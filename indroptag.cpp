@@ -204,8 +204,8 @@ int main(int argc,char **argv) {
   //ofstream ofile;
   //ofile.open(ofname.c_str());
 
-  int readn=0; // reads read
-  int readc=0; // reads written out in to the current output file
+  long int readn=0; // reads read
+  long int readc=0; // reads written out in to the current output file
   
   
   int outcomes[5]; for(int i=0;i<5;i++) { outcomes[i]=0; };
