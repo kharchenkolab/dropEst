@@ -399,7 +399,8 @@ int main(int argc,char **argv) {
 #endif
     // output
     if(r2trim>minalignlen) {
-      ofile<<r2l1<<"\tCB:"<<cellbarcode<<"\tUB:"<<umibarcode<<endl;
+      //ofile<<r2l1<<"\tCB:"<<cellbarcode<<"\tUB:"<<umibarcode<<endl;
+      ofile<<'@'<<readn<<'!'<<cellbarcode<<'#'<<umibarcode<<endl;
       ofile<<r2l2<<endl<<r2l3<<endl<<r2l4<<endl;
       readc++;
     }
