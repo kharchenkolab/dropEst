@@ -397,9 +397,15 @@ int main(int argc,char **argv) {
   
   if(verbose) { 
     cout<<" outcomes:[ (OK) (no spacer) (short) (spacer misplaced) (spacer2)]\n";
-    cout<<" outcomes:["; for(int i=0;i<5;i++) { cout<<outcomes[i]<<" ";} cout<<"]"<<endl; }
-  
+    cout<<" outcomes:["; for(int i=0;i<5;i++) { cout<<outcomes[i]<<" ";} cout<<"]"<<endl; 
+    cout<<" outcomes:["<<setprecision(1); for(int i=0;i<5;i++) { cout<<(((double)outcomes[i])/((double)readn)*100.0)<<" ";} cout<<"] %"<<endl; 
+  }
+
+
   if(verbose) { 
     cout<<" trimst:[(no trim) (RC) (polyA) (-A)]\n";
-    cout<<" trimst:["; for(int i=0;i<4;i++) { cout<<trimst[i]<<" ";} cout<<"]"<<endl; }
+    int ttream=0;
+    cout<<" trimst:["; for(int i=0;i<4;i++) { cout<<trimst[i]<<" "; ttream+=trimst[i]; } cout<<"]"<<endl; 
+    cout<<" trimst:["<<setprecision(1); for(int i=0;i<4;i++) { cout<<(((double)trimst[i])/((double)ttream)*100.0)<<" ";} cout<<"] %"<<endl; 
+  }
 }

@@ -21,7 +21,10 @@
 #include <boost/functional/hash.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
 #include <bam.h>
+
+
 #include "edit_distance.h"
+#include "indrop_results.h"
 
 using namespace std;
 using namespace __gnu_cxx; 
@@ -43,12 +46,14 @@ bool firstDecSort(pair<int,int> i,pair<int,int> j) { return(i.first>j.first); }
 bool firstIncSort(pair<int,int> i,pair<int,int> j) { return(i.first<j.first); }
 bool secondDecSort(pair<string,int> i,pair<string,int> j) { return(i.second>j.second); }
 
+
 static void usage() {
   cerr << "\tindropest: estimate molecular counts per cell"<<endl;
   cerr << "SYNOPSIS\n";
   cerr << "\tindropest [-g|--min-genes 1000] [-u|--min-umis 10000] [-m|--merge-cell-tags] [-R|--output-r] [-v|--verbose] file1.bam [file2.bam ...]"<<endl;
   cerr << "OPTIONS:\n";
   cerr << "\t-o, --output-file filename : output file name"<<endl;
+  cerr << "\t-t, --text-output : write out text matrix"<<endl;
   cerr << "\t-g, --min-genes n : output cells with at least n genes"<<endl;
   cerr << "\t-u, --min-umis k : output cells with at least k UMIs"<<endl;
   cerr << "\t-m, --merge-cell-tags : merge linked cell tags"<<endl;
@@ -64,6 +69,7 @@ int main(int argc,char **argv) {
   int min_genes=0;
   int min_umis=0;
   int read_prefix_length=6;
+  bool text_output=false;
 
   double min_merge_fraction=0.4;
   int max_merge_edit_distance=2;
@@ -73,19 +79,23 @@ int main(int argc,char **argv) {
   int c;
   static struct option long_options[] = {
     {"verbose", no_argument, 0, 'v'},
+    {"text-output", no_argument, 0, 't'},
     {"merge-cell-tags", no_argument, 0, 'm'},
     {"output-file", required_argument, 0, 'o'},
     {"min-genes", required_argument, 0, 'g'},
     {"min-umis", required_argument, 0, 'u'},
     { 0, 0, 0, 0 }
   };
-  while (( c=getopt_long(argc, argv, "vmo:g:u:",long_options, &option_index )) != -1) {
+  while (( c=getopt_long(argc, argv, "vtmo:g:u:",long_options, &option_index )) != -1) {
     switch(c) {
     case 'v' :
       verbose=true;
       break;
     case 'm' :
       merge_tags=true;
+      break;
+    case 't' :
+      text_output=true;
       break;
     case 'g' :
       min_genes = atoi( optarg );
@@ -111,7 +121,11 @@ int main(int argc,char **argv) {
   }
   
   if(!onameset) {
-    oname="cell.counts.txt";
+    if(text_output) { 
+      oname="cell.counts.txt";
+    } else {
+      oname="cell.counts.bin";
+    }
   }
 
   if(min_genes==0 && min_umis==0) { min_genes=1000; }
@@ -128,6 +142,8 @@ int main(int argc,char **argv) {
   SIHM cb_ids;
   SIIHM umig_cbs;
   //SIIHM umip_cbs;
+  SIHM nonexone_chrs;
+  SIHM exone_chrs;
 
   // iterate over files
   while(optind<argc) {
@@ -147,6 +163,7 @@ int main(int argc,char **argv) {
     }
     bam_header_t *header;
     header = bam_header_read(in);
+    
 
     while(bam_read1(in,b) >= 0) {
       readn++;
@@ -154,6 +171,7 @@ int main(int argc,char **argv) {
 	cout<<"."<<flush; 
       }
       const bam1_core_t *c = &b->core;
+      string chr(header->target_name[c->tid]);
       uint8_t* ptr = bam_aux_get(b, "GE");
       if(ptr) {
 	reade++;
@@ -205,9 +223,14 @@ int main(int argc,char **argv) {
 	//string umip=umi+prefix; // +iseq
 	//umip_cbs[umip][cb_id]++;
 	
+	exone_chrs[chr]++;
+	
 #ifdef DEBUG
 	cout<<"CB/UMI="<<cb_genes[cb_id][gene][umi]<<" gene="<<cb_genes[cb_id][gene].size()<<" CB="<<cb_genes[cb_id].size()<<" UMIg="<<umig_cbs[umig].size()<<endl;
 #endif	
+      } else { // classify non-exonic read
+	
+	nonexone_chrs[chr]++;
       }
     }
     bam_header_destroy(header);
@@ -354,6 +377,7 @@ int main(int argc,char **argv) {
 	cout<<"no valid CBs found"<<endl;
       }
     }
+    umig_cbs.clear(); // free up some memory
   } else {
     // just pick out all sufficiently informative cells
     for(int i=cb_genen.size()-1;i>=0;i--) {
@@ -387,27 +411,129 @@ int main(int argc,char **argv) {
     }
   }
   
-  // output UMI table
-  if(verbose) { cout<<"writing output matrix to "<<oname<<" "<<flush; }
-  //ofstream ofs(oname.c_str(), ios_base::out | ios_base::binary);
-  //boost::iostreams::filtering_ostream ofile;
-  //ofile.push(boost::iostreams::gzip_compressor());
-  //ofile.push(ofs);
+  
+  // create UMI table
+  vector<string> gene_names;
+  vector<string> cell_names;
+  vector<int> umis(unmerged_cbs.size()*t1.size());
 
-  ofstream ofile(oname.c_str(), ios_base::out);
-  // header
-  ofile<<"gene";
-  for(auto i: unmerged_cbs) { ofile<<'\t'<<cb_names[i]; }
-  ofile<<endl;
-  for(auto i: t1) { 
-    ofile<<i.first; 
-    for(auto cb: unmerged_cbs) { ofile<<'\t'<<cb_genes[cb][i.first].size(); }
+  if(verbose) { cout<<"compiling count matrix ... "<<flush; }
+  for(auto i: unmerged_cbs) { 
+    cell_names.push_back(cb_names[i]);
+  }
+  for(int i=0;i<t1.size();i++) { 
+    string gn=t1[i].first; 
+    gene_names.push_back(gn);
+    for(int j=0;j<unmerged_cbs.size();j++) {
+      int umi=cb_genes[unmerged_cbs[j]][gn].size();
+      umis[(i*unmerged_cbs.size())+j]=umi;
+    }
+  }
+  if(verbose) { cout<<" done"<<endl; }
+  
+  string boname=oname;
+  
+  if(text_output) {
+    boname=oname+".bin";
+    // output UMI table
+    //ofstream ofs(oname.c_str(), ios_base::out | ios_base::binary);
+    //boost::iostreams::filtering_ostream ofile;
+    //ofile.push(boost::iostreams::gzip_compressor());
+    //ofile.push(ofs);
+    
+    if(verbose) { cout<<"writing output matrix to "<<oname<<" "<<flush; }
+    ofstream ofile(oname.c_str(), ios_base::out);
+    // header
+    ofile<<"gene";
+    for(string cell: cell_names) { 
+      ofile<<'\t'<<cell;
+    }
     ofile<<endl;
+    for(int i=0;i<gene_names.size();i++) { 
+      string gn=gene_names[i];
+      ofile<<gn;
+      for(int j=0;j<cell_names.size();j++) {
+	int umi=umis[(i*cell_names.size())+j];
+	ofile<<'\t'<<umi; 
+      }
+      ofile<<endl;
+    }
+    //ofile.pop();
+    //ofs.close();
+    ofile.close();
+    if(verbose) { cout<<" done"<<endl; }
+  }
+
+  
+  if(verbose) { cout<<"compiling diagnostic stats: "<<flush; }
+  
+  count_matrix cm(cell_names,gene_names,umis);
+  // calculate average reads/UMI / cell
+  vector<double> rpus;
+  for(int j=0;j<unmerged_cbs.size();j++) {
+    int numis=0;
+    double rpu=0.0;
+    for(auto generec: cb_genes[unmerged_cbs[j]]) {
+      for(auto umirec: generec.second) {
+	rpu+=umirec.second; numis++;
+      }
+    }
+    rpu/=((double)numis);
+    rpus.push_back(rpu);
+  }
+  if(verbose) { cout<<"reads/UMI "<<flush;}
+  
+  // umig vs. cell rank
+  // recalculate genen if merge was performed
+  if(merge_tags) {
+    cb_genen.clear();
+    for(int i=0;i<cb_genes.size();i++) {
+      int ngenes=cb_genes[i].size();
+      if(ngenes>=min_min_genes) {
+	cb_genen.push_back(pair<int,int>(ngenes,i));
+      }
+    }
+    std::sort(cb_genen.begin(),cb_genen.end(),firstIncSort);
   }
   
-  //ofile.pop();
-  //ofs.close();
-  ofile.close();
-  if(verbose) { cout<<" all done"<<endl; }
+  vector<int> umig_coverage;
+  unordered_set<string> umigs_seen;
+  for(int i=cb_genen.size()-1;i>=0;i--) {
+    int j=cb_genen[i].second;
+    int newumigs=0;
+    for(auto generec: cb_genes[j]) {
+      for(auto umirec: generec.second) {
+	string umig=umirec.first+generec.first;
+	auto res=umigs_seen.emplace(umig);
+	if(res.second) { newumigs++; }
+      }
+    }
+    umig_coverage.push_back(newumigs);
+  }
+  if(verbose) { cout<<"UMIg coverage "<<flush;}
+
+  // serialize non-exonic chromosome counts
+  vector<string> none_chr;
+  vector<int> none_c;
+  for(auto i:nonexone_chrs) {
+    none_chr.push_back(i.first);
+    none_c.push_back(i.second);
+  }
+
+  vector<string> e_chr;
+  vector<int> e_c;
+  for(auto i:exone_chrs) {
+    e_chr.push_back(i.first);
+    e_c.push_back(i.second);
+  }
   
+  indrop_results results(cm,none_c,none_chr,rpus,umig_coverage,e_c,e_chr);
+  
+  if(verbose) { cout<<" done"<<endl; }
+  if(verbose) { cout<<"writing binary results to "<<boname<<" "<<flush; }
+  ofstream bofile(boname.c_str(), ios_base::out | ios_base::binary);
+  boost::archive::binary_oarchive oa(bofile);
+  oa << results;
+  bofile.close();
+  if(verbose) { cout<<" all done"<<endl; }
 }
