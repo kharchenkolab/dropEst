@@ -331,7 +331,7 @@ int main(int argc,char **argv) {
 	    // do the merge
 	    merged=true;
 	    //cout<<"merging "<<kid<<" ("<<cb_genes[kid].size()<<" genes) into "<<top_cb<<" ("<<top_cb_ngenes<<" genes) ";
-	    merge_n.push_back(c.first);
+	    merge_n.push_back(-1*c.first);
 	
 	    // merge the actual data
 	    for(auto l: cb_genes[kid]) {
@@ -360,6 +360,7 @@ int main(int argc,char **argv) {
 	//cout<<" not merging"<<endl;
 	if(c.first>=min_genes) { // only record cells that are passing min_genes threshold
 	  unmerged_cbs.push_back(kid);
+	  merge_n.push_back(c.first);
 	}
       } else {
 	
