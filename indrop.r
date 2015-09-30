@@ -46,6 +46,9 @@ read.indropest <- function(fname) {
   return(list(cm=cm,umig.coverage=x$umig.cov,rpu=x$rpu,exonic.chr=ec,nonexonic.chr=nonec))
 }
 
+
+
+
 test.int <- function() {
   fname <- "cell.counts.txt.bin"
   x <- read.indropest(fname)
@@ -53,13 +56,19 @@ test.int <- function() {
   # diagnostic plots
 
   require(Cairo)
-  
-  par(mfrow = c(2,2), mar = c(3.5,3.5,1.0,1.0), mgp = c(2,0.65,0))
-  smoothScatter(colSums(cm),x$rpu,xlab="UMIs/cell",ylab="reads/UMI")
+  CairoPNG(file=paste(fname,"info.png",sep="."),width=700,height=800);
+  par(mfrow = c(3,2), mar = c(3.5,3.5,1.0,1.0), mgp = c(2,0.65,0))
+  hist(log10(colSums(x$cm)),xlab="log10( UMIs/cell )",main="",col="wheat")
+  hist(log10(rowSums(x$cm)),xlab="log10( UMIs/gene )",main="",col="wheat")
+  smoothScatter(colSums(x$cm),x$rpu,xlab="UMIs/cell",ylab="reads/UMI")
   plot((cumsum(x$umig.cov))[1:3000],type='l',xlab="cell rank",ylab="number of unique UMI+g")
-  abline(v=ncol(cm),col=2,lty=2)
+  abline(v=ncol(x$cm),col=2,lty=2)
   barplot(x$exonic.chr,las=2,main="exonic reads")
   barplot(x$nonexonic.chr,las=2,main="non-exonic reads")
+
+  barplot(rbind(x$nonexonic.chr,x$exonic.chr[names(x$nonexonic.chr)]),col=c("gray50","blue"),las=2)
+  legend(x="top",fill=c("gray50","blue"),legend=c("non-exonic","exonic"),horiz=T,bty="n")
+  dev.off();
   
   
   
