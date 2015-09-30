@@ -19,7 +19,7 @@
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/copy.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
-
+#include "edit_distance.h"
 
 using namespace std;
 using namespace __gnu_cxx; 
@@ -66,24 +66,6 @@ string rc(string& s) {
   return(rcss);
 }
 
-#define MIN3(a, b, c) ((a) < (b) ? ((a) < (c) ? (a) : (c)) : ((b) < (c) ? (b) : (c)))
-int edit_distance(const char *s1, const char *s2) {
-  unsigned int s1len, s2len, x, y, lastdiag, olddiag;
-  s1len = strlen(s1);
-  s2len = strlen(s2);
-  unsigned int column[s1len+1];
-  for (y = 1; y <= s1len; y++)
-    column[y] = y;
-  for (x = 1; x <= s2len; x++) {
-    column[0] = x;
-    for (y = 1, lastdiag = x-1; y <= s1len; y++) {
-      olddiag = column[y];
-      column[y] = MIN3(column[y] + 1, column[y-1] + 1, lastdiag + (s1[y-1] == s2[x-1] ? 0 : 1));
-      lastdiag = olddiag;
-    }
-  }
-  return(column[s1len]);
-}
 
 int main(int argc,char **argv) {
   bool verbose=false;
@@ -330,7 +312,7 @@ int main(int argc,char **argv) {
     
     string cellbarcode=r1l2.substr(0,spacerpos) + r1l2.substr(spacerpos+spacer.length(),firstlen);
 #ifdef DEBUG
-    cout<<"-- cell barcode: "<<cellbarcode<<endl;
+    cout<<"-- cell barcode: "<<cellbarcode<<" ("<<cellbarcode.length()<<"nt)"<<endl;
 #endif
 
     string umibarcode=r1l2.substr(spacerpos+spacer.length()+firstlen,umilen);
