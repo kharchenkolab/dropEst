@@ -43,7 +43,7 @@ read.indropest <- function(fname) {
   nonec <- x$none_c; names(nonec) <- x$none_chr;
   ec <- x$e_c; names(ec) <- x$e_chr;
 
-  return(list(cm=cm,umig.coverage=x$umig.cov,rpu=x$rpu,exonic.chr=ec,nonexonic.chr=nonec))
+  return(list(cm=cm,umig.coverage=x$umig.cov,rpu=x$rpu,exonic.chr=ec,nonexonic.chr=nonec,name=x$fname))
 }
 
 
