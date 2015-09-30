@@ -1,7 +1,8 @@
 #!/usr/bin/env Rscript
 
-
+cat("compiling ");
 source("~/drop/cp/indrop.r")
+cat(" done.\n")
 
 args <- commandArgs(TRUE);
 cat("reading in ",args[1]);
