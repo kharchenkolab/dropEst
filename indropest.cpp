@@ -130,8 +130,8 @@ int main(int argc,char **argv) {
 
   if(min_genes==0 && min_umis==0) { min_genes=1000; }
 
-  int min_min_genes=10; // hard threshold for computational optimizationx
-  if(min_genes>0 & min_genes<min_min_genes) { min_min_genes=min_genes;}
+  int low_genes=10; // hard threshold for computational optimizationx
+  if(min_genes>0 && min_genes<low_genes) { low_genes=min_genes;}
 
   long int readn=0; // all reads
   long int reade=0; // exonic reads
@@ -248,12 +248,12 @@ int main(int argc,char **argv) {
   vector<pair<int,int> > cb_genen;
   for(int i=0;i<cb_genes.size();i++) {
     int ngenes=cb_genes[i].size();
-    if(ngenes>=min_min_genes) {
+    if(ngenes>=low_genes) {
       cb_genen.push_back(pair<int,int>(ngenes,i));
     }
   }
   if(verbose) {
-    cout<<cb_genen.size()<<" CBs with more than "<<min_min_genes<<" genes"<<endl;
+    cout<<cb_genen.size()<<" CBs with more than "<<low_genes<<" genes"<<endl;
   }
   
   std::sort(cb_genen.begin(),cb_genen.end(),firstIncSort);
@@ -370,7 +370,7 @@ int main(int argc,char **argv) {
     if(verbose) {
       if(unmerged_cbs.size()>0) {
 	cout<<"top CBs:"<<endl;
-	for(int i=0;i<10;i++) {
+	for(int i=0;i<MIN(10,unmerged_cbs.size());i++) {
 	  cout<<cb_genes[unmerged_cbs[i]].size()<<"\t"<<cb_names[unmerged_cbs[i]]<<endl;
 	}
       } else {
@@ -388,7 +388,7 @@ int main(int argc,char **argv) {
       }
     }
   }
-    
+  
   if(verbose) { 
     cout<<unmerged_cbs.size()<<" valid (with >="<<min_genes<<" genes) cells with ";
   }
@@ -425,7 +425,12 @@ int main(int argc,char **argv) {
     string gn=t1[i].first; 
     gene_names.push_back(gn);
     for(int j=0;j<unmerged_cbs.size();j++) {
-      int umi=cb_genes[unmerged_cbs[j]][gn].size();
+      //int umi=cb_genes[unmerged_cbs[j]][gn].size();
+      auto res=cb_genes[unmerged_cbs[j]].find(gn);
+      int umi=0;
+      if(res!=cb_genes[unmerged_cbs[j]].end()) { 
+	umi=res->second.size();
+      }
       umis[(i*unmerged_cbs.size())+j]=umi;
     }
   }
@@ -489,11 +494,11 @@ int main(int argc,char **argv) {
     cb_genen.clear();
     for(int i=0;i<cb_genes.size();i++) {
       int ngenes=cb_genes[i].size();
-      if(ngenes>=min_min_genes) {
+      if(ngenes>=low_genes) {
 	cb_genen.push_back(pair<int,int>(ngenes,i));
       }
     }
-    std::sort(cb_genen.begin(),cb_genen.end(),firstIncSort);
+    sort(cb_genen.begin(),cb_genen.end(),firstIncSort);
   }
   
   vector<int> umig_coverage;
