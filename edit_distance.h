@@ -1,6 +1,8 @@
 #ifndef EDIT_DISTANCE_H
 #define EDIT_DISTANCE_H 1
 #define MIN3(a, b, c) ((a) < (b) ? ((a) < (c) ? (a) : (c)) : ((b) < (c) ? (b) : (c)))
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
 int edit_distance(const char *s1, const char *s2) {
   unsigned int s1len, s2len, x, y, lastdiag, olddiag;
   s1len = strlen(s1);

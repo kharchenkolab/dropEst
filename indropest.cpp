@@ -339,16 +339,21 @@ int main(int argc,char **argv) {
 	}
       }
     }
-    reverse(unmerged_cbs.begin(),unmerged_cbs.end());
+    
     cout<<" done ("<<nmerges<<" merges performed)"<<endl;
-
+    if(unmerged_cbs.size()>1) {
+      reverse(unmerged_cbs.begin(),unmerged_cbs.end());
+    }
     if(verbose) {
-      cout<<"top CBs:"<<endl;
-      for(int i=0;i<10;i++) {
-	cout<<cb_genes[unmerged_cbs[i]].size()<<"\t"<<cb_names[unmerged_cbs[i]]<<endl;
+      if(unmerged_cbs.size()>0) {
+	cout<<"top CBs:"<<endl;
+	for(int i=0;i<10;i++) {
+	  cout<<cb_genes[unmerged_cbs[i]].size()<<"\t"<<cb_names[unmerged_cbs[i]]<<endl;
+	}
+      } else {
+	cout<<"no valid CBs found"<<endl;
       }
     }
-  
   } else {
     // just pick out all sufficiently informative cells
     for(int i=cb_genen.size()-1;i>=0;i--) {
@@ -359,7 +364,7 @@ int main(int argc,char **argv) {
       }
     }
   }
-
+    
   if(verbose) { 
     cout<<unmerged_cbs.size()<<" valid (with >="<<min_genes<<" genes) cells with ";
   }
@@ -377,11 +382,11 @@ int main(int argc,char **argv) {
   
   if(verbose) {
     cout<<"top genes:"<<endl;
-    for(int i=0;i<10;i++) {
+    for(int i=0;i< MIN(10,unmerged_cbs.size()); i++) {
       cout<<t1[i].first<<'\t'<<t1[i].second<<endl;
     }
   }
-
+  
   // output UMI table
   if(verbose) { cout<<"writing output matrix to "<<oname<<" "<<flush; }
   //ofstream ofs(oname.c_str(), ios_base::out | ios_base::binary);
@@ -404,5 +409,5 @@ int main(int argc,char **argv) {
   //ofs.close();
   ofile.close();
   if(verbose) { cout<<" all done"<<endl; }
-
+  
 }
