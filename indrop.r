@@ -3,12 +3,13 @@ require(inline)
 
 # routines for reading in binary output of indropest
 indrop.compile.plug <- Rcpp:::Rcpp.plugin.maker(include.before = '',
-                                         libs = paste("-lz -lm -lbam -lboost_iostreams -lboost_serialization"))
+                                         libs = paste("-L /opt/samtools-1.2/lib/ -I /opt/samtools-1.2/include/bam/",
+                                                      "-lz -lm -lbam -lhts -lboost_iostreams -lboost_serialization"))
 
 registerPlugin("indropCompilePlugin",indrop.compile.plug)
 
 settings=getPlugin("indropCompilePlugin")
-settings$env$PKG_CXXFLAGS='-I /home/pkharchenko/drop/cp'
+settings$env$PKG_CXXFLAGS='-I /home/pvk1/drop/cp'
 
 internal.read.indropest <- cxxfunction(signature(Fname="character"),
                               includes='#include <string>
@@ -32,6 +33,7 @@ internal.read.indropest <- cxxfunction(signature(Fname="character"),
                           Named("e_chr") = wrap(res.exon_count_names),
                           Named("rpu") = wrap(res.reads_per_umi),
                           Named("umig.cov") = wrap(res.umig_covered),
+                          Named("merge.n") = wrap(res.merge_n),
                           Named("fname") = wrap(fname));
    ',plugin="indropCompilePlugin",settings=settings)
 
@@ -42,8 +44,8 @@ read.indropest <- function(fname) {
   colnames(cm) <- x$cell.names;
   nonec <- x$none_c; names(nonec) <- x$none_chr;
   ec <- x$e_c; names(ec) <- x$e_chr;
-
-  return(list(cm=cm,umig.coverage=x$umig.cov,rpu=x$rpu,exonic.chr=ec,nonexonic.chr=nonec,name=x$fname))
+  
+  return(list(cm=cm,umig.coverage=x$umig.cov,rpu=x$rpu,exonic.chr=ec,nonexonic.chr=nonec,mergen=x$merge.n,name=x$fname))
 }
 
 

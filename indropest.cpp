@@ -145,6 +145,8 @@ int main(int argc,char **argv) {
   SIHM nonexone_chrs;
   SIHM exone_chrs;
 
+  vector<int> merge_n;
+
   // iterate over files
   while(optind<argc) {
     string bam_file = string(argv[optind++]);
@@ -280,7 +282,6 @@ int main(int argc,char **argv) {
     if(verbose) {
       cout<<"merging linked tags "<<flush;
     }
-    int nmerges=0;
   
     int ti=0;
     for(auto c:cb_genen) {
@@ -330,7 +331,7 @@ int main(int argc,char **argv) {
 	    // do the merge
 	    merged=true;
 	    //cout<<"merging "<<kid<<" ("<<cb_genes[kid].size()<<" genes) into "<<top_cb<<" ("<<top_cb_ngenes<<" genes) ";
-	    nmerges++;
+	    merge_n.push_back(c.first);
 	
 	    // merge the actual data
 	    for(auto l: cb_genes[kid]) {
@@ -360,10 +361,12 @@ int main(int argc,char **argv) {
 	if(c.first>=min_genes) { // only record cells that are passing min_genes threshold
 	  unmerged_cbs.push_back(kid);
 	}
+      } else {
+	
       }
     }
     
-    cout<<" done ("<<nmerges<<" merges performed)"<<endl;
+    cout<<" done ("<<merge_n.size()<<" merges performed)"<<endl;
     if(unmerged_cbs.size()>1) {
       reverse(unmerged_cbs.begin(),unmerged_cbs.end());
     }
@@ -532,7 +535,7 @@ int main(int argc,char **argv) {
     e_c.push_back(i.second);
   }
   
-  indrop_results results(cm,none_c,none_chr,rpus,umig_coverage,e_c,e_chr);
+  indrop_results results(cm,none_c,none_chr,rpus,umig_coverage,e_c,e_chr,merge_n);
   
   if(verbose) { cout<<" done"<<endl; }
   if(verbose) { cout<<"writing binary results to "<<boname<<" "<<flush; }

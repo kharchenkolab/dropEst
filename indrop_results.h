@@ -27,7 +27,7 @@ class indrop_results {
   friend class boost::serialization::access;
   template<class Archive>
   void serialize(Archive & ar, const unsigned int /* file_version */){
-    ar & cm & non_exon_counts & non_exon_count_names & reads_per_umi & umig_covered & exon_counts & exon_count_names;
+    ar & cm & non_exon_counts & non_exon_count_names & reads_per_umi & umig_covered & exon_counts & exon_count_names & merge_n;
   }
 public:
   count_matrix cm;
@@ -37,8 +37,9 @@ public:
   vector<string> exon_count_names;
   vector<double> reads_per_umi;
   vector<int> umig_covered;
+  vector<int> merge_n;
   indrop_results() {};
-   indrop_results(count_matrix& _cm,vector<int>& nec,vector<string>& necm,vector<double> rpu,vector<int> u, vector<int>& ec, vector<string>& ecn): cm(_cm), non_exon_counts(nec), non_exon_count_names(necm), reads_per_umi(rpu), umig_covered(u), exon_counts(ec), exon_count_names(ecn) {}
+ indrop_results(count_matrix& _cm,vector<int>& nec,vector<string>& necm,vector<double> rpu,vector<int> u, vector<int>& ec, vector<string>& ecn,vector<int>& mn): cm(_cm), non_exon_counts(nec), non_exon_count_names(necm), reads_per_umi(rpu), umig_covered(u), exon_counts(ec), exon_count_names(ecn), merge_n(mn) {}
 };
 
 
