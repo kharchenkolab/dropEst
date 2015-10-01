@@ -358,12 +358,10 @@ int main(int argc,char **argv) {
       }
       if(!merged) {
 	//cout<<" not merging"<<endl;
+	merge_n.push_back(c.first);
 	if(c.first>=min_genes) { // only record cells that are passing min_genes threshold
 	  unmerged_cbs.push_back(kid);
-	  merge_n.push_back(c.first);
 	}
-      } else {
-	
       }
     }
     
