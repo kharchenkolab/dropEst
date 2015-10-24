@@ -3,13 +3,13 @@ require(inline)
 
 # routines for reading in binary output of indropest
 indrop.compile.plug <- Rcpp:::Rcpp.plugin.maker(include.before = '',
-                                         libs = paste("-L /opt/samtools-1.2/lib/ -I /opt/samtools-1.2/include/bam/",
-                                                      "-lz -lm -lbam -lhts -lboost_iostreams -lboost_serialization"))
+                                         libs = paste(
+                                                      "-lz -lm -lbam -lboost_iostreams -lboost_serialization"))
 
 registerPlugin("indropCompilePlugin",indrop.compile.plug)
 
 settings=getPlugin("indropCompilePlugin")
-settings$env$PKG_CXXFLAGS='-I /home/pvk1/drop/cp'
+settings$env$PKG_CXXFLAGS='-I /home/pkharchenko/drop/cp'
 
 internal.read.indropest <- cxxfunction(signature(Fname="character"),
                               includes='#include <string>
@@ -49,26 +49,57 @@ read.indropest <- function(fname) {
 }
 
 
+##' Draw a panel of diagnostic plots for an indrop dataset
+##'
+##' @title Diagnostic plots for indrop dataset
+##' @param x dataset read in using read.indropest()
+##' @param n.cells max number of cells to show in the cell number estimate analysis
+##' @param merge.threshold maximum merge probability threshold after which cell barcodes are considered false (default p=0.08)
+basic.plots <- function(x,n.cells=min(ncol(x$cm)*2,length(x$umig.cov)),merge.threshold=0.08) {
+  df <- data.frame(rank=c(1:n.cells),s=(sign(rev(x$mergen))==-1)[1:n.cells]);
+  m <- glm(cbind(s==1,s==0)~rank,family=binomial(logit),data=df)
+  ti <- which(m$fitted>merge.threshold)[1]
 
-
-test.int <- function() {
-  fname <- "cell.counts.txt.bin"
-  x <- read.indropest(fname)
-
-  # diagnostic plots
-
-  require(Cairo)
-  CairoPNG(file=paste(fname,"info.png",sep="."),width=700,height=800);
-  par(mfrow = c(3,2), mar = c(3.5,3.5,1.0,1.0), mgp = c(2,0.65,0))
+  #l <- layout(matrix(c(seq(1,5),5),nrow=3,byrow=T));
+  #par(mar = c(3.5,3.5,1.0,1.0), mgp = c(2,0.65,0),cex=1)
+  par(mfrow=c(3,2), mar = c(3.5,3.5,1.0,1.0), mgp = c(2,0.65,0),cex=1)
   hist(log10(colSums(x$cm)),xlab="log10( UMIs/cell )",main="",col="wheat")
   hist(log10(rowSums(x$cm)),xlab="log10( UMIs/gene )",main="",col="wheat")
   smoothScatter(colSums(x$cm),x$rpu,xlab="UMIs/cell",ylab="reads/UMI")
-  plot((cumsum(x$umig.cov))[1:3000],type='l',xlab="cell rank",ylab="number of unique UMI+g")
+  plot((cumsum(x$umig.cov))[1:n.cells],type='l',xlab="cell rank",ylab="number of unique UMI+g")
   abline(v=ncol(x$cm),col=2,lty=2)
-  barplot(x$exonic.chr,las=2,main="exonic reads")
-  barplot(x$nonexonic.chr,las=2,main="non-exonic reads")
+  abline(v=ti,lty=2,col=8)
+  #barplot(x$exonic.chr,las=2,main="exonic reads")
+  #barplot(x$nonexonic.chr,las=2,main="non-exonic reads")
+  
+  #par(mar = c(4,5,1.0,1.0), mgp = c(2,0.65,0),cex=1)
+  barplot(rbind(x$nonexonic.chr,x$exonic.chr[names(x$nonexonic.chr)]),col=c("gray50","blue"),las=3,ylab="reads")
+  legend(x="top",fill=c("gray50","blue"),legend=c("non-exonic","exonic"),horiz=T,bty="n")
 
-  barplot(rbind(x$nonexonic.chr,x$exonic.chr[names(x$nonexonic.chr)]),col=c("gray50","blue"),las=2)
+  smoothScatter(df$s,xlab="cell rank",ylab="merge p")
+  lines(df$rank,m$fitted,col=2)
+  abline(v=ti,lty=2,col=8)
+  abline(v=ncol(x$cm),lty=2,col=2)
+  legend(x="bottomright",bty='n',col=8,lty=2,legend=paste("cell",ti))
+
+}
+
+test.int <- function() {
+  # diagnostic plots
+
+  
+  CairoPNG(file=paste(fname,"info.png",sep="."),width=700,height=800);
+  par(mfrow = c(3,2), mar = c(3.5,3.5,1.0,1.0), mgp = c(2,0.65,0),cex=1)
+  hist(log10(colSums(x$cm)),xlab="log10( UMIs/cell )",main="",col="wheat")
+  hist(log10(rowSums(x$cm)),xlab="log10( UMIs/gene )",main="",col="wheat")
+  smoothScatter(colSums(x$cm),x$rpu,xlab="UMIs/cell",ylab="reads/UMI")
+  plot((cumsum(x$umig.cov))[1:min(ncol(x$cm)*2,length(x$umig.cov))],type='l',xlab="cell rank",ylab="number of unique UMI+g")
+  abline(v=ncol(x$cm),col=2,lty=2)
+  #barplot(x$exonic.chr,las=2,main="exonic reads")
+  #barplot(x$nonexonic.chr,las=2,main="non-exonic reads")
+
+  par(mar = c(4,5,1.0,1.0), mgp = c(2,0.65,0),cex=1)
+  barplot(rbind(x$nonexonic.chr,x$exonic.chr[names(x$nonexonic.chr)]),col=c("gray50","blue"),las=2,ylab="reads")
   legend(x="top",fill=c("gray50","blue"),legend=c("non-exonic","exonic"),horiz=T,bty="n")
   dev.off();
   
