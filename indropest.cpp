@@ -384,7 +384,7 @@ int main(int argc,char **argv) {
     // just pick out all sufficiently informative cells
     for(int i=cb_genen.size()-1;i>=0;i--) {
       if(cb_genen[i].first>=min_genes) { // only record cells that are passing min_genes threshold
-	unmerged_cbs.push_back(i);
+	unmerged_cbs.push_back(cb_genen[i].second);
       } else {
 	break;
       }
