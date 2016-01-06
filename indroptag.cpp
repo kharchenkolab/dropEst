@@ -74,18 +74,42 @@ int main(int argc,char **argv) {
   int maxreads=INT_MAX;
   string basename;
   bool basenameset=false;
-  
+
+  // inDrop read structure: [C8-11][S][C8][M6], S=GAGTGATTGCTTGTGACGCCTT
+
   string spacer="GAGTGATTGCTTGTGACGCCTT";
   string spacer2="GAGTGATTGCTTGTGCCGCCTT";
   int spacerminpos=8;
   int spacermaxpos=11;
   int firstlen=8;
   int umilen=6;
-  int rclen=8;
+
+
+  /*
+// examples of Huidan's reads
+TGAGGTCT GTGATTGCTTGTGACGCCTT GTTTGTTT ATAGCG AGCC
+TAACCCGT GTGATTGCTTGTGACGCCTC TCCTTATT TCATCG TCCTTTTTTTTTTTTTTTTTTTTG
+GCATGGGT GTGATTGCTTGTGACGCCTT TCGACGGT CCCCTA AATATTTTTTTTTTTTTTTTTTTT
+TGAGGTCT GTGATTGCTTGTGACGCCTT GTTTGTTT CCGACA TGAGTTTTTTTTTTTTTTTTTCACG
+CCGCTGTT GTGATTGCTTGTGACGCCTT TGCTCCGT ACCCGA CAGTTTTTTTTTTTTTTTTTTTTTT
+CCAGCAGT GTGATTGCTTGTGACGCCTT CATTTGTT CCCGCC TCATTAACCTATGGATTCAGTTAAT
+CTTCAGGT GTGATTGCTTGTGACGCCTT AGATGGCT TCCAAT CCGATTTTTTTTTTTTTTTTTTTTT
+  */
+  // Huidan read structure: [C8][S][C8][M6], S=GTGATTGCTTGTGACGCCTT
+  /*
+  string spacer="GTGATTGCTTGTGACGCCTT";
+  string spacer2="GTGATTGCTTGTGACGCCTC";
+  int spacerminpos=7;
+  int spacermaxpos=9;
+  int firstlen=8;
+  int umilen=6;
+  */
+
+  int rclen=8; // RC of R1 to lookup in R2 for trimming
   string polyA("AAAAAAAA");
-  int minalignlen=10;
-  int max_spacer_ed=3;
-  int prefix_len=5;
+  int minalignlen=10; // minimum length of R2 after trimming to output for the alignment
+  int max_spacer_ed=3; // maximum number of spacer mismatches
+  int prefix_len=5; // length of the spacer prefix/suffix to use as a seed
   
   int option_index=0;
   int c;
