@@ -423,7 +423,7 @@ CTTCAGGT GTGATTGCTTGTGACGCCTT AGATGGCT TCCAAT CCGATTTTTTTTTTTTTTTTTTTTT
   if(verbose) { 
     cout<<" outcomes:[ (OK) (no spacer) (short) (spacer misplaced) (spacer2)]\n";
     cout<<" outcomes:["; for(int i=0;i<5;i++) { cout<<outcomes[i]<<" ";} cout<<"]"<<endl; 
-    cout<<" outcomes:["<<setprecision(1); for(int i=0;i<5;i++) { cout<<(((double)outcomes[i])/((double)readn)*100.0)<<" ";} cout<<"] %"<<endl; 
+    cout<<" outcomes:["<<setprecision(3); for(int i=0;i<5;i++) { cout<<(((double)outcomes[i])/((double)readn)*100.0)<<" ";} cout<<"] %"<<endl; 
   }
 
 
@@ -431,6 +431,6 @@ CTTCAGGT GTGATTGCTTGTGACGCCTT AGATGGCT TCCAAT CCGATTTTTTTTTTTTTTTTTTTTT
     cout<<" trimst:[(no trim) (RC) (polyA) (-A)]\n";
     int ttream=0;
     cout<<" trimst:["; for(int i=0;i<4;i++) { cout<<trimst[i]<<" "; ttream+=trimst[i]; } cout<<"]"<<endl; 
-    cout<<" trimst:["<<setprecision(1); for(int i=0;i<4;i++) { cout<<(((double)trimst[i])/((double)ttream)*100.0)<<" ";} cout<<"] %"<<endl; 
+    cout<<" trimst:["<<setprecision(3); for(int i=0;i<4;i++) { cout<<(((double)trimst[i])/((double)ttream)*100.0)<<" ";} cout<<"] %"<<endl; 
   }
 }
