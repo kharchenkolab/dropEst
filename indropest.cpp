@@ -247,7 +247,7 @@ int main(int argc,char **argv) {
   // count the number of UMIs per cb
   SIHM umi_map;
   
-  vector<pair<int,int> > cb_genen;
+  vector<pair<int,int> > cb_genen; // <ngenes,cb_id> pairs
   for(int i=0;i<cb_genes.size();i++) {
     int ngenes=cb_genes[i].size();
     if(ngenes>=low_genes) {
@@ -272,6 +272,7 @@ int main(int argc,char **argv) {
   
   if(merge_tags) {
     // cb merging 
+    int nmerges=0;
     // reassigned barcodes ids
     vector<int> cb_reassigned(cbn);
     for(int i=0;i<cbn;i++) { cb_reassigned[i]=i; }
@@ -284,7 +285,7 @@ int main(int argc,char **argv) {
     }
   
     int ti=0;
-    for(auto c:cb_genen) {
+    for(auto c:cb_genen) { // iterate through the minimally-slected CBs, from low to high counts
       ti++;
       if(verbose && (ti % 1000 == 0)) { 
 	cout<<"."<<flush; 
@@ -303,7 +304,7 @@ int main(int argc,char **argv) {
 	  string umig=j.first+gene;
 	  for(auto k: umig_cbs[umig]) {
 	    //cout<<k.first<<" ";
-	    if(k.first!=kid) {
+	    if(cb_reassigned[k.first]!=kid && cb_genes[cb_reassigned[k.first]].size()>c.first) {
 	      umig_top[cb_reassigned[k.first]]++;
 	    }
 	  }
@@ -332,7 +333,7 @@ int main(int argc,char **argv) {
 	    merged=true;
 	    //cout<<"merging "<<kid<<" ("<<cb_genes[kid].size()<<" genes) into "<<top_cb<<" ("<<top_cb_ngenes<<" genes) ";
 	    merge_n.push_back(-1*c.first);
-	
+	    nmerges++;
 	    // merge the actual data
 	    for(auto l: cb_genes[kid]) {
 	      for(auto m: l.second) {
@@ -364,8 +365,9 @@ int main(int argc,char **argv) {
 	}
       }
     }
+
+    cout<<" done ("<<nmerges<<" merges performed)"<<endl;
     
-    cout<<" done ("<<merge_n.size()<<" merges performed)"<<endl;
     if(unmerged_cbs.size()>1) {
       reverse(unmerged_cbs.begin(),unmerged_cbs.end());
     }
