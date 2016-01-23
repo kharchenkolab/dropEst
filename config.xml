@@ -1,0 +1,19 @@
+<config>
+    <SpacerSearch>
+        <spacer>GAGTGATTGCTTGTGACGCCTT</spacer>
+        <spacer2>GAGTGATTGCTTGTGCCGCCTT</spacer2>
+        <max_spacer_edit_distance>3</max_spacer_edit_distance>
+        <spacer_prefix_length>5</spacer_prefix_length>
+
+        <spacer_min_pos>8</spacer_min_pos>
+        <spacer_max_pos>11</spacer_max_pos>
+        <barcode_length>8</barcode_length>
+        <umi_length>6</umi_length>
+        <r1_rc_length>8</r1_rc_length>
+    </SpacerSearch>
+    <TailTrimming>
+        <min_align_length>10</min_align_length>
+        <max_reads>10000000</max_reads>
+        <poly_a_tail>AAAAAAAA</poly_a_tail>
+    </TailTrimming>
+</config>

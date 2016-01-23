@@ -23,7 +23,7 @@
 #include <bam.h>
 
 
-#include "edit_distance.h"
+#include "Tools/edit_distance.h"
 #include "indrop_results.h"
 
 using namespace std;
