@@ -170,22 +170,22 @@ TagsFinder::len_t TagsFinder::get_trim_position(len_t spacer_pos, const string &
 	rcb = TagsFinder::reverse_complement(rcb);
 
 	L_DEBUG << "-- barcode RC: " << rcb;
-	len_t rcpos = r2_line.find(rcb);
-	if (rcpos != string::npos)
+	len_t rc_pos = r2_line.find(rcb);
+	if (rc_pos != string::npos)
 	{
-		r2_trim = rcpos;
+		r2_trim = rc_pos;
 		this->trims_counter.inc(TrimsCounter::RC);
-		L_DEBUG << "-- found barcode RC at " << rcpos;
+		L_DEBUG << "-- found barcode RC at " << rc_pos;
 	}
 	else
 	{
 		// attempt 2: find polyA block
-		rcpos = r2_line.find(this->poly_a);
-		if (rcpos != -1)
+		rc_pos = r2_line.find(this->poly_a);
+		if (rc_pos != -1)
 		{
-			r2_trim = rcpos;
+			r2_trim = rc_pos;
 			this->trims_counter.inc(TrimsCounter::POLY_A);
-			L_DEBUG << "-- found polyA at " << rcpos;
+			L_DEBUG << "-- found polyA at " << rc_pos;
 		}
 	}
 

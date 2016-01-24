@@ -46,7 +46,7 @@ Params parse_cmd_params(int argc, char **argv)
 	};
 
 	Params params;
-	while ((c = getopt_long(argc, argv, "vfn:m:s:l:r:", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "vn:", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -96,8 +96,8 @@ int main(int argc, char **argv)
 	boost::property_tree::ptree pt;
 	read_xml(params.config_file_name, pt);
 
-	SpacerFinder spacer_finder(pt.get_child("config.SpacerSearch"));
-	TagsFinder finder(spacer_finder, pt.get_child("config.TailTrimming"));
+	SpacerFinder spacer_finder(pt.get_child("config.TagsSearch.SpacerSearch"));
+	TagsFinder finder(spacer_finder, pt.get_child("config.TagsSearch.TailTrimming"));
 
 	try
 	{

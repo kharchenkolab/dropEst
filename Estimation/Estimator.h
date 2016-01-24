@@ -7,6 +7,7 @@
 
 #include <bam.h>
 #include <boost/functional/hash.hpp>
+#include <boost/property_tree/ptree.hpp>
 
 #include "IndropResults.h"
 
@@ -27,12 +28,12 @@ private:
 
 private:
 	const size_t top_print_size = 10;
-	const size_t read_prefix_length = 6;
-	const double min_merge_fraction = 0.4;
-	const int max_merge_edit_distance = 2;
+
+	size_t read_prefix_length;
+	double min_merge_fraction;
+	int max_merge_edit_distance;
 
 	int min_genes;
-	int min_umis;
 	int low_genes;
 
 	SIHM cb_ids, nonexone_chrs, exone_chrs;
@@ -42,7 +43,7 @@ private:
 	SIIHM umig_cbs;
 
 public:
-	Estimator(const std::vector<std::string> &files, int min_genes, int min_umis, int low_genes);
+	Estimator(const std::vector<std::string> &files, const boost::property_tree::ptree &config);
 
 	void run(bool merge_tags, bool text_output, const std::string &output_name);
 

@@ -1,19 +1,29 @@
 <config>
-    <SpacerSearch>
-        <spacer>GAGTGATTGCTTGTGACGCCTT</spacer>
-        <spacer2>GAGTGATTGCTTGTGCCGCCTT</spacer2>
-        <max_spacer_edit_distance>3</max_spacer_edit_distance>
-        <spacer_prefix_length>5</spacer_prefix_length>
+    <TagsSearch>
+        <SpacerSearch>
+            <spacer>GAGTGATTGCTTGTGACGCCTT</spacer>
+            <spacer2>GAGTGATTGCTTGTGCCGCCTT</spacer2>
+            <max_spacer_edit_distance>3</max_spacer_edit_distance>
+            <spacer_prefix_length>5</spacer_prefix_length>
 
-        <spacer_min_pos>8</spacer_min_pos>
-        <spacer_max_pos>11</spacer_max_pos>
-        <barcode_length>8</barcode_length>
-        <umi_length>6</umi_length>
-        <r1_rc_length>8</r1_rc_length>
-    </SpacerSearch>
-    <TailTrimming>
-        <min_align_length>10</min_align_length>
-        <max_reads>10000000</max_reads>
-        <poly_a_tail>AAAAAAAA</poly_a_tail>
-    </TailTrimming>
+            <spacer_min_pos>8</spacer_min_pos>
+            <spacer_max_pos>11</spacer_max_pos>
+            <barcode_length>8</barcode_length>
+            <umi_length>6</umi_length>
+            <r1_rc_length>8</r1_rc_length>
+        </SpacerSearch>
+        <TailTrimming>
+            <min_align_length>10</min_align_length>
+            <max_reads>10000000</max_reads>
+            <poly_a_tail>AAAAAAAA</poly_a_tail>
+        </TailTrimming>
+    </TagsSearch>
+
+    <Estimation>
+        <read_prefix_length>6</read_prefix_length>
+        <min_merge_fraction>0.4</min_merge_fraction>
+        <max_merge_edit_distance>2</max_merge_edit_distance>
+        <min_genes>10</min_genes>
+        <low_genes>10</low_genes>
+    </Estimation>
 </config>

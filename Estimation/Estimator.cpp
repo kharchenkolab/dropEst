@@ -50,11 +50,19 @@ struct BamRaiiContainer
 	}
 };
 
-Estimator::Estimator(const std::vector<std::string> &files, int min_genes, int min_umis, int low_genes)
-		: min_genes(min_genes)
-		, min_umis(min_umis)
-		, low_genes(low_genes)
+Estimator::Estimator(const std::vector<std::string> &files, const boost::property_tree::ptree &config)
 {
+	this->read_prefix_length = config.get<size_t>("read_prefix_length");
+	this->min_merge_fraction = config.get<double>("min_merge_fraction");
+	this->max_merge_edit_distance = config.get<int>("max_merge_edit_distance");
+	this->min_genes = config.get<int>("min_genes");
+	this->low_genes = config.get<int>("low_genes");
+
+	if (this->min_genes > 0 && this->min_genes < this->low_genes)
+	{
+		this->low_genes = this->min_genes;
+	}
+
 	for (auto const &name : files)
 	{
 		this->parse_bam_file(name);
