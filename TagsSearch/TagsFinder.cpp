@@ -11,9 +11,8 @@
 
 using namespace std;
 
-TagsFinder::TagsFinder(bool verbose, const SpacerFinder &spacer_finder, const boost::property_tree::ptree &config)
-	: verbose(verbose)
-	, spacer_finder(spacer_finder)
+TagsFinder::TagsFinder(const SpacerFinder &spacer_finder, const boost::property_tree::ptree &config)
+	: spacer_finder(spacer_finder)
 	, trims_counter()
 {
 	this->max_reads = config.get<long>("max_reads", -1);
@@ -119,10 +118,7 @@ bool TagsFinder::read_blocks(FilesProcessor &files_processor, long total_reads_r
 
 void TagsFinder::run(const std::string &r1_filename, const std::string &r2_filename, const std::string &base_name)
 {
-	if (this->verbose)
-	{
-		L_INFO << "reading reads ";
-	}
+	L_TRACE << "reading reads ";
 
 	FilesProcessor files_processor(r1_filename, r2_filename, base_name, this->max_reads);
 
@@ -131,9 +127,9 @@ void TagsFinder::run(const std::string &r1_filename, const std::string &r2_filen
 	string r1_line2, r2_line2, r2_line3, r2_line4;
 	while (TagsFinder::read_blocks(files_processor, total_reads_read, r1_line2, r2_line2, r2_line3, r2_line4))
 	{
-		if (this->verbose && (total_reads_read % 1000000 == 0))
+		if (total_reads_read % 1000000 == 0)
 		{
-			L_INFO << "Total " << total_reads_read << " read";
+			L_TRACE << "Total " << total_reads_read << " read";
 		}
 
 		string out_text = this->process_lines(total_reads_read++, r1_line2, r2_line2, r2_line3, r2_line4);
@@ -142,29 +138,27 @@ void TagsFinder::run(const std::string &r1_filename, const std::string &r2_filen
 
 		bool new_file = files_processor.write(out_text);
 
-		if (this->verbose && new_file)
+		if (new_file)
 		{
-			L_INFO << "|";
+			L_TRACE << "|";
 		}
-
-//		if (total_reads_read >= 10000)
-//			break;
 	}
 
 	files_processor.close();
 
 	--total_reads_read;
-	if (this->verbose)
-	{
-		this->log_results(total_reads_read);
-	}
+
+	L_TRACE << this->results_to_string(total_reads_read);
 }
 
-void TagsFinder::log_results(long total_reads_read) const
+string TagsFinder::results_to_string(long total_reads_read) const
 {
-	L_INFO << " (" << total_reads_read << " reads)";
-	L_INFO << this->spacer_finder.get_outcomes_counter().print(total_reads_read);
-	L_INFO << this->trims_counter.print();
+	stringstream ss;
+	ss << " (" << total_reads_read << " reads)";
+	ss << this->spacer_finder.get_outcomes_counter().print(total_reads_read);
+	ss << this->trims_counter.print();
+
+	return ss.str();
 }
 
 TagsFinder::len_t TagsFinder::get_trim_position(len_t spacer_pos, const string &r1_line, const string &r2_line)

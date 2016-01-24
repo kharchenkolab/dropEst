@@ -15,7 +15,7 @@ struct Fixture
 {
 	Fixture()
 	{
-		init_log(boost::log::trivial::fatal);
+		init_test_logs();
 		std::stringstream config;
 		config << "<config>\n"
 				"    <SpacerSearch>\n"
@@ -40,7 +40,7 @@ struct Fixture
 		read_xml(config, pt);
 
 		this->spacer_finder = SpacerFinder(pt.get_child("config.SpacerSearch"));
-		this->tags_finder = TagsFinder(false, this->spacer_finder, pt.get_child("config.TailTrimming"));
+		this->tags_finder = TagsFinder(this->spacer_finder, pt.get_child("config.TailTrimming"));
 	}
 
 	SpacerFinder spacer_finder;

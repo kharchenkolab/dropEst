@@ -27,12 +27,12 @@ struct Params
 
 static void usage()
 {
-	L_ERR << "\tindroptag -- generate tagged indrop fastq files for alignment";
-	L_ERR << "SYNOPSIS";
-	L_ERR << "\tindroptag [-n|--name baseName] [-v|--verbose] read_1.fastq read_2.fastq config.xml";
-	L_ERR << "OPTIONS:";
-	L_ERR << "\t-v, --verbose verbose mode";
-	L_ERR << "\t-n, --name BASE_NAME specify alternative output base name";
+	cerr << "\tindroptag -- generate tagged indrop fastq files for alignment";
+	cerr << "SYNOPSIS";
+	cerr << "\tindroptag [-n|--name baseName] [-v|--verbose] read_1.fastq read_2.fastq config.xml";
+	cerr << "OPTIONS:";
+	cerr << "\t-v, --verbose verbose mode";
+	cerr << "\t-n, --name BASE_NAME specify alternative output base name";
 }
 
 Params parse_cmd_params(int argc, char **argv)
@@ -57,7 +57,7 @@ Params parse_cmd_params(int argc, char **argv)
 				params.base_name = string(optarg);
 				break;
 			default:
-				L_ERR << "indroptag: unknown arguments passed";
+				cerr << "indroptag: unknown arguments passed";
 				usage();
 				params.cant_parse = true;
 				return params;
@@ -66,7 +66,7 @@ Params parse_cmd_params(int argc, char **argv)
 
 	if (optind != argc - 3)
 	{
-		L_ERR << "indroptag: two read files and configs file must be provided" << endl;
+		cerr << "indroptag: two read files and configs file must be provided" << endl;
 		usage();
 		params.cant_parse = true;
 		return params;
@@ -86,18 +86,18 @@ Params parse_cmd_params(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-	init_log(boost::log::trivial::debug);
-
 	Params params = parse_cmd_params(argc, argv);
 
 	if (params.cant_parse)
 		return 1;
 
+	init_log(params.verbose, true);
+
 	boost::property_tree::ptree pt;
 	read_xml(params.config_file_name, pt);
 
 	SpacerFinder spacer_finder(pt.get_child("config.SpacerSearch"));
-	TagsFinder finder(params.verbose, spacer_finder, pt.get_child("config.TailTrimming"));
+	TagsFinder finder(spacer_finder, pt.get_child("config.TailTrimming"));
 
 	try
 	{
