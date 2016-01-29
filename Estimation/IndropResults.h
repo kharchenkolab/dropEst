@@ -58,9 +58,9 @@ public:
 	{};
 
 	IndropResult(const CountMatrix &cm, const std::vector<int> &non_exon_counts,
-				 const std::vector<std::string> &non_exon_count_names, const std::vector<double> &reads_per_umi,
-				 const std::vector<int> &umig_covered, const std::vector<int> &exon_counts,
-				 const std::vector<std::string> &exon_count_names, const std::vector<int> &merge_n)
+				 const std::vector<std::string> &non_exon_count_names, const std::vector<int> &exon_counts,
+				 const std::vector<std::string> &exon_count_names, const std::vector<double> &reads_per_umi,
+				 const std::vector<int> &umig_covered, const std::vector<int> &merge_n)
 			: cm(cm)
 			, non_exon_counts(non_exon_counts)
 			, non_exon_count_names(non_exon_count_names)

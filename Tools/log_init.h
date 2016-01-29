@@ -29,14 +29,22 @@ static void init_log(bool verbose, bool debug, std::string debug_file_name = "de
 	);
 	console_sink->set_formatter(logFmt);
 
+	auto fs_sink = logging::add_file_log(
+			logging::keywords::file_name = "main.log",
+			logging::keywords::open_mode = std::ios_base::out,
+			logging::keywords::filter = (logging::trivial::severity >= logging::trivial::info ||
+										 logging::trivial::severity == logging::trivial::trace));
+	fs_sink->set_formatter(logFmt);
+	fs_sink->locked_backend()->auto_flush(true);
+
 	if (debug)
 	{
-		auto fs_sink = logging::add_file_log(
+		auto debug_fs_sink = logging::add_file_log(
 				logging::keywords::file_name = debug_file_name,
 				logging::keywords::open_mode = std::ios_base::out,
 				logging::keywords::filter = (logging::trivial::severity >= logging::trivial::debug));
-		fs_sink->set_formatter(logFmt);
-		fs_sink->locked_backend()->auto_flush(true);
+		debug_fs_sink->set_formatter(logFmt);
+		debug_fs_sink->locked_backend()->auto_flush(true);
 	}
 }
 

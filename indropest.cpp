@@ -8,10 +8,11 @@
 #include <boost/property_tree/xml_parser.hpp>
 
 #include "Estimation/Estimator.h"
+#include "Estimation/ResultPrinter.h"
 #include "Tools/log_init.h"
+#include "Tools/log_defs.h"
 
 using namespace std;
-using namespace __gnu_cxx;
 
 struct Params
 {
@@ -19,7 +20,7 @@ struct Params
 	bool verbose = false;
 	bool text_output = false;
 	bool merge_tags = false;
-	string out_name = "";
+	string output_name = "";
 	string config_file_name = "";
 };
 
@@ -28,7 +29,7 @@ static void usage()
 	cerr << "\tindropest: estimate molecular counts per cell" << endl;
 	cerr << "SYNOPSIS\n";
 	cerr <<
-	"\tindropest [-g|--min-genes 1000] [-u|--min-umis 10000] [-m|--merge-cell-tags] [-R|--output-r] [-v|--verbose] -c config.xml file1.bam [file2.bam ...]" <<
+	"\tindropest [-g|--min-cells_genes 1000] [-u|--min-umis 10000] [-m|--merge-cell-tags] [-R|--output-r] [-v|--verbose] -c config.xml file1.bam [file2.bam ...]" <<
 	endl;
 	cerr << "OPTIONS:\n";
 	cerr << "\t-o, --output-file filename : output file name" << endl;
@@ -66,7 +67,7 @@ static Params parse_cmd_params(int argc, char **argv)
 				params.text_output = true;
 				break;
 			case 'o' :
-				params.out_name = string(optarg);
+				params.output_name = string(optarg);
 				break;
 			case 'c' :
 				params.config_file_name = string(optarg);
@@ -92,15 +93,15 @@ static Params parse_cmd_params(int argc, char **argv)
 		return params;
 	}
 
-	if (params.out_name == "")
+	if (params.output_name == "")
 	{
 		if (params.text_output)
 		{
-			params.out_name = "cell.counts.txt";
+			params.output_name = "cell.counts.txt";
 		}
 		else
 		{
-			params.out_name = "cell.counts.bin";
+			params.output_name = "cell.counts.bin";
 		}
 	}
 
@@ -117,7 +118,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	init_log(params.verbose, true, "debug_est.log");
+	init_log(params.verbose, false, "debug_est.log");
 
 	vector<string> files;
 	while (optind < argc)
@@ -128,6 +129,23 @@ int main(int argc, char **argv)
 	boost::property_tree::ptree pt;
 	read_xml(params.config_file_name, pt);
 
-	Estimator estimator(files, pt.get_child("config.Estimation"));
-	estimator.run(params.merge_tags, params.text_output, params.out_name);
+	try
+	{
+		Estimator estimator(pt.get_child("config.Estimation"));
+		IndropResult results = estimator.get_results(files, params.merge_tags);
+
+		if (params.text_output)
+		{
+			ResultPrinter::print_text_table(params.output_name, results.cm);
+			params.output_name += ".bin";
+		}
+
+		ResultPrinter::print_binary(params.output_name, results);
+		ResultPrinter::print_fields("_new", results);
+	}
+	catch (std::runtime_error err)
+	{
+		L_ERR << err.what();
+		return 1;
+	}
 }

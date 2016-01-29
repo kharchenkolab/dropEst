@@ -1,0 +1,35 @@
+#pragma once
+
+#include <string>
+#include <unordered_map>
+
+#include <boost/functional/hash.hpp>
+
+class Stats
+{
+public:
+	typedef std::vector<std::string> str_list_t;
+	typedef std::vector<int> int_list_t;
+
+private:
+	typedef std::unordered_map<std::string, int, boost::hash<std::string>> s_counter_t;
+
+	s_counter_t exone_chr_reads;
+	s_counter_t nonexone_chr_reads;
+	int_list_t merge_counts;
+
+
+private:
+	static void split_pairs(const s_counter_t &base, str_list_t &out_1, int_list_t &out_2);
+
+public:
+	void inc_exone_chr_reads(std::string &chr_name);
+	void get_exone_chr_stats(str_list_t &exon_count_names, int_list_t &exon_counts) const;
+
+	void inc_nonexone_chr_reads(std::string &chr_name);
+	void get_nonexone_chr_stats(str_list_t &nonexon_count_names, int_list_t &nonexon_counts) const;
+
+	void add_merge_count(long count);
+	const int_list_t& get_merge_counts() const;
+};
+

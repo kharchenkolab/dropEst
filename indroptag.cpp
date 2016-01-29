@@ -13,7 +13,7 @@
 #include "Tools/log_init.h"
 
 using namespace std;
-using namespace __gnu_cxx;
+
 
 struct Params
 {
