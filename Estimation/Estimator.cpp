@@ -116,18 +116,7 @@ IndropResult Estimator::get_indrop_results(const CountMatrix cm, const GenesCont
 	ints_t umig_coverage(this->get_umig_coverage(genes_container));
 	L_TRACE << "UMIg coverage";
 
-	names_t non_exon_count_names;
-	ints_t non_exon_counts;
-	genes_container.stats().get_nonexone_chr_stats(non_exon_count_names, non_exon_counts);
-
-	names_t exon_count_names;
-	ints_t exon_counts;
-	genes_container.stats().get_exone_chr_stats(exon_count_names, exon_counts);
-
-	L_TRACE << "Done";
-
-	return IndropResult(cm, non_exon_counts, non_exon_count_names, exon_counts, exon_count_names,
-						reads_per_umis, umig_coverage, genes_container.stats().get_merge_counts());
+	return IndropResult(cm, genes_container.stats(), reads_per_umis, umig_coverage);
 }
 
 Estimator::doubles_t Estimator::get_reads_per_umis(const GenesContainer &genes_container, const ids_t &unmerged_cells) const

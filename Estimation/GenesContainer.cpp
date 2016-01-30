@@ -205,14 +205,17 @@ void GenesContainer::parse_bam_file(const string &bam_file_name, size_t read_pre
 
 		string chr_name(c.header->target_name[c.align_info->core.tid]);
 		uint8_t *ptr = bam_aux_get(c.align_info, "GE");
+
+		string qname, cell_tag, umi;
+		if (!this->parse_read_name(c.align_info, qname, cell_tag, umi))
+			continue;
+
 		if (ptr == nullptr)
 		{
 			this->_stats.inc_nonexone_chr_reads(chr_name);
+			this->_stats.inc_nonexone_cell_reads(cell_tag);
 			continue;
 		}
-
-		string qname, cell_tag, umi;
-		this->parse_read_name(c.align_info, qname, cell_tag, umi);
 
 		string gene(bam_aux2Z(ptr));
 
@@ -232,6 +235,7 @@ void GenesContainer::parse_bam_file(const string &bam_file_name, size_t read_pre
 
 		exonic_reads++;
 		this->_stats.inc_exone_chr_reads(chr_name);
+		this->_stats.inc_exone_cell_reads(cell_tag);
 
 		L_DEBUG << "CB/UMI=" << this->_cells_genes[cell_id][gene][umi] << " gene=" << this->_cells_genes[cell_id][gene].size()
 				<< " CB=" << this->_cells_genes[cell_id].size() << " UMIg=" << umig_cells_counts[umig].size();

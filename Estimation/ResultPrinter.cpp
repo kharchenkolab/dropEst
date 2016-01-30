@@ -3,6 +3,7 @@
 #include "Tools/log_defs.h"
 
 #include <fstream>
+#include <RInside.h>
 
 void ResultPrinter::print_text_table(const std::string &output_name, const CountMatrix &count_matrix)
 {
@@ -43,19 +44,28 @@ void ResultPrinter::print_binary(const std::string &bin_output_name, const Indro
 	oa << results;
 	bin_out_file.close();
 
-	L_TRACE << "All done";
+	L_TRACE << "Done";
+}
+
+void ResultPrinter::print_rds(const std::string &output_name, const IndropResult &results)
+{
+	L_TRACE << "writing R data to " << output_name;
+	RInside R(0, nullptr);
+	R["saved_vec"] = results.get_r_table(output_name);
+	R.parseEvalQ("saveRDS(saved_vec, '" + output_name + "')");
+	L_TRACE << "Done";
 }
 
 void ResultPrinter::print_fields(const std::string &output_suffix, const IndropResult &results)
 {
 	std::ofstream of("ex_names" + output_suffix);
-	for (auto & name : results.exon_count_names)
+	for (auto & name : results.exon_chr_count_names)
 	{
 		of << name << "\n";
 	}
 	of.close();
 	of.open("ex_counts" + output_suffix);
-	for (auto & val : results.exon_counts)
+	for (auto & val : results.exon_chr_counts)
 	{
 		of << val << "\n";
 	}
@@ -67,13 +77,13 @@ void ResultPrinter::print_fields(const std::string &output_suffix, const IndropR
 	}
 	of.close();
 	of.open("nonex_names" + output_suffix);
-	for (auto & val : results.non_exon_count_names)
+	for (auto & val : results.non_exon_chr_count_names)
 	{
 		of << val << "\n";
 	}
 	of.close();
 	of.open("nonex_counts" + output_suffix);
-	for (auto & val : results.non_exon_counts)
+	for (auto & val : results.non_exon_chr_counts)
 	{
 		of << val << "\n";
 	}

@@ -118,7 +118,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	init_log(params.verbose, false, "debug_est.log");
+	init_log(params.verbose, true, "debug_est.log");
 
 	vector<string> files;
 	while (optind < argc)
@@ -133,6 +133,7 @@ int main(int argc, char **argv)
 	{
 		Estimator estimator(pt.get_child("config.Estimation"));
 		IndropResult results = estimator.get_results(files, params.merge_tags);
+		L_TRACE << "Done";
 
 		if (params.text_output)
 		{
@@ -140,12 +141,13 @@ int main(int argc, char **argv)
 			params.output_name += ".bin";
 		}
 
-		ResultPrinter::print_binary(params.output_name, results);
-		ResultPrinter::print_fields("_new", results);
+//		ResultPrinter::print_binary(params.output_name, results);
+		ResultPrinter::print_rds(params.output_name, results);
 	}
 	catch (std::runtime_error err)
 	{
 		L_ERR << err.what();
 		return 1;
 	}
+	L_TRACE << "All done";
 }

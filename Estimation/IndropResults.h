@@ -1,11 +1,15 @@
 #pragma once
 
 #include <vector>
+
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/utility.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/assume_abstract.hpp>
+#include <Rcpp.h>
+
+class Stats;
 
 class CountMatrix
 {
@@ -40,34 +44,35 @@ class IndropResult
 	template<class Archive>
 	void serialize(Archive &ar, const unsigned int /* file_version */)
 	{
-		ar & cm & non_exon_counts & non_exon_count_names & reads_per_umi & umig_covered & exon_counts &
-		exon_count_names & merge_n;
+		ar & cm & non_exon_chr_counts & non_exon_chr_count_names & reads_per_umi & umig_covered & exon_chr_counts &
+		exon_chr_count_names & merge_n;
 	}
 
 public:
 	CountMatrix cm;
-	std::vector<int> non_exon_counts;
-	std::vector<std::string> non_exon_count_names;
-	std::vector<int> exon_counts;
-	std::vector<std::string> exon_count_names;
+	std::vector<int> non_exon_chr_counts;
+	std::vector<std::string> non_exon_chr_count_names;
+	std::vector<int> exon_chr_counts;
+	std::vector<std::string> exon_chr_count_names;
+
+	std::vector<int> non_exon_cell_counts;
+	std::vector<std::string> non_exon_cell_count_tags;
+	std::vector<int> exon_cell_counts;
+	std::vector<std::string> exon_cell_count_tags;
+	
 	std::vector<double> reads_per_umi;
 	std::vector<int> umig_covered;
 	std::vector<int> merge_n;
 
-	IndropResult()
-	{};
+	IndropResult() = default;
 
-	IndropResult(const CountMatrix &cm, const std::vector<int> &non_exon_counts,
-				 const std::vector<std::string> &non_exon_count_names, const std::vector<int> &exon_counts,
-				 const std::vector<std::string> &exon_count_names, const std::vector<double> &reads_per_umi,
-				 const std::vector<int> &umig_covered, const std::vector<int> &merge_n)
-			: cm(cm)
-			, non_exon_counts(non_exon_counts)
-			, non_exon_count_names(non_exon_count_names)
-			, reads_per_umi(reads_per_umi)
-			, umig_covered(umig_covered)
-			, exon_counts(exon_counts)
-			, exon_count_names(exon_count_names)
-			, merge_n(merge_n)
-	{}
+	IndropResult(const CountMatrix &cm, const std::vector<int> &non_exon_chr_counts,
+				 const std::vector<std::string> &non_exon_chr_count_names, const std::vector<int> &exon_chr_counts,
+				 const std::vector<std::string> &exon_chr_count_names, const std::vector<double> &reads_per_umi,
+				 const std::vector<int> &umig_covered, const std::vector<int> &merge_n);
+
+	IndropResult(const CountMatrix &cm, const Stats &stats, const std::vector<double> &reads_per_umi,
+				 const std::vector<int> &umig_covered);
+
+	Rcpp::List get_r_table(const std::string &fname) const;
 };

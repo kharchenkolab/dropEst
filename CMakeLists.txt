@@ -9,23 +9,25 @@ find_package(Boost COMPONENTS unit_test_framework serialization thread system lo
 find_package (Threads REQUIRED)
 find_package (ZLIB REQUIRED)
 
-include_directories(${Boost_INCLUDE_DIR} ${PROJECT_SOURCE_DIR} ${ZLIB_INCLUDE_DIRS} /usr/include/samtools)
+set(RLIB_DIR "/usr/local/lib/R/site-library")
+
+include_directories(${Boost_INCLUDE_DIR} ${PROJECT_SOURCE_DIR} ${ZLIB_INCLUDE_DIRS}
+        /usr/include/samtools ${RLIB_DIR}/Rcpp/include/ ${RLIB_DIR}/RInside/include /usr/share/R/include/)
 set(LIBRARIES ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-
-
 
 FILE(GLOB TagsSearchSources TagsSearch/*.cpp TagsSearch/Counters/*.cpp)
 add_library(TagsSearch ${TagsSearchSources})
 
 add_executable(indroptag indroptag.cpp)
-target_link_libraries(indroptag  TagsSearch ${LIBRARIES})
+target_link_libraries(indroptag TagsSearch ${LIBRARIES})
 
 
 
 FILE(GLOB EstimationSources Estimation/*.cpp)
 add_library(Estimation ${EstimationSources})
 
-set(EST_LIBRARIES /usr/lib/libbam.a ${ZLIB_LIBRARIES} ${LIBRARIES})
+set(EST_LIBRARIES /usr/lib/libbam.a /usr/lib/R/lib/libR.so ${RLIB_DIR}/RInside/lib/libRInside.so ${ZLIB_LIBRARIES} ${LIBRARIES})
+
 add_executable(indropest indropest.cpp)
 target_link_libraries(indropest Estimation ${EST_LIBRARIES})
 
