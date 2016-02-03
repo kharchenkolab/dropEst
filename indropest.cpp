@@ -118,7 +118,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	init_log(params.verbose, true, "debug_est.log");
+	init_log(params.verbose, true, "main_est.log", "debug_est.log");
 
 	vector<string> files;
 	while (optind < argc)
@@ -141,9 +141,9 @@ int main(int argc, char **argv)
 			params.output_name += ".bin";
 		}
 #ifdef R_LIBS
-		ResultPrinter::print_binary(params.output_name, results);
-#else
 		ResultPrinter::print_rds(params.output_name, results);
+#else
+		ResultPrinter::print_binary(params.output_name, results);
 #endif
 	}
 	catch (std::runtime_error err)

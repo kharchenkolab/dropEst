@@ -9,7 +9,8 @@ namespace logging = boost::log;
 namespace src = logging::sources;
 namespace keywords = logging::keywords;
 
-static void init_log(bool verbose, bool debug, std::string debug_file_name = "debug.log")
+static void init_log(bool verbose, bool debug, const std::string &main_file_name = "main.log",
+					 const std::string &debug_file_name = "debug.log")
 {
 	logging::trivial::severity_level min_level = verbose ? logging::trivial::trace
 														 : (debug ? logging::trivial::debug
@@ -30,7 +31,7 @@ static void init_log(bool verbose, bool debug, std::string debug_file_name = "de
 	console_sink->set_formatter(logFmt);
 
 	auto fs_sink = logging::add_file_log(
-			logging::keywords::file_name = "main.log",
+			logging::keywords::file_name = main_file_name,
 			logging::keywords::open_mode = std::ios_base::out,
 			logging::keywords::filter = (logging::trivial::severity >= logging::trivial::info ||
 										 logging::trivial::severity == logging::trivial::trace));

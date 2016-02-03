@@ -2,6 +2,7 @@
 if [ "$#" -ne 3 ]; then
     echo "usage: indropalign.sh $tagged.fastq.gz genome.dir out.dir"
     echo "example: indropalign.sh SCG_27.tag.1.fastq.gz /groups/pklab/genomes/mm10 mouse.align"
+    exit 1
 fi
 infile=$1
 genome=$2

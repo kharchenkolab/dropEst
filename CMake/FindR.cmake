@@ -18,7 +18,7 @@ find_path(R_INCLUDE_DIR R.h PATHS ${R_ROOT}/include /usr/share/R/include)
 find_library(R_LIBRARY NAME R PATHS ${R_ROOT}/lib PATH_SUFFIXES R/lib lib)
 
 get_filename_component(R_LIBRARY ${R_LIBRARY} REALPATH)
-get_filename_component(R_LIB_DIR ${R_LIBRARY} DIRECTORY)
+get_filename_component(R_LIB_DIR ${R_LIBRARY} PATH)
 set(R_LIBS_PATHS ${R_ROOT}/library ${R_ROOT}/site-library ${R_LIB_DIR}/../ ${R_LIB_DIR}/../../ /usr/local/lib /usr/lib)
 
 

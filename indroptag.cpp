@@ -27,12 +27,12 @@ struct Params
 
 static void usage()
 {
-	cerr << "\tindroptag -- generate tagged indrop fastq files for alignment";
-	cerr << "SYNOPSIS";
-	cerr << "\tindroptag [-n|--name baseName] [-v|--verbose] read_1.fastq read_2.fastq config.xml";
-	cerr << "OPTIONS:";
-	cerr << "\t-v, --verbose verbose mode";
-	cerr << "\t-n, --name BASE_NAME specify alternative output base name";
+	cerr << "\tindroptag -- generate tagged indrop fastq files for alignment\n";
+	cerr << "SYNOPSIS\n";
+	cerr << "\tindroptag [-n|--name baseName] [-v|--verbose] read_1.fastq read_2.fastq config.xml\n";
+	cerr << "OPTIONS:\n";
+	cerr << "\t-v, --verbose verbose mode\n";
+	cerr << "\t-n, --name BASE_NAME specify alternative output base name" << endl;
 }
 
 Params parse_cmd_params(int argc, char **argv)
@@ -57,7 +57,7 @@ Params parse_cmd_params(int argc, char **argv)
 				params.base_name = string(optarg);
 				break;
 			default:
-				cerr << "indroptag: unknown arguments passed";
+				cerr << "indroptag: unknown arguments passed" << endl;
 				usage();
 				params.cant_parse = true;
 				return params;
@@ -91,7 +91,7 @@ int main(int argc, char **argv)
 	if (params.cant_parse)
 		return 1;
 
-	init_log(params.verbose, true);
+	init_log(params.verbose, true, "main_tag.log", "debug_tag.log");
 
 	boost::property_tree::ptree pt;
 	read_xml(params.config_file_name, pt);
