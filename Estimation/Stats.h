@@ -33,10 +33,10 @@ public:
 	void inc_nonexone_chr_reads(std::string &chr_name);
 	void get_nonexone_chr_stats(str_list_t &nonexon_count_names, int_list_t &nonexon_counts) const;
 
-	void inc_exone_cell_reads(std::string &cell_tag);
+	void inc_exone_cell_reads(std::string &cell_barcode);
 	void get_exone_cell_stats(str_list_t &exon_count_names, int_list_t &exon_counts) const;
 
-	void inc_nonexone_cell_reads(std::string &cell_tag);
+	void inc_nonexone_cell_reads(std::string &cell_barcode);
 	void get_nonexone_cell_stats(str_list_t &nonexon_count_names, int_list_t &nonexon_counts) const;
 
 	void add_merge_count(int count);

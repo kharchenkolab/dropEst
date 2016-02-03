@@ -42,7 +42,7 @@ private:
 
 private:
 	void parse_bam_file(const std::string &bam_file_name, size_t read_prefix_length, s_i_hash_t &cells_ids, s_ii_hash_t &umig_cbs);
-	bool parse_read_name(const bam1_t *align_info, std::string &read_name, std::string &cell_tag, std::string &umi) const;
+	bool parse_read_name(const bam1_t *align_info, std::string &read_name, std::string &cell_barcode, std::string &umi) const;
 
 	void merge_genes(const s_ii_hash_t &umig_cbs, double min_merge_fraction,
 					  int min_genes_after_merge, int max_merge_edit_distance);

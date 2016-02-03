@@ -244,8 +244,8 @@ string TagsFinder::process_lines(long total_reads_read, const string &r1_line2, 
 	if (r2_trim > this->min_align_len)
 	{
 		ostringstream text;
-		text << '@' << total_reads_read << '!' << cell_barcode << '#' << umi_barcode << endl;
-		text << r2_line2 << endl << r2_line3 << endl << r2_line4 << endl;
+		text << '@' << total_reads_read << '!' << cell_barcode << '#' << umi_barcode << "\n";
+		text << r2_line2 << "\n" << r2_line3 << "\n" << r2_line4 << endl;
 		return text.str();
 	}
 

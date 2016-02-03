@@ -3,7 +3,9 @@
 #include "Tools/log_defs.h"
 
 #include <fstream>
+#ifdef R_LIBS
 #include <RInside.h>
+#endif
 
 void ResultPrinter::print_text_table(const std::string &output_name, const CountMatrix &count_matrix)
 {
@@ -49,11 +51,15 @@ void ResultPrinter::print_binary(const std::string &bin_output_name, const Indro
 
 void ResultPrinter::print_rds(const std::string &output_name, const IndropResult &results)
 {
+#ifdef R_LIBS
 	L_TRACE << "writing R data to " << output_name;
 	RInside R(0, nullptr);
 	R["saved_vec"] = results.get_r_table(output_name);
 	R.parseEvalQ("saveRDS(saved_vec, '" + output_name + "')");
 	L_TRACE << "Done";
+#else
+	L_ERR << "Can't print rds without RCpp";
+#endif
 }
 
 void ResultPrinter::print_fields(const std::string &output_suffix, const IndropResult &results)

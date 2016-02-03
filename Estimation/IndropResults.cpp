@@ -30,6 +30,7 @@ IndropResult::IndropResult(const CountMatrix &cm, const Stats &stats, const std:
 	stats.get_nonexone_chr_stats(this->non_exon_chr_count_names, this->non_exon_chr_counts);
 }
 
+#ifdef R_LIBS
 Rcpp::List IndropResult::get_r_table(const std::string &fname) const
 {
 	using namespace Rcpp;
@@ -41,11 +42,12 @@ Rcpp::List IndropResult::get_r_table(const std::string &fname) const
 						Named("e_chr_c") = wrap(this->exon_chr_counts),
 						Named("e_chr_name") = wrap(this->exon_chr_count_names),
 						Named("none_cell_c") = wrap(this->non_exon_cell_counts),
-						Named("none_cell_tag") = wrap(this->non_exon_cell_count_tags),
+						Named("none_cell_barcode") = wrap(this->non_exon_cell_count_tags),
 						Named("e_cell_c") = wrap(this->exon_cell_counts),
-						Named("e_cell_tag") = wrap(this->exon_cell_count_tags),
+						Named("e_cell_barcode") = wrap(this->exon_cell_count_tags),
 						Named("rpu") = wrap(this->reads_per_umi),
 						Named("umig.cov") = wrap(this->umig_covered),
 						Named("merge.n") = wrap(this->merge_n),
 						Named("fname") = wrap(fname));
 }
+#endif

@@ -206,27 +206,27 @@ void GenesContainer::parse_bam_file(const string &bam_file_name, size_t read_pre
 		string chr_name(c.header->target_name[c.align_info->core.tid]);
 		uint8_t *ptr = bam_aux_get(c.align_info, "GE");
 
-		string qname, cell_tag, umi;
-		if (!this->parse_read_name(c.align_info, qname, cell_tag, umi))
+		string qname, cell_barcode, umi;
+		if (!this->parse_read_name(c.align_info, qname, cell_barcode, umi))
 			continue;
 
 		if (ptr == nullptr)
 		{
 			this->_stats.inc_nonexone_chr_reads(chr_name);
-			this->_stats.inc_nonexone_cell_reads(cell_tag);
+			this->_stats.inc_nonexone_cell_reads(cell_barcode);
 			continue;
 		}
 
 		string gene(bam_aux2Z(ptr));
 
-		L_DEBUG << qname << " cell:" << cell_tag << " UMI:" << umi << " prefix:"
-		<< GenesContainer::get_iseq_verbose(c.align_info, read_prefix_length) << "\tXF:" << gene;
+		L_DEBUG << qname << " cell:" << cell_barcode << " UMI:" << umi << " prefix:"
+				<< GenesContainer::get_iseq_verbose(c.align_info, read_prefix_length) << "\tXF:" << gene;
 
-		auto res = cells_ids.emplace(cell_tag, this->_cells_genes.size());
+		auto res = cells_ids.emplace(cell_barcode, this->_cells_genes.size());
 		if (res.second)
 		{ // new cb
 			this->_cells_genes.push_back(genes_t());
-			this->_genes_names.push_back(cell_tag);
+			this->_genes_names.push_back(cell_barcode);
 		}
 		int cell_id = res.first->second;
 		this->_cells_genes[cell_id][gene][umi]++;
@@ -235,7 +235,7 @@ void GenesContainer::parse_bam_file(const string &bam_file_name, size_t read_pre
 
 		exonic_reads++;
 		this->_stats.inc_exone_chr_reads(chr_name);
-		this->_stats.inc_exone_cell_reads(cell_tag);
+		this->_stats.inc_exone_cell_reads(cell_barcode);
 
 		L_DEBUG << "CB/UMI=" << this->_cells_genes[cell_id][gene][umi] << " gene=" << this->_cells_genes[cell_id][gene].size()
 				<< " CB=" << this->_cells_genes[cell_id].size() << " UMIg=" << umig_cells_counts[umig].size();
@@ -273,7 +273,7 @@ GenesContainer::i_counter_t GenesContainer::count_cells_genes(int min_genes_befo
 	return cells_genes_counts;
 }
 
-bool GenesContainer::parse_read_name(const bam1_t *align_info, string &read_name, string &cell_tag, string &umi) const
+bool GenesContainer::parse_read_name(const bam1_t *align_info, string &read_name, string &cell_barcode, string &umi) const
 {
 	read_name = bam1_qname(align_info);
 	size_t umi_start_pos = read_name.rfind('#');
@@ -283,15 +283,15 @@ bool GenesContainer::parse_read_name(const bam1_t *align_info, string &read_name
 		return false;
 	}
 
-	size_t cell_tag_start_pos = read_name.rfind('!', umi_start_pos);
-	if (cell_tag_start_pos == string::npos)
+	size_t cell_barcode_start_pos = read_name.rfind('!', umi_start_pos);
+	if (cell_barcode_start_pos == string::npos)
 	{
 		L_ERR << "WARNING: unable to parse out cell tag in read_name: " << read_name;
 		return false;
 	}
 
+	cell_barcode = read_name.substr(cell_barcode_start_pos + 1, umi_start_pos - cell_barcode_start_pos - 1);
 	umi = read_name.substr(umi_start_pos + 1);
-	cell_tag = read_name.substr(cell_tag_start_pos + 1, umi_start_pos - cell_tag_start_pos - 1);
 
 	return true;
 }

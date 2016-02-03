@@ -7,7 +7,10 @@
 #include <boost/serialization/utility.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/assume_abstract.hpp>
+
+#ifdef R_LIBS
 #include <Rcpp.h>
+#endif
 
 class Stats;
 
@@ -44,8 +47,8 @@ class IndropResult
 	template<class Archive>
 	void serialize(Archive &ar, const unsigned int /* file_version */)
 	{
-		ar & cm & non_exon_chr_counts & non_exon_chr_count_names & reads_per_umi & umig_covered & exon_chr_counts &
-		exon_chr_count_names & merge_n;
+		ar & this->cm & this->non_exon_chr_counts & this->non_exon_chr_count_names & this->reads_per_umi &
+				this->umig_covered & this->exon_chr_counts & this->exon_chr_count_names & this->merge_n;
 	}
 
 public:
@@ -74,5 +77,7 @@ public:
 	IndropResult(const CountMatrix &cm, const Stats &stats, const std::vector<double> &reads_per_umi,
 				 const std::vector<int> &umig_covered);
 
+#ifdef R_LIBS
 	Rcpp::List get_r_table(const std::string &fname) const;
+#endif
 };

@@ -140,9 +140,11 @@ int main(int argc, char **argv)
 			ResultPrinter::print_text_table(params.output_name, results.cm);
 			params.output_name += ".bin";
 		}
-
-//		ResultPrinter::print_binary(params.output_name, results);
+#ifdef R_LIBS
+		ResultPrinter::print_binary(params.output_name, results);
+#else
 		ResultPrinter::print_rds(params.output_name, results);
+#endif
 	}
 	catch (std::runtime_error err)
 	{

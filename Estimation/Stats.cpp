@@ -39,9 +39,9 @@ const Stats::int_list_t &Stats::get_merge_counts() const
 	return this->merge_counts;
 }
 
-void Stats::inc_exone_cell_reads(std::string &cell_tag)
+void Stats::inc_exone_cell_reads(std::string &cell_barcode)
 {
-	this->exone_cell_reads[cell_tag]++;
+	this->exone_cell_reads[cell_barcode]++;
 }
 
 void Stats::get_exone_cell_stats(Stats::str_list_t &exon_count_names, Stats::int_list_t &exon_counts) const
@@ -49,9 +49,9 @@ void Stats::get_exone_cell_stats(Stats::str_list_t &exon_count_names, Stats::int
 	Stats::split_pairs(this->exone_cell_reads, exon_count_names, exon_counts);
 }
 
-void Stats::inc_nonexone_cell_reads(std::string &cell_tag)
+void Stats::inc_nonexone_cell_reads(std::string &cell_barcode)
 {
-	this->nonexone_cell_reads[cell_tag]++;
+	this->nonexone_cell_reads[cell_barcode]++;
 }
 
 void Stats::get_nonexone_cell_stats(Stats::str_list_t &nonexon_count_names, Stats::int_list_t &nonexon_counts) const
