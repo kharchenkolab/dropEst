@@ -14,9 +14,11 @@ void ResultPrinter::print_text_table(const std::string &output_name, const Count
 	std::ofstream output_file(output_name.c_str(), std::ios_base::out);
 	// header
 	output_file << "gene";
-	for (auto const &cell_name: count_matrix.cell_names)
+//	for (auto const &cell_name: count_matrix.cell_names)
+	for (CountMatrix::s_list_t::const_iterator cell_name_it = count_matrix.cell_names.begin();
+		 cell_name_it != count_matrix.cell_names.end(); ++cell_name_it)
 	{
-		output_file << '\t' << cell_name;
+		output_file << '\t' << *cell_name_it;
 	}
 	output_file << "\n";
 
@@ -53,7 +55,7 @@ void ResultPrinter::print_rds(const std::string &output_name, const IndropResult
 {
 #ifdef R_LIBS
 	L_TRACE << "writing R data to " << output_name;
-	RInside R(0, nullptr);
+	RInside R(0, 0);
 	R["saved_vec"] = results.get_r_table(output_name);
 	R.parseEvalQ("saveRDS(saved_vec, '" + output_name + "')");
 	L_TRACE << "Done";
@@ -64,46 +66,47 @@ void ResultPrinter::print_rds(const std::string &output_name, const IndropResult
 
 void ResultPrinter::print_fields(const std::string &output_suffix, const IndropResult &results)
 {
-	std::ofstream of("ex_names" + output_suffix);
-	for (auto & name : results.exon_chr_count_names)
-	{
-		of << name << "\n";
-	}
-	of.close();
-	of.open("ex_counts" + output_suffix);
-	for (auto & val : results.exon_chr_counts)
-	{
-		of << val << "\n";
-	}
-	of.close();
-	of.open("merge_n" + output_suffix);
-	for (auto & val : results.merge_n)
-	{
-		of << val << "\n";
-	}
-	of.close();
-	of.open("nonex_names" + output_suffix);
-	for (auto & val : results.non_exon_chr_count_names)
-	{
-		of << val << "\n";
-	}
-	of.close();
-	of.open("nonex_counts" + output_suffix);
-	for (auto & val : results.non_exon_chr_counts)
-	{
-		of << val << "\n";
-	}
-	of.close();
-	of.open("reads_per_umi" + output_suffix);
-	for (auto & val : results.reads_per_umi)
-	{
-		of << val << "\n";
-	}
-	of.close();
-	of.open("umig_covered" + output_suffix);
-	for (auto & val : results.umig_covered)
-	{
-		of << val << "\n";
-	}
-	of.close();
+	throw std::runtime_error("print_fields not implemented");
+//	std::ofstream of("ex_names" + output_suffix);
+//	for (auto & name : results.exon_chr_count_names)
+//	{
+//		of << name << "\n";
+//	}
+//	of.close();
+//	of.open("ex_counts" + output_suffix);
+//	for (auto & val : results.exon_chr_counts)
+//	{
+//		of << val << "\n";
+//	}
+//	of.close();
+//	of.open("merge_n" + output_suffix);
+//	for (auto & val : results.merge_n)
+//	{
+//		of << val << "\n";
+//	}
+//	of.close();
+//	of.open("nonex_names" + output_suffix);
+//	for (auto & val : results.non_exon_chr_count_names)
+//	{
+//		of << val << "\n";
+//	}
+//	of.close();
+//	of.open("nonex_counts" + output_suffix);
+//	for (auto & val : results.non_exon_chr_counts)
+//	{
+//		of << val << "\n";
+//	}
+//	of.close();
+//	of.open("reads_per_umi" + output_suffix);
+//	for (auto & val : results.reads_per_umi)
+//	{
+//		of << val << "\n";
+//	}
+//	of.close();
+//	of.open("umig_covered" + output_suffix);
+//	for (auto & val : results.umig_covered)
+//	{
+//		of << val << "\n";
+//	}
+//	of.close();
 }

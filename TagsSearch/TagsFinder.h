@@ -46,7 +46,9 @@ private:
 					   std::string &r2_line2, const std::string &r2_line3, std::string &r2_line4);
 
 public:
-	TagsFinder() = default;
+	TagsFinder()
+	{}
+
 	TagsFinder(const SpacerFinder &spacer_finder, const boost::property_tree::ptree &config);
 
 	void run(const std::string &r1_filename, const std::string &r2_filename, const std::string &base_name);

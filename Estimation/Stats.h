@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include <unordered_map>
+#include <boost/unordered_map.hpp>
 
 #include <boost/functional/hash.hpp>
 
@@ -12,7 +12,7 @@ public:
 	typedef std::vector<int> int_list_t;
 
 private:
-	typedef std::unordered_map<std::string, int, boost::hash<std::string>> s_counter_t;
+	typedef boost::unordered_map<std::string, int> s_counter_t;
 
 	s_counter_t exone_chr_reads;
 	s_counter_t nonexone_chr_reads;

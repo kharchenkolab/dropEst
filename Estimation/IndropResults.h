@@ -16,6 +16,11 @@ class Stats;
 
 class CountMatrix
 {
+public:
+	typedef std::vector<std::string> s_list_t;
+	typedef std::vector<int> i_list_t;
+
+private:
 	friend class boost::serialization::access;
 
 	template<class Archive>
@@ -25,15 +30,14 @@ class CountMatrix
 	}
 
 public:
-	std::vector<std::string> cell_names;
-	std::vector<std::string> gene_names;
-	std::vector<int> counts;
+	s_list_t cell_names;
+	s_list_t gene_names;
+	i_list_t counts;
 
 	CountMatrix()
 	{};
 
-	CountMatrix(const std::vector<std::string> &cell_names, const std::vector<std::string> &gene_names,
-				const std::vector<int> &counts)
+	CountMatrix(const s_list_t &cell_names, const s_list_t &gene_names, const i_list_t &counts)
 			: cell_names(cell_names)
 			, gene_names(gene_names)
 			, counts(counts)
@@ -67,7 +71,8 @@ public:
 	std::vector<int> umig_covered;
 	std::vector<int> merge_n;
 
-	IndropResult() = default;
+	IndropResult()
+	{};
 
 	IndropResult(const CountMatrix &cm, const std::vector<int> &non_exon_chr_counts,
 				 const std::vector<std::string> &non_exon_chr_count_names, const std::vector<int> &exon_chr_counts,

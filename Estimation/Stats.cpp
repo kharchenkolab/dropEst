@@ -22,10 +22,11 @@ void Stats::get_nonexone_chr_stats(Stats::str_list_t &nonexon_count_names, Stats
 
 void Stats::split_pairs(const Stats::s_counter_t &base, Stats::str_list_t &out_1, Stats::int_list_t &out_2)
 {
-	for (auto const &i : base)
+//	for (auto const &i : base)
+	for (s_counter_t::const_iterator it = base.begin(); it != base.end(); ++it)
 	{
-		out_1.push_back(i.first);
-		out_2.push_back(i.second);
+		out_1.push_back(it->first);
+		out_2.push_back(it->second);
 	}
 }
 

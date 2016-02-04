@@ -16,12 +16,16 @@ using namespace std;
 
 struct Params
 {
-	bool cant_parse = false;
-	bool verbose = false;
-	bool text_output = false;
-	bool merge_tags = false;
-	string output_name = "";
-	string config_file_name = "";
+	bool cant_parse;
+	bool verbose;
+	bool text_output;
+	bool merge_tags;
+	string output_name;
+	string config_file_name;
+
+	Params() : cant_parse(false), verbose(false), text_output(false), merge_tags(false)
+			, output_name(""), config_file_name("")
+	{}
 };
 
 static void usage()

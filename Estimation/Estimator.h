@@ -1,10 +1,10 @@
 #pragma once
 
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
+#include <boost/unordered_map.hpp>
+#include <boost/unordered_set.hpp>
 #include <boost/functional/hash.hpp>
 #include <boost/property_tree/ptree.hpp>
 
@@ -15,18 +15,17 @@
 class Estimator
 {
 private:
-	typedef std::unordered_map<std::string, int, boost::hash<std::string>> SIHM;
-	typedef std::unordered_map<std::string, SIHM, boost::hash<std::string> > SHHM;
+	typedef boost::unordered_map<std::string, int> SIHM;
+	typedef boost::unordered_set<std::string> s_set;
 
-	typedef std::vector<std::pair<std::string, int>> s_counter_t;
+	typedef std::vector<std::pair<std::string, int> > s_counter_t;
 	typedef std::vector<double> doubles_t;
 	typedef GenesContainer::names_t names_t;
 	typedef GenesContainer::ints_t ints_t;
 	typedef GenesContainer::ids_t ids_t;
-	typedef GenesContainer::i_counter_t i_counter_t;
 
 private:
-	const size_t top_print_size = 10;
+	static const size_t top_print_size;
 
 	size_t read_prefix_length;
 	double min_merge_fraction;

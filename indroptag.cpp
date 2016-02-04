@@ -17,12 +17,15 @@ using namespace std;
 
 struct Params
 {
-	bool cant_parse = false;
-	bool verbose = false;
-	string base_name = "";
+	bool cant_parse;
+	bool verbose;
+	string base_name;
 	string r1_file_name;
 	string r2_file_name;
 	string config_file_name;
+
+	Params() : cant_parse(false), verbose(false), base_name("")
+	{}
 };
 
 static void usage()

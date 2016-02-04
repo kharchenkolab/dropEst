@@ -30,7 +30,9 @@ private:
 	OutcomesCounter outcomes;
 
 public:
-	SpacerFinder() = default;
+	SpacerFinder()
+	{}
+
 	SpacerFinder(const boost::property_tree::ptree &config);
 
 	len_t find_spacer(const std::string& seq);

@@ -3,7 +3,8 @@
 #include "Stats.h"
 
 #include <string>
-#include <unordered_map>
+#include <boost/unordered_map.hpp>
+#include <boost/unordered_set.hpp>
 #include <vector>
 
 #include <bam.h>
@@ -11,18 +12,30 @@
 class GenesContainer
 {
 private:
-	typedef std::unordered_map<int, int> i_i_hash_t;
-	typedef std::unordered_map<std::string, i_i_hash_t> s_ii_hash_t;
+	typedef boost::unordered_set<size_t> i_set_t;
+	typedef boost::unordered_map<int, int> i_i_hash_t;
+	typedef boost::unordered_map<std::string, i_i_hash_t> s_ii_hash_t;
+	typedef boost::unordered_map<size_t, i_set_t> ISIHM;
 
 public:
 	struct IndexedCount
 	{
+		IndexedCount(size_t index, size_t count)
+				: index(index)
+				, count(count)
+		{}
+
 		size_t index;
 		size_t count;
+
+		static bool counts_comp(const IndexedCount &ic1, const IndexedCount &ic2)
+		{
+			return ic1.count < ic2.count;
+		}
 	};
 
-	typedef std::unordered_map<std::string, int, boost::hash<std::string>> s_i_hash_t;
-	typedef std::unordered_map<std::string, s_i_hash_t, boost::hash<std::string> > genes_t;
+	typedef boost::unordered_map<std::string, int> s_i_hash_t;
+	typedef boost::unordered_map<std::string, s_i_hash_t> genes_t;
 
 	typedef std::vector<IndexedCount> i_counter_t;
 	typedef std::vector<int> ints_t;
@@ -47,7 +60,7 @@ private:
 	void merge_genes(const s_ii_hash_t &umig_cbs, double min_merge_fraction,
 					  int min_genes_after_merge, int max_merge_edit_distance);
 	size_t get_umig_top(const ints_t &cb_reassigned, const IndexedCount &gene_count,
-						const s_ii_hash_t &umig_cells_counts, i_i_hash_t &umig_top) const;
+						const s_ii_hash_t &umigs_cells_counts, i_i_hash_t &umig_top) const;
 
 	i_counter_t count_cells_genes(int min_genes_before_merge, bool logs = true) const;
 

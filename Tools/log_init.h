@@ -12,6 +12,9 @@ namespace keywords = logging::keywords;
 static void init_log(bool verbose, bool debug, const std::string &main_file_name = "main.log",
 					 const std::string &debug_file_name = "debug.log")
 {
+	typedef boost::shared_ptr<logging::sinks::synchronous_sink<logging::sinks::text_ostream_backend> > console_sink_t;
+	typedef boost::shared_ptr<logging::sinks::synchronous_sink<logging::sinks::text_file_backend> > file_sink_t;
+
 	logging::trivial::severity_level min_level = verbose ? logging::trivial::trace
 														 : (debug ? logging::trivial::debug
 																  : logging::trivial::info);
@@ -23,14 +26,15 @@ static void init_log(bool verbose, bool debug, const std::string &main_file_name
 			logging::expressions::format("%1%")
 			% logging::expressions::smessage;
 
-	auto console_sink = logging::add_console_log(std::cerr);
+
+	console_sink_t console_sink = logging::add_console_log(std::cerr);
 	console_sink->set_filter(
 			logging::trivial::severity >= logging::trivial::info ||
 			logging::trivial::severity == logging::trivial::trace
 	);
 	console_sink->set_formatter(logFmt);
 
-	auto fs_sink = logging::add_file_log(
+	file_sink_t fs_sink = logging::add_file_log(
 			logging::keywords::file_name = main_file_name,
 			logging::keywords::open_mode = std::ios_base::out,
 			logging::keywords::filter = (logging::trivial::severity >= logging::trivial::info ||
@@ -40,7 +44,7 @@ static void init_log(bool verbose, bool debug, const std::string &main_file_name
 
 	if (debug)
 	{
-		auto debug_fs_sink = logging::add_file_log(
+		file_sink_t debug_fs_sink = logging::add_file_log(
 				logging::keywords::file_name = debug_file_name,
 				logging::keywords::open_mode = std::ios_base::out,
 				logging::keywords::filter = (logging::trivial::severity >= logging::trivial::debug));
