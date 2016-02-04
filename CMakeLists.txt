@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 project(cp)
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMake")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-deprecated -m64 -DBOOST_LOG_DYN_LINK")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -m64 -DBOOST_LOG_DYN_LINK")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wno-deprecated -m64 -DBOOST_LOG_DYN_LINK")
 
 #set(BOOST_ROOT "/home/victor/libs/boost_1_58_0/")
 find_package(Boost 1.54.0 COMPONENTS unit_test_framework serialization thread system log iostreams REQUIRED)
