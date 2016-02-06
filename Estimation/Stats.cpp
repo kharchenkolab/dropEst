@@ -56,27 +56,46 @@ void Stats::get_cell_chr_umi(Stats::str_list_t &cell_names, Stats::str_list_t &c
 	}
 }
 
-void Stats::merge(const Stats::int_list_t &reassigned, const str_list_t &names)
+void Stats::get_cell_chr_umi_exones_filtered(const id_list_t &filtered_ids, const str_list_t &cell_names,
+											 const Stats::str_list_t &chr_names, Stats::int_list_t &counts) const
 {
-	for (int stat_type = 0; stat_type < ST_SIZE; ++stat_type)
+	const ss_cnt_t &exone_stat = this->_cells_chr_umis_counts[EXONE];
+	for (id_list_t::const_iterator id_it = filtered_ids.begin(); id_it != filtered_ids.end(); ++id_it)
 	{
-		ss_cnt_t &cur_stat = this->_cells_chr_umis_counts[stat_type];
-		for (size_t ind = 0; ind < reassigned.size(); ++ind)
+		const std::string &cell_name = cell_names[*id_it];
+		ss_cnt_t::const_iterator cells_it =  exone_stat.find(cell_name);
+		if (cells_it == exone_stat.end())
+			throw std::runtime_error("Unexpected cell barcode: " + cell_name);
+
+		for (str_list_t::const_iterator chr_name_it = chr_names.begin(); chr_name_it != chr_names.end(); ++chr_name_it)
 		{
-			const std::string &cur_name = names[ind];
-			const std::string &target_name = names[reassigned[ind]];
-			ss_cnt_t::const_iterator cell_from_it = cur_stat.find(cur_name);
-			if (cell_from_it == cur_stat.end())
-				continue;
-
-			s_cnt_t &cell_to = cur_stat[target_name];
-			for (s_cnt_t::const_iterator count_it = cell_from_it->second.begin();
-				 count_it != cell_from_it->second.end(); ++count_it)
-			{
-				cell_to[count_it->first] += count_it->second;
-			}
-
-			cur_stat.erase(cell_from_it);
+			s_cnt_t::const_iterator count = cells_it->second.find(*chr_name_it);
+			counts.push_back(count == cells_it->second.end() ? 0 : count->second);
 		}
+	}
+}
+
+void Stats::merge(const int_list_t &reassigned, const str_list_t &names)
+{
+	ss_cnt_t &cur_stat = this->_cells_chr_umis_counts[EXONE];
+	for (size_t ind = 0; ind < reassigned.size(); ++ind)
+	{
+		if (reassigned[ind] == ind)
+			continue;
+
+		const std::string &cur_name = names[ind];
+		const std::string &target_name = names[reassigned[ind]];
+		ss_cnt_t::const_iterator cell_from_it = cur_stat.find(cur_name);
+		if (cell_from_it == cur_stat.end())
+			continue;
+
+		s_cnt_t &cell_to = cur_stat[target_name];
+		for (s_cnt_t::const_iterator count_it = cell_from_it->second.begin();
+			 count_it != cell_from_it->second.end(); ++count_it)
+		{
+			cell_to[count_it->first] += count_it->second;
+		}
+
+		cur_stat.erase(cell_from_it);
 	}
 }
