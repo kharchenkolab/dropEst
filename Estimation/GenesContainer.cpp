@@ -153,7 +153,7 @@ void GenesContainer::merge_genes(const s_ii_hash_t &umig_cells_counts, double mi
 					{
 //						for (auto const &umi_count: gene_it->second)
 						for (s_i_hash_t::const_iterator umi_count_it = gene_it->second.begin();
-							 umi_count_it != gene_it->second.end(); ++umi_count_it)
+								 umi_count_it != gene_it->second.end(); ++umi_count_it)
 						{
 							this->_cells_genes[top_cell_ind][gene_it->first][umi_count_it->first] += umi_count_it->second;
 						}
@@ -185,6 +185,8 @@ void GenesContainer::merge_genes(const s_ii_hash_t &umig_cells_counts, double mi
 			}
 		}
 	}
+
+	this->_stats.merge(cb_reassigned, this->_cells_names);
 
 	if (this->_filtered_cells.size() > 1)
 	{

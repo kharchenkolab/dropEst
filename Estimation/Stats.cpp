@@ -40,7 +40,7 @@ void Stats::inc_cell_chr_umi(const std::string &chr_name, const std::string &cel
 void Stats::get_cell_chr_umi(Stats::str_list_t &cell_names, Stats::str_list_t &chr_names,
 							 Stats::int_list_t &counts) const
 {
-	std::copy(this->_chr_names.begin(), this->_chr_names.end(), chr_names.begin());
+	std::copy(this->_chr_names.begin(), this->_chr_names.end(), std::back_inserter(chr_names));
 	for (int stat_type = 0; stat_type < ST_SIZE; ++stat_type)
 	{
 		const ss_cnt_t &cur_stat = this->_cells_chr_umis_counts[stat_type];
@@ -52,6 +52,31 @@ void Stats::get_cell_chr_umi(Stats::str_list_t &cell_names, Stats::str_list_t &c
 				s_cnt_t::const_iterator count = cells_it->second.find(*name_it);
 				counts.push_back(count == cells_it->second.end() ? 0 : count->second);
 			}
+		}
+	}
+}
+
+void Stats::merge(const Stats::int_list_t &reassigned, const str_list_t &names)
+{
+	for (int stat_type = 0; stat_type < ST_SIZE; ++stat_type)
+	{
+		ss_cnt_t &cur_stat = this->_cells_chr_umis_counts[stat_type];
+		for (size_t ind = 0; ind < reassigned.size(); ++ind)
+		{
+			const std::string &cur_name = names[ind];
+			const std::string &target_name = names[reassigned[ind]];
+			ss_cnt_t::const_iterator cell_from_it = cur_stat.find(cur_name);
+			if (cell_from_it == cur_stat.end())
+				continue;
+
+			s_cnt_t &cell_to = cur_stat[target_name];
+			for (s_cnt_t::const_iterator count_it = cell_from_it->second.begin();
+				 count_it != cell_from_it->second.end(); ++count_it)
+			{
+				cell_to[count_it->first] += count_it->second;
+			}
+
+			cur_stat.erase(cell_from_it);
 		}
 	}
 }
