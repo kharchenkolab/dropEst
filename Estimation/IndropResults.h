@@ -73,7 +73,7 @@ public:
 	{};
 
 	IndropResult(const CountMatrix &cm, const Stats &stats, const std::vector<double> &reads_per_umi,
-				 const std::vector<int> &umig_covered, const Stats::id_list_t filtered_ids);
+				 const std::vector<int> &umig_covered);
 
 #ifdef R_LIBS
 	Rcpp::List get_r_table(const std::string &fname) const;

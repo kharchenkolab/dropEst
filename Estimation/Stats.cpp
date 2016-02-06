@@ -56,16 +56,15 @@ void Stats::get_cell_chr_umi(Stats::str_list_t &cell_names, Stats::str_list_t &c
 	}
 }
 
-void Stats::get_cell_chr_umi_exones_filtered(const id_list_t &filtered_ids, const str_list_t &cell_names,
-											 const Stats::str_list_t &chr_names, Stats::int_list_t &counts) const
+void Stats::get_cell_chr_umi_exones_filtered(const str_list_t &cell_names, const str_list_t &chr_names,
+											 int_list_t &counts) const
 {
 	const ss_cnt_t &exone_stat = this->_cells_chr_umis_counts[EXONE];
-	for (id_list_t::const_iterator id_it = filtered_ids.begin(); id_it != filtered_ids.end(); ++id_it)
+	for (str_list_t::const_iterator cell_name_it = cell_names.begin(); cell_name_it != cell_names.end(); ++cell_name_it)
 	{
-		const std::string &cell_name = cell_names[*id_it];
-		ss_cnt_t::const_iterator cells_it =  exone_stat.find(cell_name);
+		ss_cnt_t::const_iterator cells_it =  exone_stat.find(*cell_name_it);
 		if (cells_it == exone_stat.end())
-			throw std::runtime_error("Unexpected cell barcode: " + cell_name);
+			throw std::runtime_error("Unexpected cell barcode: " + *cell_name_it);
 
 		for (str_list_t::const_iterator chr_name_it = chr_names.begin(); chr_name_it != chr_names.end(); ++chr_name_it)
 		{

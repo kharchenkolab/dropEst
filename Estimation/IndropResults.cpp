@@ -2,15 +2,14 @@
 
 
 IndropResult::IndropResult(const CountMatrix &cm, const Stats &stats, const std::vector<double> &reads_per_umi,
-						   const std::vector<int> &umig_covered, const Stats::id_list_t filtered_ids)
+						   const std::vector<int> &umig_covered)
 	: cm(cm)
 	, reads_per_umi(reads_per_umi)
 	, umig_covered(umig_covered)
 	, merge_n(stats.get_merge_counts())
 {
 	stats.get_cell_chr_umi(this->cell_names, this->chr_names, this->cells_chr_umis_counts);
-	stats.get_cell_chr_umi_exones_filtered(filtered_ids, this->cell_names, this->chr_names,
-										   this->filtered_cells_chr_umis_counts);
+	stats.get_cell_chr_umi_exones_filtered(this->cm.cell_names, this->chr_names, this->filtered_cells_chr_umis_counts);
 }
 
 #ifdef R_LIBS
@@ -25,8 +24,8 @@ Rcpp::List IndropResult::get_r_table(const std::string &fname) const
 						Named("cm") = wrap(this->cm.counts),
 						Named("cells_chr_counts") = wrap(cube_array),
 						Named("filtered_cells_chr_counts") = wrap(this->filtered_cells_chr_umis_counts),
-						Named("conts_cell_names") = wrap(this->cell_names),
-						Named("conts_chr_names") = wrap(this->chr_names),
+						Named("counts_cell_names") = wrap(this->cell_names),
+						Named("counts_chr_names") = wrap(this->chr_names),
 						Named("rpu") = wrap(this->reads_per_umi),
 						Named("umig.cov") = wrap(this->umig_covered),
 						Named("merge.n") = wrap(this->merge_n),

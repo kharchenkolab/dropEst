@@ -124,7 +124,7 @@ IndropResult Estimator::get_indrop_results(const CountMatrix cm, const GenesCont
 	ints_t umig_coverage(this->get_umig_coverage(genes_container));
 	L_TRACE << "UMIg coverage";
 
-	return IndropResult(cm, genes_container.stats(), reads_per_umis, umig_coverage, genes_container.filtered_cells());
+	return IndropResult(cm, genes_container.stats(), reads_per_umis, umig_coverage);
 }
 
 Estimator::doubles_t Estimator::get_reads_per_umis(const GenesContainer &genes_container, const ids_t &unmerged_cells) const

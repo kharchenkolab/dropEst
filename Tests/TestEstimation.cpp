@@ -81,4 +81,11 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		BOOST_CHECK_EQUAL(container._cells_genes[1]["G2"]["UMI2"], 7);
 	}
 
+	BOOST_FIXTURE_TEST_CASE(testIncrement, Fixture)
+	{
+		boost::unordered_map<std::string, int> map;
+		map["chr1"]++;
+		BOOST_CHECK_EQUAL(map["chr1"], 1);
+	}
+
 BOOST_AUTO_TEST_SUITE_END()

@@ -47,8 +47,7 @@ public:
 	void inc_cell_chr_umi(const std::string &chr_name, const std::string &cell_name, StatType type);
 	void get_cell_chr_umi(str_list_t &cell_names, str_list_t &chr_names, int_list_t &counts) const;
 
-	void get_cell_chr_umi_exones_filtered(const id_list_t &filtered_ids, const str_list_t &cell_names,
-										  const str_list_t &chr_names, int_list_t &counts) const;
+	void get_cell_chr_umi_exones_filtered(const str_list_t &cell_names, const str_list_t &chr_names, int_list_t &counts) const;
 
 	void add_merge_count(int count);
 	const int_list_t& get_merge_counts() const;
