@@ -46,7 +46,7 @@ private:
 	size_t top_print_size;
 
 	std::vector<genes_t> _cells_genes; //cell_id -> gen_name -> umi -> count
-	names_t _genes_names;
+	names_t _cells_names;
 	ids_t _filtered_cells;
 
 	i_counter_t _cells_genes_counts_sorted;
@@ -76,5 +76,5 @@ public:
 	const Stats& stats() const;
 	const i_counter_t& cells_genes_counts_sorted() const;
 	const genes_t& cell_genes(size_t index) const;
-	const std::string& gene_name(size_t index) const;
+	const std::string& cell_name(size_t index) const;
 };

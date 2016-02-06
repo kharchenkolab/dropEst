@@ -75,7 +75,7 @@ SpacerFinder::len_t SpacerFinder::find_spacer_partial(const string &seq)
 		len_t spacer_pos = suffix_seq_pos - suffix_start;
 
 		if (spacer_pos >= this->spacer_min_pos &&
-			spacer_pos + this->spacer.length() < this->spacer_max_pos + SpacerFinder::spacer_prefix_length)
+			spacer_pos + this->spacer.length() < this->spacer_max_pos + this->spacer_prefix_length)
 		{
 			int ed = Tools::edit_distance(this->spacer.c_str(), seq.substr(spacer_pos, this->spacer.length()).c_str());
 
@@ -94,7 +94,7 @@ SpacerFinder::len_t SpacerFinder::find_spacer_partial(const string &seq)
 	len_t prefix_pos = seq.rfind(this->spacer.substr(0, this->spacer_prefix_length));
 
 	if (prefix_pos != string::npos && prefix_pos >= this->spacer_min_pos &&
-		prefix_pos + this->spacer.length() < this->spacer_max_pos + SpacerFinder::spacer_prefix_length) //TODO !!!
+		prefix_pos + this->spacer.length() < this->spacer_max_pos + this->spacer_prefix_length) //TODO !!!
 	{
 		int ed = Tools::edit_distance(this->spacer.c_str(), seq.substr(prefix_pos, this->spacer.length()).c_str());
 		L_DEBUG << "-- prefix match at " << prefix_pos << " ed=" << ed;

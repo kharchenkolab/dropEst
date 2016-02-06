@@ -8,8 +8,10 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/assume_abstract.hpp>
 
+#include "Stats.h"
+
 #ifdef R_LIBS
-#include <Rcpp.h>
+#include <RcppArmadillo.h>
 #endif
 
 class Stats;
@@ -51,33 +53,23 @@ class IndropResult
 	template<class Archive>
 	void serialize(Archive &ar, const unsigned int /* file_version */)
 	{
-		ar & this->cm & this->non_exon_chr_counts & this->non_exon_chr_count_names & this->reads_per_umi &
-				this->umig_covered & this->exon_chr_counts & this->exon_chr_count_names & this->merge_n;
+		ar & this->cm & this->cells_chr_umis_counts & this->cell_names & this->chr_names &
+				this->reads_per_umi & this->umig_covered & this->merge_n;
 	}
 
 public:
 	CountMatrix cm;
-	std::vector<int> non_exon_chr_counts;
-	std::vector<std::string> non_exon_chr_count_names;
-	std::vector<int> exon_chr_counts;
-	std::vector<std::string> exon_chr_count_names;
 
-	std::vector<int> non_exon_cell_counts;
-	std::vector<std::string> non_exon_cell_count_tags;
-	std::vector<int> exon_cell_counts;
-	std::vector<std::string> exon_cell_count_tags;
-	
+	Stats::int_list_t cells_chr_umis_counts;
+	Stats::str_list_t cell_names;
+	Stats::str_list_t chr_names;
+
 	std::vector<double> reads_per_umi;
 	std::vector<int> umig_covered;
 	std::vector<int> merge_n;
 
 	IndropResult()
 	{};
-
-	IndropResult(const CountMatrix &cm, const std::vector<int> &non_exon_chr_counts,
-				 const std::vector<std::string> &non_exon_chr_count_names, const std::vector<int> &exon_chr_counts,
-				 const std::vector<std::string> &exon_chr_count_names, const std::vector<double> &reads_per_umi,
-				 const std::vector<int> &umig_covered, const std::vector<int> &merge_n);
 
 	IndropResult(const CountMatrix &cm, const Stats &stats, const std::vector<double> &reads_per_umi,
 				 const std::vector<int> &umig_covered);

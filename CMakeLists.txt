@@ -42,8 +42,14 @@ target_link_libraries(indropest Estimation ${EST_LIBRARIES})
 
 
 
-set (TEST TestTagsSearch)
-add_executable (${TEST} ${PROJECT_SOURCE_DIR}/Tests/TestTagsSearch.cpp)
-target_link_libraries (${TEST} TagsSearch ${LIBRARIES})
+set (TEST_TS TestTagsSearch)
+add_executable (${TEST_TS} ${PROJECT_SOURCE_DIR}/Tests/TestTagsSearch.cpp)
+target_link_libraries (${TEST_TS} TagsSearch ${LIBRARIES})
 enable_testing ()
-add_test (${TEST} ${TEST})
+add_test (${TEST_TS} ${TEST_TS})
+
+
+set (TEST_EST TestEstimator)
+add_executable (${TEST_EST} ${PROJECT_SOURCE_DIR}/Tests/TestEstimator.cpp)
+target_link_libraries (${TEST_EST} Estimation ${EST_LIBRARIES})
+add_test (${TEST_EST} ${TEST_EST})

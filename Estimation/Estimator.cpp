@@ -87,7 +87,7 @@ Estimator::names_t Estimator::get_unmerged_names(const GenesContainer &genes_con
 	cell_names.reserve(unmerged_cells.size());
 	for (ids_t::const_iterator cell_id_it = unmerged_cells.begin(); cell_id_it != unmerged_cells.end(); ++cell_id_it)
 	{
-		cell_names.push_back(genes_container.gene_name(*cell_id_it));
+		cell_names.push_back(genes_container.cell_name(*cell_id_it));
 	}
 	return cell_names;
 }
@@ -192,7 +192,8 @@ string Estimator::get_cb_top_verbose(const GenesContainer &genes_container, cons
 		ss << "top CBs:\n";
 		for (size_t i = 0; i < min(unmerged_cells.size(), Estimator::top_print_size); i++)
 		{
-			ss << genes_container.cell_genes(unmerged_cells[i]).size() << "\t" << genes_container.gene_name(unmerged_cells[i]) << "\n";
+			ss << genes_container.cell_genes(unmerged_cells[i]).size() << "\t" <<
+			genes_container.cell_name(unmerged_cells[i]) << "\n";
 		}
 	}
 	else

@@ -137,7 +137,7 @@ void GenesContainer::merge_genes(const s_ii_hash_t &umig_cells_counts, double mi
 			// check if the top candidate is valid for merging
 			if (top_cell_fraction > min_merge_fraction)
 			{
-				int ed = Tools::edit_distance(this->_genes_names[top_cell_ind].c_str(), this->_genes_names[cell_id].c_str());
+				int ed = Tools::edit_distance(this->_cells_names[top_cell_ind].c_str(), this->_cells_names[cell_id].c_str());
 				if (ed < max_merge_edit_distance)
 				{
 					// do the merge
@@ -217,16 +217,15 @@ void GenesContainer::parse_bam_file(const string &bam_file_name, size_t read_pre
 		}
 
 		string chr_name(c.header->target_name[c.align_info->core.tid]);
-		uint8_t *ptr = bam_aux_get(c.align_info, "GE");
 
 		string qname, cell_barcode, umi;
 		if (!this->parse_read_name(c.align_info, qname, cell_barcode, umi))
 			continue;
 
+		uint8_t *ptr = bam_aux_get(c.align_info, "GE");
 		if (ptr == 0)
 		{
-			this->_stats.inc_nonexone_chr_reads(chr_name);
-			this->_stats.inc_nonexone_cell_reads(cell_barcode);
+			this->_stats.inc_cell_chr_umi(chr_name, cell_barcode, Stats::NON_EXONE);
 			continue;
 		}
 
@@ -239,7 +238,7 @@ void GenesContainer::parse_bam_file(const string &bam_file_name, size_t read_pre
 		if (res.second)
 		{ // new cb
 			this->_cells_genes.push_back(genes_t());
-			this->_genes_names.push_back(cell_barcode);
+			this->_cells_names.push_back(cell_barcode);
 		}
 		int cell_id = res.first->second;
 		this->_cells_genes[cell_id][gene][umi]++;
@@ -247,8 +246,7 @@ void GenesContainer::parse_bam_file(const string &bam_file_name, size_t read_pre
 		umig_cells_counts[umig][cell_id]++;
 
 		exonic_reads++;
-		this->_stats.inc_exone_chr_reads(chr_name);
-		this->_stats.inc_exone_cell_reads(cell_barcode);
+		this->_stats.inc_cell_chr_umi(chr_name, cell_barcode, Stats::EXONE);
 
 		L_DEBUG << "CB/UMI=" << this->_cells_genes[cell_id][gene][umi] << " gene=" << this->_cells_genes[cell_id][gene].size()
 				<< " CB=" << this->_cells_genes[cell_id].size() << " UMIg=" << umig_cells_counts[umig].size();
@@ -318,7 +316,7 @@ string GenesContainer::get_cb_count_top_verbose(const i_counter_t &cells_genes_c
 		size_t low_border = cells_genes_counts.size() - min(cells_genes_counts.size(), this->top_print_size);
 		for (size_t i = cells_genes_counts.size() - 1; i > low_border; --i)
 		{
-			ss << cells_genes_counts[i].count << "\t" << this->_genes_names[cells_genes_counts[i].index] << "\n";
+			ss << cells_genes_counts[i].count << "\t" << this->_cells_names[cells_genes_counts[i].index] << "\n";
 		}
 	}
 	else
@@ -360,9 +358,9 @@ const GenesContainer::i_counter_t &GenesContainer::cells_genes_counts_sorted() c
 	return this->_cells_genes_counts_sorted;
 }
 
-const string &GenesContainer::gene_name(size_t index) const
+const string &GenesContainer::cell_name(size_t index) const
 {
-	return this->_genes_names[index];
+	return this->_cells_names[index];
 }
 
 const GenesContainer::ids_t &GenesContainer::filtered_cells() const
