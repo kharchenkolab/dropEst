@@ -49,7 +49,7 @@ enable_testing ()
 add_test (${TEST_TS} ${TEST_TS})
 
 
-set (TEST_EST TestEstimator)
-add_executable (${TEST_EST} ${PROJECT_SOURCE_DIR}/Tests/TestEstimator.cpp)
+set (TEST_EST TestEstimation)
+add_executable (${TEST_EST} ${PROJECT_SOURCE_DIR}/Tests/TestEstimation.cpp)
 target_link_libraries (${TEST_EST} Estimation ${EST_LIBRARIES})
 add_test (${TEST_EST} ${TEST_EST})
