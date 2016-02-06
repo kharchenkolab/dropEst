@@ -34,9 +34,9 @@ Estimator::Estimator(const boost::property_tree::ptree &config)
 
 IndropResult Estimator::get_results(const names_t &files, bool merge_tags)
 {
-	GenesContainer container(files, merge_tags, this->read_prefix_length, this->min_merge_fraction,
-							 this->min_genes_before_merge, this->min_genes_after_merge,
-							 this->max_merge_edit_distance, Estimator::top_print_size);
+	GenesContainer container(this->read_prefix_length, this->min_merge_fraction, this->min_genes_before_merge,
+							 this->min_genes_after_merge, this->max_merge_edit_distance, Estimator::top_print_size);
+	container.init(files, merge_tags);
 
 	ids_t filtered_cells = container.filtered_cells();
 

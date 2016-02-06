@@ -46,26 +46,33 @@ struct BamRaiiContainer
 	}
 };
 
-GenesContainer::GenesContainer(const names_t &files, bool merge_tags, size_t read_prefix_length,
-							   double min_merge_fraction, int min_genes_before_merge, int min_genes_after_merge,
-							   int max_merge_edit_distance, size_t top_print_size)
-	: top_print_size(top_print_size)
+GenesContainer::GenesContainer(size_t read_prefix_length, double min_merge_fraction, int min_genes_before_merge,
+							   int min_genes_after_merge, int max_merge_edit_distance, size_t top_print_size)
+	: _top_print_size(top_print_size)
+	, _min_merge_fraction(min_merge_fraction)
+	, _min_genes_after_merge(min_genes_after_merge)
+	, _min_genes_before_merge(min_genes_before_merge)
+	, _max_merge_edit_distance(max_merge_edit_distance)
+	, _read_prefix_length(read_prefix_length)
+{}
+
+void GenesContainer::init(const std::vector<std::string> &files, bool merge_tags)
 {
 	s_i_hash_t cb_ids;
 	s_ii_hash_t umig_cells_counts;
 //	for (auto const &name : files)
 	for (names_t::const_iterator name_it = files.begin(); name_it != files.end(); ++name_it)
 	{
-		this->parse_bam_file(*name_it, read_prefix_length, cb_ids, umig_cells_counts);
+		this->parse_bam_file(*name_it, cb_ids, umig_cells_counts);
 	}
 
-	this->_cells_genes_counts_sorted = this->count_cells_genes(min_genes_before_merge);
+	this->_cells_genes_counts_sorted = this->count_cells_genes();
 
 	if (merge_tags)
 	{
-		this->merge_genes(umig_cells_counts, min_merge_fraction, min_genes_after_merge, max_merge_edit_distance);
+		this->merge_genes(umig_cells_counts);
 
-		this->_cells_genes_counts_sorted = this->count_cells_genes(min_genes_before_merge, false);
+		this->_cells_genes_counts_sorted = this->count_cells_genes(false);
 	}
 	else
 	{
@@ -73,7 +80,7 @@ GenesContainer::GenesContainer(const names_t &files, bool merge_tags, size_t rea
 		for (i_counter_t::const_reverse_iterator gene_count_it = this->_cells_genes_counts_sorted.rbegin();
 			 gene_count_it != this->_cells_genes_counts_sorted.rend(); ++gene_count_it)
 		{
-			if (gene_count_it->count < min_genes_after_merge)
+			if (gene_count_it->count < this->_min_genes_after_merge)
 				break;
 
 			this->_filtered_cells.push_back(gene_count_it->index);
@@ -81,8 +88,7 @@ GenesContainer::GenesContainer(const names_t &files, bool merge_tags, size_t rea
 	}
 }
 
-void GenesContainer::merge_genes(const s_ii_hash_t &umig_cells_counts, double min_merge_fraction,
-								 int min_genes_after_merge, int max_merge_edit_distance)
+void GenesContainer::merge_genes(const s_ii_hash_t &umig_cells_counts)
 {
 	// cb merging
 	int merges_count = 0;
@@ -102,7 +108,7 @@ void GenesContainer::merge_genes(const s_ii_hash_t &umig_cells_counts, double mi
 	for (i_counter_t::const_iterator gene_count_it = this->_cells_genes_counts_sorted.begin();
 			gene_count_it != this->_cells_genes_counts_sorted.end(); ++gene_count_it)
 	{ // iterate through the minimally-selected CBs, from low to high counts
-		const IndexedCount &gene_count = *gene_count_it;
+		const IndexedCount &cur_gene = *gene_count_it;
 		tag_index++;
 		if (tag_index % 1000 == 0)
 		{
@@ -110,8 +116,7 @@ void GenesContainer::merge_genes(const s_ii_hash_t &umig_cells_counts, double mi
 		}
 
 		i_i_hash_t umig_top;
-		size_t umigs_count = this->get_umig_top(cb_reassigned, gene_count, umig_cells_counts, umig_top);
-		size_t cell_id = gene_count.index;
+		size_t umigs_count = this->get_umig_top(cb_reassigned, cur_gene, umig_cells_counts, umig_top);
 
 		// get top umig, its edit distance
 		int top_cell_ind = -1;
@@ -121,7 +126,7 @@ void GenesContainer::merge_genes(const s_ii_hash_t &umig_cells_counts, double mi
 		for (i_i_hash_t::const_iterator cell_it = umig_top.begin(); cell_it != umig_top.end(); ++cell_it)
 		{
 			const pair<int, int> &cell = *cell_it;
-			double cb_fraction = (((double) cell.second) / ((double) umigs_count));
+			double cb_fraction = cell.second / (double) umigs_count;
 			if (cb_fraction - top_cell_fraction > EPS || (abs(cb_fraction - top_cell_fraction) < EPS &&
 														  this->_cells_genes[cell.first].size() > top_cell_genes_count))
 			{
@@ -131,57 +136,16 @@ void GenesContainer::merge_genes(const s_ii_hash_t &umig_cells_counts, double mi
 			}
 		}
 
-		bool merged = false;
-		if (top_cell_ind > 0)
+		if (this->merge(top_cell_ind, top_cell_fraction, cur_gene, cb_reassigned, cb_reassigned_to))
 		{
-			// check if the top candidate is valid for merging
-			if (top_cell_fraction > min_merge_fraction)
-			{
-				int ed = Tools::edit_distance(this->_cells_names[top_cell_ind].c_str(), this->_cells_names[cell_id].c_str());
-				if (ed < max_merge_edit_distance)
-				{
-					// do the merge
-					merged = true;
-
-					this->_stats.add_merge_count(-1 * gene_count.count);
-					merges_count++;
-
-					// merge the actual data
-//					for (auto const &gene: this->_cells_genes[cell_id])
-					genes_t &cell_genes = this->_cells_genes[cell_id];
-					for (genes_t::const_iterator gene_it = cell_genes.begin(); gene_it != cell_genes.end(); ++gene_it)
-					{
-//						for (auto const &umi_count: gene_it->second)
-						for (s_i_hash_t::const_iterator umi_count_it = gene_it->second.begin();
-								 umi_count_it != gene_it->second.end(); ++umi_count_it)
-						{
-							this->_cells_genes[top_cell_ind][gene_it->first][umi_count_it->first] += umi_count_it->second;
-						}
-					}
-					// establish new mapping
-					cb_reassigned[cell_id] = top_cell_ind; // set reassignment mapping
-					cb_reassigned_to[top_cell_ind].insert(cell_id); // reassign current cell
-
-					// transfer mapping of the cbs previously mapped to kid
-					ISIHM::const_iterator k = cb_reassigned_to.find(cell_id);
-					if (k != cb_reassigned_to.end())
-					{
-//						for (auto m: k->second)
-						for (i_set_t::const_iterator it = k->second.begin(); it != k->second.end(); ++it)
-						{
-							cb_reassigned[*it] = top_cell_ind; // update reassignment mapping
-						}
-						cb_reassigned_to[top_cell_ind].insert(k->first); // reassign to the new cell
-					}
-				}
-			}
+			merges_count++;
 		}
-		if (!merged)
+		else
 		{
-			this->_stats.add_merge_count(gene_count.count);
-			if (gene_count.count >= min_genes_after_merge)
+			this->_stats.add_merge_count(cur_gene.count);
+			if (cur_gene.count >= this->_min_genes_after_merge)
 			{
-				this->_filtered_cells.push_back(cell_id);
+				this->_filtered_cells.push_back(cur_gene.index);
 			}
 		}
 	}
@@ -196,8 +160,64 @@ void GenesContainer::merge_genes(const s_ii_hash_t &umig_cells_counts, double mi
 	L_INFO << "Done (" << merges_count << " merges performed)" << endl;
 }
 
-void GenesContainer::parse_bam_file(const string &bam_file_name, size_t read_prefix_length,
-									s_i_hash_t &cells_ids, s_ii_hash_t &umig_cells_counts)
+bool GenesContainer::merge(int top_cell_ind, double top_cell_fraction, const IndexedCount &gene_count,
+						   ints_t &cb_reassigned, ISIHM &cb_reassigned_to)
+{
+	if (top_cell_ind < 0)
+		return false;
+
+	// check if the top candidate is valid for merging
+	if (top_cell_fraction < this->_min_merge_fraction)
+		return false;
+
+	size_t cell_id = gene_count.index;
+	int ed = Tools::edit_distance(this->_cells_names[top_cell_ind].c_str(), this->_cells_names[cell_id].c_str());
+	if (ed >= this->_max_merge_edit_distance)
+		return false;
+
+	// do the merge
+	this->_stats.add_merge_count(-1 * gene_count.count);
+
+	// merge the actual data
+//	for (auto const &gene: this->_cells_genes[cell_id])
+	genes_t &cell_genes = this->_cells_genes[cell_id];
+	for (genes_t::const_iterator gene_it = cell_genes.begin(); gene_it != cell_genes.end(); ++gene_it)
+	{
+//		for (auto const &umi_count: gene_it->second)
+		for (s_i_hash_t::const_iterator umi_count_it = gene_it->second.begin();
+			 umi_count_it != gene_it->second.end(); ++umi_count_it)
+		{
+			this->_cells_genes[top_cell_ind][gene_it->first][umi_count_it->first] += umi_count_it->second;
+		}
+	}
+
+	this->reassign(cell_id, top_cell_ind, cb_reassigned, cb_reassigned_to);
+
+	return true;
+}
+
+void GenesContainer::reassign(size_t cell_id, int target_cell_id, ints_t &cb_reassigned, ISIHM &cb_reassigned_to) const
+{
+	cb_reassigned[cell_id] = target_cell_id; // set reassignment mapping
+	cb_reassigned_to[target_cell_id].insert(cell_id); // reassign current cell
+
+	// transfer mapping of the cbs previously mapped to kid
+	ISIHM::iterator k = cb_reassigned_to.find(cell_id);
+	if (k == cb_reassigned_to.end())
+		return;
+
+//	for (auto m: k->second)
+	for (i_set_t::const_iterator it = k->second.begin(); it != k->second.end(); ++it)
+	{
+		cb_reassigned[*it] = target_cell_id; // update reassignment mapping
+		cb_reassigned_to[target_cell_id].insert(*it);
+	}
+
+	k->second.clear();
+	cb_reassigned_to[target_cell_id].insert(k->first); // reassign to the new cell
+}
+
+void GenesContainer::parse_bam_file(const string &bam_file_name, s_i_hash_t &cells_ids, s_ii_hash_t &umig_cells_counts)
 {
 	L_TRACE << "Reading " << bam_file_name;
 
@@ -212,7 +232,7 @@ void GenesContainer::parse_bam_file(const string &bam_file_name, size_t read_pre
 			L_TRACE << "Total " << total_reads << " reads processed";
 		}
 
-		if (c.align_info->core.l_qseq < read_prefix_length)
+		if (c.align_info->core.l_qseq < this->_read_prefix_length)
 		{
 			L_ERR << "WARNING: read is shorter than read_prefix_length. total_reads=" << total_reads << endl;
 			continue;
@@ -234,7 +254,7 @@ void GenesContainer::parse_bam_file(const string &bam_file_name, size_t read_pre
 		string gene(bam_aux2Z(ptr));
 
 		L_DEBUG << qname << " cell:" << cell_barcode << " UMI:" << umi << " prefix:"
-				<< GenesContainer::get_iseq_verbose(c.align_info, read_prefix_length) << "\tXF:" << gene;
+				<< GenesContainer::get_iseq_verbose(c.align_info) << "\tXF:" << gene;
 
 		pair<s_i_hash_t::iterator, bool> res = cells_ids.emplace(cell_barcode, this->_cells_genes.size());
 		if (res.second)
@@ -258,13 +278,13 @@ void GenesContainer::parse_bam_file(const string &bam_file_name, size_t read_pre
 			<< this->_cells_genes.size() << " cell barcodes)";
 }
 
-GenesContainer::i_counter_t GenesContainer::count_cells_genes(int min_genes_before_merge, bool logs) const
+GenesContainer::i_counter_t GenesContainer::count_cells_genes(bool logs) const
 {
 	i_counter_t cells_genes_counts; // <genes_count,cell_id> pairs
 	for (size_t i = 0; i < this->_cells_genes.size(); i++)
 	{
 		size_t genes_count = this->_cells_genes[i].size();
-		if (genes_count >= min_genes_before_merge)
+		if (genes_count >= this->_min_genes_before_merge)
 		{
 			cells_genes_counts.push_back(IndexedCount(i, genes_count));
 		}
@@ -272,7 +292,7 @@ GenesContainer::i_counter_t GenesContainer::count_cells_genes(int min_genes_befo
 
 	if (logs)
 	{
-		L_TRACE << cells_genes_counts.size() << " CBs with more than " << min_genes_before_merge << " genes";
+		L_TRACE << cells_genes_counts.size() << " CBs with more than " << this->_min_genes_before_merge << " genes";
 	}
 
 	sort(cells_genes_counts.begin(), cells_genes_counts.end(), IndexedCount::counts_comp);
@@ -315,7 +335,7 @@ string GenesContainer::get_cb_count_top_verbose(const i_counter_t &cells_genes_c
 	if (cells_genes_counts.size() > 0)
 	{
 		ss << "top CBs:\n";
-		size_t low_border = cells_genes_counts.size() - min(cells_genes_counts.size(), this->top_print_size);
+		size_t low_border = cells_genes_counts.size() - min(cells_genes_counts.size(), this->_top_print_size);
 		for (size_t i = cells_genes_counts.size() - 1; i > low_border; --i)
 		{
 			ss << cells_genes_counts[i].count << "\t" << this->_cells_names[cells_genes_counts[i].index] << "\n";
@@ -329,14 +349,14 @@ string GenesContainer::get_cb_count_top_verbose(const i_counter_t &cells_genes_c
 	return ss.str();
 }
 
-string GenesContainer::get_iseq_verbose(bam1_t *align_info, size_t read_prefix_length) const
+string GenesContainer::get_iseq_verbose(bam1_t *align_info) const
 {
 	// unpack first part of the read
-	string iseq(read_prefix_length, ' ');
+	string iseq(this->_read_prefix_length, ' ');
 
 	uint8_t *s = bam1_seq(align_info);
 
-	for (int i = 0; i < read_prefix_length; i++)
+	for (int i = 0; i < this->_read_prefix_length; i++)
 	{
 		iseq[i] = bam_nt16_rev_table[bam1_seqi(s, i)];
 	}
@@ -370,31 +390,31 @@ const GenesContainer::ids_t &GenesContainer::filtered_cells() const
 	return this->_filtered_cells;
 }
 
-size_t GenesContainer::get_umig_top(const ints_t &cb_reassigned, const IndexedCount &gene_count,
+size_t GenesContainer::get_umig_top(const ints_t &cb_reassigned, const IndexedCount &cur_gene,
 									const s_ii_hash_t &umigs_cells_counts, i_i_hash_t &umig_top) const
 {
 	size_t umigs_count = 0;
-//	for (auto const &gene: this->_cells_genes[gene_count.index])
-	const genes_t &cell_genes = this->_cells_genes[gene_count.index];
-	for (genes_t::const_iterator gene_it = cell_genes.begin(); gene_it != cell_genes.end(); ++gene_it)
+//	for (auto const &gene: this->_cells_genes[cur_gene.index])
+	const genes_t &cur_cell_genes = this->_cells_genes[cur_gene.index];
+	for (genes_t::const_iterator gene_it = cur_cell_genes.begin(); gene_it != cur_cell_genes.end(); ++gene_it)
 	{
 		const string &gene_name = gene_it->first;
-		const s_i_hash_t &umi_counts = gene_it->second;
+		const s_i_hash_t &umis = gene_it->second;
 
-//		for (auto const &umi_count: umi_counts)
-		for (s_i_hash_t::const_iterator umi_count_it = umi_counts.begin(); umi_count_it != umi_counts.end(); ++umi_count_it)
+//		for (auto const &umi_count: umis)
+		for (s_i_hash_t::const_iterator umi_it = umis.begin(); umi_it != umis.end(); ++umi_it)
 		{
-			string umig = umi_count_it->first + gene_name;
-			const i_i_hash_t &umig_cells_count = umigs_cells_counts.at(umig);
-			for (i_i_hash_t::const_iterator cells_counts_it = umig_cells_count.begin();
-				 cells_counts_it != umig_cells_count.end(); ++cells_counts_it)
+			string umig = umi_it->first + gene_name;
+			const i_i_hash_t &umig_cells = umigs_cells_counts.at(umig);
+			for (i_i_hash_t::const_iterator cells_it = umig_cells.begin(); cells_it != umig_cells.end(); ++cells_it)
 			{
-				if (cb_reassigned[cells_counts_it->first] == gene_count.index)
+				int cell_with_same_umig_id = cells_it->first;
+				if (cb_reassigned[cell_with_same_umig_id] == cur_gene.index)
 					continue;
 
-				if (this->_cells_genes[cb_reassigned[cells_counts_it->first]].size() > gene_count.count)
+				if (this->_cells_genes[cb_reassigned[cell_with_same_umig_id]].size() > cur_gene.count)
 				{
-					umig_top[cb_reassigned[cells_counts_it->first]]++;
+					umig_top[cb_reassigned[cell_with_same_umig_id]]++;
 				}
 			}
 			umigs_count++;
