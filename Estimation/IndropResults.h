@@ -53,16 +53,19 @@ class IndropResult
 	template<class Archive>
 	void serialize(Archive &ar, const unsigned int /* file_version */)
 	{
-		ar & this->cm & this->cells_chr_umis_counts & this->filtered_cells_chr_umis_counts & this->cell_names &
-				this->chr_names & this->reads_per_umi & this->umig_covered & this->merge_n;
+		ar & this->cm & this->ex_cells_chr_umis_counts & this->nonex_cells_chr_umis_counts &
+		this->filtered_cells_chr_umis_counts & this->filtered_cells_chr_umis_counts & this->ex_cell_names &
+		this->nonex_cell_names & this->chr_names & this->reads_per_umi & this->umig_covered & this->merge_n;
 	}
 
 public:
 	CountMatrix cm;
 
-	Stats::int_list_t cells_chr_umis_counts;
+	Stats::int_list_t ex_cells_chr_umis_counts;
+	Stats::int_list_t nonex_cells_chr_umis_counts;
 	Stats::int_list_t filtered_cells_chr_umis_counts;
-	Stats::str_list_t cell_names;
+	Stats::str_list_t ex_cell_names;
+	Stats::str_list_t nonex_cell_names;
 	Stats::str_list_t chr_names;
 
 	std::vector<double> reads_per_umi;

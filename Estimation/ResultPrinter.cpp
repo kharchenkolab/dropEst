@@ -56,8 +56,18 @@ void ResultPrinter::print_rds(const std::string &output_name, const IndropResult
 #ifdef R_LIBS
 	L_TRACE << "writing R data to " << output_name;
 	RInside R(0, 0);
-	R["saved_vec"] = results.get_r_table(output_name);
-	R.parseEvalQ("saveRDS(saved_vec, '" + output_name + "')");
+	R["d"] = results.get_r_table(output_name);
+
+	R.parseEvalQ("d$ex_cells_chr_counts<-as.data.frame(matrix(d$ex_cells_chr_counts, length(d$ex_counts_cell_names), "
+						 "length(d$counts_chr_names), byrow = TRUE), row.names = d$ex_counts_cell_names); "
+						 "colnames(d$ex_cells_chr_counts)<-d$counts_chr_names; d$ex_counts_cell_names<-NULL;");
+
+	R.parseEvalQ("d$nonex_cells_chr_counts<-as.data.frame(matrix(d$nonex_cells_chr_counts, length(d$nonex_counts_cell_names), "
+						 "length(d$counts_chr_names), byrow = TRUE), row.names = d$nonex_counts_cell_names); "
+						 "colnames(d$nonex_cells_chr_counts)<-d$counts_chr_names; d$nonex_counts_cell_names<-NULL;"
+						 "d$counts_chr_names<-NULL;");
+
+	R.parseEvalQ("saveRDS(d, '" + output_name + "')");
 	L_TRACE << "Done";
 #else
 	L_ERR << "Can't print rds without RCpp";

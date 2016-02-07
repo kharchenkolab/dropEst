@@ -8,7 +8,9 @@ IndropResult::IndropResult(const CountMatrix &cm, const Stats &stats, const std:
 	, umig_covered(umig_covered)
 	, merge_n(stats.get_merge_counts())
 {
-	stats.get_cell_chr_umi(this->cell_names, this->chr_names, this->cells_chr_umis_counts);
+	stats.get_cell_chr_umi(Stats::EXONE, this->ex_cell_names, this->chr_names, this->ex_cells_chr_umis_counts);
+	this->chr_names.clear();
+	stats.get_cell_chr_umi(Stats::NON_EXONE, this->nonex_cell_names, this->chr_names, this->nonex_cells_chr_umis_counts);
 	stats.get_cell_chr_umi_exones_filtered(this->cm.cell_names, this->chr_names, this->filtered_cells_chr_umis_counts);
 }
 
@@ -16,15 +18,15 @@ IndropResult::IndropResult(const CountMatrix &cm, const Stats &stats, const std:
 Rcpp::List IndropResult::get_r_table(const std::string &fname) const
 {
 	using namespace Rcpp;
-	NumericVector vec_array(wrap(this->cells_chr_umis_counts));
 
-	arma::cube cube_array(vec_array.begin(), Stats::ST_SIZE, this->cell_names.size(), this->chr_names.size());
 	return List::create(Named("cell.names") = wrap(this->cm.cell_names),
 						Named("gene.names") = wrap(this->cm.gene_names),
 						Named("cm") = wrap(this->cm.counts),
-						Named("cells_chr_counts") = wrap(cube_array),
+						Named("ex_cells_chr_counts") = wrap(this->ex_cells_chr_umis_counts),
+						Named("nonex_cells_chr_counts") = wrap(this->nonex_cells_chr_umis_counts),
 						Named("filtered_cells_chr_counts") = wrap(this->filtered_cells_chr_umis_counts),
-						Named("counts_cell_names") = wrap(this->cell_names),
+						Named("ex_counts_cell_names") = wrap(this->ex_cell_names),
+						Named("nonex_counts_cell_names") = wrap(this->nonex_cell_names),
 						Named("counts_chr_names") = wrap(this->chr_names),
 						Named("rpu") = wrap(this->reads_per_umi),
 						Named("umig.cov") = wrap(this->umig_covered),
