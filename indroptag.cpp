@@ -20,11 +20,12 @@ struct Params
 	bool cant_parse;
 	bool verbose;
 	string base_name;
+	string log_prefix;
 	string r1_file_name;
 	string r2_file_name;
 	string config_file_name;
 
-	Params() : cant_parse(false), verbose(false), base_name("")
+	Params() : cant_parse(false), verbose(false), base_name(""), log_prefix("")
 	{}
 };
 
@@ -32,10 +33,11 @@ static void usage()
 {
 	cerr << "\tindroptag -- generate tagged indrop fastq files for alignment\n";
 	cerr << "SYNOPSIS\n";
-	cerr << "\tindroptag [-n|--name baseName] [-v|--verbose] read_1.fastq read_2.fastq config.xml\n";
+	cerr << "\tindroptag [-n|--name baseName] [-v|--verbose] [-l, --log-prefix logs_name] read_1.fastq read_2.fastq config.xml\n";
 	cerr << "OPTIONS:\n";
 	cerr << "\t-v, --verbose verbose mode\n";
 	cerr << "\t-n, --name BASE_NAME specify alternative output base name" << endl;
+	cerr << "\t-l, --log-prefix : logs prefix" << endl;
 }
 
 Params parse_cmd_params(int argc, char **argv)
@@ -45,11 +47,12 @@ Params parse_cmd_params(int argc, char **argv)
 	static struct option long_options[] = {
 			{"verbose",    no_argument,       0, 'v'},
 			{"name",       required_argument, 0, 'n'},
+			{"log-prefix", required_argument, 0, 'l'},
 			{0, 0,                            0, 0}
 	};
 
 	Params params;
-	while ((c = getopt_long(argc, argv, "vn:", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "vn:l:", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -58,6 +61,9 @@ Params parse_cmd_params(int argc, char **argv)
 				break;
 			case 'n' :
 				params.base_name = string(optarg);
+				break;
+			case 'l' :
+				params.log_prefix = string(optarg);
 				break;
 			default:
 				cerr << "indroptag: unknown arguments passed" << endl;
@@ -94,7 +100,11 @@ int main(int argc, char **argv)
 	if (params.cant_parse)
 		return 1;
 
-	init_log(params.verbose, true, "main_tag.log", "debug_tag.log");
+	if (params.log_prefix.length() != 0)
+	{
+		params.log_prefix += "_";
+	}
+	init_log(params.verbose, false, params.log_prefix + "tag_main.log", params.log_prefix + "tag_debug.log");
 
 	boost::property_tree::ptree pt;
 	read_xml(params.config_file_name, pt);

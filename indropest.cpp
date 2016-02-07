@@ -22,9 +22,10 @@ struct Params
 	bool merge_tags;
 	string output_name;
 	string config_file_name;
+	string log_prefix;
 
 	Params() : cant_parse(false), verbose(false), text_output(false), merge_tags(false)
-			, output_name(""), config_file_name("")
+			, output_name(""), config_file_name(""), log_prefix("")
 	{}
 };
 
@@ -33,14 +34,14 @@ static void usage()
 	cerr << "\tindropest: estimate molecular counts per cell" << endl;
 	cerr << "SYNOPSIS\n";
 	cerr <<
-	"\tindropest [-g|--min-cells_genes 1000] [-u|--min-umis 10000] [-m|--merge-cell-tags] [-R|--output-r] [-v|--verbose] -c config.xml file1.bam [file2.bam ...]" <<
+	"\tindropest [-t, --text-output] [-m|--merge-cell-tags] [-v|--verbose] [-l, --log-prefix logs_name] -c config.xml file1.bam [file2.bam ...]" <<
 	endl;
 	cerr << "OPTIONS:\n";
 	cerr << "\t-o, --output-file filename : output file name" << endl;
+	cerr << "\t-l, --log-prefix : logs prefix" << endl;
 	cerr << "\t-t, --text-output : write out text matrix" << endl;
-	cerr << "\t-c, --config config.xml : xml file with estimation parameters" << endl;
+	cerr << "\t-c, --config : xml file with estimation parameters" << endl;
 	cerr << "\t-m, --merge-cell-tags : merge linked cell tags" << endl;
-	cerr << "\t-R, --otuput-r : write out RData file" << endl;
 }
 
 static Params parse_cmd_params(int argc, char **argv)
@@ -55,9 +56,10 @@ static Params parse_cmd_params(int argc, char **argv)
 			{"merge-cell-tags", no_argument,       0, 'm'},
 			{"output-file",     required_argument, 0, 'o'},
 			{"config",     		required_argument, 0, 'c'},
+			{"log-prefix",		required_argument, 0, 'l'},
 			{0, 0,                                 0, 0}
 	};
-	while ((c = getopt_long(argc, argv, "vtmo:c:", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "vtmo:c:l:", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -75,6 +77,9 @@ static Params parse_cmd_params(int argc, char **argv)
 				break;
 			case 'c' :
 				params.config_file_name = string(optarg);
+				break;
+			case 'l' :
+				params.log_prefix = string(optarg);
 				break;
 			default:
 				cerr << "indropest: unknown arguments passed" << endl;
@@ -122,7 +127,12 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	init_log(params.verbose, true, "main_est.log", "debug_est.log");
+
+	if (params.log_prefix.length() != 0)
+	{
+		params.log_prefix += "_";
+	}
+	init_log(params.verbose, false, params.log_prefix + "est_main.log", params.log_prefix + "est_debug.log");
 
 	vector<string> files;
 	while (optind < argc)
