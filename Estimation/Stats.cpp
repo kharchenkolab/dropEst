@@ -37,19 +37,39 @@ void Stats::inc_cell_chr_umi(const std::string &chr_name, const std::string &cel
 	this->_chr_names.emplace(chr_name);
 }
 
-void Stats::get_cell_chr_umi(StatType type, Stats::str_list_t &cell_names, Stats::str_list_t &chr_names,
-							 Stats::int_list_t &counts) const
+void Stats::get_cell_chr_umi(StatType type, str_list_t &cell_names, str_list_t &chr_names, int_list_t &counts) const
 {
 	std::copy(this->_chr_names.begin(), this->_chr_names.end(), std::back_inserter(chr_names));
 	const ss_cnt_t &cur_stat = this->_cells_chr_umis_counts[type];
 	for (ss_cnt_t::const_iterator cells_it = cur_stat.begin(); cells_it != cur_stat.end(); ++cells_it)
 	{
 		cell_names.push_back(cells_it->first);
-		for (str_list_t::const_iterator name_it = chr_names.begin(); name_it != chr_names.end(); ++name_it)
-		{
-			s_cnt_t::const_iterator count = cells_it->second.find(*name_it);
-			counts.push_back(count == cells_it->second.end() ? 0 : count->second);
-		}
+		this->get_chr_umi(cells_it->second, chr_names, counts);
+	}
+}
+
+void Stats::get_cell_chr_umi_filtered(StatType type, const str_list_t &filter_names, str_list_t &cell_names,
+									  str_list_t &chr_names, int_list_t &counts) const
+{
+	std::copy(this->_chr_names.begin(), this->_chr_names.end(), std::back_inserter(chr_names));
+	const ss_cnt_t &cur_stat = this->_cells_chr_umis_counts[type];
+	for (str_list_t::const_iterator name_it = filter_names.begin(); name_it != filter_names.end(); ++name_it)
+	{
+		ss_cnt_t::const_iterator cell_it = cur_stat.find(*name_it);
+		if (cell_it == cur_stat.end())
+			continue;
+
+		cell_names.push_back(*name_it);
+		this->get_chr_umi(cell_it->second, chr_names, counts);
+	}
+}
+
+void Stats::get_chr_umi(const s_cnt_t &cell, const str_list_t &chr_names, int_list_t &counts) const
+{
+	for (str_list_t::const_iterator name_it = chr_names.begin(); name_it != chr_names.end(); ++name_it)
+	{
+		s_cnt_t::const_iterator count = cell.find(*name_it);
+		counts.push_back(count == cell.end() ? 0 : count->second);
 	}
 }
 

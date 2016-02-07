@@ -37,7 +37,7 @@ private:
 public:
 	Estimator(const boost::property_tree::ptree &config);
 
-	IndropResult get_results(const names_t &files, bool merge_tags);
+	IndropResult get_results(const names_t &files, bool merge_tags, bool not_filtered);
 
 private:
 	names_t get_unmerged_names(const GenesContainer &genes_container, const ids_t &unmerged_cells) const;
@@ -50,7 +50,7 @@ private:
 	ints_t get_umig_coverage(const GenesContainer &genes_container) const;
 
 	IndropResult get_indrop_results(const CountMatrix cm, const GenesContainer &genes_conteiner,
-									const ids_t &unmerged_cells) const;
+									const ids_t &unmerged_cells, bool not_filtered) const;
 
 	std::string get_cb_top_verbose(const GenesContainer &genes_container, const ids_t &unmerged_cells) const;
 	std::string get_genes_top_verbose(const s_counter_t &genes_count) const;

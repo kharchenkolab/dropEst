@@ -32,7 +32,7 @@ Estimator::Estimator(const boost::property_tree::ptree &config)
 	}
 }
 
-IndropResult Estimator::get_results(const names_t &files, bool merge_tags)
+IndropResult Estimator::get_results(const names_t &files, bool merge_tags, bool not_filtered)
 {
 	GenesContainer container(this->read_prefix_length, this->min_merge_fraction, this->min_genes_before_merge,
 							 this->min_genes_after_merge, this->max_merge_edit_distance, Estimator::top_print_size);
@@ -56,7 +56,7 @@ IndropResult Estimator::get_results(const names_t &files, bool merge_tags)
 	L_TRACE << "Done";
 
 	CountMatrix cm(cell_names, gene_names, umis_table);
-	return this->get_indrop_results(cm, container, filtered_cells);
+	return this->get_indrop_results(cm, container, filtered_cells, not_filtered);
 }
 
 Estimator::s_counter_t Estimator::count_genes(const GenesContainer &genes_container, const ids_t &unmerged_cells) const
@@ -114,7 +114,7 @@ void Estimator::fill_table(const ids_t &unmerged_cells, const s_counter_t &gene_
 }
 
 IndropResult Estimator::get_indrop_results(const CountMatrix cm, const GenesContainer &genes_container,
-										   const ids_t &unmerged_cells) const
+										   const ids_t &unmerged_cells, bool not_filtered) const
 {
 	L_TRACE << "compiling diagnostic stats: ";
 
@@ -124,7 +124,7 @@ IndropResult Estimator::get_indrop_results(const CountMatrix cm, const GenesCont
 	ints_t umig_coverage(this->get_umig_coverage(genes_container));
 	L_TRACE << "UMIg coverage";
 
-	return IndropResult(cm, genes_container.stats(), reads_per_umis, umig_coverage);
+	return IndropResult(cm, genes_container.stats(), reads_per_umis, umig_coverage, not_filtered);
 }
 
 Estimator::doubles_t Estimator::get_reads_per_umis(const GenesContainer &genes_container, const ids_t &unmerged_cells) const

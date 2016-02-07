@@ -2,15 +2,27 @@
 
 
 IndropResult::IndropResult(const CountMatrix &cm, const Stats &stats, const std::vector<double> &reads_per_umi,
-						   const std::vector<int> &umig_covered)
+						   const std::vector<int> &umig_covered, bool not_filtered)
 	: cm(cm)
 	, reads_per_umi(reads_per_umi)
 	, umig_covered(umig_covered)
 	, merge_n(stats.get_merge_counts())
 {
-	stats.get_cell_chr_umi(Stats::EXONE, this->ex_cell_names, this->chr_names, this->ex_cells_chr_umis_counts);
-	this->chr_names.clear();
-	stats.get_cell_chr_umi(Stats::NON_EXONE, this->nonex_cell_names, this->chr_names, this->nonex_cells_chr_umis_counts);
+	if (not_filtered)
+	{
+		stats.get_cell_chr_umi(Stats::EXONE, this->ex_cell_names, this->chr_names, this->ex_cells_chr_umis_counts);
+		this->chr_names.clear();
+		stats.get_cell_chr_umi(Stats::NON_EXONE, this->nonex_cell_names, this->chr_names,
+							   this->nonex_cells_chr_umis_counts);
+	}
+	else
+	{
+		stats.get_cell_chr_umi_filtered(Stats::EXONE, this->cm.cell_names, this->ex_cell_names, this->chr_names,
+										this->ex_cells_chr_umis_counts);
+		this->chr_names.clear();
+		stats.get_cell_chr_umi_filtered(Stats::NON_EXONE, this->cm.cell_names, this->nonex_cell_names, this->chr_names,
+							   this->nonex_cells_chr_umis_counts);
+	}
 }
 
 #ifdef R_LIBS
