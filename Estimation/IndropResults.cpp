@@ -11,7 +11,6 @@ IndropResult::IndropResult(const CountMatrix &cm, const Stats &stats, const std:
 	stats.get_cell_chr_umi(Stats::EXONE, this->ex_cell_names, this->chr_names, this->ex_cells_chr_umis_counts);
 	this->chr_names.clear();
 	stats.get_cell_chr_umi(Stats::NON_EXONE, this->nonex_cell_names, this->chr_names, this->nonex_cells_chr_umis_counts);
-	stats.get_cell_chr_umi_exones_filtered(this->cm.cell_names, this->chr_names, this->filtered_cells_chr_umis_counts);
 }
 
 #ifdef R_LIBS
@@ -24,7 +23,6 @@ Rcpp::List IndropResult::get_r_table(const std::string &fname) const
 						Named("cm") = wrap(this->cm.counts),
 						Named("ex_cells_chr_counts") = wrap(this->ex_cells_chr_umis_counts),
 						Named("nonex_cells_chr_counts") = wrap(this->nonex_cells_chr_umis_counts),
-						Named("filtered_cells_chr_counts") = wrap(this->filtered_cells_chr_umis_counts),
 						Named("ex_counts_cell_names") = wrap(this->ex_cell_names),
 						Named("nonex_counts_cell_names") = wrap(this->nonex_cell_names),
 						Named("counts_chr_names") = wrap(this->chr_names),

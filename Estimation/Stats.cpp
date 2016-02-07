@@ -53,24 +53,6 @@ void Stats::get_cell_chr_umi(StatType type, Stats::str_list_t &cell_names, Stats
 	}
 }
 
-void Stats::get_cell_chr_umi_exones_filtered(const str_list_t &cell_names, const str_list_t &chr_names,
-											 int_list_t &counts) const
-{
-	const ss_cnt_t &exone_stat = this->_cells_chr_umis_counts[EXONE];
-	for (str_list_t::const_iterator cell_name_it = cell_names.begin(); cell_name_it != cell_names.end(); ++cell_name_it)
-	{
-		ss_cnt_t::const_iterator cells_it =  exone_stat.find(*cell_name_it);
-		if (cells_it == exone_stat.end())
-			throw std::runtime_error("Unexpected cell barcode: " + *cell_name_it);
-
-		for (str_list_t::const_iterator chr_name_it = chr_names.begin(); chr_name_it != chr_names.end(); ++chr_name_it)
-		{
-			s_cnt_t::const_iterator count = cells_it->second.find(*chr_name_it);
-			counts.push_back(count == cells_it->second.end() ? 0 : count->second);
-		}
-	}
-}
-
 void Stats::merge(const int_list_t &reassigned, const str_list_t &names)
 {
 	ss_cnt_t &cur_stat = this->_cells_chr_umis_counts[EXONE];
