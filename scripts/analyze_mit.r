@@ -1,4 +1,6 @@
 #!/usr/bin/env Rscript
+library(preseqR)
+
 args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args) != 1) {
@@ -55,6 +57,12 @@ plot_exclude_extrims <- function(fraction, mit_countss, all_countss) {
 
 fractions <- get_mit_fraction(d$ex_cells_chr_counts, d$nonex_cells_chr_counts)
 
+plot_preseq <- function(reads_by_umig) {
+  counts <- as.vector(table(reads_by_umig))
+  freqs <- sort(unique(reads_by_umig))
+  plot(preseqR.interpolate.mincount(1e5, cbind(freqs, counts)))
+}
+
 jpeg(paste(prefix, "mit_frac.jpeg"))
 hist(as.numeric(fractions$full), breaks = 30, xlab = "Mitochondrial Fraction", ylab = "Cells Count", main = "MurineSample1_S2_L001.1.rds")
 dev.off()
@@ -64,3 +72,9 @@ dev.off()
 jpeg(paste(prefix, "exclut_extrims.jpeg"))
 plot_exclude_extrims(as.numeric(fractions$full), as.numeric(fractions$mit_counts), as.numeric(fractions$all_counts))
 dev.off()
+
+jpeg(paste(prefix, "preseq.jpeg"))
+plot_preseq(d$reads_by_umig)
+dev.off()
+
+
