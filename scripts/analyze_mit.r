@@ -2,14 +2,14 @@
 library(preseqR)
 
 args <- commandArgs(trailingOnly = TRUE)
-
+#args <- c("/home/victor/InDrop/data/work/MurineSample1_S2_L001.1_new.rds")
 if (length(args) != 1) {
   stop("You should pass name of one rds file")
 }
 
-prefix <- paste(basename(args[1]), "_")
+base_name <- basename(args[1])
+prefix <- paste(base_name, "_")
 d <- readRDS(args[1])
-#d <- readRDS("/home/victor/InDrop/data/work/SRR1784310.tag.full.rds")
 
 get_mit_fraction <- function(ex_cells, nonex_cells) {
   mit_id = match("chrM", names(nonex_cells))
@@ -24,7 +24,7 @@ get_mit_fraction <- function(ex_cells, nonex_cells) {
     }
     
     full_mit_fractions <- c(full_mit_fractions, mit_count / (nonex_sum + ex_sum))
-    ex_mit_fractions <- c(full_mit_fractions, mit_count / ex_sum)
+    ex_mit_fractions <- c(ex_mit_fractions, mit_count / ex_sum)
     mit_counts <- c(mit_counts, mit_count)
     all_counts <- c(all_counts, nonex_sum + ex_sum)
   }
@@ -37,7 +37,7 @@ plot_mit_per_exonic <- function(ex_mit_fractions) {
   for (i in x_ax) {
     percent = c(percent, length(ex_mit_fractions[ex_mit_fractions >= i]) / length(ex_mit_fractions))
   }
-  plot(x_ax, percent, "l", xlab = "(Mitochondrial reads) / (exonic reads)", ylab = "Part of cells with >= x fraction")
+  plot(x_ax, percent, "l", main = base_name, xlab = "(Mitochondrial reads) / (exonic reads)", ylab = "Part of cells with >= x fraction")
 }
 
 plot_exclude_extrims <- function(fraction, mit_countss, all_countss) {
@@ -52,19 +52,19 @@ plot_exclude_extrims <- function(fraction, mit_countss, all_countss) {
     total_fraction <- c(total_fraction, sum_met / sum_all)
   }
   
-  plot(0:(length(total_fraction) - 1), total_fraction, "l")
+  plot(0:(length(total_fraction) - 1), total_fraction, "l", main = base_name, xlab = "Excludes count", ylab = "Total mitochondrial fraction")
 }
-
-fractions <- get_mit_fraction(d$ex_cells_chr_counts, d$nonex_cells_chr_counts)
 
 plot_preseq <- function(reads_by_umig) {
   counts <- as.vector(table(reads_by_umig))
   freqs <- sort(unique(reads_by_umig))
-  plot(preseqR.interpolate.mincount(1e5, cbind(freqs, counts)))
+  plot(preseqR.interpolate.mincount(50000, cbind(freqs, counts)), main = base_name, xlab = "Exonic reads count", ylab = "Unique UMIgs")
 }
 
+fractions <- get_mit_fraction(d$ex_cells_chr_counts, d$nonex_cells_chr_counts)
+
 jpeg(paste(prefix, "mit_frac.jpeg"))
-hist(as.numeric(fractions$full), breaks = 30, xlab = "Mitochondrial Fraction", ylab = "Cells Count", main = "MurineSample1_S2_L001.1.rds")
+hist(as.numeric(fractions$full), breaks = 30, main = base_name, xlab = "Mitochondrial Fraction", ylab = "Cells Count")
 dev.off()
 jpeg(paste(prefix, "mit_per_ex.jpeg"))
 plot_mit_per_exonic(fractions$exon)
