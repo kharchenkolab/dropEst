@@ -15,13 +15,13 @@ const Stats::int_list_t &Stats::get_merge_counts() const
 	return this->_merge_counts;
 }
 
-void Stats::inc(Stats::NamedCounter counter, const std::string &name)
+void Stats::inc(Stats::StringCounter counter, const std::string &name)
 {
 	this->_named_counters[counter][name]++;
 }
 
 
-void Stats::get(Stats::NamedCounter counter, Stats::str_list_t &names, Stats::int_list_t &counts) const
+void Stats::get(Stats::StringCounter counter, Stats::str_list_t &names, Stats::int_list_t &counts) const
 {
 	const s_cnt_t &s_counter = this->_named_counters[counter];
 	for (s_cnt_t::const_iterator it = s_counter.begin(); it != s_counter.end(); ++it)
@@ -29,6 +29,18 @@ void Stats::get(Stats::NamedCounter counter, Stats::str_list_t &names, Stats::in
 		names.push_back(it->first);
 		counts.push_back(it->second);
 	}
+}
+
+Stats::int_list_t Stats::get(Stats::StringCounter counter) const
+{
+	const s_cnt_t &s_counter = this->_named_counters[counter];
+	int_list_t result;
+	for (s_cnt_t::const_iterator it = s_counter.begin(); it != s_counter.end(); ++it)
+	{
+		result.push_back(it->second);
+	}
+
+	return result;
 }
 
 void Stats::inc_cell_chr_umi(const std::string &chr_name, const std::string &cell_name, StatType type)

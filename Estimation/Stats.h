@@ -10,11 +10,12 @@ class Stats
 {
 public:
 	typedef std::vector<std::string> str_list_t;
-	typedef std::vector<int> int_list_t;
+	typedef std::vector<long> int_list_t;
 	typedef std::vector<size_t> id_list_t;
 
-	enum NamedCounter
+	enum StringCounter
 	{
+		READS_BY_UMIG,
 		NC_SIZE
 	};
 
@@ -44,8 +45,9 @@ private:
 public:
 	Stats();
 
-	void inc(NamedCounter counter, const std::string &name);
-	void get(NamedCounter counter, str_list_t &names, int_list_t &counts) const;
+	void inc(StringCounter counter, const std::string &name);
+	void get(StringCounter counter, str_list_t &names, int_list_t &counts) const;
+	int_list_t get(StringCounter counter) const;
 
 	void inc_cell_chr_umi(const std::string &chr_name, const std::string &cell_name, StatType type);
 	void get_cell_chr_umi(StatType type, str_list_t &cell_names, str_list_t &chr_names, int_list_t &counts) const;

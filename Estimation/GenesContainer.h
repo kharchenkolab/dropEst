@@ -45,7 +45,7 @@ public:
 	typedef boost::unordered_map<std::string, s_i_hash_t> genes_t;
 
 	typedef std::vector<IndexedCount> i_counter_t;
-	typedef std::vector<int> ints_t;
+	typedef std::vector<long> ints_t;
 	typedef std::vector<size_t> ids_t;
 	typedef std::vector<std::string> names_t;
 

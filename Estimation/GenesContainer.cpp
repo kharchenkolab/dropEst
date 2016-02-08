@@ -268,6 +268,7 @@ void GenesContainer::parse_bam_file(const string &bam_file_name, s_i_hash_t &cel
 		umig_cells_counts[umig][cell_id]++;
 
 		exonic_reads++;
+		this->_stats.inc(Stats::READS_BY_UMIG, umig);
 		this->_stats.inc_cell_chr_umi(chr_name, cell_barcode, Stats::EXONE);
 
 		L_DEBUG << "CB/UMI=" << this->_cells_genes[cell_id][gene][umi] << " gene=" << this->_cells_genes[cell_id][gene].size()

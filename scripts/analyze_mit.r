@@ -2,9 +2,10 @@
 args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args) != 1) {
-  stop("You should pass name of 0ne rds file")
+  stop("You should pass name of one rds file")
 }
 
+prefix <- paste(basename(args[1]), "_")
 d <- readRDS(args[1])
 #d <- readRDS("/home/victor/InDrop/data/work/SRR1784310.tag.full.rds")
 
@@ -54,12 +55,12 @@ plot_exclude_extrims <- function(fraction, mit_countss, all_countss) {
 
 fractions <- get_mit_fraction(d$ex_cells_chr_counts, d$nonex_cells_chr_counts)
 
-jpeg("mit_frac.jpeg")
+jpeg(paste(prefix, "mit_frac.jpeg"))
 hist(as.numeric(fractions$full), breaks = 30, xlab = "Mitochondrial Fraction", ylab = "Cells Count", main = "MurineSample1_S2_L001.1.rds")
 dev.off()
-jpeg("mit_per_ex.jpeg")
+jpeg(paste(prefix, "mit_per_ex.jpeg"))
 plot_mit_per_exonic(fractions$exon)
 dev.off()
-jpeg("exclut_extrims.jpeg")
+jpeg(paste(prefix, "exclut_extrims.jpeg"))
 plot_exclude_extrims(as.numeric(fractions$full), as.numeric(fractions$mit_counts), as.numeric(fractions$all_counts))
 dev.off()

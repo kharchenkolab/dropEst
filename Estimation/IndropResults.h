@@ -20,7 +20,7 @@ class CountMatrix
 {
 public:
 	typedef std::vector<std::string> s_list_t;
-	typedef std::vector<int> i_list_t;
+	typedef std::vector<long> i_list_t;
 
 private:
 	friend class boost::serialization::access;
@@ -54,8 +54,12 @@ class IndropResult
 	void serialize(Archive &ar, const unsigned int /* file_version */)
 	{
 		ar & this->cm & this->ex_cells_chr_umis_counts & this->nonex_cells_chr_umis_counts & this->ex_cell_names &
-		this->nonex_cell_names & this->chr_names & this->reads_per_umi & this->umig_covered & this->merge_n;
+		this->nonex_cell_names & this->chr_names & this->reads_per_umi & this->umig_covered & this->merge_n &
+		this->reads_by_umig;
 	}
+
+public:
+	typedef Stats::int_list_t int_list_t;
 
 public:
 	CountMatrix cm;
@@ -67,14 +71,15 @@ public:
 	Stats::str_list_t chr_names;
 
 	std::vector<double> reads_per_umi;
-	std::vector<int> umig_covered;
-	std::vector<int> merge_n;
+	int_list_t umig_covered;
+	int_list_t merge_n;
+	int_list_t reads_by_umig;
 
 	IndropResult()
 	{};
 
 	IndropResult(const CountMatrix &cm, const Stats &stats, const std::vector<double> &reads_per_umi,
-				 const std::vector<int> &umig_covered, bool not_filtered);
+				 const int_list_t &umig_covered, bool not_filtered);
 
 #ifdef R_LIBS
 	Rcpp::List get_r_table(const std::string &fname) const;

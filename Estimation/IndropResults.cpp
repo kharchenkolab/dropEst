@@ -2,11 +2,12 @@
 
 
 IndropResult::IndropResult(const CountMatrix &cm, const Stats &stats, const std::vector<double> &reads_per_umi,
-						   const std::vector<int> &umig_covered, bool not_filtered)
+						   const int_list_t &umig_covered, bool not_filtered)
 	: cm(cm)
 	, reads_per_umi(reads_per_umi)
 	, umig_covered(umig_covered)
 	, merge_n(stats.get_merge_counts())
+	, reads_by_umig(stats.get(Stats::READS_BY_UMIG))
 {
 	if (not_filtered)
 	{
@@ -41,6 +42,7 @@ Rcpp::List IndropResult::get_r_table(const std::string &fname) const
 						Named("rpu") = wrap(this->reads_per_umi),
 						Named("umig.cov") = wrap(this->umig_covered),
 						Named("merge.n") = wrap(this->merge_n),
+						Named("reads_by_umig") = wrap(this->reads_by_umig),
 						Named("fname") = wrap(fname));
 }
 #endif
