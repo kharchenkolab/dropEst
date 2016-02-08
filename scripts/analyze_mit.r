@@ -1,4 +1,11 @@
-d <- readRDS("/home/victor/InDrop/data/work/MurineSample1_S2_L001.1_filtered.rds")
+#!/usr/bin/env Rscript
+args <- commandArgs(trailingOnly = TRUE)
+
+if (length(args) != 1) {
+  stop("You should pass name of 0ne rds file")
+}
+
+d <- readRDS(args[1])
 #d <- readRDS("/home/victor/InDrop/data/work/SRR1784310.tag.full.rds")
 
 get_mit_fraction <- function(ex_cells, nonex_cells) {
