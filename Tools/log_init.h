@@ -24,10 +24,7 @@ static void init_log(bool verbose, bool debug, const std::string &main_file_name
 			logging::trivial::severity >= min_level
 	);
 
-	logging::formatter logFmt =
-			logging::expressions::format("[%1%]: %2%")
-			% logging::expressions::format_date_time< boost::posix_time::ptime >("TimeStamp", "%Y-%m-%d %H:%M:%S")
-			% logging::expressions::smessage;
+	logging::formatter logFmt(expr::format("%1%") % expr::smessage);
 
 
 	console_sink_t console_sink = logging::add_console_log(std::cerr);

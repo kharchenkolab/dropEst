@@ -126,8 +126,7 @@ static Params parse_cmd_params(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-//	const time_t ctt = time(0);
-//	std::cout << asctime(localtime(&ctt)) << std::endl;
+
 	Params params = parse_cmd_params(argc, argv);
 
 	if (params.cant_parse)
@@ -151,11 +150,15 @@ int main(int argc, char **argv)
 	boost::property_tree::ptree pt;
 	read_xml(params.config_file_name, pt);
 
+	time_t ctt = time(0);
 	try
 	{
+		L_TRACE << "Run: " << asctime(localtime(&ctt));
 		Estimator estimator(pt.get_child("config.Estimation"));
 		IndropResult results = estimator.get_results(files, params.merge_tags, params.not_filtered);
-		L_TRACE << "Done";
+		
+		ctt = time(0);
+		L_TRACE << "Done: " << asctime(localtime(&ctt));
 
 		if (params.text_output)
 		{
@@ -173,5 +176,6 @@ int main(int argc, char **argv)
 		L_ERR << err.what();
 		return 1;
 	}
-	L_TRACE << "All done";
+	ctt = time(0);
+	L_TRACE << "All done: " << asctime(localtime(&ctt));
 }
