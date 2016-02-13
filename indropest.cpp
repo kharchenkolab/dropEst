@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <getopt.h>
+#include <ctime>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -125,6 +126,8 @@ static Params parse_cmd_params(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+//	const time_t ctt = time(0);
+//	std::cout << asctime(localtime(&ctt)) << std::endl;
 	Params params = parse_cmd_params(argc, argv);
 
 	if (params.cant_parse)

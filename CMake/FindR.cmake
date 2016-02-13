@@ -14,7 +14,7 @@
 #   R_LIBRARIES - libraries to link against R
 #   R_FOUND - true if R has been found and can be used
 
-find_path(R_INCLUDE_DIR R.h PATHS ${R_ROOT}/include /usr/share/R/include)
+find_path(R_INCLUDE_DIR R.h PATHS ${R_ROOT}/include /usr/lib/R/include/ /usr/share/R/include)
 find_library(R_LIBRARY NAME R PATHS ${R_ROOT}/lib PATH_SUFFIXES R/lib lib)
 
 get_filename_component(R_LIBRARY ${R_LIBRARY} REALPATH)
@@ -22,11 +22,15 @@ get_filename_component(R_LIB_DIR ${R_LIBRARY} PATH)
 set(R_LIBS_PATHS ${R_ROOT}/library ${R_LOCAL_LIBS} ${R_ROOT}/site-library ${R_LIB_DIR}/../ ${R_LIB_DIR}/../../ /usr/local/lib /usr/lib)
 
 
-find_path(RCPP_INCLUDE_DIR Rcpp.h PATHS ${R_LIBS_PATHS} PATH_SUFFIXES R/site-library/Rcpp/include/ Rcpp/include/)
+find_path(RCPP_INCLUDE_DIR Rcpp.h
+        PATHS ${R_LIBS_PATHS}
+        PATH_SUFFIXES R/library/Rcpp/include/ R/site-library/Rcpp/include/ Rcpp/include/)
 find_path(RCPP_ARM_INCLUDE_DIR RcppArmadillo.h
         PATHS ${R_LIBS_PATHS}
-        PATH_SUFFIXES R/site-library/RcppArmadillo/include/ RcppArmadillo/include/)
-find_path(RINSIDE_INCLUDE_DIR RInside.h PATHS ${R_LIBS_PATHS} PATH_SUFFIXES R/site-library/RInside/include RInside/include)
+        PATH_SUFFIXES R/library/RcppArmadillo/include/ R/site-library/RcppArmadillo/include/ RcppArmadillo/include/)
+find_path(RINSIDE_INCLUDE_DIR RInside.h
+        PATHS ${R_LIBS_PATHS}
+        PATH_SUFFIXES R/library/RInside/include R/site-library/RInside/include RInside/include)
 
 find_library(RINSIDE_LIBRARY RInside PATH ${RINSIDE_INCLUDE_DIR}/../lib)
 

@@ -1,12 +1,14 @@
 #pragma once
 
-#include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
+#include <boost/log/support/date_time.hpp>
+#include <boost/log/trivial.hpp>
 #include <boost/log/utility/setup/file.hpp>
 #include <boost/log/utility/setup/console.hpp>
 
 namespace logging = boost::log;
 namespace src = logging::sources;
+namespace expr = logging::expressions;
 namespace keywords = logging::keywords;
 
 static void init_log(bool verbose, bool debug, const std::string &main_file_name = "main.log",
@@ -23,7 +25,8 @@ static void init_log(bool verbose, bool debug, const std::string &main_file_name
 	);
 
 	logging::formatter logFmt =
-			logging::expressions::format("%1%")
+			logging::expressions::format("[%1%]: %2%")
+			% logging::expressions::format_date_time< boost::posix_time::ptime >("TimeStamp", "%Y-%m-%d %H:%M:%S")
 			% logging::expressions::smessage;
 
 

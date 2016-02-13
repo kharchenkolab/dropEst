@@ -10,7 +10,7 @@
 #   BAM_LIBRARIES - libraries to link against BAM
 #   BAM_FOUND - true if BAM has been found and can be used
 
-find_path(BAM_INCLUDE_DIR bam.h PATHS ${BAM_ROOT}/include ${BAM_ROOT}/include/bam PATH_SUFFIXES samtools)
+find_path(BAM_INCLUDE_DIR bam.h PATHS ${BAM_ROOT}/include ${BAM_ROOT}/include/bam PATH_SUFFIXES samtools bam)
 find_library(BAM_LIBRARY bam PATHS ${BAM_ROOT}/lib)
 
 include(FindPackageHandleStandardArgs)
