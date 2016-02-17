@@ -5,8 +5,12 @@ import os
 import random
 import sys
 
+from os import listdir
+from os.path import isfile, join, splitext
+
+
 PROJECT_PATH = "/home/vp76/drop/cp/"
-WORK_DIR = "/home/vp76/drop/results/"
+WORK_DIR = "/home/vp76/drop/results_17_2/"
 EST_EXE_PATH = PROJECT_PATH + "build/indropest"
 R_EXE_PATH = PROJECT_PATH + "scripts/analyze_mit.r"
 
@@ -38,14 +42,47 @@ def run_all_est():
 
 
 def run_all_r():
-    submit_r_job(1, 7, WORK_DIR + "SCG29.rds")
-    submit_r_job(1, 7, WORK_DIR + "MurineSample1_S2_L001.1.rds")
-    submit_r_job(1, 30, WORK_DIR + "BAa1-1.rds")
+    #submit_r_job(1, 7, WORK_DIR + "SCG29.rds")
+    #submit_r_job(1, 7, WORK_DIR + "MurineSample1_S2_L001.1.rds")
+    #submit_r_job(1, 30, WORK_DIR + "BAa1-1.rds")
+    rds_names = [join(WORK_DIR, f) for f in listdir(WORK_DIR) if isfile(join(WORK_DIR, f)) and splitext(f)[1] == '.rds']
+    for name in rds_names:
+        submit_r_job(1, 7, name)
+
+
+def run_cv_full():
+    name_mask = "/groups/pklab/peterk/jimin/allon/ES/SRR1784310.tag.%d.aligned.bam"
+    start_num = 2
+    max_num = 27
+    length = max_num - start_num
+
+    part_size = start_num
+    step_size = 1
+    examples_count = 10
+    jobs_count = 0
+    while part_size <= max_num:
+        for i in range(1, min(int(examples_count), max_num - part_size + 1)):
+            jobs_count += 1
+            bam_str = ''.join([name_mask % random.randint(1, max_num) + ' ' for _ in range(1, int(part_size) + 1)])
+            submit_est_job(1 + int(part_size / 9), 3 + int((part_size - 1) * 1.5) , bam_str, 'SRR1784310_cv_%d_%d' % (part_size, i))
+
+        part_size += step_size
+
+    print(jobs_count)
+
+
+def run_cv_3():
+    name_mask = "/groups/pklab/peterk/jimin/allon/ES/SRR1784310.tag.%d.aligned.bam"
+    max_num = 27
+
+    for part_size in range(1, max_num + 1):
+        bam_str = ''.join([name_mask % random.randint(1, max_num) + ' ' for _ in range(1, int(part_size) + 1)])
+        submit_est_job(1 + int(part_size / 9), 3 + int((part_size - 1) * 1.5) , bam_str, 'SRR1784310_cv_%d_1' % (part_size))
 
 
 def run_cv():
     name_mask = "/groups/pklab/peterk/jimin/allon/ES/SRR1784310.tag.%d.aligned.bam"
-    start_num = 1
+    start_num = 2
     max_num = 27
     length = max_num - start_num
 
@@ -54,7 +91,7 @@ def run_cv():
     examples_count = 10
     examples_step_size = examples_count * math.log(step_size) / math.log(length)
     jobs_count = 0
-    while part_size < max_num:
+    while part_size <= max_num:
         print(str(int(examples_count) - 1) + ':')
         for i in range(1, int(examples_count)):
             jobs_count += 1
@@ -78,5 +115,9 @@ if __name__ == '__main__':
         run_all_r()
     elif sys.argv[1] == '-cv':
         run_cv()
+    elif sys.argv[1] == '-cv2':
+        run_cv_full()
+    elif sys.argv[1] == '-cv3':
+        run_cv_3()
     else:
         usage_exit()

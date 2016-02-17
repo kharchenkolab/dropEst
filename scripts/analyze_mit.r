@@ -8,7 +8,7 @@ if (length(args) != 1) {
 }
 
 base_name <- basename(args[1])
-prefix <- paste(base_name, "_")
+prefix <- paste0(base_name, "_")
 d <- readRDS(args[1])
 
 get_mit_fraction <- function(ex_cells, nonex_cells) {
@@ -63,18 +63,18 @@ plot_preseq <- function(reads_by_umig) {
 
 fractions <- get_mit_fraction(d$ex_cells_chr_counts, d$nonex_cells_chr_counts)
 
-jpeg(paste(prefix, "mit_frac.jpeg"))
+jpeg(paste0(prefix, "mit_frac.jpeg"))
 hist(as.numeric(fractions$full), breaks = 30, main = base_name, xlab = "Mitochondrial Fraction", ylab = "Cells Count")
 dev.off()
-jpeg(paste(prefix, "mit_per_ex.jpeg"))
+jpeg(paste0(prefix, "mit_per_ex.jpeg"))
 plot_mit_per_exonic(fractions$exon)
 dev.off()
-jpeg(paste(prefix, "exclut_extrims.jpeg"))
+jpeg(paste0(prefix, "exclude_extrims.jpeg"))
 plot_exclude_extrims(as.numeric(fractions$full), as.numeric(fractions$mit_counts), as.numeric(fractions$all_counts))
 dev.off()
 
-jpeg(paste(prefix, "preseq.jpeg"))
+jpeg(paste0(prefix, "preseq.jpeg"))
 plot_preseq(d$reads_by_umig)
 dev.off()
 
-
+write(paste0(sum(d$reads_by_umig), ": ", length(d$reads_by_umig)), file=paste0(base_name, ".pred_out"))
