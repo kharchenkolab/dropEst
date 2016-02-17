@@ -58,7 +58,9 @@ plot_exclude_extrims <- function(fraction, mit_countss, all_countss) {
 plot_preseq <- function(reads_by_umig) {
   counts <- as.vector(table(reads_by_umig))
   freqs <- sort(unique(reads_by_umig))
-  plot(preseqR.interpolate.mincount(50000, cbind(freqs, counts)), main = base_name, xlab = "Exonic reads count", ylab = "Unique UMIgs")
+  
+  df <- as.data.frame(preseqR.pf.mincount(n=cbind(freqs, counts))$yield.estimates)
+  plot(df$sample.size, df$yield.estimates.r.1., main = base_name, xlab = "Exonic reads count", ylab = "Unique UMIgs")
 }
 
 fractions <- get_mit_fraction(d$ex_cells_chr_counts, d$nonex_cells_chr_counts)
