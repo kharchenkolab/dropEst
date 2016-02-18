@@ -63,20 +63,23 @@ plot_preseq <- function(reads_by_umig) {
   plot(df$sample.size, df$yield.estimates.r.1., main = base_name, xlab = "Exonic reads count", ylab = "Unique UMIgs")
 }
 
-fractions <- get_mit_fraction(d$ex_cells_chr_counts, d$nonex_cells_chr_counts)
+plot_all <- function() {
+  fractions <- get_mit_fraction(d$ex_cells_chr_counts, d$nonex_cells_chr_counts)
 
-jpeg(paste0(prefix, "mit_frac.jpeg"))
-hist(as.numeric(fractions$full), breaks = 30, main = base_name, xlab = "Mitochondrial Fraction", ylab = "Cells Count")
-dev.off()
-jpeg(paste0(prefix, "mit_per_ex.jpeg"))
-plot_mit_per_exonic(fractions$exon)
-dev.off()
-jpeg(paste0(prefix, "exclude_extrims.jpeg"))
-plot_exclude_extrims(as.numeric(fractions$full), as.numeric(fractions$mit_counts), as.numeric(fractions$all_counts))
-dev.off()
+  jpeg(paste0(prefix, "mit_frac.jpeg"))
+  hist(as.numeric(fractions$full), breaks = 30, main = base_name, xlab = "Mitochondrial Fraction", ylab = "Cells Count")
+  dev.off()
+  jpeg(paste0(prefix, "mit_per_ex.jpeg"))
+  plot_mit_per_exonic(fractions$exon)
+  dev.off()
+  jpeg(paste0(prefix, "exclude_extrims.jpeg"))
+  plot_exclude_extrims(as.numeric(fractions$full), as.numeric(fractions$mit_counts), as.numeric(fractions$all_counts))
+  dev.off()
 
-jpeg(paste0(prefix, "preseq.jpeg"))
-plot_preseq(d$reads_by_umig)
-dev.off()
+  jpeg(paste0(prefix, "preseq.jpeg"))
+  plot_preseq(d$reads_by_umig)
+  dev.off()
+}
 
+#plot_all();
 write(paste0(sum(d$reads_by_umig), ": ", length(d$reads_by_umig)), file=paste0(base_name, ".pred_out"))
