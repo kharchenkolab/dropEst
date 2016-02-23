@@ -3,6 +3,10 @@
 #include "Tools/UtilFunctions.h"
 #include "Tools/Logs.h"
 
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/serialization/unordered_map.hpp>
+#include <fstream>
+
 //#include <boost/range/adaptor/reversed.hpp>
 
 using namespace std;
@@ -49,11 +53,22 @@ namespace Estimation
 	};
 
 	GenesContainer::GenesContainer(size_t read_prefix_length, double min_merge_fraction, int min_genes_before_merge,
-								   int min_genes_after_merge, int max_merge_edit_distance, size_t top_print_size)
-			: _top_print_size(top_print_size), _min_merge_fraction(min_merge_fraction),
-			  _min_genes_after_merge(min_genes_after_merge), _min_genes_before_merge(min_genes_before_merge),
-			  _max_merge_edit_distance(max_merge_edit_distance), _read_prefix_length(read_prefix_length)
+								   int min_genes_after_merge, int max_merge_edit_distance, size_t top_print_size,
+								   const std::string &reads_params_name)
+		: _top_print_size(top_print_size)
+		, _min_merge_fraction(min_merge_fraction)
+		, _min_genes_after_merge(min_genes_after_merge)
+		, _min_genes_before_merge(min_genes_before_merge)
+		, _max_merge_edit_distance(max_merge_edit_distance)
+		, _read_prefix_length(read_prefix_length)
+		, _use_names_map(reads_params_name.length() != 0)
 	{
+		if (this->_use_names_map)
+		{
+			std::ifstream ifs(reads_params_name);
+			boost::archive::binary_iarchive ia(ifs);
+			ia >> this->_reads_params;
+		}
 	}
 
 	void GenesContainer::init(const std::vector<std::string> &files, bool merge_tags)
@@ -314,23 +329,38 @@ namespace Estimation
 										 string &umi) const
 	{
 		read_name = bam1_qname(align_info);
-		size_t umi_start_pos = read_name.rfind('#');
-		if (umi_start_pos == string::npos)
+		Tools::ReadsParameters params;
+
+		if (this->_use_names_map)
 		{
-			L_ERR << "WARNING: unable to parse out UMI in read_name: " << read_name;
-			return false;
+			auto iter = this->_reads_params.find(read_name);
+			if (iter == this->_reads_params.end())
+			{
+				L_ERR << "WARNING: can't find read_name in map: " << read_name;
+				return false;
+			}
+
+			params = iter->second;
+			if (params.is_empty()) {
+				L_ERR << "WARNING: empty parameters for read_name: " << read_name;
+				return false;
+			}
+		}
+		else
+		{
+			try
+			{
+				params = Tools::ReadsParameters(read_name);
+			}
+			catch (std::runtime_error &error)
+			{
+				L_ERR << error.what();
+				return false;
+			}
 		}
 
-		size_t cell_barcode_start_pos = read_name.rfind('!', umi_start_pos);
-		if (cell_barcode_start_pos == string::npos)
-		{
-			L_ERR << "WARNING: unable to parse out cell tag in read_name: " << read_name;
-			return false;
-		}
-
-		cell_barcode = read_name.substr(cell_barcode_start_pos + 1, umi_start_pos - cell_barcode_start_pos - 1);
-		umi = read_name.substr(umi_start_pos + 1);
-
+		cell_barcode = params.cell_barcode();
+		umi = params.umi_barcode();
 		return true;
 	}
 

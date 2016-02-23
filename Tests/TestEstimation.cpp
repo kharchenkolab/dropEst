@@ -16,7 +16,7 @@ using namespace Estimation;
 struct Fixture
 {
 	Fixture()
-		: container(0, 0, 0, 0, 100, 10)
+		: container(0, 0, 0, 0, 100, 10, "")
 	{}
 
 	GenesContainer container;

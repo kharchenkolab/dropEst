@@ -35,10 +35,12 @@ namespace Estimation
 		}
 	}
 
-	IndropResult Estimator::get_results(const names_t &files, bool merge_tags, bool not_filtered)
+	IndropResult Estimator::get_results(const names_t &files, bool merge_tags, bool not_filtered,
+										const std::string &reads_params_name)
 	{
 		GenesContainer container(this->read_prefix_length, this->min_merge_fraction, this->min_genes_before_merge,
-								 this->min_genes_after_merge, this->max_merge_edit_distance, Estimator::top_print_size);
+								 this->min_genes_after_merge, this->max_merge_edit_distance, Estimator::top_print_size,
+								 reads_params_name);
 		container.init(files, merge_tags);
 
 		ids_t filtered_cells = container.filtered_cells();

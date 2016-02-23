@@ -137,7 +137,7 @@ namespace TagsSearch
 			}
 
 			Tools::ReadsParameters params = this->process_lines(total_reads_read++, r1_line2, r2_line2, r2_line3, r2_line4);
-			if (params.is_empty)
+			if (params.is_empty())
 				continue;
 
 			string text;

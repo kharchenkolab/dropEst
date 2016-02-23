@@ -26,9 +26,10 @@ struct Params
 	string output_name;
 	string config_file_name;
 	string log_prefix;
+	string reads_params_file;
 
 	Params() : cant_parse(false), verbose(false), text_output(false), merge_tags(false), not_filtered(false)
-			, output_name(""), config_file_name(""), log_prefix("")
+			, output_name(""), config_file_name(""), log_prefix(""), reads_params_file("")
 	{}
 };
 
@@ -37,15 +38,16 @@ static void usage()
 	cerr << "\tindropest: estimate molecular counts per cell" << endl;
 	cerr << "SYNOPSIS\n";
 	cerr <<
-	"\tindropest [-t, --text-output] [-m|--merge-cell-tags] [-v|--verbose] [-n | --not-flitered] "
-	"[-l, --log-prefix logs_name] -c config.xml file1.bam [file2.bam ...]" << endl;
+	"\tindropest [-t, --text-output] [-m|--merge-cell-tags] [-v|--verbose] [-n | --not-filtered] "
+	"[-l, --log-prefix logs_name] [-r, --reads-params filename] -c config.xml file1.bam [file2.bam ...]" << endl;
 	cerr << "OPTIONS:\n";
-	cerr << "\t-o, --output-file filename : output file name" << endl;
+	cerr << "\t-c, --config filename: xml file with estimation parameters" << endl;
 	cerr << "\t-l, --log-prefix : logs prefix" << endl;
-	cerr << "\t-n, --not-flitered : print data for all cells" << endl;
-	cerr << "\t-t, --text-output : write out text matrix" << endl;
-	cerr << "\t-c, --config : xml file with estimation parameters" << endl;
 	cerr << "\t-m, --merge-cell-tags : merge linked cell tags" << endl;
+	cerr << "\t-n, --not-filtered : print data for all cells" << endl;
+	cerr << "\t-o, --output-file filename : output file name" << endl;
+	cerr << "\t-r, --reads-params filename: file with serialized params from tags search step" << endl;
+	cerr << "\t-t, --text-output : write out text matrix" << endl;
 }
 
 static Params parse_cmd_params(int argc, char **argv)
@@ -55,16 +57,17 @@ static Params parse_cmd_params(int argc, char **argv)
 	int option_index = 0;
 	int c;
 	static struct option long_options[] = {
-			{"verbose",         no_argument,       0, 'v'},
-			{"text-output",     no_argument,       0, 't'},
+			{"config",     		required_argument, 0, 'c'},
+			{"log-prefix",		required_argument, 0, 'l'},
 			{"merge-cell-tags", no_argument,       0, 'm'},
 			{"not-filtered",	no_argument, 	   0, 'n'},
 			{"output-file",     required_argument, 0, 'o'},
-			{"config",     		required_argument, 0, 'c'},
-			{"log-prefix",		required_argument, 0, 'l'},
+			{"reads-params",     required_argument, 0, 'o'},
+			{"text-output",     no_argument,       0, 't'},
+			{"verbose",         no_argument,       0, 'v'},
 			{0, 0,                                 0, 0}
 	};
-	while ((c = getopt_long(argc, argv, "vtmno:c:l:", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "vtmno:c:l:r:", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -85,6 +88,9 @@ static Params parse_cmd_params(int argc, char **argv)
 				break;
 			case 'c' :
 				params.config_file_name = string(optarg);
+				break;
+			case 'r' :
+				params.reads_params_file = string(optarg);
 				break;
 			case 'l' :
 				params.log_prefix = string(optarg);
@@ -156,7 +162,7 @@ int main(int argc, char **argv)
 	{
 		L_TRACE << "Run: " << asctime(localtime(&ctt));
 		Estimator estimator(pt.get_child("config.Estimation"));
-		IndropResult results = estimator.get_results(files, params.merge_tags, params.not_filtered);
+		IndropResult results = estimator.get_results(files, params.merge_tags, params.not_filtered, params.reads_params_file);
 		
 		ctt = time(0);
 		L_TRACE << "Done: " << asctime(localtime(&ctt));

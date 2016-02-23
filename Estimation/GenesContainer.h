@@ -8,6 +8,7 @@
 #include <vector>
 
 #include <bam.h>
+#include <Tools/ReadsParameters.h>
 
 namespace TestEstimator
 {
@@ -59,6 +60,9 @@ namespace Estimation
 		const int _max_merge_edit_distance;
 		const size_t _read_prefix_length;
 
+		const bool _use_names_map;
+		Tools::reads_params_map_t _reads_params;
+
 		std::vector<genes_t> _cells_genes; //cell_id -> gen_name -> umi -> count
 		names_t _cells_names;
 		ids_t _filtered_cells;
@@ -92,7 +96,8 @@ namespace Estimation
 	public:
 
 		GenesContainer(size_t read_prefix_length, double min_merge_fraction, int min_genes_before_merge,
-					   int min_genes_after_merge, int max_merge_edit_distance, size_t top_print_size);
+					   int min_genes_after_merge, int max_merge_edit_distance, size_t top_print_size,
+					   const std::string &reads_params_name);
 
 		void init(const std::vector<std::string> &files, bool merge_tags);
 
