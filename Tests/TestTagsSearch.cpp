@@ -5,17 +5,20 @@
 
 #include "TagsSearch/SpacerFinder.h"
 #include "TagsSearch/TagsFinder.h"
-#include "Tools/log_init.h"
+#include "Tools/Logs.h"
+#include "Tools/ReadsParameters.h"
 
 #include <sstream>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
+using namespace TagsSearch;
+
 struct Fixture
 {
 	Fixture()
 	{
-		init_test_logs();
+		Tools::init_test_logs();
 		std::stringstream config;
 		config << "<config>\n"
 				"    <SpacerSearch>\n"
@@ -67,8 +70,8 @@ BOOST_AUTO_TEST_SUITE(TestTagsSearch)
 		std::string r2_line2 = "TCTTCCACTAATAGTTATGTCATCCCTCTTATTAATCATCATCCTAGCCCTAAGTCTGGCCTATGAGTCACTACAAAAAGGATTAGACTGAACCG";
 		std::string r2_line3 = "+";
 		std::string r2_line4 = "1>111@1@111@33AA3BAA33DE1AA0FF3DA33AB3AF3D2A12110AB000DFGD01F10A121A11A2BFB110/AA0ABG111A111BF>";
-		std::string res = tags_finder.process_lines(0, r1_line2, r2_line2, r2_line3, r2_line4);
-		BOOST_CHECK_EQUAL(res, "");
+		Tools::ReadsParameters res = tags_finder.process_lines(0, r1_line2, r2_line2, r2_line3, r2_line4);
+		BOOST_CHECK_EQUAL(res.is_empty, true);
 	}
 
 BOOST_AUTO_TEST_SUITE_END()

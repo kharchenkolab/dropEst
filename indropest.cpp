@@ -10,10 +10,11 @@
 
 #include "Estimation/Estimator.h"
 #include "Estimation/ResultPrinter.h"
-#include "Tools/log_init.h"
-#include "Tools/log_defs.h"
+#include "Estimation/IndropResults.h"
+#include "Tools/Logs.h"
 
 using namespace std;
+using namespace Estimation;
 
 struct Params
 {
@@ -139,7 +140,7 @@ int main(int argc, char **argv)
 	{
 		params.log_prefix += "_";
 	}
-	init_log(params.verbose, false, params.log_prefix + "est_main.log", params.log_prefix + "est_debug.log");
+	Tools::init_log(params.verbose, false, params.log_prefix + "est_main.log", params.log_prefix + "est_debug.log");
 
 	vector<string> files;
 	while (optind < argc)

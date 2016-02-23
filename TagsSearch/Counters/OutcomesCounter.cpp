@@ -3,53 +3,56 @@
 #include <iomanip>
 #include <sstream>
 
-void OutcomesCounter::inc(StatType type)
+namespace TagsSearch
 {
-	++this->stats[type];
-}
-
-int OutcomesCounter::get(StatType type) const
-{
-	return this->stats[type];
-}
-
-OutcomesCounter::OutcomesCounter()
-{
-	for (int i = 0; i < STAT_SIZE; ++i)
+	void OutcomesCounter::inc(StatType type)
 	{
-		stats[i] = 0;
+		++this->stats[type];
 	}
 
-	names[OK] = "OK";
-	names[NO_SPACER] = "No spacer";
-	names[SHORT_SEQ] = "Short";
-	names[SPACER_2] = "Spacer2";
-	names[SPACER_MISPLACED] = "Spacer misplaced";
-}
-
-std::string OutcomesCounter::print(double normalizer) const
-{
-	std::ostringstream out_stream;
-	out_stream << " outcomes:[";
-	for (int i = 0; i < STAT_SIZE; i++)
+	int OutcomesCounter::get(StatType type) const
 	{
-		out_stream << " (" <<names[i] << ") ";
+		return this->stats[type];
 	}
-	out_stream << "]" << std::endl;
 
-	out_stream << " outcomes:[";
-	for (int i = 0; i < STAT_SIZE; i++)
+	OutcomesCounter::OutcomesCounter()
 	{
-		out_stream << stats[i] << " ";
-	}
-	out_stream << "]" << std::endl;
+		for (int i = 0; i < STAT_SIZE; ++i)
+		{
+			stats[i] = 0;
+		}
 
-	out_stream << " outcomes:[" << std::setprecision(3);
-	for (int i = 0; i < STAT_SIZE; i++)
+		names[OK] = "OK";
+		names[NO_SPACER] = "No spacer";
+		names[SHORT_SEQ] = "Short";
+		names[SPACER_2] = "Spacer2";
+		names[SPACER_MISPLACED] = "Spacer misplaced";
+	}
+
+	std::string OutcomesCounter::print(double normalizer) const
 	{
-		out_stream << 100.0 * stats[i] / normalizer << " ";
-	}
-	out_stream << "] %" << std::endl;
+		std::ostringstream out_stream;
+		out_stream << " outcomes:[";
+		for (int i = 0; i < STAT_SIZE; i++)
+		{
+			out_stream << " (" <<names[i] << ") ";
+		}
+		out_stream << "]" << std::endl;
 
-	return out_stream.str();
+		out_stream << " outcomes:[";
+		for (int i = 0; i < STAT_SIZE; i++)
+		{
+			out_stream << stats[i] << " ";
+		}
+		out_stream << "]" << std::endl;
+
+		out_stream << " outcomes:[" << std::setprecision(3);
+		for (int i = 0; i < STAT_SIZE; i++)
+		{
+			out_stream << 100.0 * stats[i] / normalizer << " ";
+		}
+		out_stream << "] %" << std::endl;
+
+		return out_stream.str();
+	}
 }

@@ -1,10 +1,6 @@
-#pragma once
+#include "UtilFunctions.h"
 
 #include <string.h>
-
-#define MIN3(a, b, c) ((a) < (b) ? ((a) < (c) ? (a) : (c)) : ((b) < (c) ? (b) : (c)))
-#define MIN(a, b) (((a)<(b))?(a):(b))
-#define MAX(a, b) (((a)>(b))?(a):(b))
 
 namespace Tools
 {
@@ -30,4 +26,5 @@ namespace Tools
 		}
 		return (column[s1len]);
 	}
-};
+}
+

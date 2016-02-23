@@ -9,16 +9,16 @@
 
 #include "TagsSearch/SpacerFinder.h"
 #include "TagsSearch/TagsFinder.h"
-#include "Tools/log_defs.h"
-#include "Tools/log_init.h"
+#include "Tools/Logs.h"
 
 using namespace std;
-
+using namespace TagsSearch;
 
 struct Params
 {
 	bool cant_parse;
 	bool verbose;
+	bool save_reads_names;
 	string base_name;
 	string log_prefix;
 	string r1_file_name;
@@ -33,10 +33,12 @@ static void usage()
 {
 	cerr << "\tindroptag -- generate tagged indrop fastq files for alignment\n";
 	cerr << "SYNOPSIS\n";
-	cerr << "\tindroptag [-n|--name baseName] [-v|--verbose] [-l, --log-prefix logs_name] read_1.fastq read_2.fastq config.xml\n";
+	cerr << "\tindroptag [-n|--name baseName] [-v|--verbose] [-s|--save-reads-names] [-l, --log-prefix logs_name] "
+					<< "read_1.fastq read_2.fastq config.xml\n";
 	cerr << "OPTIONS:\n";
 	cerr << "\t-v, --verbose verbose mode\n";
-	cerr << "\t-n, --name BASE_NAME specify alternative output base name" << endl;
+	cerr << "\t-s, --save-reads-names serialize reads parameters to save names\n";
+	cerr << "\t-n, --name BASE_NAME specify alternative output base name\n";
 	cerr << "\t-l, --log-prefix : logs prefix" << endl;
 }
 
@@ -46,18 +48,22 @@ Params parse_cmd_params(int argc, char **argv)
 	int c;
 	static struct option long_options[] = {
 			{"verbose",    no_argument,       0, 'v'},
+			{"save-reads-names",    no_argument,       0, 's'},
 			{"name",       required_argument, 0, 'n'},
 			{"log-prefix", required_argument, 0, 'l'},
 			{0, 0,                            0, 0}
 	};
 
 	Params params;
-	while ((c = getopt_long(argc, argv, "vn:l:", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "vsn:l:", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
 			case 'v' :
 				params.verbose = true;
+				break;
+			case 's' :
+				params.save_reads_names = true;
 				break;
 			case 'n' :
 				params.base_name = string(optarg);
@@ -104,7 +110,7 @@ int main(int argc, char **argv)
 	{
 		params.log_prefix += "_";
 	}
-	init_log(params.verbose, false, params.log_prefix + "tag_main.log", params.log_prefix + "tag_debug.log");
+	Tools::init_log(params.verbose, false, params.log_prefix + "tag_main.log", params.log_prefix + "tag_debug.log");
 
 	boost::property_tree::ptree pt;
 	read_xml(params.config_file_name, pt);
@@ -114,7 +120,7 @@ int main(int argc, char **argv)
 
 	try
 	{
-		finder.run(params.r1_file_name, params.r2_file_name, params.base_name);
+		finder.run(params.r1_file_name, params.r2_file_name, params.base_name, params.save_reads_names);
 	}
 	catch (std::runtime_error &err)
 	{

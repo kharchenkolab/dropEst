@@ -2,6 +2,8 @@
 #define BOOST_TEST_MODULE tests
 
 #include <boost/test/unit_test.hpp>
+#include <sstream>
+#include <boost/unordered_map.hpp>
 
 #include "Estimation/GenesContainer.h"
 
@@ -9,9 +11,7 @@
 #include <RInside.h>
 #endif
 
-
-#include <sstream>
-#include <boost/unordered_map.hpp>
+using namespace Estimation;
 
 struct Fixture
 {

@@ -2,27 +2,30 @@
 
 #include <string>
 
-class TrimsCounter
+namespace TagsSearch
 {
-public:
-	enum StatType
+	class TrimsCounter
 	{
-		NO_TRIM = 0,
-		RC,
-		POLY_A,
-		A_TRIM,
-		STAT_SIZE
+	public:
+		enum StatType
+		{
+			NO_TRIM = 0,
+			RC,
+			POLY_A,
+			A_TRIM,
+			STAT_SIZE
+		};
+
+	private:
+		int stats[STAT_SIZE];
+		std::string names[STAT_SIZE];
+
+	public:
+		TrimsCounter();
+
+		void inc(StatType type);
+		int get(StatType type) const;
+
+		std::string print()  const;
 	};
-
-private:
-	int stats[STAT_SIZE];
-	std::string names[STAT_SIZE];
-
-public:
-	TrimsCounter();
-
-	void inc(StatType type);
-	int get(StatType type) const;
-
-	std::string print()  const;
-};
+}
