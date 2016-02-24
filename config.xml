@@ -23,7 +23,7 @@
         <read_prefix_length>6</read_prefix_length>
         <min_merge_fraction>0.4</min_merge_fraction>
         <max_merge_edit_distance>2</max_merge_edit_distance>
-        <min_genes_after_merge>10</min_genes_after_merge>
+        <min_genes_after_merge>100</min_genes_after_merge>
         <min_genes_before_merge>10</min_genes_before_merge>
     </Estimation>
 </config>

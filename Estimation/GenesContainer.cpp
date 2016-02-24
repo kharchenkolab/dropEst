@@ -333,7 +333,7 @@ namespace Estimation
 
 		if (this->_use_names_map)
 		{
-			auto iter = this->_reads_params.find(read_name);
+			auto iter = this->_reads_params.find("@" + read_name);
 			if (iter == this->_reads_params.end())
 			{
 				L_ERR << "WARNING: can't find read_name in map: " << read_name;
@@ -341,7 +341,8 @@ namespace Estimation
 			}
 
 			params = iter->second;
-			if (params.is_empty()) {
+			if (params.is_empty()) 
+			{
 				L_ERR << "WARNING: empty parameters for read_name: " << read_name;
 				return false;
 			}

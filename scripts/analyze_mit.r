@@ -1,5 +1,6 @@
 #!/usr/bin/env Rscript
 library(preseqR)
+library(ggplot2)
 
 args <- commandArgs(trailingOnly = TRUE)
 #args <- c("/home/victor/InDrop/data/work/MurineSample1_S2_L001.1_new.rds")
@@ -55,13 +56,21 @@ plot_exclude_extrims <- function(fraction, mit_countss, all_countss) {
   plot(0:(length(total_fraction) - 1), total_fraction, "l", main = base_name, xlab = "Excludes count", ylab = "Total mitochondrial fraction")
 }
 
+
 plot_preseq <- function(reads_by_umig) {
   counts <- as.vector(table(reads_by_umig))
   freqs <- sort(unique(reads_by_umig))
+  reads_count <- sum(reads_by_umig)
   
-  df <- as.data.frame(preseqR.pf.mincount(n=cbind(freqs, counts))$yield.estimates)
-  plot(df$sample.size, df$yield.estimates.r.1., main = base_name, xlab = "Exonic reads count", ylab = "Unique UMIgs")
+  predicted <- preseqR.pf.mincount(ss = round(reads_count / 3), n=cbind(freqs, counts))
+  df <- as.data.frame(predicted$yield.estimates)
+  ggplot() + geom_line(aes(x=df$sample.size, y=df$yield.estimates.r.1., colour = "Predicted")) + 
+    geom_abline(slope = pi/4, col="red", lty = 2) + 
+    geom_vline(aes(xintercept = reads_count, colour="Current"), show.legend = F) + 
+    scale_colour_manual(values = c("Predicted"="blue", "biss" = "red", "Current" = "green")) + 
+    xlab("Exonic reads count") + ylab("Unique UMIgs") + ggtitle(base_name) + xlim(1, reads_count * 10)
 }
+
 
 plot_all <- function() {
   fractions <- get_mit_fraction(d$ex_cells_chr_counts, d$nonex_cells_chr_counts)
@@ -76,10 +85,9 @@ plot_all <- function() {
   plot_exclude_extrims(as.numeric(fractions$full), as.numeric(fractions$mit_counts), as.numeric(fractions$all_counts))
   dev.off()
 
-  jpeg(paste0(prefix, "preseq.jpeg"))
   plot_preseq(d$reads_by_umig)
-  dev.off()
+  ggsave(paste0(prefix, "preseq.jpeg"))
 }
 
-#plot_all();
+plot_all();
 write(paste0(sum(d$reads_by_umig), ": ", length(d$reads_by_umig)), file=paste0(base_name, ".pred_out"))
