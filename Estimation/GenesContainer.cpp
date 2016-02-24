@@ -287,6 +287,7 @@ namespace Estimation
 
 			exonic_reads++;
 			this->_stats.inc(Stats::READS_BY_UMIG, cell_barcode + "_" + umig);
+			this->_stats.inc(Stats::READS_BY_CB, cell_barcode);
 			this->_stats.inc_cell_chr_umi(chr_name, cell_barcode, Stats::EXONE);
 
 			L_DEBUG << "CB/UMI=" << this->_cells_genes[cell_id][gene][umi] << " gene=" <<

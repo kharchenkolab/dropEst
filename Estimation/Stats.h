@@ -18,6 +18,7 @@ namespace Estimation
 		enum StringCounter
 		{
 			READS_BY_UMIG,
+			READS_BY_CB,
 			NC_SIZE
 		};
 

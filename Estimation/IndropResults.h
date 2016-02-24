@@ -74,10 +74,10 @@ namespace Estimation
 		int_list_t umig_covered;
 		int_list_t merge_n;
 		int_list_t reads_by_umig;
+		int_list_t reads_by_cb;
 
 		IndropResult()
-		{
-		};
+		{};
 
 		IndropResult(const CountMatrix &cm, const Stats &stats, const std::vector<double> &reads_per_umi,
 					 const int_list_t &umig_covered, bool not_filtered);

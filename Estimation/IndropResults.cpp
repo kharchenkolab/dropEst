@@ -4,8 +4,8 @@ namespace Estimation
 {
 	IndropResult::IndropResult(const CountMatrix &cm, const Stats &stats, const std::vector<double> &reads_per_umi,
 							   const int_list_t &umig_covered, bool not_filtered)
-			: cm(cm), reads_per_umi(reads_per_umi), umig_covered(umig_covered), merge_n(stats.get_merge_counts()),
-			  reads_by_umig(stats.get(Stats::READS_BY_UMIG))
+			: cm(cm), reads_per_umi(reads_per_umi), umig_covered(umig_covered), merge_n(stats.get_merge_counts())
+			, reads_by_umig(stats.get(Stats::READS_BY_UMIG)), reads_by_cb(stats.get(Stats::READS_BY_CB))
 	{
 		if (not_filtered)
 		{
@@ -43,6 +43,7 @@ namespace Estimation
 							Named("umig.cov") = wrap(this->umig_covered),
 							Named("merge.n") = wrap(this->merge_n),
 							Named("reads_by_umig") = wrap(this->reads_by_umig),
+							Named("reads_by_cb") = wrap(this->reads_by_cb),
 							Named("fname") = wrap(fname));
 	}
 
