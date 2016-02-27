@@ -109,8 +109,8 @@ plot_all <- function() {
   print("exclude_extrims plotted")
 
   plot_preseq_with_base(d$reads_by_umig, "UMIg", 0.33, base_preseq_curve)
-  ggsave(paste0(prefix, "preseq.jpeg"))
-  print("preseq plotted")
+  ggsave(paste0(prefix, "preseq_umigs.jpeg"))
+  print("preseq_umigs plotted")
   
   plot_preseq(d$reads_by_cb, "CB", 0.2)
   ggsave(paste0(prefix, "preseq_cb.jpeg"))
