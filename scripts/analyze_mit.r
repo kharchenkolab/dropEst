@@ -31,20 +31,6 @@ get_mit_fraction <- function(ex_cells, nonex_cells) {
   list("full" = full_mit_fractions, "exone" = ex_mit_fractions, "mit_counts" = mit_counts, "all_counts" = all_counts)
 }
 
-get_preseq_max_extrapol <- function(reads_count) reads_count * 100
-
-read_base_preseq_curve <- function(current_reads_count) {
-  curve <- readRDS(base_preseq_curve_path)
-  
-  max_sample_size <- max(curve$sample.size)
-  current_max_ss <- get_preseq_max_extrapol(current_reads_count)
-  normalizer <- current_max_ss / max_sample_size
-  curve$sample.size <- round(curve$sample.size * normalizer)
-  curve$yield.estimates.r.1. <- round(curve$yield.estimates.r.1. * normalizer)
-  
-  return(curve)
-}
-
 plot_mit_per_exonic <- function(ex_mit_fractions) {
   percent = c()
   x_ax = seq(0, 1.5, 0.02);
@@ -75,7 +61,7 @@ plot_preseq <- function(reads_by_class, class_name, y_scale) {
   reads_count <- sum(reads_by_class)
   x_border <- reads_count * 10
   
-  predicted <- preseqR.pf.mincount(ss = round(reads_count / 3), n=cbind(freqs, counts), max.extrapolation=get_preseq_max_extrapol(reads_count))
+  predicted <- preseqR.pf.mincount(ss = round(reads_count / 3), n=cbind(freqs, counts))
   df <- as.data.frame(predicted$yield.estimates)
   ggplot() + geom_line(data=df, aes(x=sample.size, y=yield.estimates.r.1., colour = "Predicted")) + 
     geom_abline(slope = pi/4, col="red", lty = 2) + 
@@ -86,12 +72,12 @@ plot_preseq <- function(reads_by_class, class_name, y_scale) {
 
 plot_preseq_with_base <- function(reads_by_class, class_name, y_scale, base_curve) {
   plt <- plot_preseq(reads_by_class, class_name, y_scale);
-  plt + geom_line(data=base_curve, aes(x=sample.size, y=yield.estimates.r.1., colour = "SRR* Predicted"))
+  plt + geom_line(data=base_curve, aes(x=sample.size, y=umigs_count, colour = "SRR* Predicted"))
 }
 
 plot_all <- function() {
   d <- readRDS(args[1])
-  base_preseq_curve <- read_base_preseq_curve(sum(d$reads_by_umig))
+  base_preseq_curve <- readRDS(base_preseq_curve_path)
   
   fractions <- get_mit_fraction(d$ex_cells_chr_counts, d$nonex_cells_chr_counts)
   print("Fractions calculated")
@@ -108,7 +94,8 @@ plot_all <- function() {
   dev.off()
   print("exclude_extrims plotted")
 
-  plot_preseq_with_base(d$reads_by_umig, "UMIg", 0.33, base_preseq_curve)
+  #plot_preseq_with_base(d$reads_by_umig, "UMIg", 0.33, base_preseq_curve)
+  plot_preseq(d$reads_by_umig, "UMIg", 0.33)
   ggsave(paste0(prefix, "preseq_umigs.jpeg"))
   print("preseq_umigs plotted")
   
