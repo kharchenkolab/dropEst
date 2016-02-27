@@ -3,14 +3,13 @@ library(preseqR)
 library(ggplot2)
 
 args <- commandArgs(trailingOnly = TRUE)
-#args <- c("/home/victor/InDrop/data/work/MurineSample1_S2_L001.1_new.rds")
 if (length(args) != 1) {
   stop("You should pass name of one rds file")
 }
 
 base_name <- basename(args[1])
 prefix <- paste0(base_name, "_")
-d <- readRDS(args[1])
+base_preseq_curve_path <- "/home/vp76/drop/cp/data/SRR1784310_curve.rds"
 
 get_mit_fraction <- function(ex_cells, nonex_cells) {
   mit_id = match("chrM", names(nonex_cells))
@@ -30,6 +29,20 @@ get_mit_fraction <- function(ex_cells, nonex_cells) {
     all_counts <- c(all_counts, nonex_sum + ex_sum)
   }
   list("full" = full_mit_fractions, "exone" = ex_mit_fractions, "mit_counts" = mit_counts, "all_counts" = all_counts)
+}
+
+get_preseq_max_extrapol <- function(reads_count) reads_count * 100
+
+read_base_preseq_curve <- function(current_reads_count) {
+  curve <- readRDS(base_preseq_curve_path)
+  
+  max_sample_size <- max(curve$sample.size)
+  current_max_ss <- get_preseq_max_extrapol(current_reads_count)
+  normalizer <- current_max_ss / max_sample_size
+  curve$sample.size <- round(curve$sample.size * normalizer)
+  curve$yield.estimates.r.1. <- round(curve$yield.estimates.r.1. * normalizer)
+  
+  return(curve)
 }
 
 plot_mit_per_exonic <- function(ex_mit_fractions) {
@@ -56,38 +69,53 @@ plot_exclude_extrims <- function(fraction, mit_countss, all_countss) {
   plot(0:(length(total_fraction) - 1), total_fraction, "l", main = base_name, xlab = "Excludes count", ylab = "Total mitochondrial fraction")
 }
 
-
-plot_preseq <- function(reads_by_umig) {
-  counts <- as.vector(table(reads_by_umig))
-  freqs <- sort(unique(reads_by_umig))
-  reads_count <- sum(reads_by_umig)
+plot_preseq <- function(reads_by_class, class_name, y_scale) {
+  counts <- as.vector(table(reads_by_class))
+  freqs <- sort(unique(reads_by_class))
+  reads_count <- sum(reads_by_class)
+  x_border <- reads_count * 10
   
-  predicted <- preseqR.pf.mincount(ss = round(reads_count / 3), n=cbind(freqs, counts))
+  predicted <- preseqR.pf.mincount(ss = round(reads_count / 3), n=cbind(freqs, counts), max.extrapolation=get_preseq_max_extrapol(reads_count))
   df <- as.data.frame(predicted$yield.estimates)
-  ggplot() + geom_line(aes(x=df$sample.size, y=df$yield.estimates.r.1., colour = "Predicted")) + 
+  ggplot() + geom_line(data=df, aes(x=sample.size, y=yield.estimates.r.1., colour = "Predicted")) + 
     geom_abline(slope = pi/4, col="red", lty = 2) + 
-    geom_vline(aes(xintercept = reads_count, colour="Current"), show.legend = F) + 
-    scale_colour_manual(values = c("Predicted"="blue", "biss" = "red", "Current" = "green")) + 
-    xlab("Exonic reads count") + ylab("Unique UMIgs") + ggtitle(base_name) + xlim(1, reads_count * 10)
+    geom_point(aes(x = reads_count, y = length(reads_by_class), colour="Current"), show.legend = F, size=3) + 
+    scale_colour_manual(values = c("Predicted"="blue", "biss" = "red", "Current" = "green", "SRR* Predicted"="black")) + 
+    xlab("Exonic reads count") + ylab(paste0("Unique ", class_name, "s")) + ggtitle(base_name) + xlim(1, x_border) + ylim(1, x_border * y_scale)
 }
 
+plot_preseq_with_base <- function(reads_by_class, class_name, y_scale, base_curve) {
+  plt <- plot_preseq(reads_by_class, class_name, y_scale);
+  plt + geom_line(data=base_curve, aes(x=sample.size, y=yield.estimates.r.1., colour = "SRR* Predicted"))
+}
 
 plot_all <- function() {
+  d <- readRDS(args[1])
+  base_preseq_curve <- read_base_preseq_curve(sum(d$reads_by_umig))
+  
   fractions <- get_mit_fraction(d$ex_cells_chr_counts, d$nonex_cells_chr_counts)
-
+  print("Fractions calculated")
   jpeg(paste0(prefix, "mit_frac.jpeg"))
   hist(as.numeric(fractions$full), breaks = 30, main = base_name, xlab = "Mitochondrial Fraction", ylab = "Cells Count")
   dev.off()
+  print("mit_frac plotted")
   jpeg(paste0(prefix, "mit_per_ex.jpeg"))
   plot_mit_per_exonic(fractions$exon)
   dev.off()
+  print("mit_per_ex exonic plotted")
   jpeg(paste0(prefix, "exclude_extrims.jpeg"))
   plot_exclude_extrims(as.numeric(fractions$full), as.numeric(fractions$mit_counts), as.numeric(fractions$all_counts))
   dev.off()
+  print("exclude_extrims plotted")
 
-  plot_preseq(d$reads_by_umig)
+  plot_preseq_with_base(d$reads_by_umig, "UMIg", 0.33, base_preseq_curve)
   ggsave(paste0(prefix, "preseq.jpeg"))
+  print("preseq plotted")
+  
+  plot_preseq(d$reads_by_cb, "CB", 0.2)
+  ggsave(paste0(prefix, "preseq_cb.jpeg"))
+  print("preseq_cb plotted")
 }
 
 plot_all();
-write(paste0(sum(d$reads_by_umig), ": ", length(d$reads_by_umig)), file=paste0(base_name, ".pred_out"))
+#write(paste0(sum(d$reads_by_umig), ": ", length(d$reads_by_umig)), file=paste0(base_name, ".pred_out"))
