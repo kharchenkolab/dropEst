@@ -8,7 +8,7 @@
 #include <boost/functional/hash.hpp>
 #include <boost/property_tree/ptree.hpp>
 
-#include "GenesContainer.h"
+#include "CellsDataContainer.h"
 
 namespace Estimation
 {
@@ -23,9 +23,9 @@ namespace Estimation
 
 		typedef std::vector<std::pair<std::string, int> > s_counter_t;
 		typedef std::vector<double> doubles_t;
-		typedef GenesContainer::names_t names_t;
-		typedef GenesContainer::ints_t ints_t;
-		typedef GenesContainer::ids_t ids_t;
+		typedef CellsDataContainer::names_t names_t;
+		typedef CellsDataContainer::ints_t ints_t;
+		typedef CellsDataContainer::ids_t ids_t;
 
 	private:
 		static const size_t top_print_size;
@@ -44,21 +44,21 @@ namespace Estimation
 								 const std::string &reads_params_name);
 
 	private:
-		names_t get_unmerged_names(const GenesContainer &genes_container, const ids_t &unmerged_cells) const;
+		names_t get_unmerged_names(const CellsDataContainer &genes_container, const ids_t &unmerged_cells) const;
 
 		void fill_table(const ids_t &unmerged_cells, const s_counter_t &gene_counts,
-						const GenesContainer &genes_container, names_t &gene_names_header, ints_t &umis_table) const;
+		                const CellsDataContainer &genes_container, names_t &gene_names_header, ints_t &umis_table) const;
 
-		s_counter_t count_genes(const GenesContainer &genes_container, const ids_t &unmerged_cells) const;
+		s_counter_t count_genes(const CellsDataContainer &genes_container, const ids_t &unmerged_cells) const;
 
-		doubles_t get_reads_per_umis(const GenesContainer &genes_container, const ids_t &unmerged_cells) const;
+		doubles_t get_reads_per_umis(const CellsDataContainer &genes_container, const ids_t &unmerged_cells) const;
 
-		ints_t get_umig_coverage(const GenesContainer &genes_container) const;
+		ints_t get_umig_coverage(const CellsDataContainer &genes_container) const;
 
-		IndropResult get_indrop_results(const CountMatrix cm, const GenesContainer &genes_conteiner,
+		IndropResult get_indrop_results(const CountMatrix cm, const CellsDataContainer &genes_conteiner,
 										const ids_t &unmerged_cells, bool not_filtered) const;
 
-		std::string get_cb_top_verbose(const GenesContainer &genes_container, const ids_t &unmerged_cells) const;
+		std::string get_cb_top_verbose(const CellsDataContainer &genes_container, const ids_t &unmerged_cells) const;
 
 		std::string get_genes_top_verbose(const s_counter_t &genes_count) const;
 	};

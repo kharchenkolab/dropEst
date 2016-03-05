@@ -1,4 +1,4 @@
-#include "GenesContainer.h"
+#include "CellsDataContainer.h"
 
 #include "Tools/UtilFunctions.h"
 #include "Tools/Logs.h"
@@ -52,9 +52,9 @@ namespace Estimation
 		}
 	};
 
-	GenesContainer::GenesContainer(size_t read_prefix_length, double min_merge_fraction, int min_genes_before_merge,
-								   int min_genes_after_merge, int max_merge_edit_distance, size_t top_print_size,
-								   const std::string &reads_params_name)
+	CellsDataContainer::CellsDataContainer(size_t read_prefix_length, double min_merge_fraction, int min_genes_before_merge,
+	                                       int min_genes_after_merge, int max_merge_edit_distance, size_t top_print_size,
+	                                       const std::string &reads_params_name)
 		: _top_print_size(top_print_size)
 		, _min_merge_fraction(min_merge_fraction)
 		, _min_genes_after_merge(min_genes_after_merge)
@@ -71,7 +71,7 @@ namespace Estimation
 		}
 	}
 
-	void GenesContainer::init(const std::vector<std::string> &files, bool merge_tags)
+	void CellsDataContainer::init(const std::vector<std::string> &files, bool merge_tags)
 	{
 		s_i_hash_t cb_ids;
 		s_ii_hash_t umig_cells_counts;
@@ -103,7 +103,7 @@ namespace Estimation
 		}
 	}
 
-	void GenesContainer::merge_genes(const s_ii_hash_t &umig_cells_counts)
+	void CellsDataContainer::merge_genes(const s_ii_hash_t &umig_cells_counts)
 	{
 		// cb merging
 		int merges_count = 0;
@@ -176,8 +176,8 @@ namespace Estimation
 		L_INFO << "Done (" << merges_count << " merges performed)" << endl;
 	}
 
-	bool GenesContainer::merge(int top_cell_ind, double top_cell_fraction, const IndexedCount &gene_count,
-							   ints_t &cb_reassigned, ISIHM &cb_reassigned_to)
+	bool CellsDataContainer::merge(int top_cell_ind, double top_cell_fraction, const IndexedCount &gene_count,
+	                               ints_t &cb_reassigned, ISIHM &cb_reassigned_to)
 	{
 		if (top_cell_ind < 0)
 			return false;
@@ -212,8 +212,8 @@ namespace Estimation
 		return true;
 	}
 
-	void GenesContainer::reassign(size_t cell_id, int target_cell_id, ints_t &cb_reassigned,
-								  ISIHM &cb_reassigned_to) const
+	void CellsDataContainer::reassign(size_t cell_id, int target_cell_id, ints_t &cb_reassigned,
+	                                  ISIHM &cb_reassigned_to) const
 	{
 		cb_reassigned[cell_id] = target_cell_id; // set reassignment mapping
 		cb_reassigned_to[target_cell_id].insert(cell_id); // reassign current cell
@@ -234,8 +234,8 @@ namespace Estimation
 		cb_reassigned_to[target_cell_id].insert(k->first); // reassign to the new cell
 	}
 
-	void GenesContainer::parse_bam_file(const string &bam_file_name, s_i_hash_t &cells_ids,
-										s_ii_hash_t &umig_cells_counts)
+	void CellsDataContainer::parse_bam_file(const string &bam_file_name, s_i_hash_t &cells_ids,
+	                                        s_ii_hash_t &umig_cells_counts)
 	{
 		L_TRACE << "Reading " << bam_file_name;
 
@@ -272,7 +272,7 @@ namespace Estimation
 			string gene(bam_aux2Z(ptr));
 
 			L_DEBUG << qname << " cell:" << cell_barcode << " UMI:" << umi << " prefix:"
-					<< GenesContainer::get_iseq_verbose(c.align_info) << "\tXF:" << gene;
+			        << CellsDataContainer::get_iseq_verbose(c.align_info) << "\tXF:" << gene;
 
 			pair<s_i_hash_t::iterator, bool> res = cells_ids.emplace(cell_barcode, this->_cells_genes.size());
 			if (res.second)
@@ -299,7 +299,7 @@ namespace Estimation
 				<< this->_cells_genes.size() << " cell barcodes)";
 	}
 
-	GenesContainer::i_counter_t GenesContainer::count_cells_genes(bool logs) const
+	CellsDataContainer::i_counter_t CellsDataContainer::count_cells_genes(bool logs) const
 	{
 		i_counter_t cells_genes_counts; // <genes_count,cell_id> pairs
 		for (size_t i = 0; i < this->_cells_genes.size(); i++)
@@ -326,8 +326,8 @@ namespace Estimation
 		return cells_genes_counts;
 	}
 
-	bool GenesContainer::parse_read_name(const bam1_t *align_info, string &read_name, string &cell_barcode,
-										 string &umi) const
+	bool CellsDataContainer::parse_read_name(const bam1_t *align_info, string &read_name, string &cell_barcode,
+	                                         string &umi) const
 	{
 		read_name = bam1_qname(align_info);
 		Tools::ReadsParameters params;
@@ -367,7 +367,7 @@ namespace Estimation
 	}
 
 
-	string GenesContainer::get_cb_count_top_verbose(const i_counter_t &cells_genes_counts) const
+	string CellsDataContainer::get_cb_count_top_verbose(const i_counter_t &cells_genes_counts) const
 	{
 		stringstream ss;
 		if (cells_genes_counts.size() > 0)
@@ -387,7 +387,7 @@ namespace Estimation
 		return ss.str();
 	}
 
-	string GenesContainer::get_iseq_verbose(bam1_t *align_info) const
+	string CellsDataContainer::get_iseq_verbose(bam1_t *align_info) const
 	{
 		// unpack first part of the read
 		string iseq(this->_read_prefix_length, ' ');
@@ -403,33 +403,33 @@ namespace Estimation
 	}
 
 
-	const Stats &GenesContainer::stats() const
+	const Stats &CellsDataContainer::stats() const
 	{
 		return this->_stats;
 	}
 
-	const GenesContainer::genes_t &GenesContainer::cell_genes(size_t index) const
+	const CellsDataContainer::genes_t &CellsDataContainer::cell_genes(size_t index) const
 	{
 		return this->_cells_genes[index];
 	}
 
-	const GenesContainer::i_counter_t &GenesContainer::cells_genes_counts_sorted() const
+	const CellsDataContainer::i_counter_t &CellsDataContainer::cells_genes_counts_sorted() const
 	{
 		return this->_cells_genes_counts_sorted;
 	}
 
-	const string &GenesContainer::cell_name(size_t index) const
+	const string &CellsDataContainer::cell_name(size_t index) const
 	{
 		return this->_cells_names[index];
 	}
 
-	const GenesContainer::ids_t &GenesContainer::filtered_cells() const
+	const CellsDataContainer::ids_t &CellsDataContainer::filtered_cells() const
 	{
 		return this->_filtered_cells;
 	}
 
-	size_t GenesContainer::get_umig_top(const ints_t &cb_reassigned, const IndexedCount &cur_gene,
-										const s_ii_hash_t &umigs_cells_counts, i_i_hash_t &umig_top) const
+	size_t CellsDataContainer::get_umig_top(const ints_t &cb_reassigned, const IndexedCount &cur_gene,
+	                                        const s_ii_hash_t &umigs_cells_counts, i_i_hash_t &umig_top) const
 	{
 		size_t umigs_count = 0;
 //	for (auto const &gene: this->_cells_genes[cur_gene.index])

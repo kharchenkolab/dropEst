@@ -12,6 +12,7 @@
 #include "Estimation/ResultPrinter.h"
 #include "Estimation/IndropResults.h"
 #include "Tools/Logs.h"
+#include "Tools/RefGenesContainer.h"
 
 using namespace std;
 using namespace Estimation;
@@ -133,7 +134,6 @@ static Params parse_cmd_params(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-
 	Params params = parse_cmd_params(argc, argv);
 
 	if (params.cant_parse)

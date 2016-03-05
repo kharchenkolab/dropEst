@@ -53,11 +53,9 @@ namespace Tools
 		}
 	}
 
-	void init_test_logs()
+	void init_test_logs(boost::log::trivial::severity_level level)
 	{
-		logging::core::get()->set_filter(
-				logging::trivial::severity >= logging::trivial::fatal
-		);
+		logging::core::get()->set_filter(logging::trivial::severity >= level);
 	}
 }
 

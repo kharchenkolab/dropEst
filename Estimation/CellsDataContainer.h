@@ -17,7 +17,7 @@ namespace TestEstimator
 
 namespace Estimation
 {
-	class GenesContainer
+	class CellsDataContainer
 	{
 		friend struct TestEstimator::testMerge;
 
@@ -95,9 +95,9 @@ namespace Estimation
 
 	public:
 
-		GenesContainer(size_t read_prefix_length, double min_merge_fraction, int min_genes_before_merge,
-					   int min_genes_after_merge, int max_merge_edit_distance, size_t top_print_size,
-					   const std::string &reads_params_name);
+		CellsDataContainer(size_t read_prefix_length, double min_merge_fraction, int min_genes_before_merge,
+		                   int min_genes_after_merge, int max_merge_edit_distance, size_t top_print_size,
+		                   const std::string &reads_params_name);
 
 		void init(const std::vector<std::string> &files, bool merge_tags);
 

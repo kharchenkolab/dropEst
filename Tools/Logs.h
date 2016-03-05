@@ -14,5 +14,5 @@ namespace Tools
 	void init_log(bool verbose, bool debug, const std::string &main_file_name = "main.log",
 						 const std::string &debug_file_name = "debug.log");
 
-	void init_test_logs();
+	void init_test_logs(boost::log::trivial::severity_level level = boost::log::trivial::fatal);
 }

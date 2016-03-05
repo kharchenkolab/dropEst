@@ -5,7 +5,7 @@
 #include <sstream>
 #include <boost/unordered_map.hpp>
 
-#include "Estimation/GenesContainer.h"
+#include "Estimation/CellsDataContainer.h"
 
 #ifdef R_LIBS
 #include <RInside.h>
@@ -19,7 +19,7 @@ struct Fixture
 		: container(0, 0, 0, 0, 100, 10, "")
 	{}
 
-	GenesContainer container;
+	CellsDataContainer container;
 };
 
 BOOST_AUTO_TEST_SUITE(TestEstimator)
@@ -42,8 +42,8 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 	BOOST_FIXTURE_TEST_CASE(testMerge, Fixture)
 	{
-		GenesContainer::ISIHM cb_reassigned_to;
-		GenesContainer::ints_t cb_reassigned;
+		CellsDataContainer::ISIHM cb_reassigned_to;
+		CellsDataContainer::ints_t cb_reassigned;
 		cb_reassigned.push_back(0);
 		cb_reassigned.push_back(1);
 		cb_reassigned.push_back(2);
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		container._cells_genes[1]["G1"]["UMI3"] = 5;
 		container._cells_genes[1]["G2"]["UMI2"] = 7;
 
-		container.merge(1, 1, GenesContainer::IndexedCount(0, 3), cb_reassigned, cb_reassigned_to); //merge 0 to 1
+		container.merge(1, 1, CellsDataContainer::IndexedCount(0, 3), cb_reassigned, cb_reassigned_to); //merge 0 to 1
 
 		BOOST_CHECK_EQUAL(cb_reassigned[0], 1);
 		BOOST_CHECK_EQUAL(cb_reassigned[1], 1);
