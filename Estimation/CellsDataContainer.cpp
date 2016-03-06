@@ -6,9 +6,7 @@
 
 #include "api/BamMultiReader.h"
 
-#include <boost/archive/binary_iarchive.hpp>
 #include <boost/range/adaptor/reversed.hpp>
-#include <boost/serialization/unordered_map.hpp>
 
 using namespace std;
 
@@ -16,35 +14,21 @@ namespace Estimation
 {
 	const double EPS = 0.00001;
 
-	CellsDataContainer::CellsDataContainer(size_t read_prefix_length, double min_merge_fraction, int min_genes_before_merge,
-	                                       int min_genes_after_merge, int max_merge_edit_distance, size_t top_print_size,
-	                                       const std::string &reads_params_name)
-		: _top_print_size(top_print_size)
+	CellsDataContainer::CellsDataContainer(double min_merge_fraction, int min_genes_before_merge, bool merge_tags,
+	                                       int min_genes_after_merge, int max_merge_edit_distance, size_t top_print_size)
+		: _merge_tags(merge_tags)
+		, _top_print_size(top_print_size)
 		, _min_merge_fraction(min_merge_fraction)
 		, _min_genes_after_merge(min_genes_after_merge)
 		, _min_genes_before_merge(min_genes_before_merge)
 		, _max_merge_edit_distance(max_merge_edit_distance)
-		, _read_prefix_length(read_prefix_length)
-		, _use_names_map(reads_params_name.length() != 0)
+	{}
+
+	void CellsDataContainer::init_filled(const CellsDataContainer::s_ii_hash_t & umig_cells_counts)
 	{
-		if (this->_use_names_map)
-		{
-			std::ifstream ifs(reads_params_name);
-			boost::archive::binary_iarchive ia(ifs);
-			ia >> this->_reads_params;
-		}
-	}
-
-	void CellsDataContainer::init(const std::vector<std::string> &files, bool merge_tags)
-	{
-		s_i_hash_t cb_ids;
-		s_ii_hash_t umig_cells_counts;
-
-		this->parse_bam_files(files, cb_ids, umig_cells_counts);
-
 		this->_cells_genes_counts_sorted = this->count_cells_genes();
 
-		if (merge_tags)
+		if (this->_merge_tags)
 		{
 			this->merge_genes(umig_cells_counts);
 
@@ -183,76 +167,22 @@ namespace Estimation
 		cb_reassigned_to[target_cell_id].insert(k->first); // reassign to the new cell
 	}
 
-	void CellsDataContainer::parse_bam_files(const std::vector<std::string> &bams, s_i_hash_t &cells_ids,
-											s_ii_hash_t &umig_cells_counts)
+	int CellsDataContainer::add_record(const string &cell_barcode, const string &umi, const string &gene, s_i_hash_t &cells_ids)
 	{
-//		Tools::RefGenesContainer genes_container("/home/victor/Study/InDrop/Data/mouse_genes.gtf");
-		using namespace BamTools;
-		L_TRACE << "Start reading bam files";
-
-		BamMultiReader reader;
-		if (!reader.Open(bams))
-			throw std::runtime_error("Could not open BAM files");
-
-		BamAlignment alignment;
-		long total_reads = 0, exonic_reads = 0, new_ex_reads = 0;
-		while (reader.GetNextAlignment(alignment))
-		{
-			total_reads++;
-			if (total_reads % 1000000 == 0)
-			{
-				L_TRACE << "Total " << total_reads << " reads processed";
-			}
-
-			if (alignment.Length < this->_read_prefix_length)
-			{
-				L_ERR << "WARNING: read is shorter than read_prefix_length. total_reads=" << total_reads << endl;
-				continue;
-			}
-
-			string chr_name = reader.GetReferenceData()[alignment.RefID].RefName;
-
-			string cell_barcode, umi;
-			if (!this->parse_read_name(alignment.Name, cell_barcode, umi))
-				continue;
-
-			std::string gene;
-			alignment.GetTag("GE", gene);
-//			std::string test_gene = genes_container.get_gene_info(chr_name, alignment.Position, alignment.Position + alignment.Length).id();
-
-			if (gene == "")
-			{
-				this->_stats.inc_cell_chr_umi(chr_name, cell_barcode, Stats::NON_EXONE);
-				continue;
-			}
-
-
-			L_DEBUG << alignment.Name << " cell:" << cell_barcode << " UMI:" << umi << " prefix:"
-					<< alignment.QueryBases.substr(this->_read_prefix_length) << "\tXF:" << gene;
-
-			pair<s_i_hash_t::iterator, bool> res = cells_ids.emplace(cell_barcode, this->_cells_genes.size());
-			if (res.second)
-			{ // new cb
-				this->_cells_genes.push_back(genes_t());
-				this->_cells_names.push_back(cell_barcode);
-			}
-			int cell_id = res.first->second;
-			this->_cells_genes[cell_id][gene][umi]++;
-			string umig = umi + gene; // +iseq
-			umig_cells_counts[umig][cell_id]++;
-
-			exonic_reads++;
-			this->_stats.inc(Stats::READS_BY_UMIG, cell_barcode + "_" + umig);
-			this->_stats.inc(Stats::READS_BY_CB, cell_barcode);
-			this->_stats.inc_cell_chr_umi(chr_name, cell_barcode, Stats::EXONE);
-
-			L_DEBUG << "CB/UMI=" << this->_cells_genes[cell_id][gene][umi] << " gene=" <<
-					this->_cells_genes[cell_id][gene].size()
-					<< " CB=" << this->_cells_genes[cell_id].size() << " UMIg=" << umig_cells_counts[umig].size();
+		pair<s_i_hash_t::iterator, bool> res = cells_ids.emplace(cell_barcode, this->_cells_genes.size());
+		if (res.second)
+		{ // new cb
+			this->_cells_genes.push_back(genes_t());
+			this->_cells_names.push_back(cell_barcode);
 		}
+		int cell_id = res.first->second;
+		this->_cells_genes[cell_id][gene][umi]++;
 
-		L_TRACE << "Done (" << total_reads << " total reads; " << exonic_reads << " exonic reads; "
-				<< this->_cells_genes.size() << " cell barcodes)";
+		L_DEBUG << "CB/UMI=" << this->_cells_genes[cell_id][gene][umi] << " gene=" <<
+				this->_cells_genes[cell_id][gene].size()
+				<< " CB=" << this->_cells_genes[cell_id].size();
+
+		return cell_id;
 	}
 
 	CellsDataContainer::i_counter_t CellsDataContainer::count_cells_genes(bool logs) const
@@ -282,44 +212,6 @@ namespace Estimation
 		return cells_genes_counts;
 	}
 
-	bool CellsDataContainer::parse_read_name(const std::string &read_name, std::string &cell_barcode, std::string &umi) const
-	{
-		Tools::ReadsParameters params;
-
-		if (this->_use_names_map)
-		{
-			auto iter = this->_reads_params.find("@" + read_name);
-			if (iter == this->_reads_params.end())
-			{
-				L_ERR << "WARNING: can't find read_name in map: " << read_name;
-				return false;
-			}
-
-			params = iter->second;
-			if (params.is_empty())
-			{
-				L_ERR << "WARNING: empty parameters for read_name: " << read_name;
-				return false;
-			}
-		}
-		else
-		{
-			try
-			{
-				params = Tools::ReadsParameters(read_name);
-			}
-			catch (std::runtime_error &error)
-			{
-				L_ERR << error.what();
-				return false;
-			}
-		}
-
-		cell_barcode = params.cell_barcode();
-		umi = params.umi_barcode();
-		return true;
-	}
-
 	string CellsDataContainer::get_cb_count_top_verbose(const i_counter_t &cells_genes_counts) const
 	{
 		stringstream ss;
@@ -340,7 +232,12 @@ namespace Estimation
 		return ss.str();
 	}
 
-	const Stats &CellsDataContainer::stats() const
+	Stats& CellsDataContainer::stats()
+	{
+		return this->_stats;
+	}
+
+	const Stats& CellsDataContainer::stats() const
 	{
 		return this->_stats;
 	}

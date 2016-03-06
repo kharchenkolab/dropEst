@@ -1,7 +1,8 @@
 #include "Estimator.h"
 
-#include "Tools/Logs.h"
+#include "BamProcessor.h"
 #include "IndropResults.h"
+#include "Tools/Logs.h"
 
 #include <fstream>
 #include <iostream>
@@ -35,13 +36,13 @@ namespace Estimation
 		}
 	}
 
-	IndropResult Estimator::get_results(const names_t &files, bool merge_tags, bool not_filtered,
-										const std::string &reads_params_name)
+	IndropResult Estimator::get_results(const names_t &files, bool merge_tags, bool not_filtered, bool bam_output,
+										const std::string &reads_params_name, const std::string &gtf_filename)
 	{
-		CellsDataContainer container(this->read_prefix_length, this->min_merge_fraction, this->min_genes_before_merge,
-		                             this->min_genes_after_merge, this->max_merge_edit_distance, Estimator::top_print_size,
-		                             reads_params_name);
-		container.init(files, merge_tags);
+		CellsDataContainer container(this->min_merge_fraction, this->min_genes_before_merge, merge_tags,
+		                             this->min_genes_after_merge, this->max_merge_edit_distance, Estimator::top_print_size);
+		BamProcessor bam_processor(this->read_prefix_length, reads_params_name, gtf_filename);
+		bam_processor.parse_bam_files(files, bam_output, container);
 
 		ids_t filtered_cells = container.filtered_cells();
 

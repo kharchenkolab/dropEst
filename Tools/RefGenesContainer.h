@@ -79,6 +79,7 @@ namespace Tools
 		static GeneInfo accumulate_genes(genes_set genes);
 
 	public:
+		RefGenesContainer() = default;
 		RefGenesContainer(const std::string &gtf_filename);
 		GeneInfo get_gene_info(const std::string &chr_name, pos_t start_pos, pos_t end_pos) const;
 

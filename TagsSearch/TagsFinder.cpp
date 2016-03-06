@@ -8,7 +8,7 @@
 #include "FilesProcessor.h"
 #include "SpacerFinder.h"
 #include "Tools/Logs.h"
-#include "Tools/ReadsParameters.h"
+#include "Tools/ReadParameters.h"
 
 using namespace std;
 
@@ -128,31 +128,35 @@ namespace TagsSearch
 		long total_reads_read = 1;
 		Tools::reads_params_map_t reads_params;
 
-		string r1_line2, r2_line1, r2_line2, r2_line3, r2_line4;
-		while (TagsFinder::read_blocks(files_processor, total_reads_read, r1_line2, r2_line1, r2_line2, r2_line3, r2_line4))
+		string r1_seq, r2_id, r2_seq, r2_description, r2_quality_str;
+		while (TagsFinder::read_blocks(files_processor, total_reads_read, r1_seq, r2_id, r2_seq, r2_description,
+									   r2_quality_str))
 		{
 			if (total_reads_read % 1000000 == 0)
 			{
 				L_TRACE << "Total " << total_reads_read << " read";
 			}
 
-			Tools::ReadsParameters params = this->process_lines(total_reads_read++, r1_line2, r2_line2, r2_line3, r2_line4);
+			Tools::ReadParameters params = this->fill_parameters(total_reads_read, r1_seq, r2_id, r2_seq,
+																 r2_description, r2_quality_str);
+
+			++total_reads_read;
 			if (params.is_empty())
 				continue;
 
 			string text;
 			if (save_reads_names)
 			{
-				text = r2_line1;
-//				reads_params[r2_line1] = params;
-				reads_params.emplace(r2_line1, params);
+				std::string new_id = std::to_string(total_reads_read);
+				text = "@" + new_id;
+				reads_params.emplace(new_id, params);
 			}
 			else
 			{
 				text = params.to_string();
 			}
 
-			text += "\n" + r2_line2 + "\n" + r2_line3 + "\n" + r2_line4 + "\n";
+			text += "\n" + r2_seq + "\n" + r2_description + "\n" + r2_quality_str + "\n";
 
 			bool new_file = files_processor.write(text);
 
@@ -183,16 +187,16 @@ namespace TagsSearch
 		return ss.str();
 	}
 
-	TagsFinder::len_t TagsFinder::get_trim_position(len_t spacer_pos, const string &r1_line, const string &r2_line)
+	TagsFinder::len_t TagsFinder::get_trim_position(len_t spacer_pos, const string &r1_seq, const string &r2_seq)
 	{
-		len_t r2_trim = r2_line.length();
+		len_t r2_trim = r2_seq.length();
 		// attempt 1: check for reverse complement of the UMI+second barcode, remove trailing As
 		// RC of UMI+second barcode (up to a length r1_rc_length - spacer_finder parameter)
-		string rcb = this->spacer_finder.parse_r1_rc(r1_line, spacer_pos);
+		string rcb = this->spacer_finder.parse_r1_rc(r1_seq, spacer_pos);
 		rcb = TagsFinder::reverse_complement(rcb);
 
 		L_DEBUG << "-- barcode RC: " << rcb;
-		len_t rc_pos = r2_line.find(rcb);
+		len_t rc_pos = r2_seq.find(rcb);
 		if (rc_pos != string::npos)
 		{
 			r2_trim = rc_pos;
@@ -202,7 +206,7 @@ namespace TagsSearch
 		else
 		{
 			// attempt 2: find polyA block
-			rc_pos = r2_line.find(this->poly_a);
+			rc_pos = r2_seq.find(this->poly_a);
 			if (rc_pos != -1)
 			{
 				r2_trim = rc_pos;
@@ -214,7 +218,7 @@ namespace TagsSearch
 		// attempt 3: trim trailing As
 		bool a_trim = false;
 		len_t skip_count = 0;
-		while (r2_trim > 0 && (r2_line.at(r2_trim - 1) == 'A' || r2_line.at(r2_trim - 1) == 'N'))
+		while (r2_trim > 0 && (r2_seq.at(r2_trim - 1) == 'A' || r2_seq.at(r2_trim - 1) == 'N'))
 		{
 			r2_trim--;
 			skip_count++;
@@ -225,53 +229,46 @@ namespace TagsSearch
 			this->trims_counter.inc(TrimsCounter::A_TRIM);
 		}
 
-		L_DEBUG << string(skip_count, '-') << "   trimming " << (r2_line.length() - r2_trim);
+		L_DEBUG << string(skip_count, '-') << "   trimming " << (r2_seq.length() - r2_trim);
 
 		return r2_trim;
 	}
 
-	Tools::ReadsParameters TagsFinder::process_lines(long total_reads_read, const string &r1_line2, string &r2_line2,
-									 const string &r2_line3, string &r2_line4)
+	Tools::ReadParameters TagsFinder::fill_parameters(long total_reads_read, const string &r1_seq, const string &r2_id,
+													  string &r2_seq, const string &r2_description, string &r2_quality_str)
 	{
-		L_DEBUG << r1_line2 << ":";
+		L_DEBUG << r1_seq << ":";
 
-		SpacerFinder::len_t spacer_pos = this->spacer_finder.find_spacer(r1_line2);
+		SpacerFinder::len_t spacer_pos = this->spacer_finder.find_spacer(r1_seq);
 		if (spacer_pos == SpacerFinder::ERR_CODE)
-			return Tools::ReadsParameters();
+			return Tools::ReadParameters();
 
-		string cell_barcode = this->spacer_finder.parse_cell_barcode(r1_line2, spacer_pos);
+		string cell_barcode = this->spacer_finder.parse_cell_barcode(r1_seq, spacer_pos);
 		L_DEBUG << "-- cell barcode: " << cell_barcode << " (" << cell_barcode.length() << "nt)";
 
-		string umi_barcode = this->spacer_finder.parse_umi_barcode(r1_line2, spacer_pos);
+		string umi_barcode = this->spacer_finder.parse_umi_barcode(r1_seq, spacer_pos);
 
 		L_DEBUG << "-- umi barcode: " << umi_barcode;
-		L_DEBUG << "R2: " << r2_line2;
+		L_DEBUG << "R2: " << r2_seq;
 
-		// clean up R2
-		len_t r2_trim = this->get_trim_position(spacer_pos, r1_line2, r2_line2);
+		len_t r2_trim = this->get_trim_position(spacer_pos, r1_seq, r2_seq);
 
-		if (r2_line2.length() != r2_trim)
+		if (r2_seq.length() != r2_trim)
 		{
-			r2_line2 = r2_line2.substr(0, r2_trim);
-			r2_line4 = r2_line4.substr(0, r2_trim);
+			r2_seq = r2_seq.substr(0, r2_trim);
+			r2_quality_str = r2_quality_str.substr(0, r2_trim);
 		}
 		else
 		{
 			this->trims_counter.inc(TrimsCounter::NO_TRIM);
 		}
 
-		L_DEBUG << " trimmed:" << r2_line2;
+		L_DEBUG << " trimmed:" << r2_seq;
 
-		// output
 		if (r2_trim > this->min_align_len)
-		{
-			ostringstream text;
-			text << '@' << total_reads_read << '!' << cell_barcode << '#' << umi_barcode << "\n";
-			text << r2_line2 << "\n" << r2_line3 << "\n" << r2_line4 << endl;
-			return Tools::ReadsParameters(total_reads_read, cell_barcode, umi_barcode);
-		}
+			return Tools::ReadParameters(total_reads_read, r2_id, cell_barcode, umi_barcode);
 
-		return Tools::ReadsParameters();
+		return Tools::ReadParameters();
 	}
 
 }

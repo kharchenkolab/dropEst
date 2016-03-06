@@ -16,7 +16,7 @@ namespace TestTagsSearch
 
 namespace Tools
 {
-	class ReadsParameters;
+	class ReadParameters;
 }
 
 namespace TagsSearch
@@ -46,9 +46,11 @@ namespace TagsSearch
 								std::string &out_2_line_3, std::string &out_2_line_4);
 
 		std::string results_to_string(long total_reads_read) const;
-		len_t get_trim_position(len_t spacer_pos, const std::string &r1_line, const std::string &r2_line);
-		Tools::ReadsParameters process_lines(long total_reads_read, const std::string &r1_line2,
-								  std::string &r2_line2, const std::string &r2_line3, std::string &r2_line4);
+		len_t get_trim_position(len_t spacer_pos, const std::string &r1_seq, const std::string &r2_seq);
+		Tools::ReadParameters fill_parameters(long total_reads_read, const std::string &r1_seq,
+											  const std::string &r2_id,
+											  std::string &r2_seq, const std::string &r2_description,
+											  std::string &r2_quality_str);
 
 	public:
 		TagsFinder()

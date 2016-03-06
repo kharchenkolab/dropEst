@@ -7,8 +7,6 @@
 #include <boost/unordered_set.hpp>
 #include <vector>
 
-#include <Tools/ReadsParameters.h>
-
 namespace TestEstimator
 {
 	struct testMerge;
@@ -23,7 +21,6 @@ namespace Estimation
 	private:
 		typedef boost::unordered_set<size_t> i_set_t;
 		typedef boost::unordered_map<int, int> i_i_hash_t;
-		typedef boost::unordered_map<std::string, i_i_hash_t> s_ii_hash_t;
 		typedef boost::unordered_map<size_t, i_set_t> ISIHM;
 
 	public:
@@ -43,6 +40,7 @@ namespace Estimation
 		};
 
 		typedef boost::unordered_map<std::string, int> s_i_hash_t;
+		typedef boost::unordered_map<std::string, i_i_hash_t> s_ii_hash_t;
 		typedef boost::unordered_map<std::string, s_i_hash_t> genes_t;
 
 		typedef std::vector<IndexedCount> i_counter_t;
@@ -51,15 +49,12 @@ namespace Estimation
 		typedef std::vector<std::string> names_t;
 
 	private:
+		const bool _merge_tags;
 		const size_t _top_print_size;
 		const double _min_merge_fraction;
 		const int _min_genes_before_merge;
 		const int _min_genes_after_merge;
 		const int _max_merge_edit_distance;
-		const size_t _read_prefix_length;
-
-		const bool _use_names_map;
-		Tools::reads_params_map_t _reads_params;
 
 		std::vector<genes_t> _cells_genes; //cell_id -> gen_name -> umi -> count
 		names_t _cells_names;
@@ -70,10 +65,6 @@ namespace Estimation
 		Stats _stats;
 
 	private:
-		void parse_bam_files(const std::vector<std::string> &bams, s_i_hash_t &cells_ids, s_ii_hash_t &umig_cells_counts);
-
-		bool parse_read_name(const std::string &read_name, std::string &cell_barcode, std::string &umi) const;
-
 		void merge_genes(const s_ii_hash_t &umig_cbs);
 
 		bool merge(int top_cell_ind, double top_cell_fraction, const IndexedCount &gene_count,
@@ -89,15 +80,17 @@ namespace Estimation
 		std::string get_cb_count_top_verbose(const i_counter_t &cells_genes_counts) const;
 
 	public:
-		CellsDataContainer(size_t read_prefix_length, double min_merge_fraction, int min_genes_before_merge,
-		                   int min_genes_after_merge, int max_merge_edit_distance, size_t top_print_size,
-		                   const std::string &reads_params_name);
+		CellsDataContainer(double min_merge_fraction, int min_genes_before_merge, bool merge_tags,
+						   int min_genes_after_merge, int max_merge_edit_distance, size_t top_print_size);
 
-		void init(const std::vector<std::string> &files, bool merge_tags);
+		void init_filled(const CellsDataContainer::s_ii_hash_t &umig_cells_counts);
+
+		int add_record(const std::string &cell_barcode, const std::string &umi, const std::string &gene, s_i_hash_t &cells_ids);
+
+		Stats &stats();
+		const Stats &stats() const;
 
 		const ids_t &filtered_cells() const;
-
-		const Stats &stats() const;
 
 		const i_counter_t &cells_genes_counts_sorted() const;
 

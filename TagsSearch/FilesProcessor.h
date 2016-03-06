@@ -7,7 +7,7 @@
 #include <boost/iostreams/copy.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
 
-#include <Tools/ReadsParameters.h>
+#include "Tools/ReadParameters.h"
 
 namespace TagsSearch
 {

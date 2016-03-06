@@ -40,8 +40,8 @@ namespace Estimation
 	public:
 		Estimator(const boost::property_tree::ptree &config);
 
-		IndropResult get_results(const names_t &files, bool merge_tags, bool not_filtered,
-								 const std::string &reads_params_name);
+		IndropResult get_results(const names_t &files, bool merge_tags, bool not_filtered, bool bam_output,
+								 const std::string &reads_params_name, const std::string &gtf_filename);
 
 	private:
 		names_t get_unmerged_names(const CellsDataContainer &genes_container, const ids_t &unmerged_cells) const;

@@ -19,19 +19,17 @@ using namespace Estimation;
 
 struct Params
 {
-	bool cant_parse;
-	bool verbose;
-	bool text_output;
-	bool merge_tags;
-	bool not_filtered;
-	string output_name;
-	string config_file_name;
-	string log_prefix;
-	string reads_params_file;
-
-	Params() : cant_parse(false), verbose(false), text_output(false), merge_tags(false), not_filtered(false)
-			, output_name(""), config_file_name(""), log_prefix(""), reads_params_file("")
-	{}
+	bool bam_output = false;
+	bool cant_parse = false;
+	bool verbose = false;
+	bool text_output = false;
+	bool merge_tags = false;
+	bool not_filtered = false;
+	string output_name = "";
+	string config_file_name = "";
+	string log_prefix = "";
+	string reads_params_file = "";
+	string gtf_filename = "";
 };
 
 static void usage()
@@ -39,16 +37,20 @@ static void usage()
 	cerr << "\tindropest: estimate molecular counts per cell" << endl;
 	cerr << "SYNOPSIS\n";
 	cerr <<
-	"\tindropest [-t, --text-output] [-m|--merge-cell-tags] [-v|--verbose] [-n | --not-filtered] "
-	"[-l, --log-prefix logs_name] [-r, --reads-params filename] -c config.xml file1.bam [file2.bam ...]" << endl;
+	"\tindropest [-t, --text-output] [-m|--merge-cell-tags] [-v|--verbose] [-n | --not-filtered] [-g | --gtf filename]"
+	"[-l, --log-prefix logs_name] [-r, --reads-params filename] -c config.xml file1.bam [file2.bam ...] [-b | --bam]"
+	<< endl;
 	cerr << "OPTIONS:\n";
+	cerr << "\t-b, --bam-out: print corrected bam files" << endl;
 	cerr << "\t-c, --config filename: xml file with estimation parameters" << endl;
+	cerr << "\t-g, --gtf filename: gtf file with genes annotations" << endl;
 	cerr << "\t-l, --log-prefix : logs prefix" << endl;
 	cerr << "\t-m, --merge-cell-tags : merge linked cell tags" << endl;
 	cerr << "\t-n, --not-filtered : print data for all cells" << endl;
 	cerr << "\t-o, --output-file filename : output file name" << endl;
 	cerr << "\t-r, --reads-params filename: file with serialized params from tags search step" << endl;
 	cerr << "\t-t, --text-output : write out text matrix" << endl;
+	cerr << "\t-v, --verbose : verbose mode" << endl;
 }
 
 static Params parse_cmd_params(int argc, char **argv)
@@ -58,20 +60,25 @@ static Params parse_cmd_params(int argc, char **argv)
 	int option_index = 0;
 	int c;
 	static struct option long_options[] = {
+			{"bam-output",     	no_argument, 	   0, 'b'},
 			{"config",     		required_argument, 0, 'c'},
+			{"gtf",     		required_argument, 0, 'g'},
 			{"log-prefix",		required_argument, 0, 'l'},
 			{"merge-cell-tags", no_argument,       0, 'm'},
 			{"not-filtered",	no_argument, 	   0, 'n'},
 			{"output-file",     required_argument, 0, 'o'},
-			{"reads-params",     required_argument, 0, 'o'},
+			{"reads-params",     required_argument, 0, 'r'},
 			{"text-output",     no_argument,       0, 't'},
 			{"verbose",         no_argument,       0, 'v'},
 			{0, 0,                                 0, 0}
 	};
-	while ((c = getopt_long(argc, argv, "vtmno:c:l:r:", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "bvtmno:c:l:r:g:", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
+			case 'b':
+				params.bam_output = true;
+				break;
 			case 'v' :
 				params.verbose = true;
 				break;
@@ -95,6 +102,9 @@ static Params parse_cmd_params(int argc, char **argv)
 				break;
 			case 'l' :
 				params.log_prefix = string(optarg);
+				break;
+			case 'g' :
+				params.gtf_filename = string(optarg);
 				break;
 			default:
 				cerr << "indropest: unknown arguments passed" << endl;
@@ -162,7 +172,8 @@ int main(int argc, char **argv)
 	{
 		L_TRACE << "Run: " << asctime(localtime(&ctt));
 		Estimator estimator(pt.get_child("config.Estimation"));
-		IndropResult results = estimator.get_results(files, params.merge_tags, params.not_filtered, params.reads_params_file);
+		IndropResult results = estimator.get_results(files, params.merge_tags, params.not_filtered, params.bam_output,
+													 params.reads_params_file, params.gtf_filename);
 		
 		ctt = time(0);
 		L_TRACE << "Done: " << asctime(localtime(&ctt));

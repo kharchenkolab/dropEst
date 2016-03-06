@@ -1,12 +1,14 @@
-#include "ReadsParameters.h"
+#include "ReadParameters.h"
 
 #include <sstream>
 #include <string>
 
 namespace Tools
 {
-	ReadsParameters::ReadsParameters(long total_reads_read, const std::string &cell_barcode, const std::string &umi_barcode)
-		: _total_reads_read(total_reads_read)
+	ReadParameters::ReadParameters(long total_reads_read, const std::string &read_name, const std::string &cell_barcode,
+								   const std::string &umi_barcode)
+		: _read_number(total_reads_read)
+		, _read_name(read_name)
 		, _cell_barcode(cell_barcode)
 		, _umi_barcode(umi_barcode)
 		, _is_empty(false)
@@ -15,7 +17,7 @@ namespace Tools
 			throw std::runtime_error("Bad reads parameters: " + cell_barcode + umi_barcode);
 	}
 
-	ReadsParameters::ReadsParameters(const std::string &encoded_params)
+	ReadParameters::ReadParameters(const std::string &encoded_params)
 	{
 		size_t umi_start_pos = encoded_params.rfind('#');
 		if (umi_start_pos == std::string::npos)
@@ -25,49 +27,57 @@ namespace Tools
 		if (cell_barcode_start_pos == std::string::npos)
 			throw std::runtime_error("WARNING: unable to parse out cell tag in: " + encoded_params);
 
-		this->_total_reads_read = atol(encoded_params.substr(0, umi_start_pos).c_str());
+		this->_read_number = atol(encoded_params.substr(0, umi_start_pos).c_str());
+		this->_read_name = encoded_params;
 		this->_cell_barcode = encoded_params.substr(cell_barcode_start_pos + 1, umi_start_pos - cell_barcode_start_pos - 1);
 		this->_umi_barcode = encoded_params.substr(umi_start_pos + 1);
 	}
 
-	ReadsParameters::ReadsParameters()
-		: _total_reads_read(0)
+	ReadParameters::ReadParameters()
+		: _read_number(0)
+		, _read_name("")
 		, _cell_barcode("")
 		, _umi_barcode("")
 		, _is_empty(true)
 	{}
 
-	ReadsParameters::ReadsParameters(const ReadsParameters &source)
-		: _total_reads_read(source._total_reads_read)
+	ReadParameters::ReadParameters(const ReadParameters &source)
+		: _read_number(source._read_number)
+		, _read_name(source._read_name)
 		, _cell_barcode(source._cell_barcode)
 		, _umi_barcode(source._umi_barcode)
 		, _is_empty(source._is_empty)
 	{}
 
-	long ReadsParameters::total_reads_read()
+	long ReadParameters::read_number() const
 	{
-		return this->_total_reads_read;
+		return this->_read_number;
 	}
 
-	std::string ReadsParameters::cell_barcode()
+	const std::string& ReadParameters::read_name() const
+	{
+		return this->_read_name;
+	}
+
+	const std::string& ReadParameters::cell_barcode() const
 	{
 		return this->_cell_barcode;
 	}
 
-	std::string ReadsParameters::umi_barcode()
+	const std::string& ReadParameters::umi_barcode() const
 	{
 		return this->_umi_barcode;
 	}
 
-	bool ReadsParameters::is_empty()
+	bool ReadParameters::is_empty() const
 	{
 		return this->_is_empty;
 	}
 
-	std::string ReadsParameters::to_string()
+	std::string ReadParameters::to_string() const
 	{
 		std::ostringstream text;
-		text << '@' << this->_total_reads_read << '!' << this->_cell_barcode << '#' << this->_umi_barcode;
+		text << '@' << this->_read_number << '!' << this->_cell_barcode << '#' << this->_umi_barcode;
 		return text.str();
 	}
 }
