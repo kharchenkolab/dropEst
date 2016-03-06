@@ -7,7 +7,6 @@
 #include <boost/unordered_set.hpp>
 #include <vector>
 
-#include <bam.h>
 #include <Tools/ReadsParameters.h>
 
 namespace TestEstimator
@@ -32,8 +31,7 @@ namespace Estimation
 		{
 			IndexedCount(size_t index, size_t count)
 					: index(index), count(count)
-			{
-			}
+			{}
 
 			size_t index;
 			size_t count;
@@ -72,10 +70,9 @@ namespace Estimation
 		Stats _stats;
 
 	private:
-		void parse_bam_file(const std::string &bam_file_name, s_i_hash_t &cells_ids, s_ii_hash_t &umig_cbs);
+		void parse_bam_files(const std::vector<std::string> &bams, s_i_hash_t &cells_ids, s_ii_hash_t &umig_cells_counts);
 
-		bool parse_read_name(const bam1_t *align_info, std::string &read_name, std::string &cell_barcode,
-							 std::string &umi) const;
+		bool parse_read_name(const std::string &read_name, std::string &cell_barcode, std::string &umi) const;
 
 		void merge_genes(const s_ii_hash_t &umig_cbs);
 
@@ -89,12 +86,9 @@ namespace Estimation
 
 		i_counter_t count_cells_genes(bool logs = true) const;
 
-		std::string get_iseq_verbose(bam1_t *align_info) const;
-
 		std::string get_cb_count_top_verbose(const i_counter_t &cells_genes_counts) const;
 
 	public:
-
 		CellsDataContainer(size_t read_prefix_length, double min_merge_fraction, int min_genes_before_merge,
 		                   int min_genes_after_merge, int max_merge_edit_distance, size_t top_print_size,
 		                   const std::string &reads_params_name);

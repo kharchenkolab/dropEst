@@ -12,6 +12,11 @@
 
 namespace Tools
 {
+	RefGenesContainer::RefGenesContainer(const std::string &gtf_filename)
+	{
+		this->init_from_gtf(gtf_filename);
+	}
+
 	void RefGenesContainer::init_from_gtf(const std::string &gtf_filename)
 	{
 		std::vector<std::unordered_map<std::string, genes_list_t>> genes_groups;

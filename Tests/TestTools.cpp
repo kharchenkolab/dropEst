@@ -72,9 +72,8 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 
 	BOOST_FIXTURE_TEST_CASE(testInitGtf, Fixture)
 	{
-		RefGenesContainer genes_container;
 		const std::string gtf_filename = PROJ_DATA_PATH + (std::string)("/gtf_test.gtf");
-		genes_container.init_from_gtf(gtf_filename);
+		RefGenesContainer genes_container(gtf_filename);
 
 		BOOST_CHECK_EQUAL(genes_container._genes_intervals.size(), 3);
 		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][0].start_pos, 11874);
@@ -112,9 +111,8 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 
 	BOOST_FIXTURE_TEST_CASE(testGenesNames, Fixture)
 	{
-		RefGenesContainer genes_container;
 		const std::string gtf_filename = PROJ_DATA_PATH + (std::string)("/gtf_test.gtf");
-		genes_container.init_from_gtf(gtf_filename);
+		RefGenesContainer genes_container(gtf_filename);
 
 		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 11874, 12627).id(), "DDX11L1");
 		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 17106, 17742).id(), "WASH7P");
@@ -130,11 +128,10 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 //	BOOST_FIXTURE_TEST_CASE(testGtfPerformance, Fixture) //Uncomment to print performance
 //	{
 //		init_test_logs(boost::log::trivial::info);
-//		RefGenesContainer genes_container;
 //
 //		time_t t0 = clock();
 //		std::cout << "Start init" << std::endl;
-//		genes_container.init_from_gtf("/home/victor/Study/InDrop/Data/genes.gtf");
+//		RefGenesContainer genes_container("/home/victor/Study/InDrop/Data/genes.gtf");
 //		double t_len = (clock() - t0) / (CLOCKS_PER_SEC / 1000.0);
 //		std::cout << "End init: " << t_len << "ms" << std::endl;
 //

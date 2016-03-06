@@ -73,12 +73,13 @@ namespace Tools
 
 
 	private:
+		void init_from_gtf(const std::string &gtf_filename);
 		static void add_gene(GeneInfo &gene, genes_list_t &genes);
 		static GeneInfo parse_gtf_record(const std::string &record);
 		static GeneInfo accumulate_genes(genes_set genes);
 
 	public:
-		void init_from_gtf(const std::string &gtf_filename);
+		RefGenesContainer(const std::string &gtf_filename);
 		GeneInfo get_gene_info(const std::string &chr_name, pos_t start_pos, pos_t end_pos) const;
 
 		intervals_vec_t filter_genes(const genes_vec_t &genes);

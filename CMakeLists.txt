@@ -4,14 +4,14 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMake")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-deprecated -m64 -DBOOST_LOG_DYN_LINK")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wno-deprecated -m64 -DBOOST_LOG_DYN_LINK -std=c++11")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -g3 -Wno-deprecated -m64 -DBOOST_LOG_DYN_LINK -std=c++11")
+add_definitions(-DPROJ_DATA_PATH=\"${PROJECT_SOURCE_DIR}/data\")
 
 set(BOOST_ROOT "/home/victor/libs/boost_1_58_0/")
 find_package(Boost 1.54.0 COMPONENTS unit_test_framework serialization thread system log iostreams REQUIRED)
 find_package (Threads REQUIRED)
 find_package (ZLIB REQUIRED)
 
-#set(BAM_ROOT "/opt/samtools-1.2")
-find_package (Bam REQUIRED)
+find_package (BamTools REQUIRED)
 
 #set(R_ROOT "/home/vp76/local/lib64/R")
 find_package (R)
@@ -22,7 +22,7 @@ if (R_FOUND)
     set(EST_LIBRARIES ${R_LIBRARIES})
 endif()
 
-set(INCLUDE_DIRS ${Boost_INCLUDE_DIR} ${PROJECT_SOURCE_DIR} ${ZLIB_INCLUDE_DIRS} ${BAM_INCLUDE_DIRS} ${INCLUDE_DIRS})
+set(INCLUDE_DIRS ${Boost_INCLUDE_DIR} ${PROJECT_SOURCE_DIR} ${ZLIB_INCLUDE_DIRS} ${BAMTOOLS_INCLUDE_DIRS} ${INCLUDE_DIRS})
 include_directories(${INCLUDE_DIRS})
 
 FILE(GLOB DropToolsSources Tools/*.cpp)
@@ -36,7 +36,7 @@ add_library(Estimation ${EstimationSources})
 target_link_libraries(Estimation DropTools)
 
 set(LIBRARIES DropTools ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-set(EST_LIBRARIES ${EST_LIBRARIES} ${BAM_LIBRARIES} ${ZLIB_LIBRARIES} ${LIBRARIES})
+set(EST_LIBRARIES ${EST_LIBRARIES} ${BAMTOOLS_LIBRARIES} ${ZLIB_LIBRARIES} ${LIBRARIES})
 
 add_executable(indroptag indroptag.cpp)
 target_link_libraries(indroptag TagsSearch ${LIBRARIES})
@@ -56,3 +56,9 @@ set (TEST_EST TestEstimation)
 add_executable (${TEST_EST} ${PROJECT_SOURCE_DIR}/Tests/TestEstimation.cpp)
 target_link_libraries (${TEST_EST} Estimation ${EST_LIBRARIES})
 add_test (${TEST_EST} ${TEST_EST})
+
+
+set (TEST_TOOLS TestTools)
+add_executable (${TEST_TOOLS} ${PROJECT_SOURCE_DIR}/Tests/TestTools.cpp)
+target_link_libraries (${TEST_TOOLS} DropTools ${LIBRARIES})
+add_test (${TEST_TOOLS} ${TEST_TOOLS})
