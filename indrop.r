@@ -56,9 +56,18 @@ read.indropest <- function(fname) {
 ##' @param n.cells max number of cells to show in the cell number estimate analysis
 ##' @param merge.threshold maximum merge probability threshold after which cell barcodes are considered false (default p=0.08)
 basic.plots <- function(x,n.cells=min(ncol(x$cm)*2,length(x$umig.cov)),merge.threshold=0.08) {
-  df <- data.frame(rank=c(1:min(length(x$mergen),n.cells)),s=(sign(rev(x$mergen))==-1)[1:min(length(x$mergen),n.cells)]);
+  # start with the raw output - NOTE: this should probably be made into a matrix in the C code
+  cm <- t(matrix(x$cm,nrow=length(x$cell.names)))
+  rownames(cm) <- x$gene.names;
+  colnames(cm) <- x$cell.names;
+  
+  df <- data.frame(rank=c(1:min(length(x$merge.n),n.cells)),s=(sign(rev(x$merge.n))==-1)[1:min(length(x$merge.n),n.cells)]);
   m <- glm(cbind(s==1,s==0)~rank,family=binomial(logit),data=df)
-  ti <- which(m$fitted>merge.threshold)[1]
+  if(max(m$fitted<merge.threshold)) {
+    ti <- length(m$fitted)
+  } else {
+    ti <- which(m$fitted>merge.threshold)[1];
+  }
 
   #l <- layout(matrix(c(seq(1,5),5),nrow=3,byrow=T));
   #par(mar = c(3.5,3.5,1.0,1.0), mgp = c(2,0.65,0),cex=1)
@@ -72,10 +81,9 @@ basic.plots <- function(x,n.cells=min(ncol(x$cm)*2,length(x$umig.cov)),merge.thr
   #barplot(x$exonic.chr,las=2,main="exonic reads")
   #barplot(x$nonexonic.chr,las=2,main="non-exonic reads")
   
-  #par(mar = c(4,5,1.0,1.0), mgp = c(2,0.65,0),cex=1)
-  barplot(rbind(x$nonexonic.chr,x$exonic.chr[names(x$nonexonic.chr)]),col=c("gray50","blue"),las=3,ylab="reads")
+  barplot(rbind(colSums(x$nonex_cells_chr_counts),colSums(x$ex_cells_chr_counts)),col=c("gray50","blue"),las=3,ylab="reads")
   legend(x="top",fill=c("gray50","blue"),legend=c("non-exonic","exonic"),horiz=T,bty="n")
-
+  
   smoothScatter(df$s,xlab="cell rank",ylab="merge p",bandwidth=0.01,ylim=c(0,1))
   lines(df$rank,m$fitted,col=2)
   abline(v=ti,lty=2,col=8)
