@@ -1,16 +1,21 @@
 cmake_minimum_required(VERSION 2.8)
+
+#set(CMAKE_CXX_COMPILER /opt/gcc/4.8.5/bin/g++)
+
 project(cp)
+
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMake")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-deprecated -m64 -DBOOST_LOG_DYN_LINK")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wno-deprecated -m64 -DBOOST_LOG_DYN_LINK -std=c++11")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -g3 -Wno-deprecated -m64 -DBOOST_LOG_DYN_LINK -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -gdwarf-2 -g3 -Wno-deprecated -m64 -DBOOST_LOG_DYN_LINK -std=c++11")
 add_definitions(-DPROJ_DATA_PATH=\"${PROJECT_SOURCE_DIR}/data\")
 
-set(BOOST_ROOT "/home/victor/libs/boost_1_58_0/")
+#set(BOOST_ROOT "/home/vp76/libs/boost_1_58_0/")
 find_package(Boost 1.54.0 COMPONENTS unit_test_framework serialization thread system log iostreams REQUIRED)
 find_package (Threads REQUIRED)
 find_package (ZLIB REQUIRED)
 
+#set(BAMTOOLS_ROOT "/opt/bamtools-2.2.3/")
 find_package (BamTools REQUIRED)
 
 #set(R_ROOT "/home/vp76/local/lib64/R")
