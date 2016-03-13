@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][8].genes.size(), 2);
 		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][9].genes.size(), 1);
 		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1].size(), 10);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[2].size(), 2);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals[2].size(), 3);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testGenesNames, Fixture)
@@ -128,6 +128,7 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 50000, 69793).id(), "OR4F5");
 		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 35277, 69793).id(), "");
 		BOOST_CHECK_NO_THROW(genes_container.get_gene_info("chr1", 35277, 105000));
+		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 34621, 35074).id(), "FAM138A,FAM138F");
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testOther, Fixture)

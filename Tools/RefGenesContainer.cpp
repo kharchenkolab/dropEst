@@ -103,6 +103,8 @@ namespace Tools
 
 	RefGenesContainer::intervals_vec_t RefGenesContainer::filter_genes(const genes_vec_t &genes)
 	{
+		const int min_interval_len = 5;
+
 		if (genes.empty())
 			return intervals_vec_t();
 
@@ -115,7 +117,7 @@ namespace Tools
 		for (auto const &event : events)
 		{
 			end_pos = event.first;
-			if (!cur_genes.empty() && start_pos != end_pos)
+			if (!cur_genes.empty() && end_pos - start_pos >= min_interval_len)
 			{
 				result.push_back(Interval{start_pos, end_pos, cur_genes});
 				this->save_gene_names(cur_genes);
