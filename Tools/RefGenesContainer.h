@@ -1,9 +1,13 @@
 #pragma once
 
+#include "GeneInfo.h"
+
 #include <list>
+#include <map>
 #include <set>
 #include <string>
 #include <vector>
+#include <unordered_set>
 
 namespace TestTools
 {
@@ -23,38 +27,6 @@ namespace Tools
 	public:
 		typedef unsigned long pos_t;
 
-		class GeneInfo
-		{
-			friend struct TestTools::testGtf;
-			friend struct TestTools::testGeneMerge;
-		public:
-			typedef unsigned int num_t;
-		private:
-			std::string _chr_name = "";
-			std::string _id = "";
-			pos_t _start_pos;
-			pos_t _end_pos;
-			num_t _chr_num = 0;
-
-		public:
-			GeneInfo() = default;
-			GeneInfo(const std::string &chr_name, std::string id, pos_t start_pos, pos_t end_pos);
-
-			std::string chr_name() const;
-			num_t chr_num() const;
-			std::string id() const;
-			pos_t start_pos() const;
-			pos_t end_pos() const;
-
-			bool is_valid() const;
-			void merge(const GeneInfo &other);
-			bool is_intercept(const GeneInfo &other) const;
-
-			bool operator<(const GeneInfo &other) const;
-
-			static num_t parse_chr_name(const std::string &chr_name);
-		};
-
 	private:
 		typedef std::set<GeneInfo> genes_set;
 		struct Interval
@@ -65,24 +37,30 @@ namespace Tools
 		};
 
 		typedef std::list<GeneInfo> genes_list_t;
+		typedef std::multimap<pos_t, const GeneInfo*> gene_event_t;
 		typedef std::vector<GeneInfo> genes_vec_t;
 		typedef std::vector<Interval> intervals_vec_t;
 
 	private:
 		std::vector<intervals_vec_t> _genes_intervals;
+		std::unordered_set<std::string> single_gene_names;
 
 
 	private:
 		void init_from_gtf(const std::string &gtf_filename);
 		static void add_gene(GeneInfo &gene, genes_list_t &genes);
 		static GeneInfo parse_gtf_record(const std::string &record);
-		static GeneInfo accumulate_genes(genes_set genes);
+		GeneInfo accumulate_genes(const genes_set &genes) const;
+
+		static gene_event_t genes_to_events(const genes_vec_t &genes);
+
+		intervals_vec_t filter_genes(const genes_vec_t &genes);
 
 	public:
 		RefGenesContainer() = default;
 		RefGenesContainer(const std::string &gtf_filename);
 		GeneInfo get_gene_info(const std::string &chr_name, pos_t start_pos, pos_t end_pos) const;
 
-		intervals_vec_t filter_genes(const genes_vec_t &genes);
+		void save_gene_names(const genes_set &genes_in_interval);
 	};
 }

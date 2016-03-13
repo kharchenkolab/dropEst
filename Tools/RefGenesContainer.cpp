@@ -1,5 +1,6 @@
 #include "RefGenesContainer.h"
 
+#include <Tools/GeneInfo.h>
 #include <Tools/Logs.h>
 
 #include <algorithm>
@@ -23,15 +24,12 @@ namespace Tools
 
 		std::string record;
 		std::ifstream gtf_in(gtf_filename);
-		time_t t_parse = 0, t_add = 0;
 		while (std::getline(gtf_in, record))
 		{
 			GeneInfo info;
 			try
 			{
-				time_t t0 = clock();
 				info = RefGenesContainer::parse_gtf_record(record);
-				t_parse += clock() - t0;
 			}
 			catch (std::runtime_error err)
 			{
@@ -41,13 +39,12 @@ namespace Tools
 
 			if (!info.is_valid())
 				continue;
-			time_t t1 = clock();
+
 			if (genes_groups.size() <= info.chr_num())
 			{
 				genes_groups.resize(info.chr_num() + 1);
 			}
 			RefGenesContainer::add_gene(info, genes_groups[info.chr_num()][info.id()]);
-			t_add += clock() - t1;
 		}
 
 
@@ -66,7 +63,7 @@ namespace Tools
 				std::move(gene_group.second.begin(), gene_group.second.end(), back_inserter);
 			}
 
-			this->_genes_intervals[chr_id] = RefGenesContainer::filter_genes(genes);
+			this->_genes_intervals[chr_id] = this->filter_genes(genes);
 		}
 	}
 
@@ -109,13 +106,9 @@ namespace Tools
 		if (genes.empty())
 			return intervals_vec_t();
 
+		auto events = RefGenesContainer::genes_to_events(genes);
+
 		intervals_vec_t result;
-		std::multimap<pos_t, const GeneInfo*> events;
-		for (auto const &gene : genes)
-		{
-			events.emplace(gene.start_pos(), &gene);
-			events.emplace(gene.end_pos(), &gene);
-		}
 
 		pos_t start_pos = 0, end_pos;
 		genes_set cur_genes;
@@ -125,6 +118,7 @@ namespace Tools
 			if (!cur_genes.empty() && start_pos != end_pos)
 			{
 				result.push_back(Interval{start_pos, end_pos, cur_genes});
+				this->save_gene_names(cur_genes);
 			}
 
 			if (event.second->start_pos() == event.first)
@@ -142,31 +136,41 @@ namespace Tools
 		return result;
 	}
 
-	RefGenesContainer::GeneInfo RefGenesContainer::accumulate_genes(RefGenesContainer::genes_set genes)
+	GeneInfo RefGenesContainer::accumulate_genes(const genes_set &genes) const
 	{
 		if (genes.empty())
 			return GeneInfo();
 
 		auto gene_it = genes.begin();
 		std::string id = gene_it->id();
+		if (genes.size() > 1 && this->single_gene_names.find(id) != this->single_gene_names.end())
+			return GeneInfo();
+
 		GeneInfo::num_t chr_num = gene_it->chr_num();
 		pos_t end_pos = gene_it->end_pos();
 		while (++gene_it != genes.end())
 		{
+			if (this->single_gene_names.find(gene_it->id()) != this->single_gene_names.end())
+				return GeneInfo();
+
 			id += "," + gene_it->id();
 
 			if (chr_num != gene_it->chr_num())
-			{
-				throw std::runtime_error("Can't use genes from different chromosomes: " + genes.begin()->chr_name() + ", " + gene_it->chr_name());
-			}
+				throw std::runtime_error("Can't use genes from different chromosomes: " + genes.begin()->chr_name() +
+						                         ", " + gene_it->chr_name());
+
 			end_pos = gene_it->end_pos();
 		}
 
 		return GeneInfo(genes.begin()->chr_name(), id, genes.begin()->start_pos(), end_pos);
 	}
 
-	RefGenesContainer::GeneInfo RefGenesContainer::get_gene_info(const std::string &chr_name, pos_t start_pos, pos_t end_pos) const
+	GeneInfo RefGenesContainer::get_gene_info(const std::string &chr_name, pos_t start_pos, pos_t end_pos) const
 	{
+		const double significant_part = 0.5;
+		if (end_pos < start_pos)
+			return GeneInfo();
+
 		GeneInfo::num_t chr_num = GeneInfo::parse_chr_name(chr_name);
 		const intervals_vec_t &current_intervals = this->_genes_intervals[chr_num];
 		auto intercept_it = std::lower_bound(current_intervals.begin(), current_intervals.end(), start_pos,
@@ -175,17 +179,28 @@ namespace Tools
 		if (intercept_it == current_intervals.end() || intercept_it->start_pos > end_pos)
 			return GeneInfo();
 
-		genes_set res_genes;
+		genes_set intercepted_genes;
 		while (intercept_it != current_intervals.end() && intercept_it->start_pos <= end_pos)
 		{
-			res_genes.insert(intercept_it->genes.begin(), intercept_it->genes.end());
+			intercepted_genes.insert(intercept_it->genes.begin(), intercept_it->genes.end());
 			++intercept_it;
+		}
+
+		genes_set res_genes;
+		pos_t read_len = end_pos - start_pos;
+		for (auto const &gene : intercepted_genes)
+		{
+			double intercept_len = std::min(gene.end_pos(), end_pos) - std::max(gene.start_pos(), start_pos);
+			if (intercept_len / gene.size() >= significant_part || intercept_len / read_len >= significant_part)
+			{
+				res_genes.insert(gene);
+			}
 		}
 
 		return RefGenesContainer::accumulate_genes(res_genes);
 	}
 
-	RefGenesContainer::GeneInfo RefGenesContainer::parse_gtf_record(const std::string &record)
+	GeneInfo RefGenesContainer::parse_gtf_record(const std::string &record)
 	{
 		GeneInfo result;
 		std::istringstream istr(record);
@@ -219,63 +234,33 @@ namespace Tools
 		return GeneInfo(columns[0], id, strtoul(columns[3].c_str(), NULL, 10), strtoul(columns[4].c_str(), NULL, 10));
 	}
 
-	bool RefGenesContainer::GeneInfo::is_valid() const
+	RefGenesContainer::gene_event_t RefGenesContainer::genes_to_events(const genes_vec_t &genes)
 	{
-		return this->id() != "";
+		size_t chr_num = 0;
+		if (!genes.empty())
+		{
+			chr_num = genes.front().chr_num();
+		}
+
+		gene_event_t events;
+		for (auto const &gene : genes)
+		{
+			if (chr_num != gene.chr_num())
+				throw std::runtime_error("Genes from different chromosomes in one group: " + gene.chr_name() + ", " +
+				                         gene.id() + " and " + genes.front().chr_name() + ", " + genes.front().id());
+
+			events.emplace(gene.start_pos(), &gene);
+			events.emplace(gene.end_pos(), &gene);
+		}
+
+		return events;
 	}
 
-	bool RefGenesContainer::GeneInfo::operator<(const GeneInfo &other) const
+	void RefGenesContainer::save_gene_names(const RefGenesContainer::genes_set &genes_in_interval)
 	{
-		return this->id() < other.id();
-	}
+		if (genes_in_interval.size() != 1)
+			return;
 
-	bool RefGenesContainer::GeneInfo::is_intercept(const GeneInfo &other) const
-	{
-		return this->start_pos() <= other.end_pos() && this->end_pos() >= other.start_pos();
-	}
-
-	void RefGenesContainer::GeneInfo::merge(const GeneInfo &other)
-	{
-		this->_start_pos = std::min(this->_start_pos, other._start_pos);
-		this->_end_pos= std::max(this->_end_pos, other._end_pos);
-	}
-
-	RefGenesContainer::GeneInfo::GeneInfo(const std::string &chr_name, std::string id, pos_t start_pos, pos_t end_pos)
-		: _chr_name(chr_name)
-		, _id(id)
-		, _start_pos(start_pos)
-		, _end_pos(end_pos)
-	{
-		this->_chr_num = GeneInfo::parse_chr_name(chr_name);
-	}
-
-	std::string RefGenesContainer::GeneInfo::chr_name() const
-	{
-		return this->_chr_name;
-	}
-
-	std::string RefGenesContainer::GeneInfo::id() const
-	{
-		return this->_id;
-	}
-
-	RefGenesContainer::pos_t RefGenesContainer::GeneInfo::start_pos() const
-	{
-		return this->_start_pos;
-	}
-
-	RefGenesContainer::pos_t RefGenesContainer::GeneInfo::end_pos() const
-	{
-		return this->_end_pos;
-	}
-
-	RefGenesContainer::GeneInfo::num_t RefGenesContainer::GeneInfo::chr_num() const
-	{
-		return this->_chr_num;
-	}
-
-	RefGenesContainer::GeneInfo::num_t RefGenesContainer::GeneInfo::parse_chr_name(const std::string &chr_name)
-	{
-		return chr_name.length() > 2 ? atoi(chr_name.substr(3).c_str()) : atoi(chr_name.c_str());
+		this->single_gene_names.insert(genes_in_interval.begin()->id());
 	}
 }

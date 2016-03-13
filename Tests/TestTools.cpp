@@ -1,12 +1,13 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE tests
 
-#include <boost/test/unit_test.hpp>
 #include <iostream>
+#include <boost/test/unit_test.hpp>
 #include <boost/unordered_map.hpp>
 
-#include "Tools/RefGenesContainer.h"
+#include "Tools/GeneInfo.h"
 #include "Tools/Logs.h"
+#include "Tools/RefGenesContainer.h"
 
 using namespace Tools;
 
@@ -35,8 +36,8 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 
 	BOOST_FIXTURE_TEST_CASE(testGeneMerge, Fixture)
 	{
-		std::list<RefGenesContainer::GeneInfo> genes;
-		RefGenesContainer::GeneInfo inf;
+		std::list<GeneInfo> genes;
+		GeneInfo inf;
 		inf._start_pos = 0; inf._end_pos = 100;
 		genes.push_back(inf);
 		inf._start_pos = 200; inf._end_pos = 300;
@@ -111,18 +112,28 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 
 	BOOST_FIXTURE_TEST_CASE(testGenesNames, Fixture)
 	{
+		init_test_logs(boost::log::trivial::info);
 		const std::string gtf_filename = PROJ_DATA_PATH + (std::string)("/gtf_test.gtf");
 		RefGenesContainer genes_container(gtf_filename);
 
 		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 11874, 12627).id(), "DDX11L1");
 		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 17106, 17742).id(), "WASH7P");
-		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 17106, 24738).id(), "WASH7P");
+		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 17106, 24748).id(), "");
 		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 30000, 31000).id(), "");
 		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 34621, 35074).id(), "FAM138A,FAM138F");
-		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 69791, 69793).id(), "AR4F5,BR4F5,OR4F5");
-		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 50000, 69793).id(), "AR4F5,BR4F5,OR4F5");
-		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 35277, 69793).id(), "AR4F5,BR4F5,FAM138A,FAM138F,OR4F5");
+//		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 69791, 69793).id(), "AR4F5,BR4F5,OR4F5");
+//		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 50000, 69793).id(), "AR4F5,BR4F5,OR4F5");
+//		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 35277, 69793).id(), "AR4F5,BR4F5,FAM138A,FAM138F,OR4F5");
+		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 69791, 69793).id(), "");
+		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 50000, 69793).id(), "OR4F5");
+		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 35277, 69793).id(), "");
 		BOOST_CHECK_NO_THROW(genes_container.get_gene_info("chr1", 35277, 105000));
+	}
+
+	BOOST_FIXTURE_TEST_CASE(testOther, Fixture)
+	{
+		BOOST_CHECK_EQUAL(GeneInfo::parse_chr_name("chr17"), 17);
+		BOOST_CHECK_EQUAL(GeneInfo::parse_chr_name("chr17_ctg5_hap1"), 17);
 	}
 
 //	BOOST_FIXTURE_TEST_CASE(testGtfPerformance, Fixture) //Uncomment to print performance

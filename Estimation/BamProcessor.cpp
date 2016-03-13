@@ -1,5 +1,6 @@
 #include "BamProcessor.h"
 
+#include "Tools/GeneInfo.h"
 #include "Tools/Logs.h"
 
 #include <api/BamReader.h>

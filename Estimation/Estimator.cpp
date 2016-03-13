@@ -2,6 +2,7 @@
 
 #include "BamProcessor.h"
 #include "IndropResults.h"
+#include "Tools/GeneInfo.h"
 #include "Tools/Logs.h"
 
 #include <fstream>
