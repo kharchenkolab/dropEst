@@ -149,20 +149,20 @@ namespace Tools
 
 		auto gene_it = genes.begin();
 		std::string id = gene_it->id();
-		std::string chr = gene_it->chr_name();
+		GeneInfo::num_t chr_num = gene_it->chr_num();
 		pos_t end_pos = gene_it->end_pos();
 		while (++gene_it != genes.end())
 		{
 			id += "," + gene_it->id();
 
-			if (chr != gene_it->chr_name())
+			if (chr_num != gene_it->chr_num())
 			{
-				throw std::runtime_error("Can't use genes from different chromosomes");
+				throw std::runtime_error("Can't use genes from different chromosomes: " + genes.begin()->chr_name() + ", " + gene_it->chr_name());
 			}
 			end_pos = gene_it->end_pos();
 		}
 
-		return GeneInfo(chr, id, genes.begin()->start_pos(), end_pos);
+		return GeneInfo(genes.begin()->chr_name(), id, genes.begin()->start_pos(), end_pos);
 	}
 
 	RefGenesContainer::GeneInfo RefGenesContainer::get_gene_info(const std::string &chr_name, pos_t start_pos, pos_t end_pos) const
