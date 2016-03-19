@@ -1,5 +1,9 @@
 #include "IndropResults.h"
 
+#ifdef R_LIBS
+#include <RInside.h>
+#endif
+
 namespace Estimation
 {
 	namespace Results
@@ -48,8 +52,8 @@ namespace Estimation
 			                    Named("merge.n") = wrap(this->merge_n),
 			                    Named("reads_by_umig") = wrap(this->reads_by_umig),
 			                    Named("reads_by_cb") = wrap(this->reads_by_cb),
-			                    Named("fname") = wrap(fname));
-			L_TRACE << "writing R data to " << output_name;
+			                    Named("fname") = wrap(filename));
+			L_TRACE << "writing R data to " << filename;
 
 			R.parseEvalQ(
 					"d$ex_cells_chr_counts<-as.data.frame(matrix(d$ex_cells_chr_counts, length(d$ex_counts_cell_names), "

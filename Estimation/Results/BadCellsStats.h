@@ -3,6 +3,10 @@
 #include "IRTableProvider.h"
 #include <Estimation/Stats.h>
 
+#ifdef R_LIBS
+#include <RInside.h>
+#endif
+
 namespace Estimation
 {
 	namespace Results
@@ -19,18 +23,18 @@ namespace Estimation
 
 		protected:
 #ifdef R_LIBS
-			void IndropResult::save_r_table(const std::string &filename) const override
+			virtual void save_r_table(const std::string &filename) const override
 			{
 				using namespace Rcpp;
 
+				L_TRACE << "writing R data to " << filename;
 				RInside R(0, 0);
-				R["d"] = List::create(Named("umig_cbs") = wrap(this->cm.cell_names),
-				                    Named("umigs") = wrap(this->cm.gene_names),
-				                    Named("umig_counts") = wrap(this->cm.counts),
-				                    Named("gene_cbs") = wrap(this->ex_cells_chr_umis_counts),
-				                    Named("genes") = wrap(this->nonex_cells_chr_umis_counts),
-				                    Named("gene_counts") = wrap(this->ex_cell_names));
-				L_TRACE << "writing R data to " << output_name;
+				R["d"] = List::create(Named("umig_cbs") = wrap(this->umig_cell_barcodes),
+				                    Named("umigs") = wrap(this->umigs),
+				                    Named("umig_counts") = wrap(this->umigs_counts),
+				                    Named("gene_cbs") = wrap(this->genes_cell_barcodes),
+				                    Named("genes") = wrap(this->genes),
+				                    Named("gene_counts") = wrap(this->genes_counts));
 
 				R.parseEvalQ(
 						"d$umig_counts<-as.data.frame(matrix(d$umig_counts, length(d$umig_cbs), "
