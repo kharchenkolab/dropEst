@@ -31,11 +31,12 @@ namespace Estimation
 			CELL_S_STAT_SIZE
 		};
 
-	private:
+	public:
 		typedef boost::unordered_map<std::string, int> s_cnt_t;
-		typedef boost::unordered_map<std::string, s_cnt_t> ss_cnt_t;
 		typedef boost::unordered_set<std::string> str_set_t;
+		typedef boost::unordered_map<std::string, s_cnt_t> ss_cnt_t;
 
+	private:
 		s_cnt_t _named_counters[S_STAT_SIZE];
 
 		int_list_t _merge_counts;
@@ -55,8 +56,11 @@ namespace Estimation
 
 		void inc_cells(CellStrStatType stat, const std::string &cell_barcode, const std::string &subtype);
 		void get_cells(CellStrStatType stat, str_list_t &types, str_list_t &subtypes, int_list_t &counts) const;
+		bool get_cell(CellStrStatType stat, const std::string &cell_barcode, const str_list_t &subtypes,
+		              int_list_t &counts) const;
 		void get_cells_filtered(CellStrStatType stat, const str_list_t &filter_barcodes, str_list_t &cell_barcodes,
 		                        str_list_t &subtypes, int_list_t &counts) const;
+		const ss_cnt_t& get_raw_cell_stats(CellStrStatType stat) const;
 
 		void add_merge_count(int count);
 		const int_list_t& get_merge_counts() const;

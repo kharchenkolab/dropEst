@@ -63,15 +63,12 @@ namespace Estimation
 	                               str_list_t &subtypes, int_list_t &counts) const
 	{
 		std::copy(this->_ss_cell_subtypes[stat].begin(), this->_ss_cell_subtypes[stat].end(), std::back_inserter(subtypes));
-		auto const &cur_stat = this->_ss_cell_counters[stat];
-		for (auto const &type : filter_barcodes)
+		for (auto const &barcode : filter_barcodes)
 		{
-			ss_cnt_t::const_iterator counter_it = cur_stat.find(type);
-			if (counter_it == cur_stat.end())
-				continue;
-
-			cell_barcodes.push_back(type);
-			this->fill_by_types(counter_it->second, subtypes, counts);
+			if (this->get_cell(stat, barcode, subtypes, counts))
+			{
+				cell_barcodes.push_back(barcode);
+			}
 		}
 	}
 
@@ -109,5 +106,22 @@ namespace Estimation
 				cur_stat.erase(cell_from_it);
 			}
 		}
+	}
+
+	bool Stats::get_cell(CellStrStatType stat, const std::string &cell_barcode, const str_list_t &subtypes,
+	                          int_list_t &counts) const
+	{
+		auto const &cur_stat = this->_ss_cell_counters[stat];
+		ss_cnt_t::const_iterator counter_it = cur_stat.find(cell_barcode);
+		if (counter_it == cur_stat.end())
+			return false;
+
+		this->fill_by_types(counter_it->second, subtypes, counts);
+		return true;
+	}
+
+	const Stats::ss_cnt_t &Stats::get_raw_cell_stats(Stats::CellStrStatType stat) const
+	{
+		return this->_ss_cell_counters[stat];
 	}
 }

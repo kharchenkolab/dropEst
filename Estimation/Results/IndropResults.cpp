@@ -38,8 +38,12 @@ namespace Estimation
 		{
 			using namespace Rcpp;
 
-			RInside R(0, 0);
-			R["d"] = List::create(Named("cell.names") = wrap(this->cm.cell_names),
+			RInside *R = RInside::instancePtr();
+			if (R == nullptr)
+			{
+				R = new RInside(0, 0);
+			}
+			(*R)["d"] = List::create(Named("cell.names") = wrap(this->cm.cell_names),
 			                    Named("gene.names") = wrap(this->cm.gene_names),
 			                    Named("cm") = wrap(this->cm.counts),
 			                    Named("ex_cells_chr_counts") = wrap(this->ex_cells_chr_umis_counts),
@@ -55,18 +59,18 @@ namespace Estimation
 			                    Named("fname") = wrap(filename));
 			L_TRACE << "writing R data to " << filename;
 
-			R.parseEvalQ(
+			R->parseEvalQ(
 					"d$ex_cells_chr_counts<-as.data.frame(matrix(d$ex_cells_chr_counts, length(d$ex_counts_cell_names), "
 							"length(d$counts_chr_names), byrow = TRUE), row.names = d$ex_counts_cell_names); "
 							"colnames(d$ex_cells_chr_counts)<-d$counts_chr_names; d$ex_counts_cell_names<-NULL;");
 
-			R.parseEvalQ(
+			R->parseEvalQ(
 					"d$nonex_cells_chr_counts<-as.data.frame(matrix(d$nonex_cells_chr_counts, length(d$nonex_counts_cell_names), "
 							"length(d$counts_chr_names), byrow = TRUE), row.names = d$nonex_counts_cell_names); "
 							"colnames(d$nonex_cells_chr_counts)<-d$counts_chr_names; d$nonex_counts_cell_names<-NULL;"
 							"d$counts_chr_names<-NULL;");
 
-			R.parseEvalQ("saveRDS(d, '" + filename + "')");
+			R->parseEvalQ("saveRDS(d, '" + filename + "')");
 			L_TRACE << "Done";
 		}
 #endif
