@@ -15,47 +15,48 @@ namespace Estimation
 		typedef std::vector<long> int_list_t;
 		typedef std::vector<size_t> id_list_t;
 
-		enum StringCounter
+		enum StringStatType
 		{
 			READS_BY_UMIG,
 			READS_BY_CB,
-			NC_SIZE
+			S_STAT_SIZE
 		};
 
-		enum StatType
+		enum CellStrStatType
 		{
-			EXONE = 0,
-			NON_EXONE,
-			ST_SIZE
+			EXONE_UMI_PER_CELL_PER_CHR = 0,
+			NON_EXONE_UMI_PER_CELL_PER_CHR,
+			UMIGS_READS_PER_CELL,
+			GENES_READS_PER_CELL,
+			CELL_S_STAT_SIZE
 		};
 
 	private:
 		typedef boost::unordered_map<std::string, int> s_cnt_t;
 		typedef boost::unordered_map<std::string, s_cnt_t> ss_cnt_t;
-		typedef std::vector<ss_cnt_t> ss_typed_cnt_t;
 		typedef boost::unordered_set<std::string> str_set_t;
 
-		s_cnt_t _named_counters[NC_SIZE];
+		s_cnt_t _named_counters[S_STAT_SIZE];
 
 		int_list_t _merge_counts;
 
-		ss_typed_cnt_t _cells_chr_umis_counts;
-		str_set_t _chr_names;
+		ss_cnt_t _ss_cell_counters[CELL_S_STAT_SIZE];
+		str_set_t _ss_cell_subtypes[CELL_S_STAT_SIZE];
 
 	private:
-		void get_chr_umi(const s_cnt_t &cell, const str_list_t &chr_names, int_list_t &counts) const;
+		void fill_by_types(const s_cnt_t &counter, const str_list_t &types, int_list_t &counts) const;
 
 	public:
 		Stats();
 
-		void inc(StringCounter counter, const std::string &name);
-		void get(StringCounter counter, str_list_t &names, int_list_t &counts) const;
-		int_list_t get(StringCounter counter) const;
+		void inc(StringStatType counter, const std::string &name);
+		void get(StringStatType counter, str_list_t &names, int_list_t &counts) const;
+		int_list_t get(StringStatType counter) const;
 
-		void inc_cell_chr_umi(const std::string &chr_name, const std::string &cell_name, StatType type);
-		void get_cell_chr_umi(StatType type, str_list_t &cell_names, str_list_t &chr_names, int_list_t &counts) const;
-		void get_cell_chr_umi_filtered(StatType type, const str_list_t &filter_names, str_list_t &cell_names,
-									   str_list_t &chr_names, int_list_t &counts) const;
+		void inc_cells(CellStrStatType stat, const std::string &cell_barcode, const std::string &subtype);
+		void get_cells(CellStrStatType stat, str_list_t &types, str_list_t &subtypes, int_list_t &counts) const;
+		void get_cells_filtered(CellStrStatType stat, const str_list_t &filter_barcodes, str_list_t &cell_barcodes,
+		                        str_list_t &subtypes, int_list_t &counts) const;
 
 		void add_merge_count(int count);
 		const int_list_t& get_merge_counts() const;

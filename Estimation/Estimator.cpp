@@ -1,7 +1,7 @@
 #include "Estimator.h"
 
 #include "BamProcessor.h"
-#include "IndropResults.h"
+#include "Results/IndropResults.h"
 #include "Tools/GeneInfo.h"
 #include "Tools/Logs.h"
 
@@ -37,14 +37,8 @@ namespace Estimation
 		}
 	}
 
-	IndropResult Estimator::get_results(const names_t &files, bool merge_tags, bool not_filtered, bool bam_output,
-										const std::string &reads_params_name, const std::string &gtf_filename)
+	Results::IndropResult Estimator::get_results(const CellsDataContainer &container, bool not_filtered)
 	{
-		CellsDataContainer container(this->min_merge_fraction, this->min_genes_before_merge, merge_tags,
-		                             this->min_genes_after_merge, this->max_merge_edit_distance, Estimator::top_print_size);
-		BamProcessor bam_processor(this->read_prefix_length, reads_params_name, gtf_filename);
-		bam_processor.parse_bam_files(files, bam_output, container);
-
 		ids_t filtered_cells = container.filtered_cells();
 
 		L_TRACE << this->get_cb_top_verbose(container, filtered_cells);
@@ -62,7 +56,7 @@ namespace Estimation
 
 		L_TRACE << "Done";
 
-		CountMatrix cm(cell_names, gene_names, umis_table);
+		Results::CountMatrix cm(cell_names, gene_names, umis_table);
 		return this->get_indrop_results(cm, container, filtered_cells, not_filtered);
 	}
 
@@ -93,10 +87,9 @@ namespace Estimation
 	{
 		names_t cell_names;
 		cell_names.reserve(unmerged_cells.size());
-		for (ids_t::const_iterator cell_id_it = unmerged_cells.begin();
-			 cell_id_it != unmerged_cells.end(); ++cell_id_it)
+		for (auto const &cell_id : unmerged_cells)
 		{
-			cell_names.push_back(genes_container.cell_name(*cell_id_it));
+			cell_names.push_back(genes_container.cell_name(cell_id));
 		}
 		return cell_names;
 	}
@@ -123,7 +116,7 @@ namespace Estimation
 		}
 	}
 
-	IndropResult Estimator::get_indrop_results(const CountMatrix cm, const CellsDataContainer &genes_container,
+	Results::IndropResult Estimator::get_indrop_results(const Results::CountMatrix cm, const CellsDataContainer &genes_container,
 											   const ids_t &unmerged_cells, bool not_filtered) const
 	{
 		L_TRACE << "compiling diagnostic stats: ";
@@ -134,7 +127,7 @@ namespace Estimation
 		ints_t umig_coverage(this->get_umig_coverage(genes_container));
 		L_TRACE << "UMIg coverage";
 
-		return IndropResult(cm, genes_container.stats(), reads_per_umis, umig_coverage, not_filtered);
+		return Results::IndropResult(cm, genes_container.stats(), reads_per_umis, umig_coverage, not_filtered);
 	}
 
 	Estimator::doubles_t Estimator::get_reads_per_umis(const CellsDataContainer &genes_container,
@@ -218,5 +211,16 @@ namespace Estimation
 			ss << genes[i].first << '\t' << genes[i].second << "\n";
 		}
 		return ss.str();
+	}
+
+	CellsDataContainer Estimator::get_cells_container(const names_t &files, bool merge_tags, bool bam_output,
+	                                                  const std::string &reads_params_name, const std::string &gtf_filename)
+	{
+		CellsDataContainer container(this->min_merge_fraction, this->min_genes_before_merge, merge_tags,
+		                             this->min_genes_after_merge, this->max_merge_edit_distance, Estimator::top_print_size);
+		BamProcessor bam_processor(this->read_prefix_length, reads_params_name, gtf_filename);
+		bam_processor.parse_bam_files(files, bam_output, container);
+
+		return container;
 	}
 }

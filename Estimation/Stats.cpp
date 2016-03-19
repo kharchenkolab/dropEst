@@ -3,9 +3,7 @@
 namespace Estimation
 {
 	Stats::Stats()
-	{
-		this->_cells_chr_umis_counts.resize(ST_SIZE);
-	}
+	{}
 
 	void Stats::add_merge_count(int count)
 	{
@@ -17,13 +15,13 @@ namespace Estimation
 		return this->_merge_counts;
 	}
 
-	void Stats::inc(Stats::StringCounter counter, const std::string &name)
+	void Stats::inc(Stats::StringStatType counter, const std::string &name)
 	{
 		this->_named_counters[counter][name]++;
 	}
 
 
-	void Stats::get(Stats::StringCounter counter, Stats::str_list_t &names, Stats::int_list_t &counts) const
+	void Stats::get(Stats::StringStatType counter, Stats::str_list_t &names, Stats::int_list_t &counts) const
 	{
 		const s_cnt_t &s_counter = this->_named_counters[counter];
 		for (s_cnt_t::const_iterator it = s_counter.begin(); it != s_counter.end(); ++it)
@@ -33,7 +31,7 @@ namespace Estimation
 		}
 	}
 
-	Stats::int_list_t Stats::get(Stats::StringCounter counter) const
+	Stats::int_list_t Stats::get(Stats::StringStatType counter) const
 	{
 		const s_cnt_t &s_counter = this->_named_counters[counter];
 		int_list_t result;
@@ -45,70 +43,71 @@ namespace Estimation
 		return result;
 	}
 
-	void Stats::inc_cell_chr_umi(const std::string &chr_name, const std::string &cell_name, StatType type)
+	void Stats::inc_cells(CellStrStatType stat, const std::string &cell_barcode, const std::string &subtype)
 	{
-		this->_cells_chr_umis_counts[type][cell_name][chr_name]++;
-		this->_chr_names.emplace(chr_name);
+		this->_ss_cell_counters[stat][cell_barcode][subtype]++;
+		this->_ss_cell_subtypes[stat].emplace(subtype);
 	}
 
-	void Stats::get_cell_chr_umi(StatType type, str_list_t &cell_names, str_list_t &chr_names, int_list_t &counts) const
+	void Stats::get_cells(CellStrStatType stat, str_list_t &types, str_list_t &subtypes, int_list_t &counts) const
 	{
-		std::copy(this->_chr_names.begin(), this->_chr_names.end(), std::back_inserter(chr_names));
-		const ss_cnt_t &cur_stat = this->_cells_chr_umis_counts[type];
-		for (ss_cnt_t::const_iterator cells_it = cur_stat.begin(); cells_it != cur_stat.end(); ++cells_it)
+		std::copy(this->_ss_cell_subtypes[stat].begin(), this->_ss_cell_subtypes[stat].end(), std::back_inserter(subtypes));
+		for (auto const &val : this->_ss_cell_counters[stat])
 		{
-			cell_names.push_back(cells_it->first);
-			this->get_chr_umi(cells_it->second, chr_names, counts);
+			types.push_back(val.first);
+			this->fill_by_types(val.second, subtypes, counts);
 		}
 	}
 
-	void Stats::get_cell_chr_umi_filtered(StatType type, const str_list_t &filter_names, str_list_t &cell_names,
-										  str_list_t &chr_names, int_list_t &counts) const
+	void Stats::get_cells_filtered(CellStrStatType stat, const str_list_t &filter_barcodes, str_list_t &cell_barcodes,
+	                               str_list_t &subtypes, int_list_t &counts) const
 	{
-		std::copy(this->_chr_names.begin(), this->_chr_names.end(), std::back_inserter(chr_names));
-		const ss_cnt_t &cur_stat = this->_cells_chr_umis_counts[type];
-		for (str_list_t::const_iterator name_it = filter_names.begin(); name_it != filter_names.end(); ++name_it)
+		std::copy(this->_ss_cell_subtypes[stat].begin(), this->_ss_cell_subtypes[stat].end(), std::back_inserter(subtypes));
+		auto const &cur_stat = this->_ss_cell_counters[stat];
+		for (auto const &type : filter_barcodes)
 		{
-			ss_cnt_t::const_iterator cell_it = cur_stat.find(*name_it);
-			if (cell_it == cur_stat.end())
+			ss_cnt_t::const_iterator counter_it = cur_stat.find(type);
+			if (counter_it == cur_stat.end())
 				continue;
 
-			cell_names.push_back(*name_it);
-			this->get_chr_umi(cell_it->second, chr_names, counts);
+			cell_barcodes.push_back(type);
+			this->fill_by_types(counter_it->second, subtypes, counts);
 		}
 	}
 
-	void Stats::get_chr_umi(const s_cnt_t &cell, const str_list_t &chr_names, int_list_t &counts) const
+	void Stats::fill_by_types(const s_cnt_t &counter, const str_list_t &types, int_list_t &counts) const
 	{
-		for (str_list_t::const_iterator name_it = chr_names.begin(); name_it != chr_names.end(); ++name_it)
+		for (auto const &name : types)
 		{
-			s_cnt_t::const_iterator count = cell.find(*name_it);
-			counts.push_back(count == cell.end() ? 0 : count->second);
+			s_cnt_t::const_iterator count = counter.find(name);
+			counts.push_back(count == counter.end() ? 0 : count->second);
 		}
 	}
 
 	void Stats::merge(const int_list_t &reassigned, const str_list_t &names)
 	{
-		ss_cnt_t &cur_stat = this->_cells_chr_umis_counts[EXONE];
-		for (size_t ind = 0; ind < reassigned.size(); ++ind)
+		for (int stat_num = 0; stat_num < CELL_S_STAT_SIZE; ++stat_num)
 		{
-			if (reassigned[ind] == ind)
-				continue;
-
-			const std::string &cur_name = names[ind];
-			const std::string &target_name = names[reassigned[ind]];
-			ss_cnt_t::const_iterator cell_from_it = cur_stat.find(cur_name);
-			if (cell_from_it == cur_stat.end())
-				continue;
-
-			s_cnt_t &cell_to = cur_stat[target_name];
-			for (s_cnt_t::const_iterator count_it = cell_from_it->second.begin();
-				 count_it != cell_from_it->second.end(); ++count_it)
+			ss_cnt_t &cur_stat = this->_ss_cell_counters[stat_num];
+			for (size_t ind = 0; ind < reassigned.size(); ++ind)
 			{
-				cell_to[count_it->first] += count_it->second;
-			}
+				if (reassigned[ind] == ind)
+					continue;
 
-			cur_stat.erase(cell_from_it);
+				const std::string &cur_name = names[ind];
+				const std::string &target_name = names[reassigned[ind]];
+				ss_cnt_t::const_iterator cell_from_it = cur_stat.find(cur_name);
+				if (cell_from_it == cur_stat.end())
+					continue;
+
+				s_cnt_t &cell_to = cur_stat[target_name];
+				for (auto const &count: cell_from_it->second)
+				{
+					cell_to[count.first] += count.second;
+				}
+
+				cur_stat.erase(cell_from_it);
+			}
 		}
 	}
 }

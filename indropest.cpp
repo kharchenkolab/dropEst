@@ -9,8 +9,9 @@
 #include <boost/property_tree/xml_parser.hpp>
 
 #include "Estimation/Estimator.h"
-#include "Estimation/ResultPrinter.h"
-#include "Estimation/IndropResults.h"
+#include "Estimation/Results/ResultPrinter.h"
+#include "Estimation/Results/IndropResults.h"
+#include "Estimation/Results/BadCellsStats.h"
 #include "Tools/Logs.h"
 #include "Tools/RefGenesContainer.h"
 
@@ -172,21 +173,24 @@ int main(int argc, char **argv)
 	{
 		L_TRACE << "Run: " << asctime(localtime(&ctt));
 		Estimator estimator(pt.get_child("config.Estimation"));
-		IndropResult results = estimator.get_results(files, params.merge_tags, params.not_filtered, params.bam_output,
-													 params.reads_params_file, params.gtf_filename);
+		CellsDataContainer container = estimator.get_cells_container(files, params.merge_tags, params.bam_output,
+		                                                             params.reads_params_file, params.gtf_filename);
+		Results::IndropResult results = estimator.get_results(container, params.not_filtered);
+//		Results::BadCellsStats results(container.stats());
 		
 		ctt = time(0);
 		L_TRACE << "Done: " << asctime(localtime(&ctt));
 
 		if (params.text_output)
 		{
-			ResultPrinter::print_text_table(params.output_name, results.cm);
+			Results::ResultPrinter::print_text_table(params.output_name, results.cm);
 			params.output_name += ".bin";
 		}
+
 #ifdef R_LIBS
-		ResultPrinter::print_rds(params.output_name, results);
+		results.save_rds(params.output_name);
 #else
-		ResultPrinter::print_binary(params.output_name, results);
+		Results::ResultPrinter::print_binary(params.output_name, results);
 #endif
 	}
 	catch (std::runtime_error err)

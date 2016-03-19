@@ -142,8 +142,9 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 //		init_test_logs(boost::log::trivial::info);
 //
 //		time_t t0 = clock();
-//		std::cout << "Start init" << std::endl;
-//		RefGenesContainer genes_container("/home/victor/Study/InDrop/Data/genes.gtf");
+//		std::cout << "Start init " << std::endl;
+////		RefGenesContainer genes_container(PROJ_DATA_PATH + (std::string) "/gencode.v24.chr_patch_hapl_scaff.annotation.gtf");
+//		RefGenesContainer genes_container(PROJ_DATA_PATH + (std::string) "/Homo_sapiens.GRCh38.84.chr_patch_hapl_scaff.gtf");
 //		double t_len = (clock() - t0) / (CLOCKS_PER_SEC / 1000.0);
 //		std::cout << "End init: " << t_len << "ms" << std::endl;
 //

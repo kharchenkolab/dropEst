@@ -205,6 +205,9 @@ namespace Tools
 	GeneInfo RefGenesContainer::parse_gtf_record(const std::string &record)
 	{
 		GeneInfo result;
+		if (record[0] == '#')
+			return result;
+
 		std::istringstream istr(record);
 
 		std::string column;
