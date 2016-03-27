@@ -175,22 +175,31 @@ int main(int argc, char **argv)
 		Estimator estimator(pt.get_child("config.Estimation"));
 		CellsDataContainer container = estimator.get_cells_container(files, params.merge_tags, params.bam_output,
 		                                                             params.reads_params_file, params.gtf_filename);
-		Results::IndropResult results = estimator.get_results(container, params.not_filtered);
-//		Results::BadCellsStats results(container.stats());
 		
-		ctt = time(0);
-		L_TRACE << "Done: " << asctime(localtime(&ctt));
-
-		if (params.text_output)
+		if (false)
 		{
-			Results::ResultPrinter::print_text_table(params.output_name, results.cm);
-			params.output_name += ".bin";
-		}
+			Results::IndropResult results = estimator.get_results(container, params.not_filtered);
+		
+			ctt = time(0);
+			L_TRACE << "Done: " << asctime(localtime(&ctt));
+
+			if (params.text_output)
+			{
+				Results::ResultPrinter::print_text_table(params.output_name, results.cm);
+				params.output_name += ".bin";
+			}
 
 #ifdef R_LIBS
-		results.save_rds(params.output_name);
+			results.save_rds(params.output_name);
 #else
-		Results::ResultPrinter::print_binary(params.output_name, results);
+			Results::ResultPrinter::print_binary(params.output_name, results);
+#endif
+		}
+#ifdef R_LIBS
+		L_TRACE << "Get bad cells results";
+		Results::BadCellsStats bad_cells_results(container.stats());
+		L_TRACE << "Done";
+		bad_cells_results.save_rds(params.output_name + ".bc.rds");
 #endif
 	}
 	catch (std::runtime_error err)

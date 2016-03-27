@@ -47,7 +47,7 @@ namespace Estimation
 							   CellsDataContainer::s_ii_hash_t &umig_cells_counts, CellsDataContainer &container) const
 	{
 		using namespace BamTools;
-		L_TRACE << "Start reading bam files";
+		L_TRACE << "Start reading bam file: " + bam_name;
 
 		BamReader reader;
 		BamWriter writer;

@@ -12,7 +12,7 @@ namespace Estimation
 	namespace Results
 	{
 		class BadCellsStats : public IRTableProvider
-		{
+		{	
 		private:
 			Stats::str_list_t umig_cell_barcodes;
 			Stats::str_list_t umigs;
@@ -72,8 +72,6 @@ namespace Estimation
 				(*R)["umigs"] = this->raw_umigs_stat;
 				(*R)["genes"] = this->raw_genes_stat;
 
-				R->parseEval("for(n in names(umigs)) {umigs[[n]] <- as.list(umigs[[n]])}");
-				R->parseEval("for(n in names(genes)) {genes[[n]] <- as.list(genes[[n]])}");
 				R->parseEval("d <- list(umigs=umigs, genes=genes)");
 
 				R->parseEvalQ("saveRDS(d, '" + filename + "')");

@@ -98,6 +98,7 @@ namespace Estimation
 	                           const CellsDataContainer &genes_container, names_t &gene_names_header,
 	                           ints_t &umis_table) const
 	{
+		return;
 		size_t size = unmerged_cells.size() * gene_counts.size();
 		umis_table.resize(size);
 		gene_names_header.reserve(gene_counts.size());

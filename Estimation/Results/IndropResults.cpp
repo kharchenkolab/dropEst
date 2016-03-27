@@ -15,18 +15,22 @@ namespace Estimation
 		{
 			if (not_filtered)
 			{
+				L_TRACE << "Fill exone results";
 				stats.get_cells(Stats::EXONE_UMI_PER_CELL_PER_CHR, this->ex_cell_names, this->chr_names,
 				                this->ex_cells_chr_umis_counts);
 				this->chr_names.clear();
+				L_TRACE << "Fill nonexone results";
 				stats.get_cells(Stats::NON_EXONE_UMI_PER_CELL_PER_CHR, this->nonex_cell_names, this->chr_names,
 				                this->nonex_cells_chr_umis_counts);
 			}
 			else
 			{
+				L_TRACE << "Fill exone results";
 				stats.get_cells_filtered(Stats::EXONE_UMI_PER_CELL_PER_CHR, this->cm.cell_names, this->ex_cell_names,
 				                         this->chr_names,
 				                         this->ex_cells_chr_umis_counts);
 				this->chr_names.clear();
+				L_TRACE << "Fill nonexone results";
 				stats.get_cells_filtered(Stats::NON_EXONE_UMI_PER_CELL_PER_CHR, this->cm.cell_names,
 				                         this->nonex_cell_names,
 				                         this->chr_names, this->nonex_cells_chr_umis_counts);
