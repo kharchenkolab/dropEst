@@ -91,7 +91,6 @@ namespace TagsSearch
 		{
 			this->increase_out_file();
 
-			this->out_file_index++;
 			current_file_reads_written = 0;
 			result = true;
 		}
