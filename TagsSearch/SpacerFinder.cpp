@@ -78,7 +78,7 @@ namespace TagsSearch
 		{
 			len_t spacer_pos = suffix_seq_pos - suffix_start;
 
-			if (spacer_pos >= this->spacer_min_pos && spacer_pos < this->spacer_max_pos)
+			if (spacer_pos >= this->spacer_min_pos && spacer_pos <= this->spacer_max_pos)
 			{
 				int ed = Tools::edit_distance(this->spacer.c_str(),
 											  seq.substr(spacer_pos, this->spacer.length()).c_str());
@@ -97,7 +97,7 @@ namespace TagsSearch
 
 		len_t prefix_pos = seq.rfind(this->spacer.substr(0, this->spacer_prefix_length), this->spacer_max_pos);
 
-		if (prefix_pos != string::npos && prefix_pos < this->spacer_max_pos)
+		if (prefix_pos != string::npos && prefix_pos >= this->spacer_min_pos)
 		{
 			int ed = Tools::edit_distance(this->spacer.c_str(), seq.substr(prefix_pos, this->spacer.length()).c_str());
 			L_DEBUG << "-- prefix match at " << prefix_pos << " ed=" << ed;
