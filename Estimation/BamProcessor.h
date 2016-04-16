@@ -17,7 +17,7 @@ namespace Estimation
 	{
 	private:
 	public:
-		BamProcessor(size_t read_prefix_length, const std::string &reads_params_name, const std::string &gtf_path);
+		BamProcessor(size_t read_prefix_length, const std::string &reads_params_names_str, const std::string &gtf_path);
 
 	private:
 		const bool _use_names_map;
@@ -46,5 +46,7 @@ namespace Estimation
 
 		void write_alignment(BamTools::BamWriter &writer, BamTools::BamAlignment &alignment, const std::string &gene,
 						 const Tools::ReadParameters &parameters) const;
+
+		void fill_names_map(const std::string &reads_params_names_str);
 	};
 }

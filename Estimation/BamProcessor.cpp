@@ -6,21 +6,18 @@
 #include <api/BamReader.h>
 #include <api/BamWriter.h>
 
-#include <boost/archive/binary_iarchive.hpp>
-#include <boost/serialization/unordered_map.hpp>
+#include <Tools/UtilFunctions.h>
 
 namespace Estimation
 {
-	BamProcessor::BamProcessor(size_t read_prefix_length, const std::string &reads_params_name, const std::string &gtf_path)
-		: _use_names_map(reads_params_name.length() != 0)
+	BamProcessor::BamProcessor(size_t read_prefix_length, const std::string &reads_params_names_str, const std::string &gtf_path)
+		: _use_names_map(reads_params_names_str.length() != 0)
 		, _read_prefix_length(read_prefix_length)
 		, _use_genes_container(gtf_path.length() != 0)
 	{
 		if (this->_use_names_map)
 		{
-			std::ifstream ifs(reads_params_name);
-			boost::archive::binary_iarchive ia(ifs);
-			ia >> this->_reads_params;
+			this->fill_names_map(reads_params_names_str);
 		}
 
 		if (this->_use_genes_container)
@@ -192,5 +189,30 @@ namespace Estimation
 			alignment.AddTag("GE", "Z", gene);
 		}
 		writer.SaveAlignment(alignment);
+	}
+
+	void BamProcessor::fill_names_map(const std::string &reads_params_names_str)
+	{
+		std::vector<std::string> params_names = Tools::split(reads_params_names_str);
+		for (auto const &name : params_names)
+		{
+			std::ifstream ifs(name);
+			std::string row;
+			while (ifs >> row)
+			{
+				if (row.empty())
+					continue;
+
+				std::vector<std::string> parts = Tools::split(name);
+				if (this->_reads_params.find(parts[0]) != this->_reads_params.end())
+				{
+					L_ERR << "Read name is already in map: " << parts[0] << ", old value: " <<
+								this->_reads_params[parts[0]].to_string() << ", new value: " << parts[1];
+					continue;
+				}
+				this->_reads_params[parts[0]] = Tools::ReadParameters(parts[1]);
+			}
+		}
+
 	}
 }

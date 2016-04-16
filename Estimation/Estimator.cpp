@@ -215,11 +215,11 @@ namespace Estimation
 	}
 
 	CellsDataContainer Estimator::get_cells_container(const names_t &files, bool merge_tags, bool bam_output,
-	                                                  const std::string &reads_params_name, const std::string &gtf_filename)
+	                                                  const std::string &reads_params_names_str, const std::string &gtf_filename)
 	{
 		CellsDataContainer container(this->min_merge_fraction, this->min_genes_before_merge, merge_tags,
 		                             this->min_genes_after_merge, this->max_merge_edit_distance, Estimator::top_print_size);
-		BamProcessor bam_processor(this->read_prefix_length, reads_params_name, gtf_filename);
+		BamProcessor bam_processor(this->read_prefix_length, reads_params_names_str, gtf_filename);
 		bam_processor.parse_bam_files(files, bam_output, container);
 
 		return container;

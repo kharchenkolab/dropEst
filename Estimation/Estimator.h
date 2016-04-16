@@ -47,7 +47,7 @@ namespace Estimation
 		Results::IndropResult get_results(const CellsDataContainer &container, bool not_filtered);
 
 		CellsDataContainer get_cells_container(const names_t &files, bool merge_tags, bool bam_output,
-		                                       const std::string &reads_params_name, const std::string &gtf_filename);
+		                                       const std::string &reads_params_names_str, const std::string &gtf_filename);
 
 	private:
 		names_t get_unmerged_names(const CellsDataContainer &genes_container, const ids_t &unmerged_cells) const;

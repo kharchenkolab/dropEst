@@ -11,6 +11,7 @@ namespace TagsSearch
 	FilesProcessor::FilesProcessor(const std::string &r1_filename, const std::string &r2_filename,
 								   const std::string &base_name, long max_reads)
 			: base_name(base_name)
+			, reads_file_name(base_name + ".reads")
 			, max_reads(max_reads)
 			, current_file_reads_written(0)
 			, out_file_index(1)
@@ -45,9 +46,15 @@ namespace TagsSearch
 
 		std::string out_file_name = this->get_out_filename();
 		this->out_file.open(out_file_name.c_str(), std::ios_base::out | std::ios_base::binary);
+		this->out_reads_file.open(this->reads_file_name.c_str(), std::ios_base::out);
 
 		this->out_zip.push(boost::iostreams::gzip_compressor());
 		this->out_zip.push(this->out_file);
+	}
+
+	FilesProcessor::~FilesProcessor()
+	{
+		this->close();
 	}
 
 	std::string FilesProcessor::get_out_filename() const
@@ -80,6 +87,7 @@ namespace TagsSearch
 
 	void FilesProcessor::close()
 	{
+		this->out_reads_file.close();
 		this->out_zip.pop();
 		this->out_file.close();
 	}
@@ -101,10 +109,8 @@ namespace TagsSearch
 		return result;
 	}
 
-	void FilesProcessor::serialize_reads_params(const Tools::reads_params_map_t &reads_params) const
+	void FilesProcessor::write_read_params(const std::string &id, const Tools::ReadParameters &read_params)
 	{
-		std::ofstream of(this->base_name + ".reads.ser");
-		boost::archive::binary_oarchive oarch(of);
-		oarch << reads_params;
+		this->out_reads_file << read_params.to_string() << std::flush;
 	}
 }

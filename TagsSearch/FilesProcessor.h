@@ -20,9 +20,11 @@ namespace TagsSearch
 		boost::iostreams::filtering_istream r2_fs;
 
 		std::ofstream out_file;
+		std::ofstream out_reads_file;
 		boost::iostreams::filtering_ostream out_zip;
 
 		std::string base_name;
+		std::string reads_file_name;
 		long max_reads;
 		int current_file_reads_written;
 		int out_file_index;
@@ -35,13 +37,14 @@ namespace TagsSearch
 		FilesProcessor(const std::string &r1_filename, const std::string &r2_filename,
 					   const std::string &base_name, long max_reads);
 
+		~FilesProcessor();
+
 		bool get_r1_line(std::string &out);
 		bool get_r2_line(std::string &out);
 
 		bool write(const std::string &text);
+		void write_read_params(const std::string &id, const Tools::ReadParameters &read_params);
 
 		void close();
-
-		void serialize_reads_params(const Tools::reads_params_map_t &reads_params) const;
 	};
 }

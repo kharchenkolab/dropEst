@@ -49,7 +49,7 @@ static void usage()
 	cerr << "\t-m, --merge-cell-tags : merge linked cell tags" << endl;
 	cerr << "\t-n, --not-filtered : print data for all cells" << endl;
 	cerr << "\t-o, --output-file filename : output file name" << endl;
-	cerr << "\t-r, --reads-params filename: file with serialized params from tags search step" << endl;
+	cerr << "\t-r, --reads-params filename: file or files with serialized params from tags search step. If there are several files then it should be in quotes and splitted by space" << endl;
 	cerr << "\t-t, --text-output : write out text matrix" << endl;
 	cerr << "\t-v, --verbose : verbose mode" << endl;
 }

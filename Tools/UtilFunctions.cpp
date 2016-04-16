@@ -1,6 +1,7 @@
 #include "UtilFunctions.h"
 
 #include <string.h>
+#include <sstream>
 
 namespace Tools
 {
@@ -25,6 +26,21 @@ namespace Tools
 			}
 		}
 		return (column[s1len]);
+	}
+
+	std::vector<std::string> split(const std::string &s, char delim)
+	{
+		std::vector<std::string> elems;
+		std::stringstream ss(s);
+		std::string item;
+		while (std::getline(ss, item, delim))
+		{
+			if (item.empty())
+				continue;
+
+			elems.push_back(item);
+		}
+		return elems;
 	}
 }
 

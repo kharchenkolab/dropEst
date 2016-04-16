@@ -17,6 +17,7 @@ namespace TagsSearch
 	TagsFinder::TagsFinder(const SpacerFinder &spacer_finder, const boost::property_tree::ptree &config)
 			: spacer_finder(spacer_finder), trims_counter()
 	{
+		srand(time(nullptr));
 		this->max_reads = config.get<long>("max_reads", -1);
 		this->min_align_len = config.get<unsigned>("min_align_length");
 		this->poly_a = config.get<string>("poly_a_tail");
@@ -126,7 +127,7 @@ namespace TagsSearch
 		FilesProcessor files_processor(r1_filename, r2_filename, base_name, this->max_reads);
 
 		long total_reads_read = 1;
-		Tools::reads_params_map_t reads_params;
+		std::string file_uid = std::to_string(rand()) + std::to_string(rand() % 57 + 'A');
 
 		string r1_seq, r2_id, r2_seq, r2_description, r2_quality_str;
 		while (TagsFinder::read_blocks(files_processor, total_reads_read, r1_seq, r2_id, r2_seq, r2_description,
@@ -147,9 +148,9 @@ namespace TagsSearch
 			string text;
 			if (save_reads_names)
 			{
-				std::string new_id = std::to_string(total_reads_read);
+				std::string new_id = file_uid + std::to_string(total_reads_read);
 				text = "@" + new_id;
-				reads_params.emplace(new_id, params);
+				files_processor.write_read_params(new_id, params);
 			}
 			else
 			{
@@ -167,10 +168,6 @@ namespace TagsSearch
 		}
 
 		files_processor.close();
-		if (save_reads_names)
-		{
-			files_processor.serialize_reads_params(reads_params);
-		}
 
 		--total_reads_read;
 
