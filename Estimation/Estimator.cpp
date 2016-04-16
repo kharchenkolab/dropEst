@@ -164,7 +164,7 @@ namespace Estimation
 		for (const CellsDataContainer::IndexedCount &gene_count : boost::adaptors::reverse(genes_container.cells_genes_counts_sorted()))
 		{
 			int new_umigs = 0;
-			const CellsDataContainer::genes_t &cell_genes = genes_container.cell_genes(gene_count.index);
+			const CellsDataContainer::genes_t &cell_genes = genes_container.cell_genes(gene_count.cell_index);
 			for (auto const &gene_rec : cell_genes)
 			{
 				for (auto const &umi_rec: gene_rec.second)

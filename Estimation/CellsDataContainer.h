@@ -26,11 +26,11 @@ namespace Estimation
 	public:
 		struct IndexedCount
 		{
-			IndexedCount(size_t index, size_t count)
-					: index(index), count(count)
+			IndexedCount(size_t cell_index, size_t count)
+					: cell_index(cell_index), count(count)
 			{}
 
-			size_t index;
+			size_t cell_index;
 			size_t count;
 
 			static bool counts_comp(const IndexedCount &ic1, const IndexedCount &ic2)
@@ -67,12 +67,12 @@ namespace Estimation
 	private:
 		void merge_genes(const s_ii_hash_t &umig_cbs);
 
-		bool merge(int top_cell_ind, double top_cell_fraction, const IndexedCount &gene_count,
+		bool merge(int top_cell_ind, double top_cell_fraction, const IndexedCount &processed_gene_count,
 				   ints_t &cb_reassigned, ISIHM &cb_reassigned_to);
 
 		void reassign(size_t cell_id, int target_cell_id, ints_t &cb_reassigned, ISIHM &cb_reassigned_to) const;
 
-		size_t get_umig_top(const ints_t &cb_reassigned, const IndexedCount &cur_gene,
+		size_t get_umig_top(const ints_t &cb_reassigned, const IndexedCount &processed_genes_count,
 							const s_ii_hash_t &umigs_cells_counts, i_i_hash_t &umig_top) const;
 
 		i_counter_t count_cells_genes(bool logs = true) const;

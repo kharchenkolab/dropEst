@@ -51,18 +51,18 @@ namespace Estimation
 		// cb merging
 		int merges_count = 0;
 		// reassigned barcodes ids
-		ints_t cb_reassigned(this->_cells_genes.size());
-		for (int i = 0; i < cb_reassigned.size(); ++i)
+		ints_t cb_reassign_targets(this->_cells_genes.size());
+		for (int i = 0; i < cb_reassign_targets.size(); ++i)
 		{
-			cb_reassigned[i] = i;
+			cb_reassign_targets[i] = i;
 		}
 
-		ISIHM cb_reassigned_to;
+		ISIHM cb_reassigned_to_it;
 
 		L_TRACE << "merging linked tags ";
 
 		int tag_index = 0;
-		for (auto const &cur_gene : this->_cells_genes_counts_sorted)
+		for (auto const &genes_count : this->_cells_genes_counts_sorted)
 		{ // iterate through the minimally-selected CBs, from low to high counts
 			tag_index++;
 			if (tag_index % 1000 == 0)
@@ -71,40 +71,40 @@ namespace Estimation
 			}
 
 			i_i_hash_t umig_top;
-			size_t umigs_count = this->get_umig_top(cb_reassigned, cur_gene, umig_cells_counts, umig_top);
+			size_t umigs_count = this->get_umig_top(cb_reassign_targets, genes_count, umig_cells_counts, umig_top);
 
 			// get top umig, its edit distance
 			int top_cell_ind = -1;
-			double top_cell_fraction = -1;
-			long top_cell_genes_count = -1;
+			double top_cb_fraction = -1;
+			long top_cb_genes_count = -1;
 			for (auto const &cell: umig_top)
 			{
+				int cell_ind = cell.first;
 				double cb_fraction = cell.second / (double) umigs_count;
-				if (cb_fraction - top_cell_fraction > EPS || (abs(cb_fraction - top_cell_fraction) < EPS &&
-															  this->_cells_genes[cell.first].size() >
-															  top_cell_genes_count))
+				if (cb_fraction - top_cb_fraction > EPS || (abs(cb_fraction - top_cb_fraction) < EPS &&
+															  this->_cells_genes[cell_ind].size() > top_cb_genes_count))
 				{
-					top_cell_ind = cell.first;
-					top_cell_fraction = cb_fraction;
-					top_cell_genes_count = this->_cells_genes[cell.first].size();
+					top_cell_ind = cell_ind;
+					top_cb_fraction = cb_fraction;
+					top_cb_genes_count = this->_cells_genes[cell_ind].size();
 				}
 			}
 
-			if (this->merge(top_cell_ind, top_cell_fraction, cur_gene, cb_reassigned, cb_reassigned_to))
+			if (this->merge(top_cell_ind, top_cb_fraction, genes_count, cb_reassign_targets, cb_reassigned_to_it))
 			{
 				merges_count++;
 			}
 			else
 			{
-				this->_stats.add_merge_count(cur_gene.count);
-				if (cur_gene.count >= this->_min_genes_after_merge)
+				this->_stats.add_merge_count(genes_count.count);
+				if (genes_count.count >= this->_min_genes_after_merge)
 				{
-					this->_filtered_cells.push_back(cur_gene.index);
+					this->_filtered_cells.push_back(genes_count.cell_index);
 				}
 			}
 		}
 
-		this->_stats.merge(cb_reassigned, this->_cells_names);
+		this->_stats.merge(cb_reassign_targets, this->_cells_names);
 
 		if (this->_filtered_cells.size() > 1)
 		{
@@ -114,8 +114,8 @@ namespace Estimation
 		L_INFO << "Done (" << merges_count << " merges performed)" << endl;
 	}
 
-	bool CellsDataContainer::merge(int top_cell_ind, double top_cell_fraction, const IndexedCount &gene_count,
-	                               ints_t &cb_reassigned, ISIHM &cb_reassigned_to)
+	bool CellsDataContainer::merge(int top_cell_ind, double top_cell_fraction, const IndexedCount &processed_gene_count,
+	                               ints_t &cb_reassign_targets, ISIHM &cb_reassigned_to_it)
 	{
 		if (top_cell_ind < 0)
 			return false;
@@ -124,13 +124,13 @@ namespace Estimation
 		if (top_cell_fraction < this->_min_merge_fraction)
 			return false;
 
-		size_t cell_id = gene_count.index;
+		size_t cell_id = processed_gene_count.cell_index;
 		int ed = Tools::edit_distance(this->_cells_names[top_cell_ind].c_str(), this->_cells_names[cell_id].c_str());
 		if (ed >= this->_max_merge_edit_distance)
 			return false;
 
 		// do the merge
-		this->_stats.add_merge_count(-1 * gene_count.count);
+		this->_stats.add_merge_count(-1 * processed_gene_count.count);
 
 		// merge the actual data
 		for (auto const &gene: this->_cells_genes[cell_id])
@@ -141,30 +141,30 @@ namespace Estimation
 			}
 		}
 
-		this->reassign(cell_id, top_cell_ind, cb_reassigned, cb_reassigned_to);
+		this->reassign(cell_id, top_cell_ind, cb_reassign_targets, cb_reassigned_to_it);
 
 		return true;
 	}
 
-	void CellsDataContainer::reassign(size_t cell_id, int target_cell_id, ints_t &cb_reassigned,
-	                                  ISIHM &cb_reassigned_to) const
+	void CellsDataContainer::reassign(size_t cell_id, int target_cell_id, ints_t &cb_reassign_targets,
+	                                  ISIHM &cb_reassigned_to_it) const
 	{
-		cb_reassigned[cell_id] = target_cell_id; // set reassignment mapping
-		cb_reassigned_to[target_cell_id].insert(cell_id); // reassign current cell
+		cb_reassign_targets[cell_id] = target_cell_id; // set reassignment mapping
+		cb_reassigned_to_it[target_cell_id].insert(cell_id); // reassign current cell
 
 		// transfer mapping of the cbs previously mapped to kid
-		ISIHM::iterator k = cb_reassigned_to.find(cell_id);
-		if (k == cb_reassigned_to.end())
+		ISIHM::iterator k = cb_reassigned_to_it.find(cell_id);
+		if (k == cb_reassigned_to_it.end())
 			return;
 
 		for (auto m: k->second)
 		{
-			cb_reassigned[m] = target_cell_id; // update reassignment mapping
-			cb_reassigned_to[target_cell_id].insert(m);
+			cb_reassign_targets[m] = target_cell_id; // update reassignment mapping
+			cb_reassigned_to_it[target_cell_id].insert(m);
 		}
 
 		k->second.clear();
-		cb_reassigned_to[target_cell_id].insert(k->first); // reassign to the new cell
+		cb_reassigned_to_it[target_cell_id].insert(k->first); // reassign to the new cell
 	}
 
 	int CellsDataContainer::add_record(const string &cell_barcode, const string &umi, const string &gene, s_i_hash_t &cells_ids)
@@ -221,7 +221,7 @@ namespace Estimation
 			size_t low_border = cells_genes_counts.size() - min(cells_genes_counts.size(), this->_top_print_size);
 			for (size_t i = cells_genes_counts.size() - 1; i > low_border; --i)
 			{
-				ss << cells_genes_counts[i].count << "\t" << this->_cells_names[cells_genes_counts[i].index] << "\n";
+				ss << cells_genes_counts[i].count << "\t" << this->_cells_names[cells_genes_counts[i].cell_index] << "\n";
 			}
 		}
 		else
@@ -262,11 +262,11 @@ namespace Estimation
 		return this->_filtered_cells;
 	}
 
-	size_t CellsDataContainer::get_umig_top(const ints_t &cb_reassigned, const IndexedCount &cur_gene,
+	size_t CellsDataContainer::get_umig_top(const ints_t &cb_reassign_targets, const IndexedCount &processed_genes_count,
 	                                        const s_ii_hash_t &umigs_cells_counts, i_i_hash_t &umig_top) const
 	{
 		size_t umigs_count = 0;
-		for (auto const &gene: this->_cells_genes[cur_gene.index])
+		for (auto const &gene: this->_cells_genes[processed_genes_count.cell_index])
 		{
 			const string &gene_name = gene.first;
 			const s_i_hash_t &umis = gene.second;
@@ -275,15 +275,16 @@ namespace Estimation
 			{
 				string umig = umi_count.first + gene_name;
 				const i_i_hash_t &umig_cells = umigs_cells_counts.at(umig);
-				for (i_i_hash_t::const_iterator cells_it = umig_cells.begin(); cells_it != umig_cells.end(); ++cells_it)
+				for (auto const &cell : umig_cells)
 				{
-					int cell_with_same_umig_id = cells_it->first;
-					if (cb_reassigned[cell_with_same_umig_id] == cur_gene.index)
+					int cell_with_same_umig_id = cell.first;
+					long reassign_target = cb_reassign_targets[cell_with_same_umig_id]; //if not reassigned then cell_with_same_umig_id
+					if (reassign_target == processed_genes_count.cell_index)
 						continue;
 
-					if (this->_cells_genes[cb_reassigned[cell_with_same_umig_id]].size() > cur_gene.count)
+					if (this->_cells_genes[reassign_target].size() > processed_genes_count.count)
 					{
-						umig_top[cb_reassigned[cell_with_same_umig_id]]++;
+						umig_top[reassign_target]++;
 					}
 				}
 				umigs_count++;
