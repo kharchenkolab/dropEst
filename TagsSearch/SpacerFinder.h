@@ -21,8 +21,8 @@ namespace TagsSearch
 		std::string spacer;
 		std::string spacer_2;
 
-		int spacer_min_pos;
-		int spacer_max_pos;
+		unsigned spacer_min_pos;
+		unsigned spacer_max_pos;
 		len_t barcode_length;
 		len_t umi_length;
 		len_t r1_rc_length;

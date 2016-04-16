@@ -61,7 +61,7 @@ namespace TagsSearch
 		if (seq.length() < spacer_pos + spacer.length() + this->barcode_length + this->umi_length + 1)
 		{
 			this->outcomes.inc(OutcomesCounter::SHORT_SEQ);
-			L_DEBUG << "-- read is too short";
+			L_DEBUG << "-- read is too short for this spacer";
 
 			return string::npos;
 		}
@@ -78,8 +78,7 @@ namespace TagsSearch
 		{
 			len_t spacer_pos = suffix_seq_pos - suffix_start;
 
-			if (spacer_pos >= this->spacer_min_pos &&
-				spacer_pos + this->spacer.length() < this->spacer_max_pos + this->spacer_prefix_length)
+			if (spacer_pos >= this->spacer_min_pos && spacer_pos < this->spacer_max_pos)
 			{
 				int ed = Tools::edit_distance(this->spacer.c_str(),
 											  seq.substr(spacer_pos, this->spacer.length()).c_str());
@@ -96,10 +95,9 @@ namespace TagsSearch
 			}
 		}
 
-		len_t prefix_pos = seq.rfind(this->spacer.substr(0, this->spacer_prefix_length));
+		len_t prefix_pos = seq.rfind(this->spacer.substr(0, this->spacer_prefix_length), this->spacer_max_pos);
 
-		if (prefix_pos != string::npos && prefix_pos >= this->spacer_min_pos &&
-			prefix_pos + this->spacer.length() < this->spacer_max_pos + this->spacer_prefix_length) //TODO !!!
+		if (prefix_pos != string::npos && prefix_pos < this->spacer_max_pos)
 		{
 			int ed = Tools::edit_distance(this->spacer.c_str(), seq.substr(prefix_pos, this->spacer.length()).c_str());
 			L_DEBUG << "-- prefix match at " << prefix_pos << " ed=" << ed;

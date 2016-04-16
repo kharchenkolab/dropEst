@@ -32,21 +32,21 @@ namespace TagsSearch
 	std::string OutcomesCounter::print(double normalizer) const
 	{
 		std::ostringstream out_stream;
-		out_stream << " outcomes:[";
+		out_stream << "Outcomes:\n[";
 		for (int i = 0; i < STAT_SIZE; i++)
 		{
 			out_stream << " (" <<names[i] << ") ";
 		}
 		out_stream << "]" << std::endl;
 
-		out_stream << " outcomes:[";
+		out_stream << "[";
 		for (int i = 0; i < STAT_SIZE; i++)
 		{
 			out_stream << stats[i] << " ";
 		}
 		out_stream << "]" << std::endl;
 
-		out_stream << " outcomes:[" << std::setprecision(3);
+		out_stream << "[" << std::setprecision(3);
 		for (int i = 0; i < STAT_SIZE; i++)
 		{
 			out_stream << 100.0 * stats[i] / normalizer << " ";

@@ -41,7 +41,7 @@ namespace Estimation
 				if (gene_count.count < this->_min_genes_after_merge)
 					break;
 
-				this->_filtered_cells.push_back(gene_count.index);
+				this->_filtered_cells.push_back(gene_count.cell_index);
 			}
 		}
 	}
