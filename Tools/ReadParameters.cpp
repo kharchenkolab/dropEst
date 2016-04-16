@@ -19,6 +19,7 @@ namespace Tools
 
 	ReadParameters::ReadParameters(const std::string &encoded_params)
 	{
+		size_t start_pos = encoded_params[0] == '@' ? 1 : 0;
 		size_t umi_start_pos = encoded_params.rfind('#');
 		if (umi_start_pos == std::string::npos)
 			throw std::runtime_error("WARNING: unable to parse out UMI in: " + encoded_params);
@@ -27,7 +28,7 @@ namespace Tools
 		if (cell_barcode_start_pos == std::string::npos)
 			throw std::runtime_error("WARNING: unable to parse out cell tag in: " + encoded_params);
 
-		this->_read_number = atol(encoded_params.substr(0, umi_start_pos).c_str());
+		this->_read_number = atol(encoded_params.substr(start_pos, umi_start_pos - start_pos).c_str());
 		this->_read_name = encoded_params;
 		this->_cell_barcode = encoded_params.substr(cell_barcode_start_pos + 1, umi_start_pos - cell_barcode_start_pos - 1);
 		this->_umi_barcode = encoded_params.substr(umi_start_pos + 1);

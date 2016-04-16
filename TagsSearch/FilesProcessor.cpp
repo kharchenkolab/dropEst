@@ -111,6 +111,6 @@ namespace TagsSearch
 
 	void FilesProcessor::write_read_params(const std::string &id, const Tools::ReadParameters &read_params)
 	{
-		this->out_reads_file << read_params.to_string() << std::flush;
+		this->out_reads_file << id << " " << read_params.to_string() << std::endl;
 	}
 }
