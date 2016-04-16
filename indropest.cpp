@@ -176,7 +176,7 @@ int main(int argc, char **argv)
 		CellsDataContainer container = estimator.get_cells_container(files, params.merge_tags, params.bam_output,
 		                                                             params.reads_params_file, params.gtf_filename);
 		
-		if (false)
+//		if (false)
 		{
 			Results::IndropResult results = estimator.get_results(container, params.not_filtered);
 		
@@ -196,10 +196,13 @@ int main(int argc, char **argv)
 #endif
 		}
 #ifdef R_LIBS
-		L_TRACE << "Get bad cells results";
-		Results::BadCellsStats bad_cells_results(container.stats());
-		L_TRACE << "Done";
-		bad_cells_results.save_rds(params.output_name + ".bc.rds");
+		if (false)
+		{
+			L_TRACE << "Get bad cells results";
+			Results::BadCellsStats bad_cells_results(container.stats());
+			L_TRACE << "Done";
+			bad_cells_results.save_rds(params.output_name + ".bc.rds");
+		}
 #endif
 	}
 	catch (std::runtime_error err)
