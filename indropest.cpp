@@ -202,7 +202,7 @@ int main(int argc, char **argv)
 #endif
 		}
 #ifdef R_LIBS
-		if (false)
+//		if (false)
 		{
 			L_TRACE << "Get bad cells results";
 			Results::BadCellsStats bad_cells_results(container.stats());

@@ -18,6 +18,7 @@ namespace Tools
 	}
 
 	ReadParameters::ReadParameters(const std::string &encoded_params)
+		: _is_empty(false)
 	{
 		size_t start_pos = encoded_params[0] == '@' ? 1 : 0;
 		size_t umi_start_pos = encoded_params.rfind('#');

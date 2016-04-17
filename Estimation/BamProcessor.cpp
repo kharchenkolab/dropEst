@@ -6,7 +6,7 @@
 #include <api/BamReader.h>
 #include <api/BamWriter.h>
 
-#include <Tools/UtilFunctions.h>
+#include <boost/algorithm/string.hpp>
 
 namespace Estimation
 {
@@ -193,17 +193,30 @@ namespace Estimation
 
 	void BamProcessor::fill_names_map(const std::string &reads_params_names_str)
 	{
-		std::vector<std::string> params_names = Tools::split(reads_params_names_str);
+		std::vector<std::string> params_names;
+		boost::split(params_names, reads_params_names_str, boost::is_any_of(" \t"));
+		size_t total_reads_count = 0;
+		L_TRACE << "Start loading reads names";
 		for (auto const &name : params_names)
 		{
+			if (name.empty())
+				continue;
+			L_TRACE << "Start reading file: " << name;
 			std::ifstream ifs(name);
 			std::string row;
-			while (ifs >> row)
+			while (std::getline(ifs, row))
 			{
 				if (row.empty())
 					continue;
 
-				std::vector<std::string> parts = Tools::split(name);
+				total_reads_count++;
+				if (total_reads_count % 1000000 == 0)
+				{
+					L_TRACE << "Total " << total_reads_count << " reads record processed";
+				}
+
+				std::vector<std::string> parts;
+				boost::split(parts, row, boost::is_any_of(" \t"));
 				if (this->_reads_params.find(parts[0]) != this->_reads_params.end())
 				{
 					L_ERR << "Read name is already in map: " << parts[0] << ", old value: " <<
@@ -213,6 +226,6 @@ namespace Estimation
 				this->_reads_params[parts[0]] = Tools::ReadParameters(parts[1]);
 			}
 		}
-
+		L_TRACE << "All reads names were loaded";
 	}
 }
