@@ -134,7 +134,13 @@ namespace TagsSearch
 
 	string SpacerFinder::parse_cell_barcode(const string &seq, len_t spacer_pos) const
 	{
-		return seq.substr(0, spacer_pos) + seq.substr(spacer_pos + this->spacer.length(), this->barcode_length);
+		string res = seq.substr(0, spacer_pos) + seq.substr(spacer_pos + this->spacer.length(), this->barcode_length);
+		if (res.length() != this->barcode_length)
+		{
+			L_ERR << "Barcode is shorter then it should be (" << this->barcode_length << "): " << res;
+		}
+
+		return res;
 	}
 
 	string SpacerFinder::parse_umi_barcode(const string &seq, len_t spacer_pos) const
