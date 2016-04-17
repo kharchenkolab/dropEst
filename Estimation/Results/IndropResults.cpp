@@ -16,24 +16,24 @@ namespace Estimation
 			if (not_filtered)
 			{
 				L_TRACE << "Fill exone results";
-				stats.get_cells(Stats::EXONE_UMI_PER_CELL_PER_CHR, this->ex_cell_names, this->chr_names,
-				                this->ex_cells_chr_umis_counts);
+				stats.get_cells(Stats::EXONE_READS_PER_CELL_PER_CHR, this->ex_cell_names, this->chr_names,
+				                this->ex_cells_chr_reads_counts);
 				this->chr_names.clear();
 				L_TRACE << "Fill nonexone results";
-				stats.get_cells(Stats::NON_EXONE_UMI_PER_CELL_PER_CHR, this->nonex_cell_names, this->chr_names,
-				                this->nonex_cells_chr_umis_counts);
+				stats.get_cells(Stats::NON_EXONE_READS_PER_CELL_PER_CHR, this->nonex_cell_names, this->chr_names,
+				                this->nonex_cells_chr_reads_counts);
 			}
 			else
 			{
 				L_TRACE << "Fill exone results";
-				stats.get_cells_filtered(Stats::EXONE_UMI_PER_CELL_PER_CHR, this->cm.cell_names, this->ex_cell_names,
+				stats.get_cells_filtered(Stats::EXONE_READS_PER_CELL_PER_CHR, this->cm.cell_names, this->ex_cell_names,
 				                         this->chr_names,
-				                         this->ex_cells_chr_umis_counts);
+				                         this->ex_cells_chr_reads_counts);
 				this->chr_names.clear();
 				L_TRACE << "Fill nonexone results";
-				stats.get_cells_filtered(Stats::NON_EXONE_UMI_PER_CELL_PER_CHR, this->cm.cell_names,
+				stats.get_cells_filtered(Stats::NON_EXONE_READS_PER_CELL_PER_CHR, this->cm.cell_names,
 				                         this->nonex_cell_names,
-				                         this->chr_names, this->nonex_cells_chr_umis_counts);
+				                         this->chr_names, this->nonex_cells_chr_reads_counts);
 			}
 		}
 
@@ -47,20 +47,7 @@ namespace Estimation
 			{
 				R = new RInside(0, 0);
 			}
-			(*R)["d"] = List::create(Named("cell.names") = wrap(this->cm.cell_names),
-			                    Named("gene.names") = wrap(this->cm.gene_names),
-			                    Named("cm") = wrap(this->cm.counts),
-			                    Named("ex_cells_chr_counts") = wrap(this->ex_cells_chr_umis_counts),
-			                    Named("nonex_cells_chr_counts") = wrap(this->nonex_cells_chr_umis_counts),
-			                    Named("ex_counts_cell_names") = wrap(this->ex_cell_names),
-			                    Named("nonex_counts_cell_names") = wrap(this->nonex_cell_names),
-			                    Named("counts_chr_names") = wrap(this->chr_names),
-			                    Named("rpu") = wrap(this->reads_per_umi),
-			                    Named("umig.cov") = wrap(this->umig_covered),
-			                    Named("merge.n") = wrap(this->merge_n),
-			                    Named("reads_by_umig") = wrap(this->reads_by_umig),
-			                    Named("reads_by_cb") = wrap(this->reads_by_cb),
-			                    Named("fname") = wrap(filename));
+			(*R)["d"] = this->get_main_r_vec(filename);
 			L_TRACE << "writing R data to " << filename;
 
 			R->parseEvalQ(
@@ -76,6 +63,25 @@ namespace Estimation
 
 			R->parseEvalQ("saveRDS(d, '" + filename + "')");
 			L_TRACE << "Done";
+		}
+
+		Rcpp::List IndropResult::get_main_r_vec(const std::string &filename) const
+		{
+			using namespace Rcpp;
+			return List::create(Named("cell.names") = wrap(this->cm.cell_names),
+						 Named("gene.names") = wrap(this->cm.gene_names),
+						 Named("cm") = wrap(this->cm.counts),
+						 Named("ex_cells_chr_counts") = wrap(this->ex_cells_chr_reads_counts),
+						 Named("nonex_cells_chr_counts") = wrap(this->nonex_cells_chr_reads_counts),
+						 Named("ex_counts_cell_names") = wrap(this->ex_cell_names),
+						 Named("nonex_counts_cell_names") = wrap(this->nonex_cell_names),
+						 Named("counts_chr_names") = wrap(this->chr_names),
+						 Named("rpu") = wrap(this->reads_per_umi),
+						 Named("umig.cov") = wrap(this->umig_covered),
+						 Named("merge.n") = wrap(this->merge_n),
+						 Named("reads_by_umig") = wrap(this->reads_by_umig),
+						 Named("reads_by_cb") = wrap(this->reads_by_cb),
+						 Named("fname") = wrap(filename));
 		}
 #endif
 	}

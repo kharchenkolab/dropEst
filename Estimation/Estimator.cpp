@@ -2,6 +2,7 @@
 
 #include "BamProcessor.h"
 #include "Results/IndropResults.h"
+#include "Results/IndropResultsWithoutUmi.h"
 #include "Tools/GeneInfo.h"
 #include "Tools/Logs.h"
 
@@ -37,7 +38,7 @@ namespace Estimation
 		}
 	}
 
-	Results::IndropResult Estimator::get_results(const CellsDataContainer &container, bool not_filtered)
+	Results::IndropResult Estimator::get_results(const CellsDataContainer &container, bool not_filtered, bool reads_output)
 	{
 		ids_t filtered_cells = container.filtered_cells();
 
@@ -52,12 +53,13 @@ namespace Estimation
 
 		names_t gene_names;
 		ints_t umis_table;
-		this->fill_table(filtered_cells, gene_counts, container, gene_names, umis_table);
+		this->fill_table(filtered_cells, gene_counts, container, gene_names, umis_table, reads_output);
 
 		L_TRACE << "Done";
 
 		Results::CountMatrix cm(cell_names, gene_names, umis_table);
-		return this->get_indrop_results(cm, container, filtered_cells, not_filtered);
+		return reads_output ? Results::IndropResultsWithoutUmi(cm, container.stats(), not_filtered)
+			   : this->get_indrop_results(cm, container, filtered_cells, not_filtered);
 	}
 
 	Estimator::s_counter_t Estimator::count_genes(const CellsDataContainer &genes_container,
@@ -96,7 +98,7 @@ namespace Estimation
 
 	void Estimator::fill_table(const ids_t &unmerged_cells, const s_counter_t &gene_counts,
 	                           const CellsDataContainer &genes_container, names_t &gene_names_header,
-	                           ints_t &umis_table) const
+	                           ints_t &umis_table, bool reads_output) const
 	{
 //		return;
 		size_t size = unmerged_cells.size() * gene_counts.size();
@@ -110,10 +112,27 @@ namespace Estimation
 			gene_names_header.push_back(gene_name);
 			for (size_t j = 0; j < unmerged_cells.size(); j++)
 			{
-				const CellsDataContainer::genes_t &cur_genes = genes_container.cell_genes(unmerged_cells[j]);
-				CellsDataContainer::genes_t::const_iterator res = cur_genes.find(gene_name);
+				auto const &cur_genes = genes_container.cell_genes(unmerged_cells[j]);
+				auto res = cur_genes.find(gene_name);
 
-				umis_table[(i * unmerged_cells.size()) + j] = res == cur_genes.end() ? 0 : res->second.size();
+				long cell_value = 0;
+
+				if (res != cur_genes.end())
+				{
+					if (reads_output)
+					{
+						for (auto const &umi : res->second)
+						{
+							cell_value += umi.second;
+						}
+					}
+					else
+					{
+						cell_value = res->second.size();
+					}
+				}
+
+				umis_table[(i * unmerged_cells.size()) + j] = cell_value;
 			}
 		}
 	}

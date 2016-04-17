@@ -49,10 +49,11 @@ namespace Estimation
 		{
 			friend class boost::serialization::access;
 
+		protected:
 			template<class Archive>
 			void serialize(Archive &ar, const unsigned int /* file_version */)
 			{
-				ar & this->cm & this->ex_cells_chr_umis_counts & this->nonex_cells_chr_umis_counts &
+				ar & this->cm & this->ex_cells_chr_reads_counts & this->nonex_cells_chr_reads_counts &
 				this->ex_cell_names &
 				this->nonex_cell_names & this->chr_names & this->reads_per_umi & this->umig_covered & this->merge_n &
 				this->reads_by_umig;
@@ -64,8 +65,8 @@ namespace Estimation
 		public:
 			CountMatrix cm;
 
-			Stats::int_list_t ex_cells_chr_umis_counts;
-			Stats::int_list_t nonex_cells_chr_umis_counts;
+			Stats::int_list_t ex_cells_chr_reads_counts;
+			Stats::int_list_t nonex_cells_chr_reads_counts;
 			Stats::str_list_t ex_cell_names;
 			Stats::str_list_t nonex_cell_names;
 			Stats::str_list_t chr_names;
@@ -84,6 +85,7 @@ namespace Estimation
 
 #ifdef R_LIBS
 			virtual void save_r_table(const std::string &filename) const override;
+			virtual Rcpp::List get_main_r_vec(const std::string &filename) const;
 #endif
 		};
 	}

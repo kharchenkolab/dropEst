@@ -92,7 +92,7 @@ namespace Estimation
 
 			if (gene == "")
 			{
-				container.stats().inc_cells(Stats::NON_EXONE_UMI_PER_CELL_PER_CHR, cell_barcode, chr_name);
+				container.stats().inc_cells(Stats::NON_EXONE_READS_PER_CELL_PER_CHR, cell_barcode, chr_name);
 				continue;
 			}
 
@@ -160,7 +160,7 @@ namespace Estimation
 
 		container.stats().inc_cells(Stats::GENES_READS_PER_CELL, cell_barcode, gene);
 		container.stats().inc_cells(Stats::UMIGS_READS_PER_CELL, cell_barcode, umig);
-		container.stats().inc_cells(Stats::EXONE_UMI_PER_CELL_PER_CHR, cell_barcode, chr_name);
+		container.stats().inc_cells(Stats::EXONE_READS_PER_CELL_PER_CHR, cell_barcode, chr_name);
 		return cell_id;
 	}
 

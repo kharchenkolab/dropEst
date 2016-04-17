@@ -26,6 +26,7 @@ struct Params
 	bool text_output = false;
 	bool merge_tags = false;
 	bool not_filtered = false;
+	bool reads_output = false;
 	string output_name = "";
 	string config_file_name = "";
 	string log_prefix = "";
@@ -39,10 +40,10 @@ static void usage()
 	cerr << "SYNOPSIS\n";
 	cerr <<
 	"\tindropest [-t, --text-output] [-m|--merge-cell-tags] [-v|--verbose] [-n | --not-filtered] [-g | --gtf filename]"
-	"[-l, --log-prefix logs_name] [-r, --reads-params filename] -c config.xml file1.bam [file2.bam ...] [-b | --bam]"
+	"[-l, --log-prefix logs_name] [-r, --reads-params filename] -c config.xml file1.bam [file2.bam ...] [-b | --bam-output]"
 	<< endl;
 	cerr << "OPTIONS:\n";
-	cerr << "\t-b, --bam-out: print corrected bam files" << endl;
+	cerr << "\t-b, --bam-output: print corrected bam files" << endl;
 	cerr << "\t-c, --config filename: xml file with estimation parameters" << endl;
 	cerr << "\t-g, --gtf filename: gtf file with genes annotations" << endl;
 	cerr << "\t-l, --log-prefix : logs prefix" << endl;
@@ -50,6 +51,7 @@ static void usage()
 	cerr << "\t-n, --not-filtered : print data for all cells" << endl;
 	cerr << "\t-o, --output-file filename : output file name" << endl;
 	cerr << "\t-r, --reads-params filename: file or files with serialized params from tags search step. If there are several files then it should be in quotes and splitted by space" << endl;
+	cerr << "\t-R, --reads-output: print count matrix for reads and don't use UMI statistics" << endl;
 	cerr << "\t-t, --text-output : write out text matrix" << endl;
 	cerr << "\t-v, --verbose : verbose mode" << endl;
 }
@@ -69,25 +71,29 @@ static Params parse_cmd_params(int argc, char **argv)
 			{"not-filtered",	no_argument, 	   0, 'n'},
 			{"output-file",     required_argument, 0, 'o'},
 			{"reads-params",     required_argument, 0, 'r'},
+			{"reads-output",     no_argument, 		0, 'R'},
 			{"text-output",     no_argument,       0, 't'},
 			{"verbose",         no_argument,       0, 'v'},
 			{0, 0,                                 0, 0}
 	};
-	while ((c = getopt_long(argc, argv, "bvtmno:c:l:r:g:", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "bc:g:l:mno:r:Rtv", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
 			case 'b':
 				params.bam_output = true;
 				break;
-			case 'v' :
-				params.verbose = true;
+			case 'c' :
+				params.config_file_name = string(optarg);
+				break;
+			case 'g' :
+				params.gtf_filename = string(optarg);
+				break;
+			case 'l' :
+				params.log_prefix = string(optarg);
 				break;
 			case 'm' :
 				params.merge_tags = true;
-				break;
-			case 't' :
-				params.text_output = true;
 				break;
 			case 'n' :
 				params.not_filtered = true;
@@ -95,17 +101,17 @@ static Params parse_cmd_params(int argc, char **argv)
 			case 'o' :
 				params.output_name = string(optarg);
 				break;
-			case 'c' :
-				params.config_file_name = string(optarg);
-				break;
 			case 'r' :
 				params.reads_params_file = string(optarg);
 				break;
-			case 'l' :
-				params.log_prefix = string(optarg);
+			case 'R' :
+				params.reads_output = true;
 				break;
-			case 'g' :
-				params.gtf_filename = string(optarg);
+			case 't' :
+				params.text_output = true;
+				break;
+			case 'v' :
+				params.verbose = true;
 				break;
 			default:
 				cerr << "indropest: unknown arguments passed" << endl;
@@ -178,7 +184,7 @@ int main(int argc, char **argv)
 		
 //		if (false)
 		{
-			Results::IndropResult results = estimator.get_results(container, params.not_filtered);
+			Results::IndropResult results = estimator.get_results(container, params.not_filtered, params.reads_output);
 		
 			ctt = time(0);
 			L_TRACE << "Done: " << asctime(localtime(&ctt));
