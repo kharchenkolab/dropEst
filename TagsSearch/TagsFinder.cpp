@@ -244,6 +244,10 @@ namespace TagsSearch
 		L_DEBUG << "-- cell barcode: " << cell_barcode << " (" << cell_barcode.length() << "nt)";
 
 		string umi_barcode = this->spacer_finder.parse_umi_barcode(r1_seq, spacer_pos);
+		if (umi_barcode.length() == 0)
+		{
+			umi_barcode = "N";
+		}
 
 		L_DEBUG << "-- umi barcode: " << umi_barcode;
 		L_DEBUG << "R2: " << r2_seq;

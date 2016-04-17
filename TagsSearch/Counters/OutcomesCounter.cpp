@@ -25,7 +25,7 @@ namespace TagsSearch
 		names[OK] = "OK";
 		names[NO_SPACER] = "No spacer";
 		names[SHORT_SEQ] = "Short";
-		names[SPACER_2] = "Spacer2";
+		names[SPACER_MODIFIED] = "Spacer modified";
 		names[SPACER_MISPLACED] = "Spacer misplaced";
 	}
 

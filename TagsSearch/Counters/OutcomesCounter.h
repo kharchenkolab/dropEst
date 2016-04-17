@@ -13,7 +13,7 @@ namespace TagsSearch
 			NO_SPACER,
 			SHORT_SEQ,
 			SPACER_MISPLACED,
-			SPACER_2,
+			SPACER_MODIFIED,
 			STAT_SIZE
 		};
 

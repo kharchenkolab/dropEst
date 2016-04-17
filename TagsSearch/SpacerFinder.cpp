@@ -58,7 +58,7 @@ namespace TagsSearch
 			return string::npos;
 		}
 
-		if (seq.length() < spacer_pos + spacer.length() + this->barcode_length + this->umi_length + 1)
+		if (seq.length() < spacer_pos + spacer.length() + this->barcode_length + this->umi_length)
 		{
 			this->outcomes.inc(OutcomesCounter::SHORT_SEQ);
 			L_DEBUG << "-- read is too short for this spacer";
@@ -89,7 +89,7 @@ namespace TagsSearch
 
 				if (ed <= SpacerFinder::max_spacer_ed)
 				{
-					this->outcomes.inc(OutcomesCounter::SPACER_2);
+					this->outcomes.inc(OutcomesCounter::SPACER_MODIFIED);
 					return spacer_pos;
 				}
 			}
@@ -104,7 +104,7 @@ namespace TagsSearch
 
 			if (ed <= SpacerFinder::max_spacer_ed)
 			{
-				this->outcomes.inc(OutcomesCounter::SPACER_2);
+				this->outcomes.inc(OutcomesCounter::SPACER_MODIFIED);
 				return prefix_pos;
 			}
 		}
@@ -124,7 +124,7 @@ namespace TagsSearch
 		spacer_pos = seq.find(this->spacer_2);
 		if (spacer_pos != string::npos)
 		{
-			this->outcomes.inc(OutcomesCounter::SPACER_2);
+			this->outcomes.inc(OutcomesCounter::SPACER_MODIFIED);
 			L_DEBUG << "-- secondary spacer" << std::endl;
 
 			return spacer_pos;
@@ -139,14 +139,20 @@ namespace TagsSearch
 
 	string SpacerFinder::parse_umi_barcode(const string &seq, len_t spacer_pos) const
 	{
-		return seq.substr(spacer_pos + spacer.length() + this->barcode_length, this->umi_length);
+		string res = seq.substr(spacer_pos + spacer.length() + this->barcode_length, this->umi_length);
+		if (res.length() != this->umi_length)
+		{
+			L_ERR << "UMI is shorter then it should be (" << this->umi_length << "): " << res;
+		}
+
+		return res;
 	}
 
 	string SpacerFinder::parse_r1_rc(const string &seq, len_t spacer_pos) const
 	{
-		return seq.substr(
-				spacer_pos + this->spacer.length() + this->barcode_length + this->umi_length - this->r1_rc_length,
-				this->r1_rc_length);
+		return seq.substr(spacer_pos + this->spacer.length() + this->barcode_length +
+								  this->umi_length - this->r1_rc_length, this->r1_rc_length);
+
 	}
 
 	const OutcomesCounter &SpacerFinder::get_outcomes_counter() const
