@@ -102,8 +102,9 @@ namespace Estimation
 		size_t size = unmerged_cells.size() * gene_counts.size();
 		umis_table.resize(size);
 		gene_names_header.reserve(gene_counts.size());
+		L_TRACE << "Empty matrix created";
 
-		for (int i = 0; i < gene_counts.size(); i++)
+		for (size_t i = 0; i < gene_counts.size(); i++)
 		{
 			const string gene_name = gene_counts[i].first;
 			gene_names_header.push_back(gene_name);

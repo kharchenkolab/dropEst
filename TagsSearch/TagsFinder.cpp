@@ -127,7 +127,7 @@ namespace TagsSearch
 		FilesProcessor files_processor(r1_filename, r2_filename, base_name, this->max_reads);
 
 		long total_reads_read = 1;
-		std::string file_uid = std::to_string(rand()) + std::to_string(rand() % 57 + 'A');
+		std::string file_uid = std::to_string(rand()) + char(rand() % 57 + 'A');
 
 		string r1_seq, r2_id, r2_seq, r2_description, r2_quality_str;
 		while (TagsFinder::read_blocks(files_processor, total_reads_read, r1_seq, r2_id, r2_seq, r2_description,
