@@ -65,6 +65,6 @@ namespace Estimation
 		void add_merge_count(int count);
 		const int_list_t& get_merge_counts() const;
 
-		void merge(const int_list_t &reassigned, const str_list_t &names);
+		void merge(const int_list_t &reassigned, const str_list_t &cell_names);
 	};
 }

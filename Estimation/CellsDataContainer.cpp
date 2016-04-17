@@ -153,18 +153,17 @@ namespace Estimation
 		cb_reassigned_to_it[target_cell_id].insert(cell_id); // reassign current cell
 
 		// transfer mapping of the cbs previously mapped to kid
-		ISIHM::iterator k = cb_reassigned_to_it.find(cell_id);
-		if (k == cb_reassigned_to_it.end())
+		auto reassigned_to_cell_iter = cb_reassigned_to_it.find(cell_id);
+		if (reassigned_to_cell_iter == cb_reassigned_to_it.end())
 			return;
 
-		for (auto m: k->second)
+		for (auto reassigned_id: reassigned_to_cell_iter->second)
 		{
-			cb_reassign_targets[m] = target_cell_id; // update reassignment mapping
-			cb_reassigned_to_it[target_cell_id].insert(m);
+			cb_reassign_targets[reassigned_id] = target_cell_id; // update reassignment mapping
+			cb_reassigned_to_it[target_cell_id].insert(reassigned_id);
 		}
 
-		k->second.clear();
-		cb_reassigned_to_it[target_cell_id].insert(k->first); // reassign to the new cell
+		reassigned_to_cell_iter->second.clear();
 	}
 
 	int CellsDataContainer::add_record(const string &cell_barcode, const string &umi, const string &gene, s_i_hash_t &cells_ids)

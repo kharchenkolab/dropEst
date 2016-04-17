@@ -81,7 +81,7 @@ namespace Estimation
 		}
 	}
 
-	void Stats::merge(const int_list_t &reassigned, const str_list_t &names)
+	void Stats::merge(const int_list_t &reassigned, const str_list_t &cell_names)
 	{
 		for (int stat_num = 0; stat_num < CELL_S_STAT_SIZE; ++stat_num)
 		{
@@ -91,8 +91,8 @@ namespace Estimation
 				if (reassigned[ind] == ind)
 					continue;
 
-				const std::string &cur_name = names[ind];
-				const std::string &target_name = names[reassigned[ind]];
+				const std::string &cur_name = cell_names[ind];
+				const std::string &target_name = cell_names[reassigned[ind]];
 				ss_cnt_t::const_iterator cell_from_it = cur_stat.find(cur_name);
 				if (cell_from_it == cur_stat.end())
 					continue;

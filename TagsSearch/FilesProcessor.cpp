@@ -90,6 +90,11 @@ namespace TagsSearch
 		this->out_reads_file.close();
 		this->out_zip.pop();
 		this->out_file.close();
+
+		this->r1_fs.pop();
+		this->r2_fs.pop();
+		this->r1_file.close();
+		this->r2_file.close();
 	}
 
 	bool FilesProcessor::write(const std::string &text)

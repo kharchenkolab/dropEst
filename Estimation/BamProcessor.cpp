@@ -66,7 +66,7 @@ namespace Estimation
 			total_reads++;
 			if (total_reads % 1000000 == 0)
 			{
-				L_TRACE << "Total " << total_reads << " reads processed";
+				L_TRACE << "Total " << total_reads << " reads processed (" << exonic_reads << " exonic reads)";
 			}
 
 			if (alignment.Length < this->_read_prefix_length)
