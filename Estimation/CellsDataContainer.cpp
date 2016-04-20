@@ -67,7 +67,7 @@ namespace Estimation
 			tag_index++;
 			if (tag_index % 1000 == 0)
 			{
-				L_TRACE << "Total " << tag_index << " tags merged";
+				L_TRACE << "Total " << tag_index << " tags processed";
 			}
 
 			i_i_hash_t umig_top;

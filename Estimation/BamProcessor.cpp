@@ -7,6 +7,8 @@
 #include <api/BamWriter.h>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
 
 namespace Estimation
 {
@@ -203,8 +205,11 @@ namespace Estimation
 				continue;
 			L_TRACE << "Start reading file: " << name;
 			std::ifstream ifs(name);
+			boost::iostreams::filtering_istream gz_fs;
+			gz_fs.push(boost::iostreams::gzip_decompressor());
+			gz_fs.push(ifs);
 			std::string row;
-			while (std::getline(ifs, row))
+			while (std::getline(gz_fs, row))
 			{
 				if (row.empty())
 					continue;
