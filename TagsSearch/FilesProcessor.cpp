@@ -46,10 +46,13 @@ namespace TagsSearch
 
 		std::string out_file_name = this->get_out_filename();
 		this->out_file.open(out_file_name.c_str(), std::ios_base::out | std::ios_base::binary);
-		this->out_reads_file.open(this->reads_file_name.c_str(), std::ios_base::out);
 
 		this->out_zip.push(boost::iostreams::gzip_compressor());
 		this->out_zip.push(this->out_file);
+
+		this->out_reads_file.open(this->reads_file_name.c_str(), std::ios_base::out);
+		this->out_reads_zip.push(boost::iostreams::gzip_compressor());
+		this->out_reads_zip.push(this->out_reads_file);
 	}
 
 	FilesProcessor::~FilesProcessor()
@@ -87,13 +90,16 @@ namespace TagsSearch
 
 	void FilesProcessor::close()
 	{
+		this->out_reads_zip.pop();
 		this->out_reads_file.close();
+
 		this->out_zip.pop();
 		this->out_file.close();
 
 		this->r1_fs.pop();
-		this->r2_fs.pop();
 		this->r1_file.close();
+
+		this->r2_fs.pop();
 		this->r2_file.close();
 	}
 
@@ -116,6 +122,6 @@ namespace TagsSearch
 
 	void FilesProcessor::write_read_params(const std::string &id, const Tools::ReadParameters &read_params)
 	{
-		this->out_reads_file << id << " " << read_params.to_string() << std::endl;
+		this->out_reads_zip << id << " " << read_params.to_string() << std::endl;
 	}
 }

@@ -2,7 +2,7 @@
 
 //#include <boost/unordered_map.hpp>
 #include <string>
-#include <unordered_map>
+#include <map>
 #include <boost/serialization/access.hpp>
 
 namespace Tools
@@ -43,5 +43,5 @@ namespace Tools
 	};
 
 //	typedef boost::unordered_map<std::string, ReadParameters> reads_params_map_t;
-	typedef std::unordered_map<std::string, ReadParameters> reads_params_map_t;
+	typedef std::map<std::string, ReadParameters> reads_params_map_t;
 }

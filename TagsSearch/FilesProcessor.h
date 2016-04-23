@@ -21,6 +21,7 @@ namespace TagsSearch
 
 		std::ofstream out_file;
 		std::ofstream out_reads_file;
+		boost::iostreams::filtering_ostream out_reads_zip;
 		boost::iostreams::filtering_ostream out_zip;
 
 		std::string base_name;

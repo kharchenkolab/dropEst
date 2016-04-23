@@ -228,7 +228,17 @@ namespace Estimation
 								this->_reads_params[parts[0]].to_string() << ", new value: " << parts[1];
 					continue;
 				}
-				this->_reads_params[parts[0]] = Tools::ReadParameters(parts[1]);
+
+				try
+				{
+					this->_reads_params[parts[0]] = Tools::ReadParameters(parts[1]);
+				}
+				catch (std::runtime_error err)
+				{
+					L_ERR << err.what();
+					continue;
+				}
+
 			}
 		}
 		L_TRACE << "All reads names were loaded";
