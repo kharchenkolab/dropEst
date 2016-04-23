@@ -154,7 +154,7 @@ namespace TagsSearch
 			}
 			else
 			{
-				text = params.to_string();
+				text = params.to_monolithic_string();
 			}
 
 			text += "\n" + r2_seq + "\n" + r2_description + "\n" + r2_quality_str + "\n";

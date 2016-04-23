@@ -220,18 +220,24 @@ namespace Estimation
 					L_TRACE << "Total " << total_reads_count << " reads record processed";
 				}
 
-				std::vector<std::string> parts;
-				boost::split(parts, row, boost::is_any_of(" \t"));
-				if (this->_reads_params.find(parts[0]) != this->_reads_params.end())
+				size_t space_index = row.find_first_of(" \t");
+				if (space_index == std::string::npos)
 				{
-					L_ERR << "Read name is already in map: " << parts[0] << ", old value: " <<
-								this->_reads_params[parts[0]].to_string() << ", new value: " << parts[1];
+					L_ERR << "Can't parse row with reads params: '" << row << "'";
+					continue;
+				}
+				std::string key = row.substr(0, space_index);
+				std::string value = row.substr(space_index + 1);
+				if (this->_reads_params.find(key) != this->_reads_params.end())
+				{
+					L_ERR << "Read name is already in map: " << key << ", old value: '" <<
+								this->_reads_params[key].to_monolithic_string() << "', new value: " << value;
 					continue;
 				}
 
 				try
 				{
-					this->_reads_params[parts[0]] = Tools::ReadParameters(parts[1]);
+					this->_reads_params[key] = Tools::ReadParameters(value);
 				}
 				catch (std::runtime_error err)
 				{

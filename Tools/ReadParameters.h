@@ -1,6 +1,6 @@
 #pragma once
 
-//#include <boost/unordered_map.hpp>
+#include <boost/unordered_map.hpp>
 #include <string>
 #include <map>
 #include <boost/serialization/access.hpp>
@@ -27,12 +27,15 @@ namespace Tools
 		}
 
 	public:
+		static ReadParameters from_string(const std::string &str);
+
 		ReadParameters();
-		ReadParameters(const std::string &params_string);
+		ReadParameters(const std::string &monolithic_params_string);
 		ReadParameters(const ReadParameters &source);
-		ReadParameters(long total_reads_read, const std::string &read_name, const std::string &cell_barcode,
+		ReadParameters(long read_number, const std::string &read_name, const std::string &cell_barcode,
 					   const std::string &umi_barcode);
-		std::string to_string() const;
+		std::string to_monolithic_string() const;
+		std::string to_string();
 
 		long read_number() const;
 		const std::string& read_name() const;
@@ -42,6 +45,6 @@ namespace Tools
 		bool is_empty() const;
 	};
 
-//	typedef boost::unordered_map<std::string, ReadParameters> reads_params_map_t;
-	typedef std::map<std::string, ReadParameters> reads_params_map_t;
+	typedef boost::unordered_map<std::string, ReadParameters> reads_params_map_t;
+//	typedef std::map<std::string, ReadParameters> reads_params_map_t;
 }
