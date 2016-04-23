@@ -11,7 +11,7 @@ namespace Estimation
 		IndropResult::IndropResult(const CountMatrix &cm, const Stats &stats, const std::vector<double> &reads_per_umi,
 		                           const int_list_t &umig_covered, bool not_filtered)
 				: cm(cm), reads_per_umi(reads_per_umi), umig_covered(umig_covered), merge_n(stats.get_merge_counts()),
-				  reads_by_umig(stats.get(Stats::READS_BY_UMIG)), reads_by_cb(stats.get(Stats::READS_BY_CB))
+				  reads_by_umig(stats.get(Stats::READS_BY_UMIG)), reads_by_cb(stats.get(Stats::READS_PER_CB))
 		{
 			if (not_filtered)
 			{

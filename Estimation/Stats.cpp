@@ -43,6 +43,11 @@ namespace Estimation
 		return result;
 	}
 
+	const Stats::s_cnt_t& Stats::get_raw_stat(Stats::StringStatType stat) const
+	{
+		return this->_named_counters[stat];
+	}
+
 	void Stats::inc_cells(CellStrStatType stat, const std::string &cell_barcode, const std::string &subtype)
 	{
 		this->_ss_cell_counters[stat][cell_barcode][subtype]++;
@@ -120,7 +125,7 @@ namespace Estimation
 		return true;
 	}
 
-	const Stats::ss_cnt_t &Stats::get_raw_cell_stats(Stats::CellStrStatType stat) const
+	const Stats::ss_cnt_t &Stats::get_raw_cell_stat(Stats::CellStrStatType stat) const
 	{
 		return this->_ss_cell_counters[stat];
 	}

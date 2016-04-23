@@ -57,7 +57,7 @@ namespace Estimation
 		const int _max_merge_edit_distance;
 
 		std::vector<genes_t> _cells_genes; //cell_id -> gen_name -> umi -> count
-		names_t _cells_names;
+		names_t _cells_barcodes;
 		ids_t _filtered_cells;
 
 		i_counter_t _cells_genes_counts_sorted;
@@ -96,6 +96,6 @@ namespace Estimation
 
 		const genes_t &cell_genes(size_t index) const;
 
-		const std::string &cell_name(size_t index) const;
+		const std::string &cell_barcode(size_t index) const;
 	};
 }

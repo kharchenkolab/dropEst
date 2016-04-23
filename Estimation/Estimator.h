@@ -9,6 +9,7 @@
 #include <boost/property_tree/ptree.hpp>
 
 #include <Estimation/Results/IndropResults.h>
+#include <Estimation/Results/BadCellsStats.h>
 #include "CellsDataContainer.h"
 
 namespace Estimation
@@ -30,6 +31,7 @@ namespace Estimation
 		typedef CellsDataContainer::names_t names_t;
 		typedef CellsDataContainer::ints_t ints_t;
 		typedef CellsDataContainer::ids_t ids_t;
+		typedef Stats::ss_cnt_t ss_i_hash_t;
 
 	private:
 		static const size_t top_print_size;
@@ -45,6 +47,7 @@ namespace Estimation
 		Estimator(const boost::property_tree::ptree &config);
 
 		Results::IndropResult get_results(const CellsDataContainer &container, bool not_filtered, bool reads_output);
+		Results::BadCellsStats get_bad_cells_results(const CellsDataContainer &container);
 
 		CellsDataContainer get_cells_container(const names_t &files, bool merge_tags, bool bam_output,
 		                                       const std::string &reads_params_names_str, const std::string &gtf_filename);
@@ -67,5 +70,8 @@ namespace Estimation
 		std::string get_cb_top_verbose(const CellsDataContainer &genes_container, const ids_t &unmerged_cells) const;
 
 		std::string get_genes_top_verbose(const s_counter_t &genes_count) const;
+
+		ss_i_hash_t get_umis_per_genes_per_cells_count(const CellsDataContainer &genes_container) const;
+		ss_i_hash_t get_reads_per_genes_per_cells_count(const CellsDataContainer &genes_container) const;
 	};
 }

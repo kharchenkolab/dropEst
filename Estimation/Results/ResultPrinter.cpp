@@ -16,11 +16,9 @@ namespace Estimation
 			std::ofstream output_file(output_name.c_str(), std::ios_base::out);
 			// header
 			output_file << "gene";
-//	for (auto const &cell_name: count_matrix.cell_names)
-			for (CountMatrix::s_list_t::const_iterator cell_name_it = count_matrix.cell_names.begin();
-			     cell_name_it != count_matrix.cell_names.end(); ++cell_name_it)
+			for (auto const &cell_barcode: count_matrix.cell_names)
 			{
-				output_file << '\t' << *cell_name_it;
+				output_file << '\t' << cell_barcode;
 			}
 			output_file << "\n";
 

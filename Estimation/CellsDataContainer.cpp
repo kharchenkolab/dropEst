@@ -104,7 +104,7 @@ namespace Estimation
 			}
 		}
 
-		this->_stats.merge(cb_reassign_targets, this->_cells_names);
+		this->_stats.merge(cb_reassign_targets, this->_cells_barcodes);
 
 		if (this->_filtered_cells.size() > 1)
 		{
@@ -125,9 +125,11 @@ namespace Estimation
 			return false;
 
 		size_t cell_id = processed_gene_count.cell_index;
-		int ed = Tools::edit_distance(this->_cells_names[top_cell_ind].c_str(), this->_cells_names[cell_id].c_str());
+		int ed = Tools::edit_distance(this->_cells_barcodes[top_cell_ind].c_str(), this->_cells_barcodes[cell_id].c_str());
 		if (ed >= this->_max_merge_edit_distance)
 			return false;
+
+		this->stats().inc(Stats::MERGES_COUNT, this->_cells_barcodes[top_cell_ind]);
 
 		// do the merge
 		this->_stats.add_merge_count(-1 * processed_gene_count.count);
@@ -172,7 +174,7 @@ namespace Estimation
 		if (res.second)
 		{ // new cb
 			this->_cells_genes.push_back(genes_t());
-			this->_cells_names.push_back(cell_barcode);
+			this->_cells_barcodes.push_back(cell_barcode);
 		}
 		int cell_id = res.first->second;
 		this->_cells_genes[cell_id][gene][umi]++;
@@ -220,7 +222,7 @@ namespace Estimation
 			size_t low_border = cells_genes_counts.size() - min(cells_genes_counts.size(), this->_top_print_size);
 			for (size_t i = cells_genes_counts.size() - 1; i > low_border; --i)
 			{
-				ss << cells_genes_counts[i].count << "\t" << this->_cells_names[cells_genes_counts[i].cell_index] << "\n";
+				ss << cells_genes_counts[i].count << "\t" << this->_cells_barcodes[cells_genes_counts[i].cell_index] << "\n";
 			}
 		}
 		else
@@ -251,9 +253,9 @@ namespace Estimation
 		return this->_cells_genes_counts_sorted;
 	}
 
-	const string &CellsDataContainer::cell_name(size_t index) const
+	const string &CellsDataContainer::cell_barcode(size_t index) const
 	{
-		return this->_cells_names[index];
+		return this->_cells_barcodes[index];
 	}
 
 	const CellsDataContainer::ids_t &CellsDataContainer::filtered_cells() const

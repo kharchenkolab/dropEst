@@ -51,9 +51,9 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		std::string cb1 = "CCCCCCCCCCCCC";
 		std::string cb2 = "CCCCCCCCCCCCA";
 		std::string cb3 = "CCCCCCCCCCCAA";
-		container._cells_names.push_back(cb1);
-		container._cells_names.push_back(cb2);
-		container._cells_names.push_back(cb3);
+		container._cells_barcodes.push_back(cb1);
+		container._cells_barcodes.push_back(cb2);
+		container._cells_barcodes.push_back(cb3);
 
 		container._cells_genes.resize(2);
 		container._cells_genes[0]["G1"]["UMI1"] = 1;

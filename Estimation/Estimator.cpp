@@ -62,6 +62,12 @@ namespace Estimation
 			   : this->get_indrop_results(cm, container, filtered_cells, not_filtered);
 	}
 
+	Results::BadCellsStats Estimator::get_bad_cells_results(const CellsDataContainer &container)
+	{
+		return Results::BadCellsStats(container.stats(), this->get_reads_per_genes_per_cells_count(container),
+									  this->get_umis_per_genes_per_cells_count(container));
+	}
+
 	Estimator::s_counter_t Estimator::count_genes(const CellsDataContainer &genes_container,
 												  const ids_t &unmerged_cells) const
 	{
@@ -91,7 +97,7 @@ namespace Estimation
 		cell_names.reserve(unmerged_cells.size());
 		for (auto const &cell_id : unmerged_cells)
 		{
-			cell_names.push_back(genes_container.cell_name(cell_id));
+			cell_names.push_back(genes_container.cell_barcode(cell_id));
 		}
 		return cell_names;
 	}
@@ -212,7 +218,7 @@ namespace Estimation
 			for (size_t i = 0; i < min(unmerged_cells.size(), Estimator::top_print_size); i++)
 			{
 				ss << genes_container.cell_genes(unmerged_cells[i]).size() << "\t" <<
-				genes_container.cell_name(unmerged_cells[i]) << "\n";
+						genes_container.cell_barcode(unmerged_cells[i]) << "\n";
 			}
 		}
 		else
@@ -244,4 +250,43 @@ namespace Estimation
 
 		return container;
 	}
+
+	Estimator::ss_i_hash_t Estimator::get_umis_per_genes_per_cells_count(const CellsDataContainer &genes_container) const
+	{
+		ss_i_hash_t result;
+
+		for (auto cell_id : genes_container.filtered_cells())
+		{
+			std::string cell_barcode = genes_container.cell_barcode(cell_id);
+			auto &cell = result[cell_barcode];
+			for (auto const &gene : genes_container.cell_genes(cell_id))
+			{
+				cell[gene.first] = gene.second.size();
+			}
+		}
+
+		return result;
+	}
+
+	Estimator::ss_i_hash_t Estimator::get_reads_per_genes_per_cells_count(const CellsDataContainer &genes_container) const
+	{
+		ss_i_hash_t result;
+
+		for (auto cell_id : genes_container.filtered_cells())
+		{
+			std::string cell_barcode = genes_container.cell_barcode(cell_id);
+			for (auto const &gene : genes_container.cell_genes(cell_id))
+			{
+				auto &res_gene = result[cell_barcode][gene.first];
+				for (auto const &umi : gene.second)
+				{
+					res_gene += umi.second;
+				}
+			}
+		}
+
+		return result;
+	}
+
+
 }

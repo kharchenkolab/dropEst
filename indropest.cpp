@@ -205,7 +205,7 @@ int main(int argc, char **argv)
 //		if (false)
 		{
 			L_TRACE << "Get bad cells results";
-			Results::BadCellsStats bad_cells_results(container.stats());
+			Results::BadCellsStats bad_cells_results = estimator.get_bad_cells_results(container);
 			L_TRACE << "Done";
 			bad_cells_results.save_rds(params.output_name + ".bc.rds");
 		}

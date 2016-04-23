@@ -18,7 +18,8 @@ namespace Estimation
 		enum StringStatType
 		{
 			READS_BY_UMIG,
-			READS_BY_CB,
+			READS_PER_CB,
+			MERGES_COUNT,
 			S_STAT_SIZE
 		};
 
@@ -26,8 +27,6 @@ namespace Estimation
 		{
 			EXONE_READS_PER_CELL_PER_CHR = 0,
 			NON_EXONE_READS_PER_CELL_PER_CHR,
-			UMIGS_READS_PER_CELL,
-			GENES_READS_PER_CELL,
 			CELL_S_STAT_SIZE
 		};
 
@@ -53,6 +52,7 @@ namespace Estimation
 		void inc(StringStatType counter, const std::string &name);
 		void get(StringStatType counter, str_list_t &names, int_list_t &counts) const;
 		int_list_t get(StringStatType counter) const;
+		const s_cnt_t& get_raw_stat(StringStatType stat) const;
 
 		void inc_cells(CellStrStatType stat, const std::string &cell_barcode, const std::string &subtype);
 		void get_cells(CellStrStatType stat, str_list_t &types, str_list_t &subtypes, int_list_t &counts) const;
@@ -60,7 +60,7 @@ namespace Estimation
 		              int_list_t &counts) const;
 		void get_cells_filtered(CellStrStatType stat, const str_list_t &filter_barcodes, str_list_t &cell_barcodes,
 		                        str_list_t &subtypes, int_list_t &counts) const;
-		const ss_cnt_t& get_raw_cell_stats(CellStrStatType stat) const;
+		const ss_cnt_t& get_raw_cell_stat(CellStrStatType stat) const;
 
 		void add_merge_count(int count);
 		const int_list_t& get_merge_counts() const;
