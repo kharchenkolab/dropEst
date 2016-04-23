@@ -14,13 +14,13 @@ namespace Estimation
 		class BadCellsStats : public IRTableProvider
 		{	
 		private:
-			const Stats::ss_cnt_t &genes_umis;
-			const Stats::ss_cnt_t &genes_reads;
-			const Stats::ss_cnt_t &cell_exone_reads_per_chr;
-			const Stats::ss_cnt_t &cell_nonexone_reads_per_chr;
+			Stats::ss_cnt_t genes_umis;
+			Stats::ss_cnt_t genes_reads;
+			Stats::ss_cnt_t cell_exone_reads_per_chr;
+			Stats::ss_cnt_t cell_nonexone_reads_per_chr;
 
-			const Stats::s_cnt_t &merges_count;
-			const Stats::s_cnt_t &reads_per_cb;
+			Stats::s_cnt_t merges_count;
+			Stats::s_cnt_t reads_per_cb;
 
 		protected:
 #ifdef R_LIBS

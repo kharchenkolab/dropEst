@@ -39,7 +39,6 @@ namespace Estimation
 			, cell_nonexone_reads_per_chr(stats.get_raw_cell_stat(Stats::NON_EXONE_READS_PER_CELL_PER_CHR))
 			, merges_count(stats.get_raw_stat(Stats::MERGES_COUNT))
 			, reads_per_cb(stats.get_raw_stat(Stats::READS_PER_CB))
-		{
-		}
+		{}
 	}
 }
