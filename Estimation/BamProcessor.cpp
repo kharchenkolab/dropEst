@@ -158,7 +158,7 @@ namespace Estimation
 		L_DEBUG << "UMIg=" << umig_cells_counts[umig].size();
 
 		container.stats().inc(Stats::READS_BY_UMIG, cell_barcode + "_" + umig);
-		container.stats().inc(Stats::READS_PER_CB, cell_barcode);
+		container.stats().inc(Stats::EXONE_READS_PER_CB, cell_barcode);
 
 		container.stats().inc_cells(Stats::EXONE_READS_PER_CELL_PER_CHR, cell_barcode, chr_name);
 		return cell_id;

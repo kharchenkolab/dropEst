@@ -18,7 +18,7 @@ namespace Estimation
 		enum StringStatType
 		{
 			READS_BY_UMIG,
-			READS_PER_CB,
+			EXONE_READS_PER_CB,
 			MERGES_COUNT,
 			S_STAT_SIZE
 		};

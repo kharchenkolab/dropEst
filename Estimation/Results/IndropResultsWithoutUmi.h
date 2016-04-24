@@ -40,7 +40,7 @@ namespace Estimation
 									Named("nonex_counts_cell_names") = wrap(this->nonex_cell_names),
 									Named("counts_chr_names") = wrap(this->chr_names),
 									Named("merge.n") = wrap(this->merge_n),
-									Named("reads_by_cb") = wrap(this->reads_by_cb),
+									Named("exone_reads_by_cb") = wrap(this->exone_reads_by_cb),
 									Named("fname") = wrap(filename));
 			}
 #endif

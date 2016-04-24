@@ -20,7 +20,6 @@ namespace Estimation
 			Stats::ss_cnt_t cell_nonexone_reads_per_chr;
 
 			Stats::s_cnt_t merges_count;
-			Stats::s_cnt_t reads_per_cb;
 
 		protected:
 #ifdef R_LIBS

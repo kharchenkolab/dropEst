@@ -75,7 +75,7 @@ namespace Estimation
 			int_list_t umig_covered;
 			int_list_t merge_n;
 			int_list_t reads_by_umig;
-			int_list_t reads_by_cb;
+			int_list_t exone_reads_by_cb;
 
 			IndropResult()
 			{ };
