@@ -85,6 +85,7 @@ namespace Estimation
 				continue;
 
 			std::string cell_barcode = read_params.cell_barcode(), umi = read_params.umi_barcode();
+			container.stats().inc_cells(Stats::READS_PER_UMI_PER_CELL, cell_barcode, umi);
 
 			std::string gene = this->get_gene(chr_name, alignment);
 			if (print_result_bam)
@@ -94,7 +95,7 @@ namespace Estimation
 
 			if (gene == "")
 			{
-				container.stats().inc_cells(Stats::NON_EXONE_READS_PER_CELL_PER_CHR, cell_barcode, chr_name);
+				container.stats().inc_cells(Stats::NON_EXONE_READS_PER_CHR_PER_CELL, cell_barcode, chr_name);
 				continue;
 			}
 
@@ -160,7 +161,7 @@ namespace Estimation
 		container.stats().inc(Stats::READS_BY_UMIG, cell_barcode + "_" + umig);
 		container.stats().inc(Stats::EXONE_READS_PER_CB, cell_barcode);
 
-		container.stats().inc_cells(Stats::EXONE_READS_PER_CELL_PER_CHR, cell_barcode, chr_name);
+		container.stats().inc_cells(Stats::EXONE_READS_PER_CHR_PER_CELL, cell_barcode, chr_name);
 		return cell_id;
 	}
 

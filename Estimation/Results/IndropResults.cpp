@@ -16,22 +16,22 @@ namespace Estimation
 			if (not_filtered)
 			{
 				L_TRACE << "Fill exone results";
-				stats.get_cells(Stats::EXONE_READS_PER_CELL_PER_CHR, this->ex_cell_names, this->chr_names,
+				stats.get_cells(Stats::EXONE_READS_PER_CHR_PER_CELL, this->ex_cell_names, this->chr_names,
 				                this->ex_cells_chr_reads_counts);
 				this->chr_names.clear();
 				L_TRACE << "Fill nonexone results";
-				stats.get_cells(Stats::NON_EXONE_READS_PER_CELL_PER_CHR, this->nonex_cell_names, this->chr_names,
+				stats.get_cells(Stats::NON_EXONE_READS_PER_CHR_PER_CELL, this->nonex_cell_names, this->chr_names,
 				                this->nonex_cells_chr_reads_counts);
 			}
 			else
 			{
 				L_TRACE << "Fill exone results";
-				stats.get_cells_filtered(Stats::EXONE_READS_PER_CELL_PER_CHR, this->cm.cell_names, this->ex_cell_names,
+				stats.get_cells_filtered(Stats::EXONE_READS_PER_CHR_PER_CELL, this->cm.cell_names, this->ex_cell_names,
 				                         this->chr_names,
 				                         this->ex_cells_chr_reads_counts);
 				this->chr_names.clear();
 				L_TRACE << "Fill nonexone results";
-				stats.get_cells_filtered(Stats::NON_EXONE_READS_PER_CELL_PER_CHR, this->cm.cell_names,
+				stats.get_cells_filtered(Stats::NON_EXONE_READS_PER_CHR_PER_CELL, this->cm.cell_names,
 				                         this->nonex_cell_names,
 				                         this->chr_names, this->nonex_cells_chr_reads_counts);
 			}
