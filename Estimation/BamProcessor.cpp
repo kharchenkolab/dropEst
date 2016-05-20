@@ -95,13 +95,14 @@ namespace Estimation
 
 			if (gene == "")
 			{
+				L_DEBUG << "NonEx: " << read_name << ", cell: " << cell_barcode << " UMI: " << umi << ", start: " << alignment.Position;
 				container.stats().inc_cells(Stats::NON_EXONE_READS_PER_CHR_PER_CELL, cell_barcode, chr_name);
 				continue;
 			}
 
 			exonic_reads++;
-			L_DEBUG << read_name << " cell:" << cell_barcode << " UMI:" << umi << " prefix:"
-					<< alignment.QueryBases.substr(this->_read_prefix_length) << "\tXF:" << gene;
+			L_DEBUG << "Exonic: " << read_name << ", cell: " << cell_barcode << " UMI: " << umi << ", prefix: "
+					<< alignment.QueryBases.substr(this->_read_prefix_length) << "\tGene:" << gene;
 
 			max_cell_id = std::max(BamProcessor::save_read_data(chr_name, cell_barcode, umi, gene, cells_ids,
 																umig_cells_counts, container), max_cell_id);

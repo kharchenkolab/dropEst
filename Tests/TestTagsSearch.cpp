@@ -71,7 +71,17 @@ BOOST_AUTO_TEST_SUITE(TestTagsSearch)
 		std::string r2_description = "+";
 		std::string r2_quality_str = "1>111@1@111@33AA3BAA33DE1AA0FF3DA33AB3AF3D2A12110AB000DFGD01F10A121A11A2BFB110/AA0ABG111A111BF>";
 		Tools::ReadParameters res = tags_finder.fill_parameters(0, r1_seq, "r2_id", r2_seq, r2_description, r2_quality_str);
-		BOOST_CHECK_EQUAL(res.is_empty(), true);
+		BOOST_CHECK_EQUAL(res.is_empty(), false);
+	}
+
+	BOOST_FIXTURE_TEST_CASE(test3, Fixture)
+	{
+		std::string r1_seq = "TGACCATTACTGAGTGATTGCTTGTGACGCCTTAAGCGTACAGATTATTTT";
+		std::string r2_seq = "GACTGGTTGAAATTGATGATTGACATTAATAATGA";
+		std::string r2_description = "+";
+		std::string r2_quality_str = "1>111@1@111@33AA3BAA33DE1AA0FF3DA33AB3AF3D2A12110AB000DFGD01F10A121A11A2BFB110/AA0ABG111A111BF>";
+		Tools::ReadParameters res = tags_finder.fill_parameters(0, r1_seq, "r2_id", r2_seq, r2_description, r2_quality_str);
+		BOOST_CHECK_EQUAL(res.is_empty(), false);
 	}
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -91,7 +101,7 @@ BOOST_AUTO_TEST_SUITE(TestSpacerFinder)
 	{
 		std::string r1_line2 = "TAGTTTCGGAGTGTTTGCTTGTGACGCCTTACCTTGCCCGCGACTTTTTTTTTTT";
 		SpacerFinder::len_t spacer_pos = spacer_finder.find_spacer(r1_line2);
-		BOOST_CHECK_EQUAL(spacer_pos, std::string::npos);
+		BOOST_CHECK_EQUAL(spacer_pos, 8);
 	}
 
 BOOST_AUTO_TEST_SUITE_END()

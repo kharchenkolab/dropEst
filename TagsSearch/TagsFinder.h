@@ -12,6 +12,7 @@ namespace TestTagsSearch
 {
 	struct test1;
 	struct test2;
+	struct test3;
 }
 
 namespace Tools
@@ -27,6 +28,7 @@ namespace TagsSearch
 	{
 		friend struct TestTagsSearch::test1;
 		friend struct TestTagsSearch::test2;
+		friend struct TestTagsSearch::test3;
 
 	private:
 		typedef std::string::size_type len_t;
