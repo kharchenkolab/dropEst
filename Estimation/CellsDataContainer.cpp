@@ -129,6 +129,7 @@ namespace Estimation
 		if (ed >= this->_max_merge_edit_distance)
 			return false;
 
+		L_DEBUG << "Merge: " << this->_cells_barcodes[cell_id] << " to " << this->_cells_barcodes[top_cell_ind];
 		this->stats().inc(Stats::MERGES_COUNT, this->_cells_barcodes[top_cell_ind]);
 
 		// do the merge
