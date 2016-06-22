@@ -162,6 +162,7 @@ namespace Estimation
 		container.stats().inc(Stats::READS_BY_UMIG, cell_barcode + "_" + umig);
 		container.stats().inc(Stats::EXONE_READS_PER_CB, cell_barcode);
 
+		container.stats().inc_cells(Stats::READS_PER_UMIG_PER_CELL, cell_barcode, umig);
 		container.stats().inc_cells(Stats::EXONE_READS_PER_CHR_PER_CELL, cell_barcode, chr_name);
 		return cell_id;
 	}

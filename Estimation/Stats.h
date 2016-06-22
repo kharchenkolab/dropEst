@@ -26,6 +26,7 @@ namespace Estimation
 		enum CellStrStatType
 		{
 			EXONE_READS_PER_CHR_PER_CELL = 0,
+			READS_PER_UMIG_PER_CELL,
 			NON_EXONE_READS_PER_CHR_PER_CELL,
 			READS_PER_UMI_PER_CELL,
 			CELL_S_STAT_SIZE
