@@ -190,6 +190,9 @@ namespace Estimation
 		{
 			alignment.AddTag("GE", "Z", gene);
 		}
+
+		alignment.AddTag("CB", "Z", parameters.cell_barcode());
+		alignment.AddTag("UM", "Z", parameters.umi_barcode());
 		writer.SaveAlignment(alignment);
 	}
 
