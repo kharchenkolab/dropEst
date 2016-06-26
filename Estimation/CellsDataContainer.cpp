@@ -61,7 +61,7 @@ namespace Estimation
 		int tag_index = 0;
 		for (auto const &genes_count : this->_cells_genes_counts_sorted)
 		{ // iterate through the minimally-selected CBs, from low to high counts
-			if (tag_index++ % 1000 == 0)
+			if (++tag_index % 1000 == 0)
 			{
 				L_TRACE << "Total " << tag_index << " tags processed, " << merges_count << " cells merged";
 			}
@@ -315,7 +315,7 @@ namespace Estimation
 
 		for (auto const &genes_count : boost::adaptors::reverse(this->_cells_genes_counts_sorted))
 		{
-			if (tag_index++ % 1000 == 0)
+			if (++tag_index % 1000 == 0)
 			{
 				L_TRACE << "Total " << tag_index << " tags processed, " << merges_count << " cells merged";
 			}
@@ -419,6 +419,11 @@ namespace Estimation
 			if (cur_dist1.value > prev_dist1 && !neighbour_cbs.empty())
 				break;
 
+			if (neighbour_cbs.empty() && cur_dist1.value > prev_dist1)
+			{
+				L_DEBUG << "There is no neighbours, cb1, prev: " << prev_dist1 << ", cur: " << cur_dist1.value;
+			}
+
 			long prev_dist2 = std::numeric_limits<long>::max();
 			for (size_t ind2 = 0; ind2 < dists2.size(); ++ind2)
 			{
@@ -427,9 +432,11 @@ namespace Estimation
 						(!neighbour_cbs.empty() ||
 								ind1 != dists1.size() - 1 && ind2 != dists2.size() - 1 &&
 								dists2[ind2 + 1].value - dists2[0].value > dists1[ind2 + 1].value - dists1[0].value))
+					break;
+
+				if (neighbour_cbs.empty() && cur_dist2.value > prev_dist2)
 				{
 					L_DEBUG << "There is no neighbours, cb2, prev: " << prev_dist2 << ", cur: " << cur_dist2.value;
-					break;
 				}
 
 				string current_cb = cbs1[cur_dist1.index] + cbs2[cur_dist2.index];
@@ -443,10 +450,7 @@ namespace Estimation
 			}
 
 			if (!neighbour_cbs.empty() && (ind1 == dists1.size() || dists1[ind1 + 1].value >= cur_dist1.value))
-			{
-				L_DEBUG << "There is no neighbours, cb1, prev: " << prev_dist1 << ", cur: " << cur_dist1.value;
 				break;
-			}
 
 			prev_dist1 = cur_dist1.value;
 		}
