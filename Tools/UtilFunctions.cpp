@@ -5,7 +5,7 @@
 
 namespace Tools
 {
-	int edit_distance(const char *s1, const char *s2)
+	unsigned edit_distance(const char *s1, const char *s2)
 	{
 		unsigned int s1len, s2len, x, y, lastdiag, olddiag;
 		s1len = strlen(s1);
@@ -26,6 +26,35 @@ namespace Tools
 			}
 		}
 		return (column[s1len]);
+	}
+
+	std::string reverse_complement(const std::string &s)
+	{
+		char rcs[s.length()];
+
+		for (int i = 0; i < s.length(); i++)
+		{
+			switch (s[s.length() - i - 1])
+			{
+				case 'A':
+					rcs[i] = 'T';
+					break;
+				case 'T':
+					rcs[i] = 'A';
+					break;
+				case 'C':
+					rcs[i] = 'G';
+					break;
+				case 'G':
+					rcs[i] = 'C';
+					break;
+				default:
+					rcs[i] = 'N';
+					break;
+			}
+		}
+
+		return std::string(rcs, s.length());
 	}
 }
 

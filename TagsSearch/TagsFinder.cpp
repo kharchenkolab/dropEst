@@ -9,6 +9,7 @@
 #include "SpacerFinder.h"
 #include "Tools/Logs.h"
 #include "Tools/ReadParameters.h"
+#include "Tools/UtilFunctions.h"
 
 using namespace std;
 
@@ -26,35 +27,6 @@ namespace TagsSearch
 		{
 			this->max_reads = numeric_limits<long>::max();
 		}
-	}
-
-	string TagsFinder::reverse_complement(const string &s)
-	{
-		char rcs[s.length()];
-
-		for (int i = 0; i < s.length(); i++)
-		{
-			switch (s.at(s.length() - i - 1))
-			{
-				case 'A':
-					rcs[i] = 'T';
-					break;
-				case 'T':
-					rcs[i] = 'A';
-					break;
-				case 'C':
-					rcs[i] = 'G';
-					break;
-				case 'G':
-					rcs[i] = 'C';
-					break;
-				default:
-					rcs[i] = 'N';
-					break;
-			}
-		}
-		string rcss = string(rcs, s.length());
-		return (rcss);
 	}
 
 	bool TagsFinder::read_blocks(FilesProcessor &files_processor, long total_reads_read, string &out_1_line_2,
@@ -190,7 +162,7 @@ namespace TagsSearch
 		// attempt 1: check for reverse complement of the UMI+second barcode, remove trailing As
 		// RC of UMI+second barcode (up to a length r1_rc_length - spacer_finder parameter)
 		string rcb = this->spacer_finder.parse_r1_rc(r1_seq, spacer_pos);
-		rcb = TagsFinder::reverse_complement(rcb);
+		rcb = Tools::reverse_complement(rcb);
 
 		L_DEBUG << "-- barcode RC: " << rcb;
 		len_t rc_pos = r2_seq.find(rcb);

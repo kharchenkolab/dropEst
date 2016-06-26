@@ -32,6 +32,7 @@ struct Params
 	string log_prefix = "";
 	string reads_params_file = "";
 	string gtf_filename = "";
+	string barcodes_filename = "";
 };
 
 static void usage()
@@ -40,10 +41,11 @@ static void usage()
 	cerr << "SYNOPSIS\n";
 	cerr <<
 	"\tindropest [-t, --text-output] [-m|--merge-cell-tags] [-v|--verbose] [-n | --not-filtered] [-g | --gtf filename]"
-	"[-l, --log-prefix logs_name] [-r, --reads-params filename] -c config.xml file1.bam [file2.bam ...] [-b | --bam-output]"
-	<< endl;
+	"[-l, --log-prefix logs_name] [-r, --reads-params filename] -c config.xml file1.bam [file2.bam ...] "
+	"[-b | --bam-output] [-B | --barcodes filename]" << endl;
 	cerr << "OPTIONS:\n";
 	cerr << "\t-b, --bam-output: print corrected bam files" << endl;
+	cerr << "\t-B, --barcodes: path to barcodes file" << endl;
 	cerr << "\t-c, --config filename: xml file with estimation parameters" << endl;
 	cerr << "\t-g, --gtf filename: gtf file with genes annotations" << endl;
 	cerr << "\t-l, --log-prefix : logs prefix" << endl;
@@ -64,6 +66,7 @@ static Params parse_cmd_params(int argc, char **argv)
 	int c;
 	static struct option long_options[] = {
 			{"bam-output",     	no_argument, 	   0, 'b'},
+			{"barcodes",     	required_argument, 	   0, 'B'},
 			{"config",     		required_argument, 0, 'c'},
 			{"gtf",     		required_argument, 0, 'g'},
 			{"log-prefix",		required_argument, 0, 'l'},
@@ -76,12 +79,15 @@ static Params parse_cmd_params(int argc, char **argv)
 			{"verbose",         no_argument,       0, 'v'},
 			{0, 0,                                 0, 0}
 	};
-	while ((c = getopt_long(argc, argv, "bc:g:l:mno:r:Rtv", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "bB:c:g:l:mno:r:Rtv", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
 			case 'b':
 				params.bam_output = true;
+				break;
+			case 'B':
+				params.barcodes_filename = string(optarg);
 				break;
 			case 'c' :
 				params.config_file_name = string(optarg);
@@ -180,7 +186,8 @@ int main(int argc, char **argv)
 		L_TRACE << "Run: " << asctime(localtime(&ctt));
 		Estimator estimator(pt.get_child("config.Estimation"));
 		CellsDataContainer container = estimator.get_cells_container(files, params.merge_tags, params.bam_output,
-		                                                             params.reads_params_file, params.gtf_filename);
+		                                                             params.reads_params_file, params.gtf_filename,
+		                                                             params.barcodes_filename);
 		
 //		if (false)
 		{

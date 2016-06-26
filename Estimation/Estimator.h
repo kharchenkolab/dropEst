@@ -36,11 +36,12 @@ namespace Estimation
 	private:
 		static const size_t top_print_size;
 
-		size_t read_prefix_length;
-		double min_merge_fraction;
-		int max_merge_edit_distance;
+		const size_t read_prefix_length;
+		const double min_merge_fraction;
+		const int max_merge_edit_distance;
 
-		int min_genes_after_merge;
+		const int min_genes_after_merge;
+		const size_t barcode2_length;
 		int min_genes_before_merge;
 
 	public:
@@ -50,7 +51,8 @@ namespace Estimation
 		Results::BadCellsStats get_bad_cells_results(const CellsDataContainer &container);
 
 		CellsDataContainer get_cells_container(const names_t &files, bool merge_tags, bool bam_output,
-		                                       const std::string &reads_params_names_str, const std::string &gtf_filename);
+		                                       const std::string &reads_params_names_str, const std::string &gtf_filename,
+		                                       const std::string &barcodes_filename);
 
 	private:
 		names_t get_unmerged_names(const CellsDataContainer &genes_container, const ids_t &unmerged_cells) const;

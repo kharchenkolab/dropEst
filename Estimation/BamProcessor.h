@@ -27,19 +27,19 @@ namespace Estimation
 		Tools::reads_params_map_t _reads_params;
 
 	private:
-		void parse_bam_file(const std::string &bam_name, bool print_result_bam, CellsDataContainer::s_i_hash_t &cells_ids,
+		void parse_bam_file(const std::string &bam_name, bool print_result_bam, CellsDataContainer::s_i_map_t &cells_ids,
 							CellsDataContainer::s_ii_hash_t &umig_cells_counts, CellsDataContainer &container) const;
 
 		bool get_read_params(const std::string &read_name, Tools::ReadParameters &read_params) const;
 
 		static int save_read_data(const std::string &chr_name, const std::string &cell_barcode, const std::string &umi,
-							const std::string &gene, CellsDataContainer::s_i_hash_t &cells_ids,
+							const std::string &gene, CellsDataContainer::s_i_map_t &cells_ids,
 							CellsDataContainer::s_ii_hash_t &umig_cells_counts, CellsDataContainer &container);
 
 		static std::string get_result_bam_name(const std::string &bam_name);
 
 	public:
-		void parse_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams,
+		CellsDataContainer::s_ii_hash_t parse_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams,
 							 CellsDataContainer &container) const;
 
 		std::string get_gene(const std::string &chr_name, BamTools::BamAlignment alignment) const;

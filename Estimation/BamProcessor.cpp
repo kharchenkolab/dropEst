@@ -28,10 +28,10 @@ namespace Estimation
 		}
 	}
 
-	void BamProcessor::parse_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams,
+	CellsDataContainer::s_ii_hash_t BamProcessor::parse_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams,
 									   CellsDataContainer &container) const
 	{
-		CellsDataContainer::s_i_hash_t cb_ids;
+		CellsDataContainer::s_i_map_t cb_ids;
 		CellsDataContainer::s_ii_hash_t umig_cells_counts;
 
 		for (auto const &file : bam_files)
@@ -39,10 +39,10 @@ namespace Estimation
 			this->parse_bam_file(file, print_result_bams, cb_ids, umig_cells_counts, container);
 		}
 
-		container.init_filled(umig_cells_counts);
+		return umig_cells_counts;
 	}
 
-	void BamProcessor::parse_bam_file(const std::string &bam_name, bool print_result_bam, CellsDataContainer::s_i_hash_t &cells_ids,
+	void BamProcessor::parse_bam_file(const std::string &bam_name, bool print_result_bam, CellsDataContainer::s_i_map_t &cells_ids,
 							   CellsDataContainer::s_ii_hash_t &umig_cells_counts, CellsDataContainer &container) const
 	{
 		using namespace BamTools;
@@ -73,7 +73,7 @@ namespace Estimation
 
 			if (alignment.Length < this->_read_prefix_length)
 			{
-				L_ERR << "WARNING: read is shorter than read_prefix_length. total_reads=" << total_reads;
+				L_WARN << "WARNING: read is shorter than read_prefix_length. total_reads=" << total_reads;
 				continue;
 			}
 
@@ -121,14 +121,14 @@ namespace Estimation
 			auto iter = this->_reads_params.find(read_name);
 			if (iter == this->_reads_params.end())
 			{
-				L_ERR << "WARNING: can't find read_name in map: " << read_name;
+				L_WARN << "WARNING: can't find read_name in map: " << read_name;
 				return false;
 			}
 
 			read_params = iter->second;
 			if (read_params.is_empty())
 			{
-				L_ERR << "WARNING: empty parameters for read_name: " << read_name;
+				L_WARN << "WARNING: empty parameters for read_name: " << read_name;
 				return false;
 			}
 		}
@@ -149,7 +149,7 @@ namespace Estimation
 	}
 
 	int BamProcessor::save_read_data(const std::string &chr_name, const std::string &cell_barcode, const std::string &umi,
-									  const std::string &gene, CellsDataContainer::s_i_hash_t &cells_ids,
+									  const std::string &gene, CellsDataContainer::s_i_map_t &cells_ids,
 									  CellsDataContainer::s_ii_hash_t &umig_cells_counts, CellsDataContainer &container)
 	{
 		int cell_id = container.add_record(cell_barcode, umi, gene, cells_ids);

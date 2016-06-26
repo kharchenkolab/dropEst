@@ -52,11 +52,11 @@ namespace Tools
 		size_t start_pos = monolithic_params_string[0] == '@' ? 1 : 0;
 		size_t umi_start_pos = monolithic_params_string.rfind('#');
 		if (umi_start_pos == std::string::npos)
-			throw std::runtime_error("WARNING: unable to parse out UMI in: " + monolithic_params_string);
+			throw std::runtime_error("ERROR: unable to parse out UMI in: " + monolithic_params_string);
 
 		size_t cell_barcode_start_pos = monolithic_params_string.rfind('!', umi_start_pos);
 		if (cell_barcode_start_pos == std::string::npos)
-			throw std::runtime_error("WARNING: unable to parse out cell tag in: " + monolithic_params_string);
+			throw std::runtime_error("ERROR: unable to parse out cell tag in: " + monolithic_params_string);
 
 		this->_read_number = atol(monolithic_params_string.substr(start_pos, umi_start_pos - start_pos).c_str());
 		this->_read_name = monolithic_params_string;

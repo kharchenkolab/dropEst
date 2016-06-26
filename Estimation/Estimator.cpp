@@ -25,22 +25,31 @@ namespace Estimation
 	}
 
 	Estimator::Estimator(const boost::property_tree::ptree &config)
+		: read_prefix_length(config.get<size_t>("read_prefix_length"))
+		, min_merge_fraction(config.get<double>("min_merge_fraction"))
+		, max_merge_edit_distance(config.get<int>("max_merge_edit_distance"))
+		, min_genes_after_merge(config.get<int>("min_genes_after_merge"))
+		, barcode2_length(config.get<size_t>("barcode2_length", 0))
+		, min_genes_before_merge(config.get<int>("min_genes_before_merge"))
 	{
-		this->read_prefix_length = config.get<size_t>("read_prefix_length");
-		this->min_merge_fraction = config.get<double>("min_merge_fraction");
-		this->max_merge_edit_distance = config.get<int>("max_merge_edit_distance");
-		this->min_genes_after_merge = config.get<int>("min_genes_after_merge");
-		this->min_genes_before_merge = config.get<int>("min_genes_before_merge");
-
 		if (this->min_genes_after_merge > 0 && this->min_genes_after_merge < this->min_genes_before_merge)
 		{
 			this->min_genes_before_merge = this->min_genes_after_merge;
+		}
+
+		if (barcode2_length == 0)
+		{
+			L_WARN << "Barcode2 length is equal to 0";
 		}
 	}
 
 	Results::IndropResult Estimator::get_results(const CellsDataContainer &container, bool not_filtered, bool reads_output)
 	{
 		ids_t filtered_cells = container.filtered_cells();
+		if (filtered_cells.empty())
+		{
+			L_WARN << "WARNING: filtered cells is empty. Maybe its too strict treshold or you forgot to run 'merge_and_filter'";
+		}
 
 		L_TRACE << this->get_cb_top_verbose(container, filtered_cells);
 
@@ -64,6 +73,10 @@ namespace Estimation
 
 	Results::BadCellsStats Estimator::get_bad_cells_results(const CellsDataContainer &container)
 	{
+		if (container.filtered_cells().empty())
+		{
+			L_WARN << "WARNING: filtered cells is empty. Maybe its too strict treshold or you forgot to run 'merge_and_filter'";
+		}
 		return Results::BadCellsStats(container.stats(), this->get_reads_per_genes_per_cells_count(container),
 									  this->get_umis_per_genes_per_cells_count(container));
 	}
@@ -169,7 +182,7 @@ namespace Estimation
 			for (CellsDataContainer::genes_t::const_iterator gene_rec_it = cell_genes.begin();
 				 gene_rec_it != cell_genes.end(); ++gene_rec_it)
 			{
-				for (CellsDataContainer::s_i_hash_t::const_iterator umi_rec_it = gene_rec_it->second.begin();
+				for (CellsDataContainer::s_i_map_t::const_iterator umi_rec_it = gene_rec_it->second.begin();
 					 umi_rec_it != gene_rec_it->second.end(); ++umi_rec_it)
 				{
 					reads_per_umi += umi_rec_it->second;
@@ -187,10 +200,10 @@ namespace Estimation
 	{
 		ints_t umig_coverage;
 		s_set umigs_seen;
-		for (const CellsDataContainer::IndexedCount &gene_count : boost::adaptors::reverse(genes_container.cells_genes_counts_sorted()))
+		for (const CellsDataContainer::IndexedValue &gene_count : boost::adaptors::reverse(genes_container.cells_genes_counts_sorted()))
 		{
 			int new_umigs = 0;
-			const CellsDataContainer::genes_t &cell_genes = genes_container.cell_genes(gene_count.cell_index);
+			const CellsDataContainer::genes_t &cell_genes = genes_container.cell_genes(gene_count.index);
 			for (auto const &gene_rec : cell_genes)
 			{
 				for (auto const &umi_rec: gene_rec.second)
@@ -241,12 +254,23 @@ namespace Estimation
 	}
 
 	CellsDataContainer Estimator::get_cells_container(const names_t &files, bool merge_tags, bool bam_output,
-	                                                  const std::string &reads_params_names_str, const std::string &gtf_filename)
+	                                                  const std::string &reads_params_names_str,
+	                                                  const std::string &gtf_filename, const std::string &barcodes_filename)
 	{
 		CellsDataContainer container(this->min_merge_fraction, this->min_genes_before_merge, merge_tags,
 		                             this->min_genes_after_merge, this->max_merge_edit_distance, Estimator::top_print_size);
 		BamProcessor bam_processor(this->read_prefix_length, reads_params_names_str, gtf_filename);
-		bam_processor.parse_bam_files(files, bam_output, container);
+
+		auto umig_cells_counts = bam_processor.parse_bam_files(files, bam_output, container);
+
+		if (barcodes_filename == "")
+		{
+			container.merge_and_filter(umig_cells_counts);
+		}
+		else
+		{
+			container.merge_by_real_barcodes(barcodes_filename, this->barcode2_length);
+		}
 
 		return container;
 	}
@@ -287,6 +311,4 @@ namespace Estimation
 
 		return result;
 	}
-
-
 }
