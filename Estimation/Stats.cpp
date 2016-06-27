@@ -54,6 +54,11 @@ namespace Estimation
 		this->_ss_cell_subtypes[stat].emplace(subtype);
 	}
 
+	void Stats::add_str(StrStrStatType stat, const std::string &cell_barcode, const std::string &subtype, int value)
+	{
+		this->_ss_counters[stat][cell_barcode][subtype] += value;
+	}
+
 	void Stats::get_cells(CellStrStatType stat, str_list_t &types, str_list_t &subtypes, int_list_t &counts) const
 	{
 		std::copy(this->_ss_cell_subtypes[stat].begin(), this->_ss_cell_subtypes[stat].end(), std::back_inserter(subtypes));
@@ -128,5 +133,10 @@ namespace Estimation
 	const Stats::ss_cnt_t &Stats::get_raw_cell_stat(Stats::CellStrStatType stat) const
 	{
 		return this->_ss_cell_counters[stat];
+	}
+
+	const Stats::ss_cnt_t &Stats::get_raw_str_stat(Stats::StrStrStatType stat) const
+	{
+		return this->_ss_counters[stat];
 	}
 }

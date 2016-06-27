@@ -11,8 +11,6 @@
 
 namespace Estimation
 {
-	class CellsDataContainer;
-
 	class BamProcessor
 	{
 	private:

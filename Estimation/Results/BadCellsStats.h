@@ -21,6 +21,10 @@ namespace Estimation
 			Stats::ss_cnt_t reads_per_umig;
 			Stats::ss_cnt_t reads_per_umi;
 
+			Stats::ss_cnt_t merge_edit_distance;
+			Stats::ss_cnt_t merge_intersect_size;
+			Stats::ss_cnt_t merge_rejections;
+
 			Stats::s_cnt_t merges_count;
 
 		protected:

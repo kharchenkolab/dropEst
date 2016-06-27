@@ -12,6 +12,9 @@ namespace Estimation
 				, reads_per_umig(stats.get_raw_cell_stat(Stats::READS_PER_UMIG_PER_CELL))
 				, reads_per_umi(stats.get_raw_cell_stat(Stats::READS_PER_UMI_PER_CELL))
 				, merges_count(stats.get_raw_stat(Stats::MERGES_COUNT))
+				, merge_edit_distance(stats.get_raw_str_stat(Stats::MERGE_EDIT_DISTANCE_BY_CELL))
+				, merge_intersect_size(stats.get_raw_str_stat(Stats::MERGE_INTERSECT_SIZE_BY_CELL))
+				, merge_rejections(stats.get_raw_str_stat(Stats::MERGE_REJECTION_BY_CELL))
 		{}
 
 #ifdef R_LIBS
@@ -34,6 +37,10 @@ namespace Estimation
 			(*R)["reads_per_umi"] = this->reads_per_umi;
 
 			(*R)["merges_count"] = this->merges_count;
+
+			(*R)["merge_edit_distance"] = this->merge_edit_distance;
+			(*R)["merge_intersect_size"] = this->merge_intersect_size;
+			(*R)["merge_rejections"] = this->merge_rejections;
 
 			R->parseEval("d <- list(genes_reads=genes_reads, genes_umis=genes_umis, cell_exone_reads_per_chr=cell_exone_reads_per_chr, "
 								 "cell_nonexone_reads_per_chr=cell_nonexone_reads_per_chr, merges_count=merges_count,"

@@ -32,6 +32,14 @@ namespace Estimation
 			CELL_S_STAT_SIZE
 		};
 
+		enum StrStrStatType
+		{
+			MERGE_INTERSECT_SIZE_BY_CELL,
+			MERGE_EDIT_DISTANCE_BY_CELL,
+			MERGE_REJECTION_BY_CELL,
+			S_S_STAT_SIZE
+		};
+
 	public:
 		typedef boost::unordered_map<std::string, int> s_cnt_t;
 		typedef boost::unordered_set<std::string> str_set_t;
@@ -45,6 +53,8 @@ namespace Estimation
 		ss_cnt_t _ss_cell_counters[CELL_S_STAT_SIZE];
 		str_set_t _ss_cell_subtypes[CELL_S_STAT_SIZE];
 
+		ss_cnt_t _ss_counters[S_S_STAT_SIZE];
+
 	private:
 		void fill_by_types(const s_cnt_t &counter, const str_list_t &types, int_list_t &counts) const;
 
@@ -56,6 +66,8 @@ namespace Estimation
 		int_list_t get(StringStatType counter) const;
 		const s_cnt_t& get_raw_stat(StringStatType stat) const;
 
+		void add_str(StrStrStatType stat, const std::string &cell_barcode, const std::string &subtype, int value);
+
 		void inc_cells(CellStrStatType stat, const std::string &cell_barcode, const std::string &subtype);
 		void get_cells(CellStrStatType stat, str_list_t &types, str_list_t &subtypes, int_list_t &counts) const;
 		bool get_cell(CellStrStatType stat, const std::string &cell_barcode, const str_list_t &subtypes,
@@ -63,6 +75,7 @@ namespace Estimation
 		void get_cells_filtered(CellStrStatType stat, const str_list_t &filter_barcodes, str_list_t &cell_barcodes,
 		                        str_list_t &subtypes, int_list_t &counts) const;
 		const ss_cnt_t& get_raw_cell_stat(CellStrStatType stat) const;
+		const ss_cnt_t& get_raw_str_stat(StrStrStatType stat) const;
 
 		void add_merge_count(int count);
 		const int_list_t& get_merge_counts() const;

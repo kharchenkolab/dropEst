@@ -187,7 +187,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		CellsDataContainer::i_counter_t d1, d2;
 		CellsDataContainer::fill_distances_to_cb("CAA", "TTAGGTCCG", cbs1, cbs2, d1, d2);
 
-		CellsDataContainer::ids_t ids = this->container_full.get_real_neighbour_cbs(cbs1, cbs2, d1, d2);
+		CellsDataContainer::ids_t ids = this->container_full.get_real_neighbour_cbs(cbs1, cbs2, "CAATTAGGTCCG", d1, d2);
 
 		BOOST_CHECK_EQUAL(ids.size(), 2);
 
@@ -199,7 +199,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 		d1.clear(); d2.clear();
 		CellsDataContainer::fill_distances_to_cb("AAA", "TTAGGTCCC", cbs1, cbs2, d1, d2);
-		ids = this->container_full.get_real_neighbour_cbs(cbs1, cbs2, d1, d2);
+		ids = this->container_full.get_real_neighbour_cbs(cbs1, cbs2, "CAATTAGGTCCG", d1, d2);
 
 		BOOST_CHECK_EQUAL(ids.size(), 1);
 

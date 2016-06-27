@@ -77,7 +77,7 @@ namespace Estimation
 
 		i_counter_t nonempty_cells_genes_counts_sorted;
 
-		Stats _stats;
+		mutable Stats _stats;
 
 	private:
 		void merge_cells(const s_ii_hash_t &umig_cbs);
@@ -92,7 +92,7 @@ namespace Estimation
 
 		i_counter_t count_nonempty_cells_genes(bool logs = true) const;
 
-		ids_t get_real_neighbour_cbs(const names_t &cbs1, const names_t &cbs2,
+		ids_t get_real_neighbour_cbs(const names_t &cbs1, const names_t &cbs2, const std::string &base_cb,
 		                             const i_counter_t &dists1, const i_counter_t &dists2) const;
 
 		size_t get_real_cb(size_t base_cell_ind, const names_t &cbs1, const names_t &cbs2, size_t barcode2_length) const;

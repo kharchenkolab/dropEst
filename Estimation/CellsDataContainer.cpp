@@ -363,11 +363,11 @@ namespace Estimation
 			return base_cell_ind;
 
 		L_DEBUG <<"Get real neighbours to " << base_cb;
-		ids_t neighbour_cbs = this->get_real_neighbour_cbs(cbs1, cbs2, dists1, dists2);
+		ids_t neighbour_cells = this->get_real_neighbour_cbs(cbs1, cbs2, base_cb, dists1, dists2);
 
 		size_t max_umigs_intersection_size = 0;
-		size_t best_neighbour_cell_ind = neighbour_cbs[0];
-		for (size_t neighbour_cell_ind: neighbour_cbs)
+		size_t best_neighbour_cell_ind = neighbour_cells[0];
+		for (size_t neighbour_cell_ind: neighbour_cells)
 		{
 			size_t umigs_intersection_size = this->get_umigs_intersection_size(base_cell_ind, neighbour_cell_ind);
 			if (max_umigs_intersection_size < umigs_intersection_size)
@@ -375,6 +375,8 @@ namespace Estimation
 				max_umigs_intersection_size = umigs_intersection_size;
 				best_neighbour_cell_ind = neighbour_cell_ind;
 			}
+			this->_stats.add_str(Stats::MERGE_INTERSECT_SIZE_BY_CELL, this->_cells_barcodes[neighbour_cell_ind],
+			                     base_cb, umigs_intersection_size);
 		}
 
 		return best_neighbour_cell_ind;
@@ -409,7 +411,7 @@ namespace Estimation
 	 * Return the list of cbs with minimal distances that were found in the current dataset (work not really precisely)
 	 */
 	CellsDataContainer::ids_t CellsDataContainer::get_real_neighbour_cbs(const names_t &cbs1, const names_t &cbs2,
-	                                                   const CellsDataContainer::i_counter_t &dists1,
+	                                                   const string &base_cb, const CellsDataContainer::i_counter_t &dists1,
 	                                                   const CellsDataContainer::i_counter_t &dists2) const
 	{
 		ids_t neighbour_cbs;
@@ -445,6 +447,11 @@ namespace Estimation
 				if (current_cell_it != this->_cell_ids_by_cb.end())
 				{
 					neighbour_cbs.push_back(current_cell_it->second);
+					this->_stats.add_str(Stats::MERGE_EDIT_DISTANCE_BY_CELL, current_cb, base_cb, cur_dist1.value + cur_dist2.value);
+				}
+				else
+				{
+					this->_stats.add_str(Stats::MERGE_REJECTION_BY_CELL, current_cb, base_cb, cur_dist1.value + cur_dist2.value);
 				}
 
 				prev_dist2 = cur_dist2.value;
