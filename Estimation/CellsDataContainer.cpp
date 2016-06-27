@@ -27,17 +27,17 @@ namespace Estimation
 
 	void CellsDataContainer::merge_and_filter(const CellsDataContainer::s_ii_hash_t &umig_cells_counts)
 	{
-		this->_cells_genes_counts_sorted = this->count_cells_genes();
+		this->nonempty_cells_genes_counts_sorted = this->count_nonempty_cells_genes();
 
 		if (this->_merge_tags)
 		{
 			this->merge_cells(umig_cells_counts);
 
-			this->_cells_genes_counts_sorted = this->count_cells_genes(false);
+			this->nonempty_cells_genes_counts_sorted = this->count_nonempty_cells_genes(false);
 		}
 		else
 		{
-			for (auto const &gene_count : boost::adaptors::reverse(this->_cells_genes_counts_sorted))
+			for (auto const &gene_count : boost::adaptors::reverse(this->nonempty_cells_genes_counts_sorted))
 			{
 				if (gene_count.value < this->_min_genes_after_merge)
 					break;
@@ -59,7 +59,7 @@ namespace Estimation
 		L_TRACE << "merging linked tags ";
 
 		int tag_index = 0;
-		for (auto const &genes_count : this->_cells_genes_counts_sorted)
+		for (auto const &genes_count : this->nonempty_cells_genes_counts_sorted)
 		{ // iterate through the minimally-selected CBs, from low to high counts
 			if (++tag_index % 1000 == 0)
 			{
@@ -188,7 +188,7 @@ namespace Estimation
 		return cell_id;
 	}
 
-	CellsDataContainer::i_counter_t CellsDataContainer::count_cells_genes(bool logs) const
+	CellsDataContainer::i_counter_t CellsDataContainer::count_nonempty_cells_genes(bool logs) const
 	{
 		i_counter_t cells_genes_counts; // <genes_count,cell_id> pairs
 		for (size_t i = 0; i < this->_cells_genes.size(); i++)
@@ -252,7 +252,7 @@ namespace Estimation
 
 	const CellsDataContainer::i_counter_t &CellsDataContainer::cells_genes_counts_sorted() const
 	{
-		return this->_cells_genes_counts_sorted;
+		return this->nonempty_cells_genes_counts_sorted;
 	}
 
 	const string &CellsDataContainer::cell_barcode(size_t index) const
@@ -300,8 +300,8 @@ namespace Estimation
 	void CellsDataContainer::merge_by_real_barcodes(const string &barcodes_filename, size_t barcode2_length)
 	{
 		names_t cbs1, cbs2;
-		this->_cells_genes_counts_sorted = this->count_cells_genes();
-		vector<bool> is_cell_real(this->_cells_genes_counts_sorted.size());
+		this->nonempty_cells_genes_counts_sorted = this->count_nonempty_cells_genes();
+		vector<bool> is_cell_real(this->_cells_genes.size(), false);
 
 		CellsDataContainer::get_barcodes_list(barcodes_filename, cbs1, cbs2);
 		if (cbs1.size() == 0)
@@ -313,7 +313,7 @@ namespace Estimation
 
 		size_t tag_index = 0, merges_count = 0;
 
-		for (auto const &genes_count : boost::adaptors::reverse(this->_cells_genes_counts_sorted))
+		for (auto const &genes_count : boost::adaptors::reverse(this->nonempty_cells_genes_counts_sorted))
 		{
 			if (++tag_index % 1000 == 0)
 			{
@@ -327,14 +327,13 @@ namespace Estimation
 				continue;
 			}
 
-			is_cell_real[genes_count.index] = false;
 			this->merge_force(genes_count.index, real_cell_ind, genes_count.value, cb_reassign_targets, cb_reassigned_to_it);
 			merges_count++;
 		}
 		L_INFO << "Total " << merges_count << " merges";
 
-		this->_cells_genes_counts_sorted = this->count_cells_genes(true);
-		for (auto const &gene_count : boost::adaptors::reverse(this->_cells_genes_counts_sorted))
+		this->nonempty_cells_genes_counts_sorted = this->count_nonempty_cells_genes(true);
+		for (auto const &gene_count : boost::adaptors::reverse(this->nonempty_cells_genes_counts_sorted))
 		{
 			if (gene_count.value < this->_min_genes_after_merge)
 				break;
@@ -345,6 +344,8 @@ namespace Estimation
 			L_DEBUG << "Add cell to filtered: " << gene_count.value << " " << gene_count.index;
 			this->_filtered_cells.push_back(gene_count.index);
 		}
+
+		this->_stats.merge(cb_reassign_targets, this->_cells_barcodes);
 	}
 
 	size_t CellsDataContainer::get_real_cb(size_t base_cell_ind, const names_t &cbs1, const names_t &cbs2,

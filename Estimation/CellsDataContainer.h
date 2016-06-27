@@ -75,7 +75,7 @@ namespace Estimation
 		s_ul_hash_t _cell_ids_by_cb;
 		ids_t _filtered_cells;
 
-		i_counter_t _cells_genes_counts_sorted;
+		i_counter_t nonempty_cells_genes_counts_sorted;
 
 		Stats _stats;
 
@@ -90,7 +90,7 @@ namespace Estimation
 		size_t get_umigs_intersect_top(const ints_t &cb_reassigned, const IndexedValue &processed_genes_count,
 		                               const s_ii_hash_t &umigs_cells_counts, i_i_hash_t &umig_top) const;
 
-		i_counter_t count_cells_genes(bool logs = true) const;
+		i_counter_t count_nonempty_cells_genes(bool logs = true) const;
 
 		ids_t get_real_neighbour_cbs(const names_t &cbs1, const names_t &cbs2,
 		                             const i_counter_t &dists1, const i_counter_t &dists2) const;
