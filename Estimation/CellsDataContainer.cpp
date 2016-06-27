@@ -300,8 +300,8 @@ namespace Estimation
 	void CellsDataContainer::merge_by_real_barcodes(const string &barcodes_filename, size_t barcode2_length)
 	{
 		names_t cbs1, cbs2;
-		vector<bool> is_cell_real(this->_cells_genes_counts_sorted.size());
 		this->_cells_genes_counts_sorted = this->count_cells_genes();
+		vector<bool> is_cell_real(this->_cells_genes_counts_sorted.size());
 
 		CellsDataContainer::get_barcodes_list(barcodes_filename, cbs1, cbs2);
 		if (cbs1.size() == 0)
