@@ -367,7 +367,7 @@ namespace Estimation
 	long CellsDataContainer::get_real_cb(size_t base_cell_ind, const names_t &cbs1, const names_t &cbs2,
 	                                            size_t barcode2_length) const
 	{
-		std::string base_cb = this->_cells_barcodes[base_cell_ind];
+		string base_cb = this->_cells_barcodes[base_cell_ind];
 		i_counter_t dists1, dists2;
 
 		string cb_part1 = base_cb.substr(0, base_cb.length() - barcode2_length);
@@ -507,7 +507,7 @@ namespace Estimation
 			}
 		}
 
-		sort(real_cell_inds.begin(), real_cell_inds.end(), [](const tuple_t &t1, const tuple_t &t2){ return get<2>(t1) < get<2>(t1);});
+		sort(real_cell_inds.begin(), real_cell_inds.end(), [](const tuple_t &t1, const tuple_t &t2){ return get<2>(t1) < get<2>(t2);});
 
 		ids_t neighbour_cbs;
 		long prev_dist = std::numeric_limits<long>::max();
