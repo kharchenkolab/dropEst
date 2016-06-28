@@ -21,7 +21,8 @@ namespace Tools
 			for (y = 1, lastdiag = x - 1; y <= s1len; y++)
 			{
 				olddiag = column[y];
-				column[y] = MIN3(column[y] + 1, column[y - 1] + 1, lastdiag + (s1[y - 1] == s2[x - 1] ? 0 : 1));
+				column[y] = MIN3(column[y] + 1, column[y - 1] + 1, lastdiag +
+						(s1[y - 1] == s2[x - 1] || s1[y - 1] == 'N' || s2[x - 1] == 'N' ? 0 : 1));
 				lastdiag = olddiag;
 			}
 		}

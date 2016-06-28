@@ -61,8 +61,10 @@ namespace Estimation
 		typedef std::vector<long> ints_t;
 		typedef std::vector<size_t> ids_t;
 		typedef std::vector<std::string> names_t;
+		typedef std::vector<bool> flags_t;
 
 	private:
+		static const int MAX_REAL_MERGE_EDIT_DISTANCE=5;
 		const bool _merge_tags;
 		const size_t _top_print_size;
 		const double _min_merge_fraction;
@@ -72,10 +74,12 @@ namespace Estimation
 
 		std::vector<genes_t> _cells_genes; //cell_id -> gen_name -> umi -> count
 		names_t _cells_barcodes;
+		flags_t _is_cell_excluded;
 		s_ul_hash_t _cell_ids_by_cb;
 		ids_t _filtered_cells;
 
-		i_counter_t nonempty_cells_genes_counts_sorted;
+		i_counter_t filtered1_cells_genes_counts_sorted;
+		bool _is_initialized;
 
 		mutable Stats _stats;
 
@@ -90,12 +94,12 @@ namespace Estimation
 		size_t get_umigs_intersect_top(const ints_t &cb_reassigned, const IndexedValue &processed_genes_count,
 		                               const s_ii_hash_t &umigs_cells_counts, i_i_hash_t &umig_top) const;
 
-		i_counter_t count_nonempty_cells_genes(bool logs = true) const;
+		i_counter_t count_filtered1_cells_genes(bool logs = true) const;
 
 		ids_t get_real_neighbour_cbs(const names_t &cbs1, const names_t &cbs2, const std::string &base_cb,
 		                             const i_counter_t &dists1, const i_counter_t &dists2) const;
 
-		size_t get_real_cb(size_t base_cell_ind, const names_t &cbs1, const names_t &cbs2, size_t barcode2_length) const;
+		long get_real_cb(size_t base_cell_ind, const names_t &cbs1, const names_t &cbs2, size_t barcode2_length) const;
 
 		size_t get_umigs_intersection_size(size_t cell1_ind, size_t cell2_ind) const;
 
@@ -116,6 +120,8 @@ namespace Estimation
 
 		void merge_and_filter(const CellsDataContainer::s_ii_hash_t &umig_cells_counts);
 
+		void merge_by_real_barcodes(const std::string &barcodes_filename, size_t barcode2_length);
+
 		int add_record(const std::string &cell_barcode, const std::string &umi, const std::string &gene, s_i_map_t &cells_ids);
 
 		Stats &stats();
@@ -129,6 +135,8 @@ namespace Estimation
 
 		const std::string &cell_barcode(size_t index) const;
 
-		void merge_by_real_barcodes(const std::string &barcodes_filename, size_t barcode2_length);
+		names_t excluded_cells() const;
+
+		void set_initialized();
 	};
 }

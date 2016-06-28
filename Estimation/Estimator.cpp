@@ -78,7 +78,7 @@ namespace Estimation
 			L_WARN << "WARNING: filtered cells is empty. Maybe its too strict treshold or you forgot to run 'merge_and_filter'";
 		}
 		return Results::BadCellsStats(container.stats(), this->get_reads_per_genes_per_cells_count(container),
-									  this->get_umis_per_genes_per_cells_count(container));
+									  this->get_umis_per_genes_per_cells_count(container), container.excluded_cells());
 	}
 
 	Estimator::s_counter_t Estimator::count_genes(const CellsDataContainer &genes_container,
@@ -262,6 +262,7 @@ namespace Estimation
 		BamProcessor bam_processor(this->read_prefix_length, reads_params_names_str, gtf_filename);
 
 		auto umig_cells_counts = bam_processor.parse_bam_files(files, bam_output, container);
+		container.set_initialized();
 
 		if (barcodes_filename == "")
 		{

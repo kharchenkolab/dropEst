@@ -23,21 +23,23 @@ namespace Estimation
 		, _min_genes_after_merge(min_genes_after_merge)
 		, _min_genes_before_merge(min_genes_before_merge)
 		, _max_merge_edit_distance(max_merge_edit_distance)
+		, _is_initialized(false)
 	{}
 
 	void CellsDataContainer::merge_and_filter(const CellsDataContainer::s_ii_hash_t &umig_cells_counts)
 	{
-		this->nonempty_cells_genes_counts_sorted = this->count_nonempty_cells_genes();
+		if (!this->_is_initialized)
+			throw runtime_error("You must initialize container");
 
 		if (this->_merge_tags)
 		{
 			this->merge_cells(umig_cells_counts);
 
-			this->nonempty_cells_genes_counts_sorted = this->count_nonempty_cells_genes(false);
+			this->filtered1_cells_genes_counts_sorted = this->count_filtered1_cells_genes(false);
 		}
 		else
 		{
-			for (auto const &gene_count : boost::adaptors::reverse(this->nonempty_cells_genes_counts_sorted))
+			for (auto const &gene_count : boost::adaptors::reverse(this->filtered1_cells_genes_counts_sorted))
 			{
 				if (gene_count.value < this->_min_genes_after_merge)
 					break;
@@ -59,7 +61,7 @@ namespace Estimation
 		L_TRACE << "merging linked tags ";
 
 		int tag_index = 0;
-		for (auto const &genes_count : this->nonempty_cells_genes_counts_sorted)
+		for (auto const &genes_count : this->filtered1_cells_genes_counts_sorted)
 		{ // iterate through the minimally-selected CBs, from low to high counts
 			if (++tag_index % 1000 == 0)
 			{
@@ -172,6 +174,9 @@ namespace Estimation
 
 	int CellsDataContainer::add_record(const string &cell_barcode, const string &umi, const string &gene, s_i_map_t &cells_ids)
 	{
+		if (this->_is_initialized)
+			throw runtime_error("Container is already initialized");
+
 		pair<s_i_map_t::iterator, bool> res = cells_ids.emplace(cell_barcode, this->_cells_genes.size());
 		if (res.second)
 		{ // new cb
@@ -188,11 +193,14 @@ namespace Estimation
 		return cell_id;
 	}
 
-	CellsDataContainer::i_counter_t CellsDataContainer::count_nonempty_cells_genes(bool logs) const
+	CellsDataContainer::i_counter_t CellsDataContainer::count_filtered1_cells_genes(bool logs) const
 	{
 		i_counter_t cells_genes_counts; // <genes_count,cell_id> pairs
 		for (size_t i = 0; i < this->_cells_genes.size(); i++)
 		{
+			if (this->_is_cell_excluded[i])
+				continue;
+
 			size_t genes_count = this->_cells_genes[i].size();
 			if (genes_count >= this->_min_genes_before_merge)
 			{
@@ -252,7 +260,7 @@ namespace Estimation
 
 	const CellsDataContainer::i_counter_t &CellsDataContainer::cells_genes_counts_sorted() const
 	{
-		return this->nonempty_cells_genes_counts_sorted;
+		return this->filtered1_cells_genes_counts_sorted;
 	}
 
 	const string &CellsDataContainer::cell_barcode(size_t index) const
@@ -299,8 +307,10 @@ namespace Estimation
 
 	void CellsDataContainer::merge_by_real_barcodes(const string &barcodes_filename, size_t barcode2_length)
 	{
+		if (!this->_is_initialized)
+			throw runtime_error("You must initialize container");
+
 		names_t cbs1, cbs2;
-		this->nonempty_cells_genes_counts_sorted = this->count_nonempty_cells_genes();
 		vector<bool> is_cell_real(this->_cells_genes.size(), false);
 
 		CellsDataContainer::get_barcodes_list(barcodes_filename, cbs1, cbs2);
@@ -313,17 +323,23 @@ namespace Estimation
 
 		size_t tag_index = 0, merges_count = 0;
 
-		for (auto const &genes_count : boost::adaptors::reverse(this->nonempty_cells_genes_counts_sorted))
+		for (auto const &genes_count : boost::adaptors::reverse(this->filtered1_cells_genes_counts_sorted))
 		{
 			if (++tag_index % 1000 == 0)
 			{
 				L_TRACE << "Total " << tag_index << " tags processed, " << merges_count << " cells merged";
 			}
 
-			size_t real_cell_ind = this->get_real_cb(genes_count.index, cbs1, cbs2, barcode2_length);
+			long real_cell_ind = this->get_real_cb(genes_count.index, cbs1, cbs2, barcode2_length);
 			if (real_cell_ind == genes_count.index)
 			{
 				is_cell_real[genes_count.index] = true;
+				continue;
+			}
+
+			if (real_cell_ind < 0)
+			{
+				this->_is_cell_excluded[genes_count.index] = true;
 				continue;
 			}
 
@@ -332,8 +348,8 @@ namespace Estimation
 		}
 		L_INFO << "Total " << merges_count << " merges";
 
-		this->nonempty_cells_genes_counts_sorted = this->count_nonempty_cells_genes(true);
-		for (auto const &gene_count : boost::adaptors::reverse(this->nonempty_cells_genes_counts_sorted))
+		this->filtered1_cells_genes_counts_sorted = this->count_filtered1_cells_genes(true);
+		for (auto const &gene_count : boost::adaptors::reverse(this->filtered1_cells_genes_counts_sorted))
 		{
 			if (gene_count.value < this->_min_genes_after_merge)
 				break;
@@ -348,7 +364,7 @@ namespace Estimation
 		this->_stats.merge(cb_reassign_targets, this->_cells_barcodes);
 	}
 
-	size_t CellsDataContainer::get_real_cb(size_t base_cell_ind, const names_t &cbs1, const names_t &cbs2,
+	long CellsDataContainer::get_real_cb(size_t base_cell_ind, const names_t &cbs1, const names_t &cbs2,
 	                                            size_t barcode2_length) const
 	{
 		std::string base_cb = this->_cells_barcodes[base_cell_ind];
@@ -364,6 +380,8 @@ namespace Estimation
 
 		L_DEBUG <<"Get real neighbours to " << base_cb;
 		ids_t neighbour_cells = this->get_real_neighbour_cbs(cbs1, cbs2, base_cb, dists1, dists2);
+		if (neighbour_cells.empty())
+			return -1;
 
 		size_t max_umigs_intersection_size = 0;
 		size_t best_neighbour_cell_ind = neighbour_cells[0];
@@ -410,7 +428,7 @@ namespace Estimation
 	/*
 	 * Return the list of cbs with minimal distances that were found in the current dataset (work not really precisely)
 	 */
-	CellsDataContainer::ids_t CellsDataContainer::get_real_neighbour_cbs(const names_t &cbs1, const names_t &cbs2,
+	/*CellsDataContainer::ids_t CellsDataContainer::get_real_neighbour_cbs(const names_t &cbs1, const names_t &cbs2,
 	                                                   const string &base_cb, const CellsDataContainer::i_counter_t &dists1,
 	                                                   const CellsDataContainer::i_counter_t &dists2) const
 	{
@@ -461,6 +479,56 @@ namespace Estimation
 				break;
 
 			prev_dist1 = cur_dist1.value;
+		}
+
+		return neighbour_cbs;
+	}*/
+
+	CellsDataContainer::ids_t CellsDataContainer::get_real_neighbour_cbs(const names_t &cbs1, const names_t &cbs2,
+	                                                                     const string &base_cb, const CellsDataContainer::i_counter_t &dists1,
+	                                                                     const CellsDataContainer::i_counter_t &dists2) const
+	{
+		typedef tuple<size_t, size_t, long> tuple_t;
+		vector<tuple_t> real_cell_inds;
+		for (size_t ind1 = 0; ind1 < dists1.size(); ++ind1)
+		{
+			auto const &cur_dist1 = dists1[ind1];
+			if (cur_dist1.value + dists2[0].value > CellsDataContainer::MAX_REAL_MERGE_EDIT_DISTANCE)
+				break;
+			
+			for (size_t ind2 = 0; ind2 < dists2.size(); ++ind2)
+			{
+				auto const &cur_dist2 = dists2[ind2];
+				long cur_ed = cur_dist1.value + cur_dist2.value;
+				if (cur_ed > CellsDataContainer::MAX_REAL_MERGE_EDIT_DISTANCE)
+					break;
+
+				real_cell_inds.push_back(make_tuple(cur_dist1.index, cur_dist2.index, cur_ed));
+			}
+		}
+
+		sort(real_cell_inds.begin(), real_cell_inds.end(), [](const tuple_t &t1, const tuple_t &t2){ return get<2>(t1) < get<2>(t1);});
+
+		ids_t neighbour_cbs;
+		long prev_dist = std::numeric_limits<long>::max();
+		for (auto const & inds: real_cell_inds)
+		{
+			long cur_ed = get<2>(inds);
+			if (cur_ed > prev_dist && !neighbour_cbs.empty())
+				break;
+
+			string current_cb = cbs1[get<0>(inds)] + cbs2[get<1>(inds)];
+			auto const current_cell_it = this->_cell_ids_by_cb.find(current_cb);
+			if (current_cell_it != this->_cell_ids_by_cb.end())
+			{
+				neighbour_cbs.push_back(current_cell_it->second);
+				this->_stats.add_str(Stats::MERGE_EDIT_DISTANCE_BY_CELL, current_cb, base_cb, cur_ed);
+			}
+			else
+			{
+				this->_stats.add_str(Stats::MERGE_REJECTION_BY_CELL, current_cb, base_cb, cur_ed);
+			}
+			prev_dist = cur_ed;
 		}
 
 		return neighbour_cbs;
@@ -546,5 +614,26 @@ namespace Estimation
 		}
 
 		return intersect_size;
+	}
+
+	void CellsDataContainer::set_initialized()
+	{
+		this->_is_cell_excluded = flags_t(this->_cells_barcodes.size(), false);
+		this->filtered1_cells_genes_counts_sorted = this->count_filtered1_cells_genes();
+		this->_is_initialized = true;
+	}
+
+	CellsDataContainer::names_t CellsDataContainer::excluded_cells() const
+	{
+		names_t ec;
+		for (size_t i = 0; i < this->_is_cell_excluded.size(); ++i)
+		{
+			if (this->_is_cell_excluded[i])
+			{
+				ec.push_back(this->_cells_barcodes[i]);
+			}
+		}
+
+		return ec;
 	}
 }

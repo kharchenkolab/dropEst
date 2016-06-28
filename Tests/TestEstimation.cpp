@@ -40,6 +40,7 @@ struct Fixture
 		this->container_full.add_record("CAATTAGGTCCG", "CAACCT", "Gene1", cells_ids);
 		this->container_full.add_record("CAATTAGGTCCG", "AAACCT", "Gene1", cells_ids);
 		this->container_full.add_record("CAATTAGGTCCG", "CCCCCT", "Gene2", cells_ids);
+		this->container_full.set_initialized();
 	}
 
 	CellsDataContainer container;

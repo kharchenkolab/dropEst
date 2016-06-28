@@ -26,13 +26,15 @@ namespace Estimation
 			Stats::ss_cnt_t merge_rejections;
 
 			Stats::s_cnt_t merges_count;
+			std::vector<std::string> excluded_cells;
 
 		protected:
 #ifdef R_LIBS
 			virtual void save_r_table(const std::string &filename) const override;
 #endif
 		public:
-			BadCellsStats(const Stats &stats, const Stats::ss_cnt_t &genes_reads, const Stats::ss_cnt_t &genes_umis);
+			BadCellsStats(const Stats &stats, const Stats::ss_cnt_t &genes_reads, const Stats::ss_cnt_t &genes_umis,
+			              const std::vector<std::string> &excluded_cells);
 		};
 	}
 }
