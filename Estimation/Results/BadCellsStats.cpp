@@ -15,6 +15,7 @@ namespace Estimation
 				, merges_count(stats.get_raw_stat(Stats::MERGES_COUNT))
 				, merge_edit_distance(stats.get_raw_str_stat(Stats::MERGE_EDIT_DISTANCE_BY_CELL))
 				, merge_intersect_size(stats.get_raw_str_stat(Stats::MERGE_INTERSECT_SIZE_BY_CELL))
+				, merge_real_intersect_size(stats.get_raw_str_stat(Stats::MERGE_REAL_INTERSECT_SIZE_BY_CELL))
 				, merge_rejections(stats.get_raw_str_stat(Stats::MERGE_REJECTION_BY_CELL))
 				, excluded_cells(excluded_cells)
 		{}
@@ -42,6 +43,7 @@ namespace Estimation
 
 			(*R)["merge_edit_distance"] = this->merge_edit_distance;
 			(*R)["merge_intersect_size"] = this->merge_intersect_size;
+			(*R)["merge_real_intersect_size"] = this->merge_real_intersect_size;
 			(*R)["merge_rejections"] = this->merge_rejections;
 			(*R)["excluded_cells"] = this->excluded_cells;
 
@@ -49,7 +51,7 @@ namespace Estimation
 								 "cell_nonexone_reads_per_chr=cell_nonexone_reads_per_chr, merges_count=merges_count,"
 								 "reads_per_umig=reads_per_umig, reads_per_umi=reads_per_umi, merge_rejections=merge_rejections,"
 					             "merge_edit_distance=merge_edit_distance, merge_intersect_size=merge_intersect_size,"
-					             "excluded_cells=excluded_cells)");
+					             "excluded_cells=excluded_cells, merge_real_intersect_size=merge_real_intersect_size)");
 
 			R->parseEvalQ("saveRDS(d, '" + filename + "')");
 			L_TRACE << "Done";

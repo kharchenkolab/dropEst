@@ -396,6 +396,8 @@ namespace Estimation
 			this->_stats.add_str(Stats::MERGE_INTERSECT_SIZE_BY_CELL, this->_cells_barcodes[neighbour_cell_ind],
 			                     base_cb, umigs_intersection_size);
 		}
+		this->_stats.add_str(Stats::MERGE_REAL_INTERSECT_SIZE_BY_CELL, this->_cells_barcodes[best_neighbour_cell_ind],
+		                     base_cb, max_umigs_intersection_size);
 
 		return best_neighbour_cell_ind;
 	}
