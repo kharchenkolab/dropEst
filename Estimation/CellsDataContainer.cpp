@@ -426,66 +426,7 @@ namespace Estimation
 		sort(dists1.begin(), dists1.end(), IndexedValue::value_less);
 		sort(dists2.begin(), dists2.end(), IndexedValue::value_less);
 	}
-
-	/*
-	 * Return the list of cbs with minimal distances that were found in the current dataset (work not really precisely)
-	 */
-	/*CellsDataContainer::ids_t CellsDataContainer::get_real_neighbour_cbs(const names_t &cbs1, const names_t &cbs2,
-	                                                   const string &base_cb, const CellsDataContainer::i_counter_t &dists1,
-	                                                   const CellsDataContainer::i_counter_t &dists2) const
-	{
-		ids_t neighbour_cbs;
-		long prev_dist1 = std::numeric_limits<long>::max();
-		for (size_t ind1 = 0; ind1 < dists1.size(); ++ind1)
-		{
-			const IndexedValue &cur_dist1 = dists1[ind1];
-			if (cur_dist1.value > prev_dist1 && !neighbour_cbs.empty())
-				break;
-
-			if (neighbour_cbs.empty() && cur_dist1.value > prev_dist1)
-			{
-				L_DEBUG << "There is no neighbours, cb1, prev: " << prev_dist1 << ", cur: " << cur_dist1.value;
-			}
-
-			long prev_dist2 = std::numeric_limits<long>::max();
-			for (size_t ind2 = 0; ind2 < dists2.size(); ++ind2)
-			{
-				const IndexedValue &cur_dist2 = dists2[ind2];
-				if (cur_dist2.value > prev_dist2 &&
-						(!neighbour_cbs.empty() ||
-								ind1 != dists1.size() - 1 && ind2 != dists2.size() - 1 &&
-								dists2[ind2 + 1].value - dists2[0].value > dists1[ind2 + 1].value - dists1[0].value))
-					break;
-
-				if (neighbour_cbs.empty() && cur_dist2.value > prev_dist2)
-				{
-					L_DEBUG << "There is no neighbours, cb2, prev: " << prev_dist2 << ", cur: " << cur_dist2.value;
-				}
-
-				string current_cb = cbs1[cur_dist1.index] + cbs2[cur_dist2.index];
-				auto const current_cell_it = this->_cell_ids_by_cb.find(current_cb);
-				if (current_cell_it != this->_cell_ids_by_cb.end())
-				{
-					neighbour_cbs.push_back(current_cell_it->second);
-					this->_stats.add_str(Stats::MERGE_EDIT_DISTANCE_BY_CELL, current_cb, base_cb, cur_dist1.value + cur_dist2.value);
-				}
-				else
-				{
-					this->_stats.add_str(Stats::MERGE_REJECTION_BY_CELL, current_cb, base_cb, cur_dist1.value + cur_dist2.value);
-				}
-
-				prev_dist2 = cur_dist2.value;
-			}
-
-			if (!neighbour_cbs.empty() && (ind1 == dists1.size() || dists1[ind1 + 1].value >= cur_dist1.value))
-				break;
-
-			prev_dist1 = cur_dist1.value;
-		}
-
-		return neighbour_cbs;
-	}*/
-
+	
 	CellsDataContainer::ids_t CellsDataContainer::get_real_neighbour_cbs(const names_t &cbs1, const names_t &cbs2,
 	                                                                     const string &base_cb, const CellsDataContainer::i_counter_t &dists1,
 	                                                                     const CellsDataContainer::i_counter_t &dists2) const

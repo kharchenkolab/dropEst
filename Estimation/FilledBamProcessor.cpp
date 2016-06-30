@@ -1,3 +1,4 @@
+#include <Tools/Logs.h>
 #include "FilledBamProcessor.h"
 
 namespace Estimation
@@ -13,14 +14,16 @@ namespace Estimation
 		if (!alignment.GetTag(BamProcessor::UMI_TAG, umi))
 			return false;
 
-		std::string gene;
-		if (!alignment.GetTag(BamProcessor::GENE_TAG, gene))
+		try
 		{
-			gene = "";
+			read_params = Tools::ReadParameters(alignment.Name, barcode, umi);
+		}
+		catch (std::runtime_error &error)
+		{
+			L_ERR << error.what();
+			return false;
 		}
 
-//	read_params.ReadParameters()
-		throw std::runtime_error("Not implemented");
 		return true;
 	}
 

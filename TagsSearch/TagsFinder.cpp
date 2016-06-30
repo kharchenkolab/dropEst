@@ -239,7 +239,7 @@ namespace TagsSearch
 		L_DEBUG << " trimmed:" << r2_seq;
 
 		if (r2_trim > this->min_align_len)
-			return Tools::ReadParameters(total_reads_read, r2_id, cell_barcode, umi_barcode);
+			return Tools::ReadParameters(r2_id, cell_barcode, umi_barcode);
 
 		return Tools::ReadParameters();
 	}

@@ -22,17 +22,18 @@ struct Params
 {
 	bool bam_output = false;
 	bool cant_parse = false;
-	bool verbose = false;
-	bool text_output = false;
+	bool filled_bam = false;
 	bool merge_tags = false;
 	bool not_filtered = false;
 	bool reads_output = false;
-	string output_name = "";
-	string config_file_name = "";
-	string log_prefix = "";
-	string reads_params_file = "";
-	string gtf_filename = "";
+	bool text_output = false;
+	bool verbose = false;
 	string barcodes_filename = "";
+	string config_file_name = "";
+	string gtf_filename = "";
+	string log_prefix = "";
+	string output_name = "";
+	string reads_params_file = "";
 };
 
 static void usage()
@@ -42,11 +43,12 @@ static void usage()
 	cerr <<
 	"\tindropest [-t, --text-output] [-m|--merge-cell-tags] [-v|--verbose] [-n | --not-filtered] [-g | --gtf filename]"
 	"[-l, --log-prefix logs_name] [-r, --reads-params filename] -c config.xml file1.bam [file2.bam ...] "
-	"[-b | --bam-output] [-B | --barcodes filename]" << endl;
+	"[-b | --bam-output] [-B | --barcodes filename] [-f, --filled-bam]" << endl;
 	cerr << "OPTIONS:\n";
 	cerr << "\t-b, --bam-output: print corrected bam files" << endl;
 	cerr << "\t-B, --barcodes: path to barcodes file" << endl;
 	cerr << "\t-c, --config filename: xml file with estimation parameters" << endl;
+	cerr << "\t-f, --filled-bam: bam file already contains genes/barcodes tags" << endl;
 	cerr << "\t-g, --gtf filename: gtf file with genes annotations" << endl;
 	cerr << "\t-l, --log-prefix : logs prefix" << endl;
 	cerr << "\t-m, --merge-cell-tags : merge linked cell tags" << endl;
@@ -68,6 +70,7 @@ static Params parse_cmd_params(int argc, char **argv)
 			{"bam-output",     	no_argument, 	   0, 'b'},
 			{"barcodes",     	required_argument, 	   0, 'B'},
 			{"config",     		required_argument, 0, 'c'},
+			{"filled-bam",     	no_argument,       0, 'f'},
 			{"gtf",     		required_argument, 0, 'g'},
 			{"log-prefix",		required_argument, 0, 'l'},
 			{"merge-cell-tags", no_argument,       0, 'm'},
@@ -79,7 +82,7 @@ static Params parse_cmd_params(int argc, char **argv)
 			{"verbose",         no_argument,       0, 'v'},
 			{0, 0,                                 0, 0}
 	};
-	while ((c = getopt_long(argc, argv, "bB:c:g:l:mno:r:Rtv", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "bB:c:fg:l:mno:r:Rtv", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -91,6 +94,9 @@ static Params parse_cmd_params(int argc, char **argv)
 				break;
 			case 'c' :
 				params.config_file_name = string(optarg);
+				break;
+			case 'f' :
+				params.filled_bam = true;
 				break;
 			case 'g' :
 				params.gtf_filename = string(optarg);
@@ -140,6 +146,13 @@ static Params parse_cmd_params(int argc, char **argv)
 		return params;
 	}
 
+	if (params.filled_bam && params.reads_params_file != "")
+	{
+		cerr << "indropset: only one genes source must be provided (you can't use -r and -f at the same time)" << endl;
+		params.cant_parse = true;
+		return params;
+	}
+
 	if (params.output_name == "")
 	{
 		if (params.text_output)
@@ -185,9 +198,9 @@ int main(int argc, char **argv)
 	{
 		L_TRACE << "Run: " << asctime(localtime(&ctt));
 		Estimator estimator(pt.get_child("config.Estimation"));
-		CellsDataContainer container = estimator.get_cells_container(files, params.merge_tags, params.bam_output, false,
-		                                                             params.reads_params_file, params.gtf_filename,
-		                                                             params.barcodes_filename);
+		CellsDataContainer container = estimator.get_cells_container(files, params.merge_tags, params.bam_output,
+		                                                             params.filled_bam, params.reads_params_file,
+		                                                             params.gtf_filename, params.barcodes_filename);
 		
 //		if (false)
 		{

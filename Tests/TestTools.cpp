@@ -4,6 +4,7 @@
 #include <iostream>
 #include <boost/test/unit_test.hpp>
 #include <boost/unordered_map.hpp>
+#include <Tools/ReadParameters.h>
 
 #include "Tools/GeneInfo.h"
 #include "Tools/Logs.h"
@@ -42,6 +43,27 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 		BOOST_CHECK_EQUAL(Tools::edit_distance("ATTTTCC", "ATTTGNC"), 1);
 		BOOST_CHECK_EQUAL(Tools::edit_distance("ATTTTCC", "ATTTGTC"), 2);
 		BOOST_CHECK_EQUAL(Tools::edit_distance("ATTTTCC", "ATTTTCC"), 0);
+	}
+
+	BOOST_FIXTURE_TEST_CASE(testReadParams, Fixture)
+	{
+		ReadParameters rp("@111!ATTTGC#ATATC");
+		BOOST_CHECK_EQUAL(rp.cell_barcode(), "ATTTGC");
+		BOOST_CHECK_EQUAL(rp.umi_barcode(), "ATATC");
+
+		rp = ReadParameters("111!ATTTG#ATAT");
+		BOOST_CHECK_EQUAL(rp.cell_barcode(), "ATTTG");
+		BOOST_CHECK_EQUAL(rp.umi_barcode(), "ATAT");
+
+		rp = ReadParameters("!ATTTGC#ATATC");
+		BOOST_CHECK_EQUAL(rp.cell_barcode(), "ATTTGC");
+		BOOST_CHECK_EQUAL(rp.umi_barcode(), "ATATC");
+
+		rp = ReadParameters("trash!ATTTG#ATAT");
+		BOOST_CHECK_EQUAL(rp.cell_barcode(), "ATTTG");
+		BOOST_CHECK_EQUAL(rp.umi_barcode(), "ATAT");
+
+		BOOST_CHECK_THROW(ReadParameters("ATTTG#ATAT"), std::runtime_error);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testGeneMerge, Fixture)

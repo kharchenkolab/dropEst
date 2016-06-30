@@ -10,7 +10,6 @@ namespace Tools
 	class ReadParameters
 	{
 	private:
-		long _read_number;
 		std::string _read_name;
 		std::string _cell_barcode;
 		std::string _umi_barcode;
@@ -23,21 +22,16 @@ namespace Tools
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int /* file_version */)
 		{
-			ar & this->_read_number & this->_cell_barcode & this->_umi_barcode & this->_is_empty;
+			ar & this->_cell_barcode & this->_umi_barcode & this->_is_empty;
 		}
 
 	public:
-		static ReadParameters from_string(const std::string &str);
-
 		ReadParameters();
 		ReadParameters(const std::string &monolithic_params_string);
 		ReadParameters(const ReadParameters &source);
-		ReadParameters(long read_number, const std::string &read_name, const std::string &cell_barcode,
-					   const std::string &umi_barcode);
+		ReadParameters(const std::string &read_name, const std::string &cell_barcode, const std::string &umi_barcode);
 		std::string to_monolithic_string() const;
-		std::string to_string();
 
-		long read_number() const;
 		const std::string& read_name() const;
 		const std::string& cell_barcode() const;
 		const std::string& umi_barcode() const;
