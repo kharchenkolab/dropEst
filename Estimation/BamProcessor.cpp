@@ -6,23 +6,16 @@
 #include <api/BamReader.h>
 #include <api/BamWriter.h>
 
-#include <boost/algorithm/string.hpp>
-#include <boost/iostreams/filtering_stream.hpp>
-#include <boost/iostreams/filter/gzip.hpp>
-
 namespace Estimation
 {
-	BamProcessor::BamProcessor(size_t read_prefix_length, const std::string &reads_params_names_str, const std::string &gtf_path)
-		: _use_names_map(reads_params_names_str.length() != 0)
-		, _read_prefix_length(read_prefix_length)
-		, _use_genes_container(gtf_path.length() != 0)
-	{
-		if (this->_use_names_map)
-		{
-			this->fill_names_map(reads_params_names_str);
-		}
+	const std::string BamProcessor::GENE_TAG = "GE";
+	const std::string BamProcessor::CB_TAG = "CB";
+	const std::string BamProcessor::UMI_TAG = "UB";
 
-		if (this->_use_genes_container)
+	BamProcessor::BamProcessor(size_t read_prefix_length, const std::string &gtf_path)
+		: _read_prefix_length(read_prefix_length)
+	{
+		if (gtf_path.length() != 0)
 		{
 			this->_genes_container = Tools::RefGenesContainer(gtf_path);
 		}
@@ -80,8 +73,8 @@ namespace Estimation
 			std::string chr_name = reader.GetReferenceData()[alignment.RefID].RefName;
 
 			Tools::ReadParameters read_params;
-			const std::string read_name = alignment.Name;
-			if (!this->get_read_params(read_name, read_params))
+			const std::string &read_name = alignment.Name;
+			if (!this->get_read_params(alignment, read_params))
 				continue;
 
 			std::string cell_barcode = read_params.cell_barcode(), umi = read_params.umi_barcode();
@@ -114,35 +107,16 @@ namespace Estimation
 				<< max_cell_id + 1 << " cell barcodes)";
 	}
 
-	bool BamProcessor::get_read_params(const std::string &read_name, Tools::ReadParameters &read_params) const
+	bool BamProcessor::get_read_params(const BamTools::BamAlignment &alignment, Tools::ReadParameters &read_params) const
 	{
-		if (this->_use_names_map)
+		try
 		{
-			auto iter = this->_reads_params.find(read_name);
-			if (iter == this->_reads_params.end())
-			{
-				L_WARN << "WARNING: can't find read_name in map: " << read_name;
-				return false;
-			}
-
-			read_params = iter->second;
-			if (read_params.is_empty())
-			{
-				L_WARN << "WARNING: empty parameters for read_name: " << read_name;
-				return false;
-			}
+			read_params = Tools::ReadParameters(alignment.Name);
 		}
-		else
+		catch (std::runtime_error &error)
 		{
-			try
-			{
-				read_params = Tools::ReadParameters(read_name);
-			}
-			catch (std::runtime_error &error)
-			{
-				L_ERR << error.what();
-				return false;
-			}
+			L_ERR << error.what();
+			return false;
 		}
 
 		return true;
@@ -174,12 +148,14 @@ namespace Estimation
 
 	std::string BamProcessor::get_gene(const std::string &chr_name, BamTools::BamAlignment alignment) const
 	{
-		if (this->_use_genes_container)
+		if (!this->_genes_container.is_empty())
 			return this->_genes_container.get_gene_info(chr_name, alignment.Position,
 												 alignment.Position + alignment.Length).id();
 
 		std::string gene;
-		alignment.GetTag("GE", gene);
+		if (!alignment.GetTag(BamProcessor::GENE_TAG, gene))
+			return "";
+
 		return gene;
 	}
 
@@ -189,68 +165,11 @@ namespace Estimation
 		alignment.Name = parameters.read_name();
 		if (gene != "")
 		{
-			alignment.AddTag("GE", "Z", gene);
+			alignment.AddTag(BamProcessor::GENE_TAG, "Z", gene);
 		}
 
-		alignment.AddTag("CB", "Z", parameters.cell_barcode());
-		alignment.AddTag("UM", "Z", parameters.umi_barcode());
+		alignment.AddTag(BamProcessor::CB_TAG, "Z", parameters.cell_barcode());
+		alignment.AddTag(BamProcessor::UMI_TAG, "Z", parameters.umi_barcode());
 		writer.SaveAlignment(alignment);
-	}
-
-	void BamProcessor::fill_names_map(const std::string &reads_params_names_str)
-	{
-		std::vector<std::string> params_names;
-		boost::split(params_names, reads_params_names_str, boost::is_any_of(" \t"));
-		size_t total_reads_count = 0;
-		L_TRACE << "Start loading reads names";
-		for (auto const &name : params_names)
-		{
-			if (name.empty())
-				continue;
-			L_TRACE << "Start reading file: " << name;
-			std::ifstream ifs(name);
-			boost::iostreams::filtering_istream gz_fs;
-			gz_fs.push(boost::iostreams::gzip_decompressor());
-			gz_fs.push(ifs);
-			std::string row;
-			while (std::getline(gz_fs, row))
-			{
-				if (row.empty())
-					continue;
-
-				total_reads_count++;
-				if (total_reads_count % 1000000 == 0)
-				{
-					L_TRACE << "Total " << total_reads_count << " reads record processed";
-				}
-
-				size_t space_index = row.find_first_of(" \t");
-				if (space_index == std::string::npos)
-				{
-					L_ERR << "Can't parse row with reads params: '" << row << "'";
-					continue;
-				}
-				std::string key = row.substr(0, space_index);
-				std::string value = row.substr(space_index + 1);
-				if (this->_reads_params.find(key) != this->_reads_params.end())
-				{
-					L_ERR << "Read name is already in map: " << key << ", old value: '" <<
-								this->_reads_params[key].to_monolithic_string() << "', new value: " << value;
-					continue;
-				}
-
-				try
-				{
-					this->_reads_params[key] = Tools::ReadParameters(value);
-				}
-				catch (std::runtime_error err)
-				{
-					L_ERR << err.what();
-					continue;
-				}
-
-			}
-		}
-		L_TRACE << "All reads names were loaded";
 	}
 }

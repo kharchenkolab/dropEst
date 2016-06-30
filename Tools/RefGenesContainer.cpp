@@ -13,7 +13,12 @@
 
 namespace Tools
 {
+	RefGenesContainer::RefGenesContainer()
+		: _is_empty(true)
+	{}
+
 	RefGenesContainer::RefGenesContainer(const std::string &gtf_filename)
+		: _is_empty(false)
 	{
 		this->init_from_gtf(gtf_filename);
 	}
@@ -145,14 +150,14 @@ namespace Tools
 
 		auto gene_it = genes.begin();
 		std::string id = gene_it->id();
-		if (genes.size() > 1 && this->single_gene_names.find(id) != this->single_gene_names.end())
+		if (genes.size() > 1 && this->_single_gene_names.find(id) != this->_single_gene_names.end())
 			return GeneInfo();
 
 		GeneInfo::num_t chr_num = gene_it->chr_num();
 		pos_t end_pos = gene_it->end_pos();
 		while (++gene_it != genes.end())
 		{
-			if (this->single_gene_names.find(gene_it->id()) != this->single_gene_names.end())
+			if (this->_single_gene_names.find(gene_it->id()) != this->_single_gene_names.end())
 				return GeneInfo();
 
 			id += "," + gene_it->id();
@@ -266,6 +271,11 @@ namespace Tools
 		if (genes_in_interval.size() != 1)
 			return;
 
-		this->single_gene_names.insert(genes_in_interval.begin()->id());
+		this->_single_gene_names.insert(genes_in_interval.begin()->id());
+	}
+
+	bool RefGenesContainer::is_empty() const
+	{
+		return this->_is_empty;
 	}
 }

@@ -43,7 +43,8 @@ namespace Tools
 
 	private:
 		std::vector<intervals_vec_t> _genes_intervals;
-		std::unordered_set<std::string> single_gene_names;
+		std::unordered_set<std::string> _single_gene_names;
+		bool _is_empty;
 
 
 	private:
@@ -57,9 +58,10 @@ namespace Tools
 		intervals_vec_t filter_genes(const genes_vec_t &genes);
 
 	public:
-		RefGenesContainer() = default;
+		RefGenesContainer();
 		RefGenesContainer(const std::string &gtf_filename);
 		GeneInfo get_gene_info(const std::string &chr_name, pos_t start_pos, pos_t end_pos) const;
+		bool is_empty() const;
 
 		void save_gene_names(const genes_set &genes_in_interval);
 	};

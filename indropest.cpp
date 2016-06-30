@@ -185,7 +185,7 @@ int main(int argc, char **argv)
 	{
 		L_TRACE << "Run: " << asctime(localtime(&ctt));
 		Estimator estimator(pt.get_child("config.Estimation"));
-		CellsDataContainer container = estimator.get_cells_container(files, params.merge_tags, params.bam_output,
+		CellsDataContainer container = estimator.get_cells_container(files, params.merge_tags, params.bam_output, false,
 		                                                             params.reads_params_file, params.gtf_filename,
 		                                                             params.barcodes_filename);
 		

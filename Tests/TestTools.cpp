@@ -8,6 +8,7 @@
 #include "Tools/GeneInfo.h"
 #include "Tools/Logs.h"
 #include "Tools/RefGenesContainer.h"
+#include "Tools/UtilFunctions.h"
 
 using namespace Tools;
 
@@ -32,6 +33,15 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 		BOOST_CHECK_EQUAL(info.id(), "SAMD11");
 		BOOST_CHECK_EQUAL(info.start_pos(), 878633);
 		BOOST_CHECK_EQUAL(info.end_pos(), 878757);
+	}
+
+
+	BOOST_FIXTURE_TEST_CASE(testEditDistance, Fixture)
+	{
+		BOOST_CHECK_EQUAL(Tools::edit_distance("ATTTTC", "ATTTGC"), 1);
+		BOOST_CHECK_EQUAL(Tools::edit_distance("ATTTTCC", "ATTTGNC"), 1);
+		BOOST_CHECK_EQUAL(Tools::edit_distance("ATTTTCC", "ATTTGTC"), 2);
+		BOOST_CHECK_EQUAL(Tools::edit_distance("ATTTTCC", "ATTTTCC"), 0);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testGeneMerge, Fixture)

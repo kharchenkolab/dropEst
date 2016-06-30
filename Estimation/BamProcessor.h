@@ -13,22 +13,23 @@ namespace Estimation
 {
 	class BamProcessor
 	{
-	private:
-	public:
-		BamProcessor(size_t read_prefix_length, const std::string &reads_params_names_str, const std::string &gtf_path);
+	protected:
+		static const std::string GENE_TAG;
+		static const std::string CB_TAG;
+		static const std::string UMI_TAG;
 
 	private:
-		const bool _use_names_map;
 		const size_t _read_prefix_length;
-		const bool _use_genes_container;
 		Tools::RefGenesContainer _genes_container;
-		Tools::reads_params_map_t _reads_params;
 
 	private:
 		void parse_bam_file(const std::string &bam_name, bool print_result_bam, CellsDataContainer::s_i_map_t &cells_ids,
 							CellsDataContainer::s_ii_hash_t &umig_cells_counts, CellsDataContainer &container) const;
 
-		bool get_read_params(const std::string &read_name, Tools::ReadParameters &read_params) const;
+		void write_alignment(BamTools::BamWriter &writer, BamTools::BamAlignment &alignment, const std::string &gene,
+		                     const Tools::ReadParameters &parameters) const;
+
+		std::string get_gene(const std::string &chr_name, BamTools::BamAlignment alignment) const;
 
 		static int save_read_data(const std::string &chr_name, const std::string &cell_barcode, const std::string &umi,
 							const std::string &gene, CellsDataContainer::s_i_map_t &cells_ids,
@@ -36,15 +37,13 @@ namespace Estimation
 
 		static std::string get_result_bam_name(const std::string &bam_name);
 
+	protected:
+		virtual bool get_read_params(const BamTools::BamAlignment &alignment, Tools::ReadParameters &read_params) const;
+
 	public:
+		BamProcessor(size_t read_prefix_length, const std::string &gtf_path);
+
 		CellsDataContainer::s_ii_hash_t parse_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams,
 							 CellsDataContainer &container) const;
-
-		std::string get_gene(const std::string &chr_name, BamTools::BamAlignment alignment) const;
-
-		void write_alignment(BamTools::BamWriter &writer, BamTools::BamAlignment &alignment, const std::string &gene,
-						 const Tools::ReadParameters &parameters) const;
-
-		void fill_names_map(const std::string &reads_params_names_str);
 	};
 }

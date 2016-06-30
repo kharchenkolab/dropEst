@@ -1,6 +1,8 @@
 #include "Estimator.h"
 
 #include "BamProcessor.h"
+#include "FilledBamProcessor.h"
+#include "ReadMapBamProcessor.h"
 #include "Results/IndropResults.h"
 #include "Results/IndropResultsWithoutUmi.h"
 #include "Tools/GeneInfo.h"
@@ -254,14 +256,26 @@ namespace Estimation
 	}
 
 	CellsDataContainer Estimator::get_cells_container(const names_t &files, bool merge_tags, bool bam_output,
-	                                                  const std::string &reads_params_names_str,
+	                                                  bool filled_bam, const std::string &reads_params_names_str,
 	                                                  const std::string &gtf_filename, const std::string &barcodes_filename)
 	{
 		CellsDataContainer container(this->min_merge_fraction, this->min_genes_before_merge, merge_tags,
 		                             this->min_genes_after_merge, this->max_merge_edit_distance, Estimator::top_print_size);
-		BamProcessor bam_processor(this->read_prefix_length, reads_params_names_str, gtf_filename);
+		std::shared_ptr<BamProcessor> bam_processor;
+		if (filled_bam)
+		{
+			bam_processor = std::make_shared<FilledBamProcessor>(this->read_prefix_length, gtf_filename);
+		}
+		else if (reads_params_names_str != "")
+		{
+			bam_processor = std::make_shared<ReadMapBamProcessor>(this->read_prefix_length, reads_params_names_str, gtf_filename);
+		}
+		else
+		{
+			bam_processor = std::make_shared<BamProcessor>(this->read_prefix_length, gtf_filename);
+		}
 
-		auto umig_cells_counts = bam_processor.parse_bam_files(files, bam_output, container);
+		auto umig_cells_counts = bam_processor->parse_bam_files(files, bam_output, container);
 		container.set_initialized();
 
 		if (barcodes_filename == "")

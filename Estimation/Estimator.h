@@ -50,7 +50,7 @@ namespace Estimation
 		Results::IndropResult get_results(const CellsDataContainer &container, bool not_filtered, bool reads_output);
 		Results::BadCellsStats get_bad_cells_results(const CellsDataContainer &container);
 
-		CellsDataContainer get_cells_container(const names_t &files, bool merge_tags, bool bam_output,
+		CellsDataContainer get_cells_container(const names_t &files, bool merge_tags, bool bam_output, bool filled_bam,
 		                                       const std::string &reads_params_names_str, const std::string &gtf_filename,
 		                                       const std::string &barcodes_filename);
 
