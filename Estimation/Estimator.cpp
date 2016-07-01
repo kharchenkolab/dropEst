@@ -3,8 +3,9 @@
 #include "BamProcessor.h"
 #include "FilledBamProcessor.h"
 #include "ReadMapBamProcessor.h"
-#include "Results/IndropResults.h"
-#include "Results/IndropResultsWithoutUmi.h"
+#include <Estimation/Results/IndropResults.h>
+#include <Estimation/Results/BadCellsStats.h>
+#include <Estimation/Results/IndropResultsWithoutUmi.h>
 #include "Tools/GeneInfo.h"
 #include "Tools/Logs.h"
 
@@ -79,7 +80,7 @@ namespace Estimation
 		{
 			L_WARN << "WARNING: filtered cells is empty. Maybe its too strict treshold or you forgot to run 'merge_and_filter'";
 		}
-		return Results::BadCellsStats(container.stats(), this->get_reads_per_genes_per_cells_count(container),
+		return Results::BadCellsStats(this->get_reads_per_genes_per_cells_count(container),
 									  this->get_umis_per_genes_per_cells_count(container), container.excluded_cells());
 	}
 

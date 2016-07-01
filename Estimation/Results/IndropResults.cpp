@@ -1,5 +1,7 @@
 #include "IndropResults.h"
 
+#include <Tools/Logs.h>
+
 #ifdef R_LIBS
 #include <RInside.h>
 #endif
@@ -36,7 +38,7 @@ namespace Estimation
 		}
 
 #ifdef R_LIBS
-		void IndropResult::save_r_table(const std::string &filename) const
+		void IndropResult::save_rds(const std::string &filename) const
 		{
 			using namespace Rcpp;
 

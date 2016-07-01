@@ -8,8 +8,7 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/assume_abstract.hpp>
 
-#include <Estimation/Stats.h>
-#include "IRTableProvider.h"
+#include "IndropResults.h"
 
 namespace Estimation
 {

@@ -7,9 +7,9 @@
 #include <boost/serialization/utility.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/assume_abstract.hpp>
+#include <Rcpp.h>
 
 #include <Estimation/Stats.h>
-#include "IRTableProvider.h"
 
 namespace Estimation
 {
@@ -45,7 +45,7 @@ namespace Estimation
 			}
 		};
 
-		class IndropResult : public IRTableProvider
+		class IndropResult
 		{
 			friend class boost::serialization::access;
 
@@ -84,7 +84,7 @@ namespace Estimation
 			             const int_list_t &umig_covered, bool not_filtered);
 
 #ifdef R_LIBS
-			virtual void save_r_table(const std::string &filename) const override;
+			virtual void save_rds(const std::string &filename) const;
 			virtual Rcpp::List get_main_r_vec(const std::string &filename) const;
 #endif
 		};

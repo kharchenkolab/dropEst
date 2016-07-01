@@ -426,7 +426,7 @@ namespace Estimation
 		sort(dists1.begin(), dists1.end(), IndexedValue::value_less);
 		sort(dists2.begin(), dists2.end(), IndexedValue::value_less);
 	}
-	
+
 	CellsDataContainer::ids_t CellsDataContainer::get_real_neighbour_cbs(const names_t &cbs1, const names_t &cbs2,
 	                                                                     const string &base_cb, const CellsDataContainer::i_counter_t &dists1,
 	                                                                     const CellsDataContainer::i_counter_t &dists2) const

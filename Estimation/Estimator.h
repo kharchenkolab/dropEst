@@ -8,8 +8,6 @@
 #include <boost/functional/hash.hpp>
 #include <boost/property_tree/ptree.hpp>
 
-#include <Estimation/Results/IndropResults.h>
-#include <Estimation/Results/BadCellsStats.h>
 #include "CellsDataContainer.h"
 
 namespace Estimation
@@ -18,6 +16,7 @@ namespace Estimation
 	{
 		class CountMatrix;
 		class IndropResult;
+		class BadCellsStats;
 	}
 
 	class Estimator
