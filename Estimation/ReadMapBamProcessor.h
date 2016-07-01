@@ -1,5 +1,6 @@
 #pragma once
 #include "BamProcessor.h"
+#include <Tools/ReadParameters.h>
 
 namespace Estimation
 {

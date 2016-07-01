@@ -1,7 +1,8 @@
 #include "BamProcessor.h"
 
-#include "Tools/GeneInfo.h"
+#include "Stats.h"
 #include "Tools/Logs.h"
+#include "Tools/ReadParameters.h"
 
 #include <api/BamReader.h>
 #include <api/BamWriter.h>
@@ -138,6 +139,7 @@ namespace Estimation
 
 		container.stats().inc_cells(Stats::READS_PER_UMIG_PER_CELL, cell_barcode, umig);
 		container.stats().inc_cells(Stats::EXONE_READS_PER_CHR_PER_CELL, cell_barcode, chr_name);
+		container.stats().inc_cells(Stats::UMI_PER_CELL, cell_barcode, umi);
 		return cell_id;
 	}
 

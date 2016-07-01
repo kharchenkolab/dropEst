@@ -1,13 +1,17 @@
 #pragma once
 
 #include "CellsDataContainer.h"
-#include "Tools/ReadParameters.h"
 #include "Tools/RefGenesContainer.h"
 
 #include <string>
 #include <vector>
 #include <api/BamAlignment.h>
 #include <api/BamWriter.h>
+
+namespace Tools
+{
+	class ReadParameters;
+}
 
 namespace Estimation
 {

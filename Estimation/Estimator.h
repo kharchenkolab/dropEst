@@ -30,7 +30,7 @@ namespace Estimation
 		typedef CellsDataContainer::names_t names_t;
 		typedef CellsDataContainer::ints_t ints_t;
 		typedef CellsDataContainer::ids_t ids_t;
-		typedef Stats::ss_cnt_t ss_i_hash_t;
+		typedef boost::unordered_map<std::string, boost::unordered_map<std::string, int>> ss_i_hash_t;
 
 	private:
 		static const size_t top_print_size;

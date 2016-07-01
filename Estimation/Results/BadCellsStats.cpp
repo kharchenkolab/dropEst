@@ -41,7 +41,8 @@ namespace Estimation
 		            Named("merge_intersect_size") = wrap(stats.get_raw_str_stat(Stats::MERGE_INTERSECT_SIZE_BY_CELL)),
 		            Named("merge_real_intersect_size") = wrap(stats.get_raw_str_stat(Stats::MERGE_REAL_INTERSECT_SIZE_BY_CELL)),
 		            Named("merge_rejections") = wrap(stats.get_raw_str_stat(Stats::MERGE_REJECTION_BY_CELL)),
-		            Named("excluded_cells") = wrap(excluded_cells)
+		            Named("excluded_cells") = wrap(excluded_cells),
+		            Named("umi_per_cell") = wrap(stats.get_raw_cell_stat(Stats::UMI_PER_CELL))
 			);
 
 			R->parseEvalQ("saveRDS(d, '" + filename + "')");

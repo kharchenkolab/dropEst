@@ -1,5 +1,7 @@
-#include <Tools/Logs.h>
 #include "FilledBamProcessor.h"
+
+#include <Tools/Logs.h>
+#include <Tools/ReadParameters.h>
 
 namespace Estimation
 {
