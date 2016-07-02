@@ -156,12 +156,12 @@ namespace TagsSearch
 		return ss.str();
 	}
 
-	TagsFinder::len_t TagsFinder::get_trim_position(len_t spacer_pos, const string &r1_seq, const string &r2_seq)
+	TagsFinder::len_t TagsFinder::get_trim_position(len_t spacer_end, const string &r1_seq, const string &r2_seq)
 	{
 		len_t r2_trim = r2_seq.length();
 		// attempt 1: check for reverse complement of the UMI+second barcode, remove trailing As
 		// RC of UMI+second barcode (up to a length r1_rc_length - spacer_finder parameter)
-		string rcb = this->spacer_finder.parse_r1_rc(r1_seq, spacer_pos);
+		string rcb = this->spacer_finder.parse_r1_rc(r1_seq, spacer_end);
 		rcb = Tools::reverse_complement(rcb);
 
 		L_DEBUG << "-- barcode RC: " << rcb;
@@ -208,14 +208,14 @@ namespace TagsSearch
 	{
 		L_DEBUG << r1_seq << ":";
 
-		SpacerFinder::len_t spacer_pos = this->spacer_finder.find_spacer(r1_seq);
-		if (spacer_pos == SpacerFinder::ERR_CODE)
+		auto spacer_pos = this->spacer_finder.find_spacer(r1_seq);
+		if (spacer_pos.first == SpacerFinder::ERR_CODE)
 			return Tools::ReadParameters();
 
-		string cell_barcode = this->spacer_finder.parse_cell_barcode(r1_seq, spacer_pos);
+		string cell_barcode = this->spacer_finder.parse_cell_barcode(r1_seq, spacer_pos.first, spacer_pos.second);
 		L_DEBUG << "-- cell barcode: " << cell_barcode << " (" << cell_barcode.length() << "nt)";
 
-		string umi_barcode = this->spacer_finder.parse_umi_barcode(r1_seq, spacer_pos);
+		string umi_barcode = this->spacer_finder.parse_umi_barcode(r1_seq, spacer_pos.second);
 		if (umi_barcode.length() == 0)
 		{
 			umi_barcode = "N";
@@ -224,7 +224,7 @@ namespace TagsSearch
 		L_DEBUG << "-- umi barcode: " << umi_barcode;
 		L_DEBUG << "R2: " << r2_seq;
 
-		len_t r2_trim = this->get_trim_position(spacer_pos, r1_seq, r2_seq);
+		len_t r2_trim = this->get_trim_position(spacer_pos.second, r1_seq, r2_seq);
 
 		if (r2_seq.length() != r2_trim)
 		{

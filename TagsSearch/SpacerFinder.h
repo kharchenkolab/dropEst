@@ -6,6 +6,11 @@
 
 #include "Counters/OutcomesCounter.h"
 
+namespace Tools
+{
+	class ReadParameters;
+}
+
 namespace TagsSearch
 {
 // inDrop read structure: [C_(spacer_min_pos-spacer_max_pos)][Spacer][C(barcode_length)][M(umi_length)]
@@ -16,13 +21,15 @@ namespace TagsSearch
 		static const len_t ERR_CODE = std::string::npos;
 
 	private:
-		unsigned max_spacer_ed; // maximum number of spacer mismatches
-		unsigned spacer_prefix_length; // length of the spacer prefix/suffix to use as a seed
+		size_t max_spacer_ed; // maximum number of spacer mismatches
 		std::string spacer;
-		std::string spacer_2;
+		std::string spacer_prefix;
+		std::string spacer_suffix;
 
-		unsigned spacer_min_pos;
-		unsigned spacer_max_pos;
+		size_t spacer_min_pos;
+		size_t spacer_max_pos;
+		size_t spacer_max_suffix_start;
+		size_t spacer_min_suffix_start;
 		len_t barcode_length;
 		len_t umi_length;
 		len_t r1_rc_length;
@@ -32,7 +39,6 @@ namespace TagsSearch
 		std::string reads_params_file;
 		bool need_save_reads_params;
 
-
 		OutcomesCounter outcomes;
 
 	public:
@@ -41,16 +47,15 @@ namespace TagsSearch
 
 		SpacerFinder(const boost::property_tree::ptree &config, const std::string& reads_params_file = "");
 
-		len_t find_spacer(const std::string& seq);
+		std::pair<len_t, len_t> find_spacer(const std::string& seq);
 
-		std::string parse_cell_barcode(const std::string& seq, len_t spacer_pos) const;
-		std::string parse_umi_barcode(const std::string& seq, len_t spacer_pos) const;
-		std::string parse_r1_rc(const std::string &seq, len_t spacer_pos) const;
+		std::string parse_cell_barcode(const std::string& seq, len_t spacer_start, len_t spacer_end) const;
+		std::string parse_umi_barcode(const std::string& seq, len_t spacer_end) const;
+		std::string parse_r1_rc(const std::string &seq, len_t spacer_end) const;
 
 		const OutcomesCounter& get_outcomes_counter() const;
 
 	private:
-		len_t find_spacer_partial(const std::string& seq);
-		len_t find_spacer_full(const std::string& seq);
+		std::pair<len_t, len_t> find_spacer_partial(const std::string& seq);
 	};
 }

@@ -48,7 +48,7 @@ namespace TagsSearch
 								std::string &out_2_line_3, std::string &out_2_line_4);
 
 		std::string results_to_string(long total_reads_read) const;
-		len_t get_trim_position(len_t spacer_pos, const std::string &r1_seq, const std::string &r2_seq);
+		len_t get_trim_position(len_t spacer_end, const std::string &r1_seq, const std::string &r2_seq);
 		Tools::ReadParameters fill_parameters(long total_reads_read, const std::string &r1_seq,
 											  const std::string &r2_id,
 											  std::string &r2_seq, const std::string &r2_description,
