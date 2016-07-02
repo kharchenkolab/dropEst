@@ -89,7 +89,6 @@ namespace TagsSearch
 	std::pair<SpacerFinder::len_t, SpacerFinder::len_t> SpacerFinder::find_spacer_partial(const string &seq)
 	{
 		len_t suffix_pos = seq.rfind(this->spacer_suffix, this->spacer_max_suffix_start);
-		L_DEBUG << "-- postfix match at " << suffix_pos << " " << this->spacer_min_suffix_start << " " << this->spacer_max_suffix_start;
 		if (suffix_pos == string::npos || suffix_pos < this->spacer_min_suffix_start)
 			return std::make_pair(SpacerFinder::ERR_CODE, SpacerFinder::ERR_CODE);
 
