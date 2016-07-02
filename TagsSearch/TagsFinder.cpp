@@ -29,14 +29,12 @@ namespace TagsSearch
 		}
 	}
 
-	bool TagsFinder::read_blocks(FilesProcessor &files_processor, long total_reads_read, string &out_1_line_2,
-								 string &out_2_line_1, string &out_2_line_2, string &out_2_line_3, string &out_2_line_4)
+	bool TagsFinder::read_blocks(FilesProcessor &files_processor, long total_reads_read, string &r1_seq,
+								 string &r2_id, string &r2_seq, string &r2_description, string &r2_quality)
 	{
 		string tmp;
 		if (!files_processor.get_r1_line(tmp))
-		{
 			return 0;
-		}
 
 		if (tmp.at(0) != '@')
 		{
@@ -44,7 +42,7 @@ namespace TagsSearch
 			return 0;
 		}
 
-		if (!files_processor.get_r1_line(out_1_line_2))
+		if (!files_processor.get_r1_line(r1_seq))
 		{
 			L_ERR << "read " << total_reads_read << ": R1 fastq ended prematurely!";
 			return 0;
@@ -60,31 +58,37 @@ namespace TagsSearch
 			return 0;
 		}
 
-		if (!files_processor.get_r2_line(out_2_line_1))
+		if (!files_processor.get_r2_line(r2_id))
 		{
 			L_ERR << "read " << total_reads_read << ": R2 fastq ended prematurely!";
 			return 0;
 		}
 
-		if (out_2_line_1.at(0) != '@')
+		if (r2_id.at(0) != '@')
 		{
 			L_ERR << "read " << total_reads_read << ": R2 fastq malformed!";
 			return 0;
 		}
 
-		if (!files_processor.get_r2_line(out_2_line_2))
+		if (!files_processor.get_r2_line(r2_seq))
 		{
 			L_ERR << "read " << total_reads_read << ": R2 fastq ended prematurely!";
 			return 0;
 		}
-		if (!files_processor.get_r2_line(out_2_line_3))
+		if (!files_processor.get_r2_line(r2_description))
 		{
 			L_ERR << "read " << total_reads_read << ": R2 fastq ended prematurely!";
 			return 0;
 		}
-		if (!files_processor.get_r2_line(out_2_line_4))
+		if (!files_processor.get_r2_line(r2_quality))
 		{
 			L_ERR << "read " << total_reads_read << ": R2 fastq ended prematurely!";
+			return 0;
+		}
+		if (r2_seq.length() != r2_quality.length())
+		{
+			L_ERR << "read " << total_reads_read << " have qual length (" << r2_quality.length() <<
+						") differs from seq length (" << r2_seq.length() << ")";
 			return 0;
 		}
 

@@ -46,6 +46,8 @@ namespace TagsSearch
 
 		std::string out_file_name = this->get_out_filename();
 		this->out_file.open(out_file_name.c_str(), std::ios_base::out | std::ios_base::binary);
+		if (!this->out_file.is_open())
+			throw std::runtime_error("Can't open file: '" + out_file_name + "'");
 
 		this->out_zip.push(boost::iostreams::gzip_compressor());
 		this->out_zip.push(this->out_file);
@@ -75,6 +77,9 @@ namespace TagsSearch
 		this->out_zip.pop();
 		this->out_file.close();
 		this->out_file.open(out_file_name.c_str(), std::ios_base::out | std::ios_base::binary);
+		if (!this->out_file.is_open())
+			throw std::runtime_error("Can't open file: '" + out_file_name + "'");
+
 		this->out_zip.push(this->out_file);
 	}
 
@@ -110,11 +115,13 @@ namespace TagsSearch
 		{
 			this->increase_out_file();
 
-			current_file_reads_written = 0;
+			this->current_file_reads_written = 0;
 			result = true;
 		}
 
-		this->out_zip << text << std::flush;
+		if (!(this->out_zip << text << std::flush))
+			throw std::runtime_error("Can't write to file! Text:\n'" + text + "'");
+
 		this->current_file_reads_written++;
 
 		return result;

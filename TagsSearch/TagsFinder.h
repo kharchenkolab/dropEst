@@ -44,8 +44,8 @@ namespace TagsSearch
 		static std::string reverse_complement(const std::string &s);
 
 		static bool read_blocks(FilesProcessor &files_processor, long total_reads_read,
-								std::string &out_1_line_2, std::string &out_2_line_1, std::string &out_2_line_2,
-								std::string &out_2_line_3, std::string &out_2_line_4);
+								std::string &r1_seq, std::string &r2_id, std::string &r2_seq,
+								std::string &r2_description, std::string &r2_quality);
 
 		std::string results_to_string(long total_reads_read) const;
 		len_t get_trim_position(len_t spacer_end, const std::string &r1_seq, const std::string &r2_seq);
