@@ -102,7 +102,7 @@ namespace TagsSearch
 
 		FilesProcessor files_processor(r1_filename, r2_filename, base_name, this->max_reads);
 
-		long total_reads_read = 1;
+		long total_reads_read = 1, parsed_reads = 0;
 		std::string file_uid = std::to_string(rand()) + char(rand() % 25 + 'A');
 
 		string r1_seq, r2_id, r2_seq, r2_description, r2_quality_str;
@@ -111,7 +111,7 @@ namespace TagsSearch
 		{
 			if (total_reads_read % 1000000 == 0)
 			{
-				L_TRACE << "Total " << total_reads_read << " read";
+				L_TRACE << "Total " << total_reads_read << " read (" << parsed_reads << " parsed)";
 			}
 
 			Tools::ReadParameters params = this->fill_parameters(total_reads_read, r1_seq, r2_id, r2_seq,
@@ -120,6 +120,8 @@ namespace TagsSearch
 			++total_reads_read;
 			if (params.is_empty())
 				continue;
+
+			++parsed_reads;
 
 			string text;
 			if (save_reads_names)

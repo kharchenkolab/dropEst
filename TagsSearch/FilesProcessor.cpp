@@ -129,6 +129,6 @@ namespace TagsSearch
 
 	void FilesProcessor::write_read_params(const std::string &id, const Tools::ReadParameters &read_params)
 	{
-		this->out_reads_zip << id << " " << read_params.to_monolithic_string() << std::endl;
+		this->out_reads_zip << id << " " << read_params.to_monolithic_string() << "\n";
 	}
 }

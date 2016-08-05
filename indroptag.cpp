@@ -118,13 +118,18 @@ int main(int argc, char **argv)
 	SpacerFinder spacer_finder(pt.get_child("config.TagsSearch.SpacerSearch"));
 	TagsFinder finder(spacer_finder, pt.get_child("config.TagsSearch.TailTrimming"));
 
+	time_t ctt = time(0);
 	try
 	{
+		L_TRACE << "Run: " << asctime(localtime(&ctt));
 		finder.run(params.r1_file_name, params.r2_file_name, params.base_name, params.save_reads_names);
+		ctt = time(0);
+		L_TRACE << "All done: " << asctime(localtime(&ctt));
 	}
 	catch (std::runtime_error &err)
 	{
-		L_ERR << err.what();
+		ctt = time(0);
+		L_ERR << err.what()  << "\nTime: " << asctime(localtime(&ctt));
 		return 1;
 	}
 
