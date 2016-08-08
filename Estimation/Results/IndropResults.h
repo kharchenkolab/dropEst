@@ -83,10 +83,8 @@ namespace Estimation
 			IndropResult(const CountMatrix &cm, const Stats &stats, const std::vector<double> &reads_per_umi,
 			             const int_list_t &umig_covered, bool not_filtered);
 
-#ifdef R_LIBS
 			virtual void save_rds(const std::string &filename) const;
 			virtual Rcpp::List get_main_r_vec(const std::string &filename) const;
-#endif
 		};
 	}
 }

@@ -1,10 +1,7 @@
 #include "IndropResults.h"
 
 #include <Tools/Logs.h>
-
-#ifdef R_LIBS
 #include <RInside.h>
-#endif
 
 namespace Estimation
 {
@@ -37,7 +34,6 @@ namespace Estimation
 			}
 		}
 
-#ifdef R_LIBS
 		void IndropResult::save_rds(const std::string &filename) const
 		{
 			using namespace Rcpp;
@@ -83,6 +79,5 @@ namespace Estimation
 						 Named("exone_reads_by_cb") = wrap(this->exone_reads_by_cb),
 						 Named("fname") = wrap(filename));
 		}
-#endif
 	}
 }

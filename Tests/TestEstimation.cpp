@@ -8,9 +8,7 @@
 #include "Estimation/CellsDataContainer.h"
 #include "Tools/Logs.h"
 
-#ifdef R_LIBS
 #include <RInside.h>
-#endif
 
 using namespace Estimation;
 
@@ -51,7 +49,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 	BOOST_FIXTURE_TEST_CASE(testR, Fixture)
 	{
-#ifdef R_LIBS
+
 //		using namespace Rcpp;
 //		boost::unordered_map<std::string, int> map;
 //		map["first"] = 1;
@@ -62,7 +60,6 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 //		RInside R(0, 0);
 //		R["saved_vec"] = res;
 //		R.parseEvalQ("saveRDS(saved_vec, 'test_rds.rds')");
-#endif
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testMerge, Fixture)
@@ -142,16 +139,19 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 	BOOST_FIXTURE_TEST_CASE(testUmigsIntersection, Fixture)
 	{
-		size_t is1 = this->container_full.get_umigs_intersection_size(this->container_full._cell_ids_by_cb["AAATTAGGTCCA"],
-		                                                              this->container_full._cell_ids_by_cb["CCCTTAGGTCCA"]);
+		double is1 = this->container_full.get_umigs_intersect_fraction(
+				this->container_full._cell_ids_by_cb["AAATTAGGTCCA"],
+				this->container_full._cell_ids_by_cb["CCCTTAGGTCCA"]);
 
-		size_t is2 = this->container_full.get_umigs_intersection_size(this->container_full._cell_ids_by_cb["AAATTAGGTCCC"],
-		                                                              this->container_full._cell_ids_by_cb["AAATTAGGTCCG"]);
+		double is2 = this->container_full.get_umigs_intersect_fraction(
+				this->container_full._cell_ids_by_cb["AAATTAGGTCCC"],
+				this->container_full._cell_ids_by_cb["AAATTAGGTCCG"]);
 
-		size_t is3 = this->container_full.get_umigs_intersection_size(this->container_full._cell_ids_by_cb["AAATTAGGTCCA"],
-		                                                              this->container_full._cell_ids_by_cb["AAATTAGGTCCC"]);
+		double is3 = this->container_full.get_umigs_intersect_fraction(
+				this->container_full._cell_ids_by_cb["AAATTAGGTCCA"],
+				this->container_full._cell_ids_by_cb["AAATTAGGTCCC"]);
 
-		BOOST_CHECK_EQUAL(is1, 2);
+		BOOST_CHECK_EQUAL(is1, 2. / 3);
 		BOOST_CHECK_EQUAL(is2, 1);
 		BOOST_CHECK_EQUAL(is3, 0);
 	}

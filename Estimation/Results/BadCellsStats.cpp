@@ -15,7 +15,6 @@ namespace Estimation
 				, excluded_cells(excluded_cells)
 		{}
 
-#ifdef R_LIBS
 		void BadCellsStats::save_rds(const Stats &stats, const std::string &filename) const
 		{
 			using namespace Rcpp;
@@ -48,6 +47,5 @@ namespace Estimation
 			R->parseEvalQ("saveRDS(d, '" + filename + "')");
 			L_TRACE << "Done";
 		}
-#endif
 	}
 }

@@ -26,7 +26,6 @@ namespace Estimation
 				: IndropResult(cm, stats, std::vector<double>(), int_list_t(), not_filtered)
 			{}
 
-#ifdef R_LIBS
 			virtual Rcpp::List get_main_r_vec(const std::string &filename) const override
 			{
 				using namespace Rcpp;
@@ -42,7 +41,6 @@ namespace Estimation
 									Named("exone_reads_by_cb") = wrap(this->exone_reads_by_cb),
 									Named("fname") = wrap(filename));
 			}
-#endif
 		};
 	}
 }

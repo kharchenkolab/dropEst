@@ -25,9 +25,6 @@ set(R_LIBS_PATHS ${R_ROOT} ${R_ROOT}/library ${R_LOCAL_LIBS} ${R_ROOT}/site-libr
 find_path(RCPP_INCLUDE_DIR Rcpp.h
         PATHS ${R_LIBS_PATHS}
         PATH_SUFFIXES R/library/Rcpp/include/ R/site-library/Rcpp/include/ Rcpp/include/)
-find_path(RCPP_ARM_INCLUDE_DIR RcppArmadillo.h
-        PATHS ${R_LIBS_PATHS}
-        PATH_SUFFIXES R/library/RcppArmadillo/include/ R/site-library/RcppArmadillo/include/ RcppArmadillo/include/)
 find_path(RINSIDE_INCLUDE_DIR RInside.h
         PATHS ${R_LIBS_PATHS}
         PATH_SUFFIXES R/library/RInside/include R/site-library/RInside/include RInside/include)
@@ -36,10 +33,10 @@ find_library(RINSIDE_LIBRARY RInside PATH ${RINSIDE_INCLUDE_DIR}/../lib)
 
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(R
-        REQUIRED_VARS R_LIBRARY R_INCLUDE_DIR RCPP_INCLUDE_DIR RCPP_ARM_INCLUDE_DIR RINSIDE_INCLUDE_DIR RINSIDE_LIBRARY)
+        REQUIRED_VARS R_LIBRARY R_INCLUDE_DIR RCPP_INCLUDE_DIR RINSIDE_INCLUDE_DIR RINSIDE_LIBRARY)
 
 if (R_FOUND)
-    set(R_INCLUDE_DIRS ${R_INCLUDE_DIR} ${RCPP_INCLUDE_DIR} ${RCPP_ARM_INCLUDE_DIR} ${RINSIDE_INCLUDE_DIR})
+    set(R_INCLUDE_DIRS ${R_INCLUDE_DIR} ${RCPP_INCLUDE_DIR} ${RINSIDE_INCLUDE_DIR})
     set(R_LIBRARIES ${R_LIBRARY} ${RINSIDE_LIBRARY})
 endif()
 

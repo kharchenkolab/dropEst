@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_SUITE(TestTagsSearch)
 		std::string r1_seq = "TGACCATTACTGAGTGATTGCTTGTGACGCCTTAAGCGTACAGATTATTTT";
 		std::string r2_seq = "GACTGGTTGAAATTGATGATTGACATTAATAATGA";
 		std::string r2_description = "+";
-		std::string r2_quality_str = "1>111@1@111@33AA3BAA33DE1AA0FF3DA33AB3AF3D2A12110AB000DFGD01F10A121A11A2BFB110/AA0ABG111A111BF>";
+		std::string r2_quality_str = "GACTGGTTGAAATTGATGATTGACATTAATAATGA";
 		Tools::ReadParameters res = tags_finder.fill_parameters(0, r1_seq, "r2_id", r2_seq, r2_description, r2_quality_str);
 		BOOST_CHECK_EQUAL(res.is_empty(), false);
 	}

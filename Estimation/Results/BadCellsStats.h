@@ -1,10 +1,8 @@
 #pragma once
 
-#ifdef R_LIBS
 #include <RInside.h>
 #include <boost/unordered_map.hpp>
-
-#endif
+#include <string>
 
 namespace Estimation
 {
@@ -23,10 +21,8 @@ namespace Estimation
 			std::vector<std::string> excluded_cells;
 
 		public:
-#ifdef R_LIBS
 
 			void save_rds(const Stats &stats, const std::string &filename) const;
-#endif
 
 			BadCellsStats(const ss_cnt_t &genes_reads, const ss_cnt_t &genes_umis,
 			              const std::vector<std::string> &excluded_cells);

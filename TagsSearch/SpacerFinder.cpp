@@ -89,19 +89,19 @@ namespace TagsSearch
 	std::pair<SpacerFinder::len_t, SpacerFinder::len_t> SpacerFinder::find_spacer_partial(const string &seq)
 	{
 		len_t suffix_pos = seq.rfind(this->spacer_suffix, this->spacer_max_suffix_start);
+		len_t prefix_pos = suffix_pos - this->spacer.length() + this->spacer_suffix.length();
+
 		if (suffix_pos == string::npos || suffix_pos < this->spacer_min_suffix_start)
-			return std::make_pair(SpacerFinder::ERR_CODE, SpacerFinder::ERR_CODE);
+		{
+			prefix_pos = seq.find(this->spacer_prefix, this->spacer_min_pos);
+			if (prefix_pos == string::npos || prefix_pos > this->spacer_max_pos)
+				return std::make_pair(SpacerFinder::ERR_CODE, SpacerFinder::ERR_CODE);
+		}
+//			return std::make_pair(SpacerFinder::ERR_CODE, SpacerFinder::ERR_CODE);
 
-		L_DEBUG << "-- postfix match at " << suffix_pos;
+		L_DEBUG << "-- match at " << prefix_pos;
 
-		len_t prefix_pos = seq.find(this->spacer_prefix, this->spacer_min_pos);
-		if (prefix_pos == string::npos || prefix_pos > this->spacer_max_pos)
-			return std::make_pair(SpacerFinder::ERR_CODE, SpacerFinder::ERR_CODE);
-
-		L_DEBUG << "-- prefix match at " << prefix_pos;
-
-		int ed = Tools::edit_distance(this->spacer.c_str(), seq.substr(prefix_pos, suffix_pos +
-																	this->spacer_suffix.length() - prefix_pos).c_str());
+		int ed = Tools::edit_distance(this->spacer.c_str(), seq.substr(prefix_pos, this->spacer.length()).c_str());
 
 		L_DEBUG << "Edit distance = " << ed;
 
