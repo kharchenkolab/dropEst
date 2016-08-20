@@ -215,13 +215,9 @@ int main(int argc, char **argv)
 				params.output_name += ".bin";
 			}
 
-#ifdef R_LIBS
 			results.save_rds(params.output_name);
-#else
-			Results::ResultPrinter::print_binary(params.output_name, results);
-#endif
 		}
-#ifdef R_LIBS
+
 //		if (false)
 		{
 			L_TRACE << "Get bad cells results";
@@ -229,7 +225,6 @@ int main(int argc, char **argv)
 			L_TRACE << "Done";
 			bad_cells_results.save_rds(container.stats(), params.output_name + ".bc.rds");
 		}
-#endif
 	}
 	catch (std::runtime_error err)
 	{

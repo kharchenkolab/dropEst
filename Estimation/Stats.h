@@ -13,14 +13,12 @@ namespace Estimation
 	public:
 		typedef std::vector<std::string> str_list_t;
 		typedef std::vector<long> int_list_t;
-		typedef std::vector<size_t> id_list_t;
 
-		enum StringStatType
+		enum CellStatType
 		{
-			READS_BY_UMIG,
 			EXONE_READS_PER_CB,
-			MERGES_COUNT,
-			S_STAT_SIZE
+			MERGES_COUNT_PER_CB,
+			CELL_STAT_SIZE
 		};
 
 		enum CellStrStatType
@@ -48,14 +46,14 @@ namespace Estimation
 		typedef boost::unordered_map<std::string, s_cnt_t> ss_cnt_t;
 
 	private:
-		s_cnt_t _named_counters[S_STAT_SIZE];
+		s_cnt_t _cell_counters[CELL_STAT_SIZE];
 
 		int_list_t _merge_counts;
 
-		ss_cnt_t _ss_cell_counters[CELL_S_STAT_SIZE];
-		str_set_t _ss_cell_subtypes[CELL_S_STAT_SIZE];
+		ss_cnt_t _str_cell_counters[CELL_S_STAT_SIZE];
+		str_set_t _str_cell_subtypes[CELL_S_STAT_SIZE];
 
-		ss_cnt_t _ss_counters[S_S_STAT_SIZE];
+		ss_cnt_t _str_str_counters[S_S_STAT_SIZE];
 
 	private:
 		void fill_by_types(const s_cnt_t &counter, const str_list_t &types, int_list_t &counts) const;
@@ -63,21 +61,21 @@ namespace Estimation
 	public:
 		Stats();
 
-		void inc(StringStatType counter, const std::string &name);
-		void get(StringStatType counter, str_list_t &names, int_list_t &counts) const;
-		int_list_t get(StringStatType counter) const;
-		const s_cnt_t& get_raw_stat(StringStatType stat) const;
+		void inc(CellStatType counter, const std::string &name);
+		void get(CellStatType counter, str_list_t &names, int_list_t &counts) const;
+		int_list_t get(CellStatType counter) const;
+		const s_cnt_t& get_raw_stat(CellStatType stat) const;
 
 		void add_str(StrStrStatType stat, const std::string &cell_barcode, const std::string &subtype, int value);
 
-		void inc_cells(CellStrStatType stat, const std::string &cell_barcode, const std::string &subtype);
-		void get_cells(CellStrStatType stat, str_list_t &types, str_list_t &subtypes, int_list_t &counts) const;
-		bool get_cell(CellStrStatType stat, const std::string &cell_barcode, const str_list_t &subtypes,
-		              int_list_t &counts) const;
-		void get_cells_filtered(CellStrStatType stat, const str_list_t &filter_barcodes, str_list_t &cell_barcodes,
-		                        str_list_t &subtypes, int_list_t &counts) const;
-		const ss_cnt_t& get_raw_cell_stat(CellStrStatType stat) const;
-		const ss_cnt_t& get_raw_str_stat(StrStrStatType stat) const;
+		void inc(CellStrStatType stat, const std::string &cell_barcode, const std::string &subtype);
+		void get(CellStrStatType stat, str_list_t &types, str_list_t &subtypes, int_list_t &counts) const;
+		bool get(CellStrStatType stat, const std::string &cell_barcode, const str_list_t &subtypes,
+				 int_list_t &counts) const;
+		void get_filtered(CellStrStatType stat, const str_list_t &filter_barcodes, str_list_t &cell_barcodes,
+						  str_list_t &subtypes, int_list_t &counts) const;
+		const ss_cnt_t& get_raw(CellStrStatType stat) const;
+		const ss_cnt_t& get_raw(StrStrStatType stat) const;
 
 		void add_merge_count(int count);
 		const int_list_t& get_merge_counts() const;

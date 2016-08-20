@@ -39,18 +39,6 @@ namespace Estimation
 			L_TRACE << "Done";
 		}
 
-		void ResultPrinter::print_binary(const std::string &bin_output_name, const IndropResult &results)
-		{
-			L_TRACE << "writing binary results to " << bin_output_name;
-
-			std::ofstream bin_out_file(bin_output_name.c_str(), std::ios_base::out | std::ios_base::binary);
-			boost::archive::binary_oarchive oa(bin_out_file);
-			oa << results;
-			bin_out_file.close();
-
-			L_TRACE << "Done";
-		}
-
 		void ResultPrinter::print_fields(const std::string &output_suffix, const IndropResult &results)
 		{
 			throw std::runtime_error("print_fields not implemented");

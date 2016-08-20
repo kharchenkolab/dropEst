@@ -10,27 +10,38 @@ namespace Estimation
 		IndropResult::IndropResult(const CountMatrix &cm, const Stats &stats, const std::vector<double> &reads_per_umi,
 		                           const int_list_t &umig_covered, bool not_filtered)
 				: cm(cm), reads_per_umi(reads_per_umi), umig_covered(umig_covered), merge_n(stats.get_merge_counts()),
-				  reads_by_umig(stats.get(Stats::READS_BY_UMIG)), exone_reads_by_cb(stats.get(Stats::EXONE_READS_PER_CB))
+				  exone_reads_by_cb(stats.get(Stats::EXONE_READS_PER_CB))
 		{
+			Stats::ss_cnt_t reads_by_umig_map(stats.get_raw(Stats::READS_PER_UMIG_PER_CELL));
+
+			for (auto const& cell : reads_by_umig_map)
+			{
+				for (auto const& reads_cnt : cell.second)
+				{
+					this->reads_by_umig_cbs.push_back(cell.first);
+					this->reads_by_umig.push_back(reads_cnt.second);
+				}
+			}
+
 			if (not_filtered)
 			{
 				L_TRACE << "Fill exone results";
-				stats.get_cells(Stats::EXONE_READS_PER_CHR_PER_CELL, this->ex_cell_names, this->chr_names,
-				                this->ex_cells_chr_reads_counts);
+				stats.get(Stats::EXONE_READS_PER_CHR_PER_CELL, this->ex_cell_names, this->chr_names,
+						  this->ex_cells_chr_reads_counts);
 				this->chr_names.clear();
 				L_TRACE << "Fill nonexone results";
-				stats.get_cells(Stats::NON_EXONE_READS_PER_CHR_PER_CELL, this->nonex_cell_names, this->chr_names,
-				                this->nonex_cells_chr_reads_counts);
+				stats.get(Stats::NON_EXONE_READS_PER_CHR_PER_CELL, this->nonex_cell_names, this->chr_names,
+						  this->nonex_cells_chr_reads_counts);
 			}
 			else
 			{
 				L_TRACE << "Fill exone results";
-				stats.get_cells_filtered(Stats::EXONE_READS_PER_CHR_PER_CELL, this->cm.cell_names, this->ex_cell_names,
-				                         this->chr_names, this->ex_cells_chr_reads_counts);
+				stats.get_filtered(Stats::EXONE_READS_PER_CHR_PER_CELL, this->cm.cell_names, this->ex_cell_names,
+								   this->chr_names, this->ex_cells_chr_reads_counts);
 				this->chr_names.clear();
 				L_TRACE << "Fill nonexone results";
-				stats.get_cells_filtered(Stats::NON_EXONE_READS_PER_CHR_PER_CELL, this->cm.cell_names,
-				                         this->nonex_cell_names, this->chr_names, this->nonex_cells_chr_reads_counts);
+				stats.get_filtered(Stats::NON_EXONE_READS_PER_CHR_PER_CELL, this->cm.cell_names,
+								   this->nonex_cell_names, this->chr_names, this->nonex_cells_chr_reads_counts);
 			}
 		}
 
@@ -76,6 +87,7 @@ namespace Estimation
 						 Named("umig.cov") = wrap(this->umig_covered),
 						 Named("merge.n") = wrap(this->merge_n),
 						 Named("reads_by_umig") = wrap(this->reads_by_umig),
+						 Named("reads_by_umig_cbs") = wrap(this->reads_by_umig_cbs),
 						 Named("exone_reads_by_cb") = wrap(this->exone_reads_by_cb),
 						 Named("fname") = wrap(filename));
 		}

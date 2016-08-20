@@ -15,15 +15,15 @@ namespace Estimation
 		return this->_merge_counts;
 	}
 
-	void Stats::inc(Stats::StringStatType counter, const std::string &name)
+	void Stats::inc(Stats::CellStatType counter, const std::string &name)
 	{
-		this->_named_counters[counter][name]++;
+		this->_cell_counters[counter][name]++;
 	}
 
 
-	void Stats::get(Stats::StringStatType counter, Stats::str_list_t &names, Stats::int_list_t &counts) const
+	void Stats::get(Stats::CellStatType counter, Stats::str_list_t &names, Stats::int_list_t &counts) const
 	{
-		const s_cnt_t &s_counter = this->_named_counters[counter];
+		const s_cnt_t &s_counter = this->_cell_counters[counter];
 		for (s_cnt_t::const_iterator it = s_counter.begin(); it != s_counter.end(); ++it)
 		{
 			names.push_back(it->first);
@@ -31,9 +31,9 @@ namespace Estimation
 		}
 	}
 
-	Stats::int_list_t Stats::get(Stats::StringStatType counter) const
+	Stats::int_list_t Stats::get(Stats::CellStatType counter) const
 	{
-		const s_cnt_t &s_counter = this->_named_counters[counter];
+		const s_cnt_t &s_counter = this->_cell_counters[counter];
 		int_list_t result;
 		for (s_cnt_t::const_iterator it = s_counter.begin(); it != s_counter.end(); ++it)
 		{
@@ -43,39 +43,39 @@ namespace Estimation
 		return result;
 	}
 
-	const Stats::s_cnt_t& Stats::get_raw_stat(Stats::StringStatType stat) const
+	const Stats::s_cnt_t& Stats::get_raw_stat(Stats::CellStatType stat) const
 	{
-		return this->_named_counters[stat];
+		return this->_cell_counters[stat];
 	}
 
-	void Stats::inc_cells(CellStrStatType stat, const std::string &cell_barcode, const std::string &subtype)
+	void Stats::inc(CellStrStatType stat, const std::string &cell_barcode, const std::string &subtype)
 	{
-		this->_ss_cell_counters[stat][cell_barcode][subtype]++;
-		this->_ss_cell_subtypes[stat].emplace(subtype);
+		this->_str_cell_counters[stat][cell_barcode][subtype]++;
+		this->_str_cell_subtypes[stat].emplace(subtype);
 	}
 
 	void Stats::add_str(StrStrStatType stat, const std::string &cell_barcode, const std::string &subtype, int value)
 	{
-		this->_ss_counters[stat][cell_barcode][subtype] += value;
+		this->_str_str_counters[stat][cell_barcode][subtype] += value;
 	}
 
-	void Stats::get_cells(CellStrStatType stat, str_list_t &types, str_list_t &subtypes, int_list_t &counts) const
+	void Stats::get(CellStrStatType stat, str_list_t &types, str_list_t &subtypes, int_list_t &counts) const
 	{
-		std::copy(this->_ss_cell_subtypes[stat].begin(), this->_ss_cell_subtypes[stat].end(), std::back_inserter(subtypes));
-		for (auto const &val : this->_ss_cell_counters[stat])
+		std::copy(this->_str_cell_subtypes[stat].begin(), this->_str_cell_subtypes[stat].end(), std::back_inserter(subtypes));
+		for (auto const &val : this->_str_cell_counters[stat])
 		{
 			types.push_back(val.first);
 			this->fill_by_types(val.second, subtypes, counts);
 		}
 	}
 
-	void Stats::get_cells_filtered(CellStrStatType stat, const str_list_t &filter_barcodes, str_list_t &cell_barcodes,
-	                               str_list_t &subtypes, int_list_t &counts) const
+	void Stats::get_filtered(CellStrStatType stat, const str_list_t &filter_barcodes, str_list_t &cell_barcodes,
+							 str_list_t &subtypes, int_list_t &counts) const
 	{
-		std::copy(this->_ss_cell_subtypes[stat].begin(), this->_ss_cell_subtypes[stat].end(), std::back_inserter(subtypes));
+		std::copy(this->_str_cell_subtypes[stat].begin(), this->_str_cell_subtypes[stat].end(), std::back_inserter(subtypes));
 		for (auto const &barcode : filter_barcodes)
 		{
-			if (this->get_cell(stat, barcode, subtypes, counts))
+			if (this->get(stat, barcode, subtypes, counts))
 			{
 				cell_barcodes.push_back(barcode);
 			}
@@ -93,9 +93,8 @@ namespace Estimation
 
 	void Stats::merge(const int_list_t &reassigned, const str_list_t &cell_names)
 	{
-		for (int stat_num = 0; stat_num < CELL_S_STAT_SIZE; ++stat_num)
+		for (auto &cur_stat : this->_str_cell_counters)
 		{
-			ss_cnt_t &cur_stat = this->_ss_cell_counters[stat_num];
 			for (size_t ind = 0; ind < reassigned.size(); ++ind)
 			{
 				if (reassigned[ind] == ind)
@@ -116,12 +115,30 @@ namespace Estimation
 				cur_stat.erase(cell_from_it);
 			}
 		}
+
+		for (auto &cur_stat : this->_cell_counters)
+		{
+			for (size_t ind = 0; ind < reassigned.size(); ++ind)
+			{
+				if (reassigned[ind] == ind)
+					continue;
+
+				const std::string &cur_name = cell_names[ind];
+				const std::string &target_name = cell_names[reassigned[ind]];
+				auto const cell_from_it = cur_stat.find(cur_name);
+				if (cell_from_it == cur_stat.end())
+					continue;
+
+				cur_stat[target_name] += cell_from_it->second;
+				cur_stat.erase(cell_from_it);
+			}
+		}
 	}
 
-	bool Stats::get_cell(CellStrStatType stat, const std::string &cell_barcode, const str_list_t &subtypes,
-	                          int_list_t &counts) const
+	bool Stats::get(CellStrStatType stat, const std::string &cell_barcode, const str_list_t &subtypes,
+					int_list_t &counts) const
 	{
-		auto const &cur_stat = this->_ss_cell_counters[stat];
+		auto const &cur_stat = this->_str_cell_counters[stat];
 		ss_cnt_t::const_iterator counter_it = cur_stat.find(cell_barcode);
 		if (counter_it == cur_stat.end())
 			return false;
@@ -130,13 +147,13 @@ namespace Estimation
 		return true;
 	}
 
-	const Stats::ss_cnt_t &Stats::get_raw_cell_stat(Stats::CellStrStatType stat) const
+	const Stats::ss_cnt_t &Stats::get_raw(Stats::CellStrStatType stat) const
 	{
-		return this->_ss_cell_counters[stat];
+		return this->_str_cell_counters[stat];
 	}
 
-	const Stats::ss_cnt_t &Stats::get_raw_str_stat(Stats::StrStrStatType stat) const
+	const Stats::ss_cnt_t &Stats::get_raw(Stats::StrStrStatType stat) const
 	{
-		return this->_ss_counters[stat];
+		return this->_str_str_counters[stat];
 	}
 }

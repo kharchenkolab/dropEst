@@ -137,7 +137,7 @@ namespace Estimation
 	                                     CellsDataContainer::ISIHM &cb_reassigned_to_it)
 	{
 		L_DEBUG << "Merge: " << _cells_barcodes[src_cell_id] << " to " << _cells_barcodes[target_cell_ind];
-		this->stats().inc(Stats::MERGES_COUNT, _cells_barcodes[target_cell_ind]);
+		this->stats().inc(Stats::MERGES_COUNT_PER_CB, _cells_barcodes[target_cell_ind]);
 
 		_stats.add_merge_count(-1 * target_genes_count);
 

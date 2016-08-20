@@ -2,11 +2,6 @@
 
 #include <vector>
 
-#include <boost/archive/binary_oarchive.hpp>
-#include <boost/serialization/base_object.hpp>
-#include <boost/serialization/utility.hpp>
-#include <boost/serialization/vector.hpp>
-#include <boost/serialization/assume_abstract.hpp>
 #include <Rcpp.h>
 
 #include <Estimation/Stats.h>
@@ -20,15 +15,6 @@ namespace Estimation
 		public:
 			typedef std::vector<std::string> s_list_t;
 			typedef std::vector<long> i_list_t;
-
-		private:
-			friend class boost::serialization::access;
-
-			template<class Archive>
-			void serialize(Archive &ar, const unsigned int /* file_version */)
-			{
-				ar & cell_names & gene_names & counts;
-			}
 
 		public:
 			s_list_t cell_names;
@@ -47,18 +33,6 @@ namespace Estimation
 
 		class IndropResult
 		{
-			friend class boost::serialization::access;
-
-		protected:
-			template<class Archive>
-			void serialize(Archive &ar, const unsigned int /* file_version */)
-			{
-				ar & this->cm & this->ex_cells_chr_reads_counts & this->nonex_cells_chr_reads_counts &
-				this->ex_cell_names &
-				this->nonex_cell_names & this->chr_names & this->reads_per_umi & this->umig_covered & this->merge_n &
-				this->reads_by_umig;
-			}
-
 		public:
 			typedef Stats::int_list_t int_list_t;
 
@@ -72,10 +46,11 @@ namespace Estimation
 			Stats::str_list_t chr_names;
 
 			std::vector<double> reads_per_umi;
-			int_list_t umig_covered;
-			int_list_t merge_n;
-			int_list_t reads_by_umig;
-			int_list_t exone_reads_by_cb;
+			Stats::int_list_t umig_covered;
+			Stats::int_list_t merge_n;
+			Stats::int_list_t reads_by_umig;
+			Stats::str_list_t reads_by_umig_cbs;
+			Stats::int_list_t exone_reads_by_cb;
 
 			IndropResult()
 			{ };

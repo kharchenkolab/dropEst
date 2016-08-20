@@ -79,7 +79,7 @@ namespace Estimation
 				continue;
 
 			std::string cell_barcode = read_params.cell_barcode(), umi = read_params.umi_barcode();
-			container.stats().inc_cells(Stats::READS_PER_UMI_PER_CELL, cell_barcode, umi);
+			container.stats().inc(Stats::READS_PER_UMI_PER_CELL, cell_barcode, umi);
 
 			std::string gene = this->get_gene(chr_name, alignment);
 			if (print_result_bam)
@@ -90,7 +90,7 @@ namespace Estimation
 			if (gene == "")
 			{
 				L_DEBUG << "NonEx: " << read_name << ", cell: " << cell_barcode << " UMI: " << umi << ", start: " << alignment.Position;
-				container.stats().inc_cells(Stats::NON_EXONE_READS_PER_CHR_PER_CELL, cell_barcode, chr_name);
+				container.stats().inc(Stats::NON_EXONE_READS_PER_CHR_PER_CELL, cell_barcode, chr_name);
 				continue;
 			}
 
@@ -129,17 +129,16 @@ namespace Estimation
 	{
 		int cell_id = container.add_record(cell_barcode, umi, gene, cells_ids);
 
-		std::string umig = umi + gene; // +iseq
+		std::string umig = umi + gene;
 		umig_cells_counts[umig][cell_id]++;
 
 		L_DEBUG << "UMIg=" << umig_cells_counts[umig].size();
 
-		container.stats().inc(Stats::READS_BY_UMIG, cell_barcode + "_" + umig);
 		container.stats().inc(Stats::EXONE_READS_PER_CB, cell_barcode);
 
-		container.stats().inc_cells(Stats::READS_PER_UMIG_PER_CELL, cell_barcode, umig);
-		container.stats().inc_cells(Stats::EXONE_READS_PER_CHR_PER_CELL, cell_barcode, chr_name);
-		container.stats().inc_cells(Stats::UMI_PER_CELL, cell_barcode, umi);
+		container.stats().inc(Stats::READS_PER_UMIG_PER_CELL, cell_barcode, umig);
+		container.stats().inc(Stats::EXONE_READS_PER_CHR_PER_CELL, cell_barcode, chr_name);
+		container.stats().inc(Stats::UMI_PER_CELL, cell_barcode, umi);
 		return cell_id;
 	}
 
