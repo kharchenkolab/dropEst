@@ -11,7 +11,7 @@ namespace TagsSearch
 	FilesProcessor::FilesProcessor(const std::string &r1_filename, const std::string &r2_filename,
 								   const std::string &base_name, long max_reads)
 			: base_name(base_name)
-			, reads_file_name(base_name + ".reads")
+			, reads_file_name(base_name + ".reads.gz")
 			, max_reads(max_reads)
 			, current_file_reads_written(0)
 			, out_file_index(1)
