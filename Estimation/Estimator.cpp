@@ -6,13 +6,8 @@
 #include <Estimation/Results/IndropResults.h>
 #include <Estimation/Results/BadCellsStats.h>
 #include <Estimation/Results/IndropResultsWithoutUmi.h>
-#include "Tools/GeneInfo.h"
+#include "Estimation/Merge/MergeStrategyFactory.h"
 #include "Tools/Logs.h"
-
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <stdexcept>
 
 #include <boost/range/adaptor/reversed.hpp>
 
@@ -30,10 +25,10 @@ namespace Estimation
 	Estimator::Estimator(const boost::property_tree::ptree &config)
 		: read_prefix_length(config.get<size_t>("read_prefix_length"))
 		, min_merge_fraction(config.get<double>("min_merge_fraction"))
-		, max_merge_edit_distance(config.get<int>("max_merge_edit_distance"))
-		, min_genes_after_merge(config.get<int>("min_genes_after_merge"))
+		, max_merge_edit_distance(config.get<unsigned>("max_merge_edit_distance"))
+		, min_genes_after_merge(config.get<unsigned>("min_genes_after_merge"))
 		, barcode2_length(config.get<size_t>("barcode2_length", 0))
-		, min_genes_before_merge(config.get<int>("min_genes_before_merge"))
+		, min_genes_before_merge(config.get<unsigned>("min_genes_before_merge"))
 	{
 		if (this->min_genes_after_merge > 0 && this->min_genes_after_merge < this->min_genes_before_merge)
 		{
@@ -65,7 +60,7 @@ namespace Estimation
 
 		names_t gene_names;
 		ints_t umis_table;
-		this->fill_table(filtered_cells, gene_counts, container, gene_names, umis_table, reads_output);
+		this->fill_count_matrix(filtered_cells, gene_counts, container, gene_names, umis_table, reads_output);
 
 		L_TRACE << "Done";
 
@@ -118,13 +113,13 @@ namespace Estimation
 		return cell_names;
 	}
 
-	void Estimator::fill_table(const ids_t &unmerged_cells, const s_counter_t &gene_counts,
-	                           const CellsDataContainer &genes_container, names_t &gene_names_header,
-	                           ints_t &umis_table, bool reads_output) const
+	void Estimator::fill_count_matrix(const ids_t &unmerged_cells, const s_counter_t &gene_counts,
+									  const CellsDataContainer &genes_container, names_t &gene_names_header,
+									  ints_t &count_matrix, bool reads_output) const
 	{
 //		return;
 		size_t size = unmerged_cells.size() * gene_counts.size();
-		umis_table.resize(size);
+		count_matrix.resize(size);
 		gene_names_header.reserve(gene_counts.size());
 		L_TRACE << "Empty matrix created";
 
@@ -154,7 +149,7 @@ namespace Estimation
 					}
 				}
 
-				umis_table[(i * unmerged_cells.size()) + j] = cell_value;
+				count_matrix[(i * unmerged_cells.size()) + j] = cell_value;
 			}
 		}
 	}
@@ -203,7 +198,7 @@ namespace Estimation
 	{
 		ints_t umig_coverage;
 		s_set umigs_seen;
-		for (const CellsDataContainer::IndexedValue &gene_count : boost::adaptors::reverse(genes_container.cells_genes_counts_sorted()))
+		for (const Tools::IndexedValue &gene_count : boost::adaptors::reverse(genes_container.cells_genes_counts_sorted()))
 		{
 			int new_umigs = 0;
 			const CellsDataContainer::genes_t &cell_genes = genes_container.cell_genes(gene_count.index);
@@ -260,8 +255,12 @@ namespace Estimation
 	                                                  bool filled_bam, const std::string &reads_params_names_str,
 	                                                  const std::string &gtf_filename, const std::string &barcodes_filename)
 	{
-		CellsDataContainer container(this->min_merge_fraction, this->min_genes_before_merge, merge_tags,
-		                             this->min_genes_after_merge, this->max_merge_edit_distance, Estimator::top_print_size);
+		std::shared_ptr<Merge::IMergeStrategy> merge_strategy =
+				Merge::MergeStrategyFactory::get(this->min_merge_fraction, this->min_genes_before_merge,
+												 this->min_genes_after_merge, this->max_merge_edit_distance,
+												 merge_tags, barcodes_filename, this->barcode2_length);
+
+		CellsDataContainer container(merge_strategy, Estimator::top_print_size);
 		std::shared_ptr<BamProcessor> bam_processor;
 		if (filled_bam)
 		{
@@ -279,15 +278,7 @@ namespace Estimation
 		auto umig_cells_counts = bam_processor->parse_bam_files(files, bam_output, container);
 		container.set_initialized();
 
-		if (barcodes_filename == "")
-		{
-			container.merge_and_filter(umig_cells_counts);
-		}
-		else
-		{
-			container.merge_by_real_barcodes(barcodes_filename, this->barcode2_length);
-		}
-
+		container.merge_and_filter(umig_cells_counts);
 		return container;
 	}
 

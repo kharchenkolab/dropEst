@@ -34,6 +34,21 @@ struct Params
 	string log_prefix = "";
 	string output_name = "";
 	string reads_params_file = "";
+
+	void check_files_existence()
+	{
+		if (this->barcodes_filename != "" && !std::ifstream(this->barcodes_filename))
+			throw std::runtime_error("Can't open barcodes file '" + this->barcodes_filename + "'");
+
+		if (this->config_file_name != "" && !std::ifstream(this->config_file_name))
+			throw std::runtime_error("Can't open config file '" + this->config_file_name + "'");
+
+		if (this->gtf_filename != "" && !std::ifstream(this->gtf_filename))
+			throw std::runtime_error("Can't open GTF file '" + this->gtf_filename + "'");
+
+		if (this->reads_params_file != "" && !std::ifstream(this->reads_params_file))
+			throw std::runtime_error("Can't open reads file '" + this->reads_params_file + "'");
+	}
 };
 
 static void usage()
@@ -177,6 +192,8 @@ int main(int argc, char **argv)
 		usage();
 		return 1;
 	}
+
+	params.check_files_existence();
 
 	if (params.log_prefix.length() != 0)
 	{

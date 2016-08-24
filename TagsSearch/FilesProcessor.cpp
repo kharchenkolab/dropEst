@@ -18,19 +18,11 @@ namespace TagsSearch
 	{
 		this->r1_file.open(r1_filename.c_str(), std::ios_base::in | std::ios_base::binary);
 		if (!this->r1_file)
-		{
-			std::ostringstream ss;
-			ss << "can't open R1 file \"" << r1_filename << "\"";
-			throw std::runtime_error(ss.str());
-		}
+			throw std::runtime_error("Can't open R1 file '" + r1_filename + "'");
 
 		r2_file.open(r2_filename.c_str(), std::ios_base::in | std::ios_base::binary);
 		if (!this->r2_file)
-		{
-			std::ostringstream ss;
-			ss << "can't open R2 file \"" << r2_filename << "\"";
-			throw std::runtime_error(ss.str());
-		}
+			throw std::runtime_error("Can't open R2 file '" + r2_filename + "'");
 
 		if (boost::ends_with(r1_filename, ".gz") || boost::ends_with(r1_filename, ".gzip"))
 		{
@@ -47,12 +39,15 @@ namespace TagsSearch
 		std::string out_file_name = this->get_out_filename();
 		this->out_file.open(out_file_name.c_str(), std::ios_base::out | std::ios_base::binary);
 		if (!this->out_file.is_open())
-			throw std::runtime_error("Can't open file: '" + out_file_name + "'");
+			throw std::runtime_error("Can't open out file: '" + out_file_name + "'");
 
 		this->out_zip.push(boost::iostreams::gzip_compressor());
 		this->out_zip.push(this->out_file);
 
 		this->out_reads_file.open(this->reads_file_name.c_str(), std::ios_base::out);
+		if (this->out_reads_file.fail())
+			throw std::runtime_error("Can't open out reads file: '" + this->reads_file_name + "'");
+
 		this->out_reads_zip.push(boost::iostreams::gzip_compressor());
 		this->out_reads_zip.push(this->out_reads_file);
 	}

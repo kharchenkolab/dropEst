@@ -13,6 +13,7 @@ namespace Estimation
 	public:
 		typedef std::vector<std::string> str_list_t;
 		typedef std::vector<long> int_list_t;
+		typedef std::vector<size_t> ids_t;
 
 		enum CellStatType
 		{
@@ -80,6 +81,6 @@ namespace Estimation
 		void add_merge_count(int count);
 		const int_list_t& get_merge_counts() const;
 
-		void merge(const int_list_t &reassigned, const str_list_t &cell_names);
+		void merge(const ids_t &reassigned, const str_list_t &cell_names);
 	};
 }

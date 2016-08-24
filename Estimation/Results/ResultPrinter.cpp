@@ -14,6 +14,9 @@ namespace Estimation
 			L_TRACE << "Writing output matrix to " << output_name << " ";
 
 			std::ofstream output_file(output_name.c_str(), std::ios_base::out);
+			if (output_file.fail())
+				throw std::runtime_error("Can't open matrix file: '" + output_name + "'");
+
 			// header
 			output_file << "gene";
 			for (auto const &cell_barcode: count_matrix.cell_names)

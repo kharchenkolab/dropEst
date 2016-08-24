@@ -29,6 +29,9 @@ namespace Tools
 
 		std::string record;
 		std::ifstream gtf_in(gtf_filename);
+		if (gtf_in.fail())
+			throw std::runtime_error("Can't open GTF file: '" + gtf_filename + "'");
+
 		while (std::getline(gtf_in, record))
 		{
 			GeneInfo info;

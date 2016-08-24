@@ -91,7 +91,7 @@ namespace Estimation
 		}
 	}
 
-	void Stats::merge(const int_list_t &reassigned, const str_list_t &cell_names)
+	void Stats::merge(const ids_t &reassigned, const str_list_t &cell_names)
 	{
 		for (auto &cur_stat : this->_str_cell_counters)
 		{

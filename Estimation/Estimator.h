@@ -28,7 +28,7 @@ namespace Estimation
 		typedef std::vector<std::pair<std::string, int> > s_counter_t;
 		typedef std::vector<double> doubles_t;
 		typedef CellsDataContainer::names_t names_t;
-		typedef CellsDataContainer::ints_t ints_t;
+		typedef std::vector<long> ints_t;
 		typedef CellsDataContainer::ids_t ids_t;
 		typedef boost::unordered_map<std::string, boost::unordered_map<std::string, int>> ss_i_hash_t;
 
@@ -37,11 +37,11 @@ namespace Estimation
 
 		const size_t read_prefix_length;
 		const double min_merge_fraction;
-		const int max_merge_edit_distance;
+		const unsigned max_merge_edit_distance;
 
-		const int min_genes_after_merge;
+		const unsigned min_genes_after_merge;
 		const size_t barcode2_length;
-		int min_genes_before_merge;
+		unsigned min_genes_before_merge;
 
 	public:
 		Estimator(const boost::property_tree::ptree &config);
@@ -56,8 +56,9 @@ namespace Estimation
 	private:
 		names_t get_unmerged_names(const CellsDataContainer &genes_container, const ids_t &unmerged_cells) const;
 
-		void fill_table(const ids_t &unmerged_cells, const s_counter_t &gene_counts, const CellsDataContainer &genes_container,
-						names_t &gene_names_header, ints_t &umis_table, bool reads_output) const;
+		void fill_count_matrix(const ids_t &unmerged_cells, const s_counter_t &gene_counts,
+							   const CellsDataContainer &genes_container,
+							   names_t &gene_names_header, ints_t &count_matrix, bool reads_output) const;
 
 		s_counter_t count_genes(const CellsDataContainer &genes_container, const ids_t &unmerged_cells) const;
 
