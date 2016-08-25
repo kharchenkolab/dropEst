@@ -230,7 +230,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 	BOOST_FIXTURE_TEST_CASE(testMergeByRealBarcodes, Fixture)
 	{
-		this->container_full.merge_and_filter(CellsDataContainer::s_ii_hash_t());
+		this->container_full.merge_and_filter(CellsDataContainer::s_uu_hash_t());
 
 		BOOST_CHECK_EQUAL(this->container_full.filtered_cells().size(), 2);
 

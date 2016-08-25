@@ -27,9 +27,9 @@ namespace Estimation
 		friend struct TestEstimator::testMerge;
 
 	public:
-		typedef boost::unordered_map<int, int> i_i_hash_t;
+		typedef boost::unordered_map<size_t, size_t> u_u_hash_t;
 		typedef boost::unordered_map<std::string, size_t> s_ul_hash_t;
-		typedef boost::unordered_map<std::string, i_i_hash_t> s_ii_hash_t;
+		typedef boost::unordered_map<std::string, u_u_hash_t> s_uu_hash_t;
 
 		typedef std::map<std::string, int> s_i_map_t;
 		typedef std::map<std::string, s_i_map_t> genes_t;
@@ -61,7 +61,7 @@ namespace Estimation
 	public:
 		CellsDataContainer(std::shared_ptr<Merge::IMergeStrategy> merge_strategy, size_t top_print_size);
 
-		void merge_and_filter(const CellsDataContainer::s_ii_hash_t &umig_cells_counts);
+		void merge_and_filter(const CellsDataContainer::s_uu_hash_t &umig_cells_counts);
 
 		int add_record(const std::string &cell_barcode, const std::string &umi, const std::string &gene, s_i_map_t &cells_ids);
 

@@ -64,6 +64,6 @@ namespace Tools
 
 	GeneInfo::num_t GeneInfo::parse_chr_name(const std::string &chr_name)
 	{
-		return chr_name.length() > 2 ? atoi(chr_name.substr(3).c_str()) : atoi(chr_name.c_str());
+		return chr_name.length() > 2 ? (num_t)atoi(chr_name.substr(3).c_str()) : (num_t)atoi(chr_name.c_str());
 	}
 }

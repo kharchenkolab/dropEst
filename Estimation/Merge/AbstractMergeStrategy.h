@@ -37,7 +37,7 @@ namespace Merge
 
 	protected:
 		void merge_force(Estimation::CellsDataContainer &container, size_t src_cell_id, size_t target_cell_ind,
-						 int target_genes_count, ids_t &cb_reassign_targets, ISIHM &cb_reassigned_to_it) const;
+						 ids_t &cb_reassign_targets, ISIHM &cb_reassigned_to_it) const;
 	};
 }
 }

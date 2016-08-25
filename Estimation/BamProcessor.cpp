@@ -22,11 +22,11 @@ namespace Estimation
 		}
 	}
 
-	CellsDataContainer::s_ii_hash_t BamProcessor::parse_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams,
+	CellsDataContainer::s_uu_hash_t BamProcessor::parse_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams,
 									   CellsDataContainer &container) const
 	{
 		CellsDataContainer::s_i_map_t cb_ids;
-		CellsDataContainer::s_ii_hash_t umig_cells_counts;
+		CellsDataContainer::s_uu_hash_t umig_cells_counts;
 
 		for (auto const &file : bam_files)
 		{
@@ -37,7 +37,7 @@ namespace Estimation
 	}
 
 	void BamProcessor::parse_bam_file(const std::string &bam_name, bool print_result_bam, CellsDataContainer::s_i_map_t &cells_ids,
-							   CellsDataContainer::s_ii_hash_t &umig_cells_counts, CellsDataContainer &container) const
+							   CellsDataContainer::s_uu_hash_t &umig_cells_counts, CellsDataContainer &container) const
 	{
 		using namespace BamTools;
 		L_TRACE << "Start reading bam file: " + bam_name;
@@ -125,7 +125,7 @@ namespace Estimation
 
 	int BamProcessor::save_read_data(const std::string &chr_name, const std::string &cell_barcode, const std::string &umi,
 									  const std::string &gene, CellsDataContainer::s_i_map_t &cells_ids,
-									  CellsDataContainer::s_ii_hash_t &umig_cells_counts, CellsDataContainer &container)
+									  CellsDataContainer::s_uu_hash_t &umig_cells_counts, CellsDataContainer &container)
 	{
 		int cell_id = container.add_record(cell_barcode, umi, gene, cells_ids);
 

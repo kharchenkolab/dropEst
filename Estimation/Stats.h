@@ -49,8 +49,6 @@ namespace Estimation
 	private:
 		s_cnt_t _cell_counters[CELL_STAT_SIZE];
 
-		int_list_t _merge_counts;
-
 		ss_cnt_t _str_cell_counters[CELL_S_STAT_SIZE];
 		str_set_t _str_cell_subtypes[CELL_S_STAT_SIZE];
 
@@ -67,7 +65,7 @@ namespace Estimation
 		int_list_t get(CellStatType counter) const;
 		const s_cnt_t& get_raw_stat(CellStatType stat) const;
 
-		void add_str(StrStrStatType stat, const std::string &cell_barcode, const std::string &subtype, int value);
+		void add_str(StrStrStatType stat, const std::string &cell_barcode, const std::string &subtype, long value);
 
 		void inc(CellStrStatType stat, const std::string &cell_barcode, const std::string &subtype);
 		void get(CellStrStatType stat, str_list_t &types, str_list_t &subtypes, int_list_t &counts) const;
@@ -77,9 +75,6 @@ namespace Estimation
 						  str_list_t &subtypes, int_list_t &counts) const;
 		const ss_cnt_t& get_raw(CellStrStatType stat) const;
 		const ss_cnt_t& get_raw(StrStrStatType stat) const;
-
-		void add_merge_count(int count);
-		const int_list_t& get_merge_counts() const;
 
 		void merge(const ids_t &reassigned, const str_list_t &cell_names);
 	};

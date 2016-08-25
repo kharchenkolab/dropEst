@@ -15,7 +15,7 @@ using namespace std;
 
 namespace Estimation
 {
-	const size_t Estimator::top_print_size = 10;
+	const size_t Estimator::top_print_size;
 
 	static bool comp_counters(const pair<string, int> &p1, const pair<string, int> &p2)
 	{
@@ -154,7 +154,7 @@ namespace Estimation
 		}
 	}
 
-	Results::IndropResult Estimator::get_indrop_results(const Results::CountMatrix cm, const CellsDataContainer &genes_container,
+	Results::IndropResult Estimator::get_indrop_results(const Results::CountMatrix &cm, const CellsDataContainer &genes_container,
 											   const ids_t &unmerged_cells, bool not_filtered) const
 	{
 		L_TRACE << "compiling diagnostic stats: ";
@@ -282,9 +282,9 @@ namespace Estimation
 		return container;
 	}
 
-	Estimator::ss_i_hash_t Estimator::get_umis_per_genes_per_cells_count(const CellsDataContainer &genes_container) const
+	Estimator::ss_u_hash_t Estimator::get_umis_per_genes_per_cells_count(const CellsDataContainer &genes_container) const
 	{
-		ss_i_hash_t result;
+		ss_u_hash_t result;
 
 		for (auto cell_id : genes_container.filtered_cells())
 		{
@@ -299,9 +299,9 @@ namespace Estimation
 		return result;
 	}
 
-	Estimator::ss_i_hash_t Estimator::get_reads_per_genes_per_cells_count(const CellsDataContainer &genes_container) const
+	Estimator::ss_u_hash_t Estimator::get_reads_per_genes_per_cells_count(const CellsDataContainer &genes_container) const
 	{
-		ss_i_hash_t result;
+		ss_u_hash_t result;
 
 		for (auto cell_id : genes_container.filtered_cells())
 		{

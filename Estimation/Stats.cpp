@@ -5,16 +5,6 @@ namespace Estimation
 	Stats::Stats()
 	{}
 
-	void Stats::add_merge_count(int count)
-	{
-		this->_merge_counts.push_back(count);
-	}
-
-	const Stats::int_list_t &Stats::get_merge_counts() const
-	{
-		return this->_merge_counts;
-	}
-
 	void Stats::inc(Stats::CellStatType counter, const std::string &name)
 	{
 		this->_cell_counters[counter][name]++;
@@ -54,7 +44,7 @@ namespace Estimation
 		this->_str_cell_subtypes[stat].emplace(subtype);
 	}
 
-	void Stats::add_str(StrStrStatType stat, const std::string &cell_barcode, const std::string &subtype, int value)
+	void Stats::add_str(StrStrStatType stat, const std::string &cell_barcode, const std::string &subtype, long value)
 	{
 		this->_str_str_counters[stat][cell_barcode][subtype] += value;
 	}

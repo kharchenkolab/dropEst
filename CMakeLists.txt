@@ -11,7 +11,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -gdwarf-2 -g3 -Wno-deprecated -m64
 add_definitions(-DPROJ_DATA_PATH=\"${PROJECT_SOURCE_DIR}/data\")
 
 #set(BOOST_ROOT "/home/vp76/libs/boost_1_58_0/")
-find_package(Boost 1.54.0 COMPONENTS unit_test_framework serialization thread system log iostreams REQUIRED)
+find_package(Boost 1.54.0 COMPONENTS unit_test_framework thread system log iostreams REQUIRED)
 find_package (Threads REQUIRED)
 find_package (ZLIB REQUIRED)
 

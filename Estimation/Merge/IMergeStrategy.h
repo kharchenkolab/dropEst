@@ -12,8 +12,8 @@ namespace Merge
 	class IMergeStrategy
 	{
 	public:
-		typedef boost::unordered_map<int, int> i_i_hash_t;
-		typedef boost::unordered_map<std::string, i_i_hash_t> s_ii_hash_t;
+		typedef boost::unordered_map<size_t, size_t> u_u_hash_t;
+		typedef boost::unordered_map<std::string, u_u_hash_t> s_uu_hash_t;
 
 		typedef std::map<std::string, int> s_i_map_t;
 
@@ -32,7 +32,7 @@ namespace Merge
 				, _min_genes_after_merge(min_genes_after_merge)
 		{}
 
-		virtual void merge(Estimation::CellsDataContainer &container, const s_ii_hash_t &umig_cells_counts,
+		virtual void merge(Estimation::CellsDataContainer &container, const s_uu_hash_t &umig_cells_counts,
 						   ids_t &filtered_cells) const = 0;
 
 		int min_genes_before_merge() const

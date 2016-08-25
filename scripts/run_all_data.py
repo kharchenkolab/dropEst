@@ -54,7 +54,6 @@ def run_cv_full():
     name_mask = "/groups/pklab/peterk/jimin/allon/ES/SRR1784310.tag.%d.aligned.bam"
     start_num = 1
     max_num = 27
-    length = max_num - start_num
 
     part_size = start_num
     step_size = 1
@@ -77,7 +76,7 @@ def run_cv_3():
 
     for part_size in range(1, max_num + 1):
         bam_str = ''.join([name_mask % random.randint(1, max_num) + ' ' for _ in range(1, int(part_size) + 1)])
-        submit_est_job(1 + int(part_size / 9), 3 + int((part_size - 1) * 1.5) , bam_str, 'SRR1784310_cv_%d_1' % (part_size))
+        submit_est_job(1 + int(part_size / 9), 3 + int((part_size - 1) * 1.5) , bam_str, 'SRR1784310_cv_%d_1' % part_size)
 
 
 def run_cv():

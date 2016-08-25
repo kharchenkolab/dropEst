@@ -41,16 +41,13 @@ namespace TagsSearch
 		TrimsCounter trims_counter;
 
 	private:
-		static std::string reverse_complement(const std::string &s);
-
 		static bool read_blocks(FilesProcessor &files_processor, long total_reads_read,
 								std::string &r1_seq, std::string &r2_id, std::string &r2_seq,
 								std::string &r2_description, std::string &r2_quality);
 
 		std::string results_to_string(long total_reads_read) const;
 		len_t get_trim_position(len_t spacer_end, const std::string &r1_seq, const std::string &r2_seq);
-		Tools::ReadParameters fill_parameters(long total_reads_read, const std::string &r1_seq,
-											  const std::string &r2_id,
+		Tools::ReadParameters fill_parameters(const std::string &r1_seq, const std::string &r2_id,
 											  std::string &r2_seq, const std::string &r2_description,
 											  std::string &r2_quality_str);
 

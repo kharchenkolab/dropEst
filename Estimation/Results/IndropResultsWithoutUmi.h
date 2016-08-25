@@ -2,12 +2,6 @@
 
 #include <vector>
 
-#include <boost/archive/binary_oarchive.hpp>
-#include <boost/serialization/base_object.hpp>
-#include <boost/serialization/utility.hpp>
-#include <boost/serialization/vector.hpp>
-#include <boost/serialization/assume_abstract.hpp>
-
 #include "IndropResults.h"
 
 namespace Estimation
@@ -16,8 +10,6 @@ namespace Estimation
 	{
 		class IndropResultsWithoutUmi : public IndropResult
 		{
-			friend class boost::serialization::access;
-
 		public:
 			IndropResultsWithoutUmi()
 			{ };
@@ -37,7 +29,6 @@ namespace Estimation
 									Named("ex_counts_cell_names") = wrap(this->ex_cell_names),
 									Named("nonex_counts_cell_names") = wrap(this->nonex_cell_names),
 									Named("counts_chr_names") = wrap(this->chr_names),
-									Named("merge.n") = wrap(this->merge_n),
 									Named("exone_reads_by_cb") = wrap(this->exone_reads_by_cb),
 									Named("fname") = wrap(filename));
 			}

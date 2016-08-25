@@ -19,7 +19,7 @@ namespace Estimation
 		, _is_initialized(false)
 	{}
 
-	void CellsDataContainer::merge_and_filter(const CellsDataContainer::s_ii_hash_t &umig_cells_counts)
+	void CellsDataContainer::merge_and_filter(const s_uu_hash_t &umig_cells_counts)
 	{
 		if (!this->_is_initialized)
 			throw runtime_error("You must initialize container");

@@ -19,7 +19,7 @@ namespace Merge
 	{}
 
 	void Merge::RealBarcodesMergeStrategy::merge(Estimation::CellsDataContainer &container,
-												 const s_ii_hash_t &umig_cells_counts, ids_t &filtered_cells) const
+												 const s_uu_hash_t &umig_cells_counts, ids_t &filtered_cells) const
 	{
 		names_t cbs1, cbs2;
 		std::vector<bool> is_cell_real(container.cell_barcodes().size(), false);
@@ -41,7 +41,7 @@ namespace Merge
 				L_TRACE << "Total " << tag_index << " tags processed, " << merges_count << " cells merged";
 			}
 
-			size_t real_cell_ind = this->get_real_cb(container, genes_count.index, cbs1, cbs2);
+			long real_cell_ind = this->get_real_cb(container, genes_count.index, cbs1, cbs2);
 
 			if (real_cell_ind == genes_count.index)
 			{
@@ -55,8 +55,7 @@ namespace Merge
 				continue;
 			}
 
-			this->merge_force(container, genes_count.index, real_cell_ind, genes_count.value,
-							  cb_reassign_targets, cb_reassigned_to_it);
+			this->merge_force(container, genes_count.index, (size_t)real_cell_ind, cb_reassign_targets, cb_reassigned_to_it);
 			merges_count++;
 		}
 		L_INFO << "Total " << merges_count << " merges";
@@ -101,7 +100,7 @@ namespace Merge
 		}
 	}
 
-	size_t RealBarcodesMergeStrategy::get_real_cb(const Estimation::CellsDataContainer &container, size_t base_cell_ind,
+	long RealBarcodesMergeStrategy::get_real_cb(const Estimation::CellsDataContainer &container, size_t base_cell_ind,
 												const names_t &cbs1, const names_t &cbs2) const
 	{
 		std::string base_cb = container.cell_barcode(base_cell_ind);

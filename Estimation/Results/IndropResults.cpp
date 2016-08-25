@@ -9,8 +9,10 @@ namespace Estimation
 	{
 		IndropResult::IndropResult(const CountMatrix &cm, const Stats &stats, const std::vector<double> &reads_per_umi,
 		                           const int_list_t &umig_covered, bool not_filtered)
-				: cm(cm), reads_per_umi(reads_per_umi), umig_covered(umig_covered), merge_n(stats.get_merge_counts()),
-				  exone_reads_by_cb(stats.get(Stats::EXONE_READS_PER_CB))
+				: cm(cm)
+				, reads_per_umi(reads_per_umi)
+				, umig_covered(umig_covered)
+				, exone_reads_by_cb(stats.get(Stats::EXONE_READS_PER_CB))
 		{
 			Stats::ss_cnt_t reads_by_umig_map(stats.get_raw(Stats::READS_PER_UMIG_PER_CELL));
 
@@ -85,7 +87,6 @@ namespace Estimation
 						 Named("counts_chr_names") = wrap(this->chr_names),
 						 Named("rpu") = wrap(this->reads_per_umi),
 						 Named("umig.cov") = wrap(this->umig_covered),
-						 Named("merge.n") = wrap(this->merge_n),
 						 Named("reads_by_umig") = wrap(this->reads_by_umig),
 						 Named("reads_by_umig_cbs") = wrap(this->reads_by_umig_cbs),
 						 Named("exone_reads_by_cb") = wrap(this->exone_reads_by_cb),

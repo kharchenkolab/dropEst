@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Estimation/Estimator.h"
+
 #include <RInside.h>
 #include <boost/unordered_map.hpp>
 #include <string>
@@ -12,8 +14,7 @@ namespace Estimation
 		class BadCellsStats
 		{
 		public:
-			typedef boost::unordered_map<std::string, int> s_cnt_t;
-			typedef boost::unordered_map<std::string, s_cnt_t> ss_cnt_t;
+			typedef Estimation::Estimator::ss_u_hash_t ss_cnt_t;
 
 		private:
 			ss_cnt_t genes_reads;

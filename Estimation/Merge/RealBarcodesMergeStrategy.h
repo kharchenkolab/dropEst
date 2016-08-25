@@ -34,7 +34,7 @@ namespace Merge
 		ids_t get_real_neighbour_cbs(const Estimation::CellsDataContainer &container, const names_t &cbs1, const names_t &cbs2,
 									 const std::string &base_cb, const i_counter_t &dists1, const i_counter_t &dists2) const;
 
-		size_t get_real_cb(const Estimation::CellsDataContainer &container, size_t base_cell_ind, const names_t &cbs1,
+		long get_real_cb(const Estimation::CellsDataContainer &container, size_t base_cell_ind, const names_t &cbs1,
 						 const names_t &cbs2) const;
 
 		double get_umigs_intersect_fraction(const Estimation::CellsDataContainer &container, size_t cell1_ind,
@@ -51,7 +51,7 @@ namespace Merge
 								  int min_genes_before_merge, int min_genes_after_merge,
 								  int max_merge_edit_distance, double min_merge_fraction);
 
-		virtual void merge(Estimation::CellsDataContainer &container, const s_ii_hash_t &umig_cells_counts,
+		virtual void merge(Estimation::CellsDataContainer &container, const s_uu_hash_t &umig_cells_counts,
 						   ids_t &filtered_cells) const override;
 	};
 }

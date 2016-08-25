@@ -47,7 +47,6 @@ namespace Estimation
 
 			std::vector<double> reads_per_umi;
 			Stats::int_list_t umig_covered;
-			Stats::int_list_t merge_n;
 			Stats::int_list_t reads_by_umig;
 			Stats::str_list_t reads_by_umig_cbs;
 			Stats::int_list_t exone_reads_by_cb;

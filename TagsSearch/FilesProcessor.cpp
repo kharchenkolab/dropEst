@@ -3,7 +3,6 @@
 #include <sstream>
 #include <stdexcept>
 
-//#include <boost/serialization/unordered_map.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 
 namespace TagsSearch

@@ -30,10 +30,12 @@ namespace Estimation
 		typedef CellsDataContainer::names_t names_t;
 		typedef std::vector<long> ints_t;
 		typedef CellsDataContainer::ids_t ids_t;
-		typedef boost::unordered_map<std::string, boost::unordered_map<std::string, int>> ss_i_hash_t;
+
+	public:
+		typedef boost::unordered_map<std::string, boost::unordered_map<std::string, unsigned>> ss_u_hash_t; //Can't use long because of RInside (see BadCellsStats)
 
 	private:
-		static const size_t top_print_size;
+		static const size_t top_print_size = 10;
 
 		const size_t read_prefix_length;
 		const double min_merge_fraction;
@@ -66,14 +68,14 @@ namespace Estimation
 
 		ints_t get_umig_coverage(const CellsDataContainer &genes_container) const;
 
-		Results::IndropResult get_indrop_results(const Results::CountMatrix cm, const CellsDataContainer &genes_conteiner,
+		Results::IndropResult get_indrop_results(const Results::CountMatrix &cm, const CellsDataContainer &genes_conteiner,
 										const ids_t &unmerged_cells, bool not_filtered) const;
 
 		std::string get_cb_top_verbose(const CellsDataContainer &genes_container, const ids_t &unmerged_cells) const;
 
 		std::string get_genes_top_verbose(const s_counter_t &genes_count) const;
 
-		ss_i_hash_t get_umis_per_genes_per_cells_count(const CellsDataContainer &genes_container) const;
-		ss_i_hash_t get_reads_per_genes_per_cells_count(const CellsDataContainer &genes_container) const;
+		ss_u_hash_t get_umis_per_genes_per_cells_count(const CellsDataContainer &genes_container) const;
+		ss_u_hash_t get_reads_per_genes_per_cells_count(const CellsDataContainer &genes_container) const;
 	};
 }

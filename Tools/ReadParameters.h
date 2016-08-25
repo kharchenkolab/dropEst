@@ -3,7 +3,6 @@
 #include <boost/unordered_map.hpp>
 #include <string>
 #include <map>
-#include <boost/serialization/access.hpp>
 
 namespace Tools
 {
@@ -15,15 +14,6 @@ namespace Tools
 		std::string _umi_barcode;
 
 		bool _is_empty;
-
-	private:
-		friend class boost::serialization::access;
-
-		template<class Archive>
-		void serialize(Archive &ar, const unsigned int /* file_version */)
-		{
-			ar & this->_cell_barcode & this->_umi_barcode & this->_is_empty;
-		}
 
 	public:
 		ReadParameters();

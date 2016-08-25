@@ -15,7 +15,7 @@ namespace Merge
 				: IMergeStrategy(min_genes_before_merge, min_genes_after_merge)
 		{}
 
-		virtual void merge(Estimation::CellsDataContainer &container, const s_ii_hash_t &umig_cells_counts,
+		virtual void merge(Estimation::CellsDataContainer &container, const s_uu_hash_t &umig_cells_counts,
 						   ids_t &filtered_cells) const override
 		{
 			for (auto const &gene_count : boost::adaptors::reverse(container.cells_genes_counts_sorted()))

@@ -4,7 +4,7 @@ namespace Tools
 {
 	struct IndexedValue
 	{
-		IndexedValue(size_t index, size_t value)
+		IndexedValue(size_t index, long value)
 				: index(index), value(value)
 		{}
 
