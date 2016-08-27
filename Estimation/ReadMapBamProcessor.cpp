@@ -7,12 +7,11 @@
 
 namespace Estimation
 {
-	ReadMapBamProcessor::ReadMapBamProcessor(size_t read_prefix_length, const std::string & reads_params_names_str,
+	ReadMapBamProcessor::ReadMapBamProcessor(size_t read_prefix_length, const std::string & read_param_names,
 	                                         const std::string & gtf_path)
 		: BamProcessor(read_prefix_length, gtf_path)
-	{
-		this->fill_names_map(reads_params_names_str);
-	}
+		, _read_param_names(read_param_names)
+	{}
 
 	bool ReadMapBamProcessor::get_read_params(const BamTools::BamAlignment &alignment,
 	                                          Tools::ReadParameters &read_params) const
@@ -26,6 +25,8 @@ namespace Estimation
 		}
 
 		read_params = iter->second;
+		this->_reads_params.erase(iter);
+
 		if (read_params.is_empty())
 		{
 			L_WARN << "WARNING: empty parameters for read_name: " << read_name;
@@ -35,10 +36,10 @@ namespace Estimation
 		return true;
 	}
 
-	void ReadMapBamProcessor::fill_names_map(const std::string &reads_params_names_str)
+	void ReadMapBamProcessor::init_temporaries_before_parsing(bool save_read_name) const
 	{
 		std::vector<std::string> params_names;
-		boost::split(params_names, reads_params_names_str, boost::is_any_of(" \t"));
+		boost::split(params_names, this->_read_param_names, boost::is_any_of(" \t"));
 		size_t total_reads_count = 0;
 		L_TRACE << "Start loading reads names";
 		for (auto const &name : params_names)
@@ -73,13 +74,13 @@ namespace Estimation
 				if (this->_reads_params.find(key) != this->_reads_params.end())
 				{
 					L_ERR << "Read name is already in map: " << key << ", old value: '" <<
-					      this->_reads_params[key].to_monolithic_string() << "', new value: " << value;
+						  this->_reads_params[key].to_monolithic_string() << "', new value: " << value;
 					continue;
 				}
 
 				try
 				{
-					this->_reads_params[key] = Tools::ReadParameters(value);
+					this->_reads_params[key] = Tools::ReadParameters(value, save_read_name);
 				}
 				catch (std::runtime_error err)
 				{

@@ -48,18 +48,26 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 	BOOST_FIXTURE_TEST_CASE(testReadParams, Fixture)
 	{
 		ReadParameters rp("@111!ATTTGC#ATATC");
+		BOOST_CHECK_EQUAL(rp.read_name(), "@111");
+		BOOST_CHECK_EQUAL(rp.read_name_safe(), "@111");
 		BOOST_CHECK_EQUAL(rp.cell_barcode(), "ATTTGC");
 		BOOST_CHECK_EQUAL(rp.umi_barcode(), "ATATC");
 
 		rp = ReadParameters("111!ATTTG#ATAT");
+		BOOST_CHECK_EQUAL(rp.read_name(), "111");
+		BOOST_CHECK_EQUAL(rp.read_name_safe(), "111");
 		BOOST_CHECK_EQUAL(rp.cell_barcode(), "ATTTG");
 		BOOST_CHECK_EQUAL(rp.umi_barcode(), "ATAT");
 
 		rp = ReadParameters("!ATTTGC#ATATC");
+		BOOST_CHECK_EQUAL(rp.read_name(), "");
+		BOOST_CHECK_EQUAL(rp.read_name_safe(), "!ATTTGC#ATATC");
 		BOOST_CHECK_EQUAL(rp.cell_barcode(), "ATTTGC");
 		BOOST_CHECK_EQUAL(rp.umi_barcode(), "ATATC");
 
 		rp = ReadParameters("trash!ATTTG#ATAT");
+		BOOST_CHECK_EQUAL(rp.read_name(), "trash");
+		BOOST_CHECK_EQUAL(rp.read_name_safe(), "trash");
 		BOOST_CHECK_EQUAL(rp.cell_barcode(), "ATTTG");
 		BOOST_CHECK_EQUAL(rp.umi_barcode(), "ATAT");
 

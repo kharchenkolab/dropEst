@@ -17,7 +17,7 @@ namespace Tools
 			throw std::runtime_error("Bad reads parameters: '" + cell_barcode + "' '" + umi_barcode + "'");
 	}
 
-	ReadParameters::ReadParameters(const std::string &monolithic_params_string)
+	ReadParameters::ReadParameters(const std::string &monolithic_params_string, bool save_read_name)
 		: _is_empty(false)
 	{
 		size_t umi_start_pos = monolithic_params_string.rfind('#');
@@ -28,7 +28,7 @@ namespace Tools
 		if (cell_barcode_start_pos == std::string::npos)
 			throw std::runtime_error("ERROR: unable to parse out cell tag in: " + monolithic_params_string);
 
-		this->_read_name = monolithic_params_string;
+		this->_read_name = save_read_name ? monolithic_params_string.substr(0, cell_barcode_start_pos) : "";
 		this->_cell_barcode = monolithic_params_string.substr(cell_barcode_start_pos + 1, umi_start_pos - cell_barcode_start_pos - 1);
 		this->_umi_barcode = monolithic_params_string.substr(umi_start_pos + 1);
 	}
@@ -46,6 +46,14 @@ namespace Tools
 		, _umi_barcode(source._umi_barcode)
 		, _is_empty(source._is_empty)
 	{}
+
+	std::string ReadParameters::read_name_safe() const
+	{
+		if (this->read_name() == "")
+			return this->to_monolithic_string();
+
+		return this->read_name();
+	}
 
 	const std::string& ReadParameters::read_name() const
 	{
@@ -70,7 +78,7 @@ namespace Tools
 	std::string ReadParameters::to_monolithic_string() const
 	{
 		std::ostringstream text;
-		text << '!' << this->_cell_barcode << '#' << this->_umi_barcode;
+		text << this->_read_name << '!' << this->_cell_barcode << '#' << this->_umi_barcode;
 		return text.str();
 	}
 }

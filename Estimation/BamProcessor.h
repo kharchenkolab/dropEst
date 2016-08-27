@@ -49,5 +49,7 @@ namespace Estimation
 
 		CellsDataContainer::s_uu_hash_t parse_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams,
 							 CellsDataContainer &container) const;
+
+		virtual void init_temporaries_before_parsing(bool save_read_name) const;
 	};
 }

@@ -39,6 +39,8 @@ namespace Estimation
 	void BamProcessor::parse_bam_file(const std::string &bam_name, bool print_result_bam, CellsDataContainer::s_i_map_t &cells_ids,
 							   CellsDataContainer::s_uu_hash_t &umig_cells_counts, CellsDataContainer &container) const
 	{
+		this->init_temporaries_before_parsing(print_result_bam);
+
 		using namespace BamTools;
 		L_TRACE << "Start reading bam file: " + bam_name;
 
@@ -163,7 +165,7 @@ namespace Estimation
 	void BamProcessor::write_alignment(BamTools::BamWriter &writer, BamTools::BamAlignment &alignment,
 									   const std::string &gene, const Tools::ReadParameters &parameters) const
 	{
-		alignment.Name = parameters.read_name();
+		alignment.Name = parameters.read_name_safe();
 		if (gene != "")
 		{
 			alignment.AddTag(BamProcessor::GENE_TAG, "Z", gene);
@@ -173,4 +175,7 @@ namespace Estimation
 		alignment.AddTag(BamProcessor::UMI_TAG, "Z", parameters.umi_barcode());
 		writer.SaveAlignment(alignment);
 	}
+
+	void BamProcessor::init_temporaries_before_parsing(bool save_read_name) const
+	{}
 }
