@@ -106,6 +106,8 @@ namespace Estimation
 
 		reader.Close();
 		writer.Close();
+
+		this->release_temporaries_after_parsing();
 		L_TRACE << "Done (" << total_reads << " total reads; " << exonic_reads << " exonic reads; "
 				<< max_cell_id + 1 << " cell barcodes)";
 	}
@@ -177,5 +179,8 @@ namespace Estimation
 	}
 
 	void BamProcessor::init_temporaries_before_parsing(bool save_read_name) const
+	{}
+
+	void BamProcessor::release_temporaries_after_parsing() const
 	{}
 }

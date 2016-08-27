@@ -92,5 +92,10 @@ namespace Estimation
 		}
 		L_TRACE << "All reads names were loaded";
 	}
+
+	void ReadMapBamProcessor::release_temporaries_after_parsing() const
+	{
+		this->_reads_params.clear();
+	}
 }
 

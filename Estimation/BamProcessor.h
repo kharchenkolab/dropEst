@@ -51,5 +51,7 @@ namespace Estimation
 							 CellsDataContainer &container) const;
 
 		virtual void init_temporaries_before_parsing(bool save_read_name) const;
+
+		virtual void release_temporaries_after_parsing() const;
 	};
 }

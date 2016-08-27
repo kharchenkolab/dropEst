@@ -13,6 +13,7 @@ namespace Estimation
 	protected:
 		virtual bool get_read_params(const BamTools::BamAlignment &alignment, Tools::ReadParameters &read_params) const override;
 		virtual void init_temporaries_before_parsing(bool save_read_name) const override;
+		virtual void release_temporaries_after_parsing() const override;
 
 	public:
 		ReadMapBamProcessor(size_t read_prefix_length, const std::string & read_param_names,
