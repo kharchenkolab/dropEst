@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IMergeStrategy.h"
+#include "MergeStrategyAbstract.h"
 
 #include <boost/range/adaptor/reversed.hpp>
 
@@ -8,15 +8,11 @@ namespace Estimation
 {
 namespace Merge
 {
-	class FilteringMergeStrategy : public IMergeStrategy
+	class FilteringMergeStrategy : public MergeStrategyAbstract
 	{
-	public:
-		FilteringMergeStrategy(unsigned min_genes_before_merge, unsigned min_genes_after_merge)
-				: IMergeStrategy(min_genes_before_merge, min_genes_after_merge)
-		{}
-
-		virtual void merge(Estimation::CellsDataContainer &container, const s_uu_hash_t &umig_cells_counts,
-						   ids_t &filtered_cells) const override
+	protected:
+		virtual void merge_inited(Estimation::CellsDataContainer &container, const s_uu_hash_t &umig_cells_counts,
+							  ul_list_t &filtered_cells) const override
 		{
 			for (auto const &gene_count : boost::adaptors::reverse(container.cells_genes_counts_sorted()))
 			{
@@ -26,6 +22,11 @@ namespace Merge
 				filtered_cells.push_back(gene_count.index);
 			}
 		}
+
+	public:
+		FilteringMergeStrategy(unsigned min_genes_before_merge, unsigned min_genes_after_merge)
+				: MergeStrategyAbstract(min_genes_before_merge, min_genes_after_merge)
+		{}
 	};
 }
 }

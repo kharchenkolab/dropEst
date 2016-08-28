@@ -254,7 +254,7 @@ namespace Estimation
 	                                                  bool filled_bam, const std::string &reads_params_names_str,
 	                                                  const std::string &gtf_filename, const std::string &barcodes_filename)
 	{
-		std::shared_ptr<Merge::IMergeStrategy> merge_strategy =
+		std::shared_ptr<Merge::MergeStrategyAbstract> merge_strategy =
 				Merge::MergeStrategyFactory::get(this->min_merge_fraction, this->min_genes_before_merge,
 												 this->min_genes_after_merge, this->max_merge_edit_distance,
 												 merge_tags, barcodes_filename, this->barcode2_length);

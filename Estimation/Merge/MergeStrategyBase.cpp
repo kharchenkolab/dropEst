@@ -1,12 +1,12 @@
 #include <Tools/Logs.h>
 #include <Estimation/CellsDataContainer.h>
-#include "AbstractMergeStrategy.h"
+#include "MergeStrategyBase.h"
 
 namespace Estimation
 {
 namespace Merge
 {
-void AbstractMergeStrategy::reassign(size_t cell_id, size_t target_cell_id, ids_t &cb_reassign_targets,
+void MergeStrategyBase::reassign(size_t cell_id, size_t target_cell_id, ul_list_t &cb_reassign_targets,
 											ISIHM &cb_reassigned_to_it) const
 {
 	cb_reassign_targets[cell_id] = target_cell_id; // set reassignment mapping
@@ -26,8 +26,8 @@ void AbstractMergeStrategy::reassign(size_t cell_id, size_t target_cell_id, ids_
 	reassigned_to_cell_iter->second.clear();
 }
 
-void AbstractMergeStrategy::merge_force(Estimation::CellsDataContainer &container, size_t src_cell_id,
-									    size_t target_cell_ind, ids_t &cb_reassign_targets, ISIHM &cb_reassigned_to_it) const
+void MergeStrategyBase::merge_force(Estimation::CellsDataContainer &container, size_t src_cell_id,
+									    size_t target_cell_ind, ul_list_t &cb_reassign_targets, ISIHM &cb_reassigned_to_it) const
 {
 	L_DEBUG << "Merge: " << container.cell_barcode(src_cell_id) << " to " << container.cell_barcode(target_cell_ind);
 	container.stats().inc(Estimation::Stats::MERGES_COUNT_PER_CB, container.cell_barcode(target_cell_ind));
@@ -36,11 +36,11 @@ void AbstractMergeStrategy::merge_force(Estimation::CellsDataContainer &containe
 	this->reassign(src_cell_id, target_cell_ind, cb_reassign_targets, cb_reassigned_to_it);
 }
 
-AbstractMergeStrategy::AbstractMergeStrategy(int min_genes_before_merge, int min_genes_after_merge,
-													int max_merge_edit_distance, double min_merge_fraction)
-		: IMergeStrategy(min_genes_before_merge, min_genes_after_merge)
-		, _max_merge_edit_distance(max_merge_edit_distance)
-		, _min_merge_fraction(min_merge_fraction)
+MergeStrategyBase::MergeStrategyBase(int min_genes_before_merge, int min_genes_after_merge,
+												int max_merge_edit_distance, double min_merge_fraction)
+	: MergeStrategyAbstract(min_genes_before_merge, min_genes_after_merge)
+	, _max_merge_edit_distance(max_merge_edit_distance)
+	, _min_merge_fraction(min_merge_fraction)
 {}
 
 }

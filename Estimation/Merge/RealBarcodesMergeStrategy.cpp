@@ -13,23 +13,21 @@ namespace Merge
 	RealBarcodesMergeStrategy::RealBarcodesMergeStrategy(const std::string &barcodes_filename, size_t barcode2_length,
 														 int min_genes_before_merge, int min_genes_after_merge,
 														 int max_merge_edit_distance, double min_merge_fraction)
-			: AbstractMergeStrategy(min_genes_before_merge, min_genes_after_merge, max_merge_edit_distance, min_merge_fraction)
+			: MergeStrategyBase(min_genes_before_merge, min_genes_after_merge, max_merge_edit_distance, min_merge_fraction)
 			, _barcodes_filename(barcodes_filename)
 			, _barcode2_length(barcode2_length)
 	{}
 
-	void Merge::RealBarcodesMergeStrategy::merge(Estimation::CellsDataContainer &container,
-												 const s_uu_hash_t &umig_cells_counts, ids_t &filtered_cells) const
+	void Merge::RealBarcodesMergeStrategy::merge_inited(Estimation::CellsDataContainer &container,
+												 const s_uu_hash_t &umig_cells_counts, ul_list_t &filtered_cells) const
 	{
-		names_t cbs1, cbs2;
 		std::vector<bool> is_cell_real(container.cell_barcodes().size(), false);
 
-		RealBarcodesMergeStrategy::get_barcodes_list(this->_barcodes_filename, cbs1, cbs2);
-		if (cbs1.size() == 0)
+		if (this->_barcodes1.size() == 0)
 			return;
 
 		ISIHM cb_reassigned_to_it;
-		ids_t cb_reassign_targets(container.cell_barcodes().size());
+		ul_list_t cb_reassign_targets(container.cell_barcodes().size());
 		std::iota(cb_reassign_targets.begin(), cb_reassign_targets.end(), 0);
 
 		size_t tag_index = 0, merges_count = 0;
@@ -41,7 +39,7 @@ namespace Merge
 				L_TRACE << "Total " << tag_index << " tags processed, " << merges_count << " cells merged";
 			}
 
-			long real_cell_ind = this->get_real_cb(container, genes_count.index, cbs1, cbs2);
+			long real_cell_ind = this->get_real_cb(container, genes_count.index);
 
 			if (real_cell_ind == genes_count.index)
 			{
@@ -93,15 +91,9 @@ namespace Merge
 			barcodes1.push_back(Tools::reverse_complement(line.substr(0, space_ind)));
 			barcodes2.push_back(Tools::reverse_complement(line.substr(space_ind + 1)));
 		}
-
-		if (barcodes1.size() == 0)
-		{
-			L_WARN << "WARNING: empty barcodes list";
-		}
 	}
 
-	long RealBarcodesMergeStrategy::get_real_cb(const Estimation::CellsDataContainer &container, size_t base_cell_ind,
-												const names_t &cbs1, const names_t &cbs2) const
+	long RealBarcodesMergeStrategy::get_real_cb(const Estimation::CellsDataContainer &container, size_t base_cell_ind) const
 	{
 		std::string base_cb = container.cell_barcode(base_cell_ind);
 		i_counter_t dists1, dists2;
@@ -109,13 +101,13 @@ namespace Merge
 		std::string cb_part1 = base_cb.substr(0, base_cb.length() - this->_barcode2_length);
 		std::string cb_part2 = base_cb.substr(base_cb.length() - this->_barcode2_length + 1);
 
-		RealBarcodesMergeStrategy::fill_distances_to_cb(cb_part1, cb_part2, cbs1, cbs2, dists1, dists2);
+		this->fill_distances_to_cb(cb_part1, cb_part2, dists1, dists2);
 
 		if (dists1[0].value == 0 && dists2[0].value == 0)
 			return base_cell_ind;
 
 		L_DEBUG <<"Get real neighbours to " << base_cb;
-		ids_t neighbour_cells = this->get_real_neighbour_cbs(container, cbs1, cbs2, base_cb, dists1, dists2);
+		ul_list_t neighbour_cells = this->get_real_neighbour_cbs(container, base_cb, dists1, dists2);
 		if (neighbour_cells.empty())
 			return -1;
 
@@ -124,7 +116,7 @@ namespace Merge
 	}
 
 	long RealBarcodesMergeStrategy::get_best_merge_target(const CellsDataContainer &container, size_t base_cell_ind,
-														  const IMergeStrategy::ids_t &neighbour_cells) const
+														  const MergeStrategyAbstract::ul_list_t &neighbour_cells) const
 	{
 		double max_umigs_intersection_frac = 0;
 		size_t best_neighbour_cell_ind = neighbour_cells[0];
@@ -148,8 +140,7 @@ namespace Merge
 		return best_neighbour_cell_ind;
 	}
 
-	RealBarcodesMergeStrategy::ids_t RealBarcodesMergeStrategy::get_real_neighbour_cbs(const Estimation::CellsDataContainer &container,
-																					   const names_t &cbs1, const names_t &cbs2,
+	RealBarcodesMergeStrategy::ul_list_t RealBarcodesMergeStrategy::get_real_neighbour_cbs(const Estimation::CellsDataContainer &container,
 																					   const std::string &base_cb,
 																					   const i_counter_t &dists1,
 																					   const i_counter_t &dists2) const
@@ -175,7 +166,7 @@ namespace Merge
 
 		sort(real_cell_inds.begin(), real_cell_inds.end(), [](const tuple_t &t1, const tuple_t &t2){ return std::get<2>(t1) < std::get<2>(t2);});
 
-		ids_t neighbour_cbs;
+		ul_list_t neighbour_cbs;
 		long prev_dist = std::numeric_limits<long>::max();
 		for (auto const & inds: real_cell_inds)
 		{
@@ -183,7 +174,7 @@ namespace Merge
 			if (cur_ed > prev_dist && !neighbour_cbs.empty())
 				break;
 
-			std::string current_cb = cbs1[std::get<0>(inds)] + cbs2[std::get<1>(inds)];
+			std::string current_cb = this->_barcodes1[std::get<0>(inds)] + this->_barcodes2[std::get<1>(inds)];
 			auto const current_cell_it = container.cell_ids_by_cb().find(current_cb);
 			if (current_cell_it != container.cell_ids_by_cb().end())
 			{
@@ -260,21 +251,20 @@ namespace Merge
 	}
 
 	void RealBarcodesMergeStrategy::fill_distances_to_cb(const std::string &cb_part1, const std::string &cb_part2,
-														 const names_t &cbs1, const names_t &cbs2,
-														 i_counter_t &dists1, i_counter_t &dists2)
+														 i_counter_t &dists1, i_counter_t &dists2) const
 	{
-		dists1.reserve(cbs1.size());
-		dists2.reserve(cbs2.size());
+		dists1.reserve(this->_barcodes1.size());
+		dists2.reserve(this->_barcodes2.size());
 
 		size_t i = 0;
-		for (auto const cb1: cbs1)
+		for (auto const cb1: this->_barcodes1)
 		{
 			dists1.push_back(IndexedValue(i, Tools::edit_distance(cb_part1.c_str(), cb1.c_str())));
 			i++;
 		}
 
 		i = 0;
-		for (auto const cb2: cbs2)
+		for (auto const cb2: this->_barcodes2)
 		{
 			dists2.push_back(IndexedValue(i, Tools::edit_distance(cb_part2.c_str(), cb2.c_str())));
 			i++;
@@ -282,6 +272,24 @@ namespace Merge
 
 		sort(dists1.begin(), dists1.end(), IndexedValue::value_less);
 		sort(dists2.begin(), dists2.end(), IndexedValue::value_less);
+	}
+
+	void RealBarcodesMergeStrategy::init(const Estimation::CellsDataContainer &container)
+	{
+		MergeStrategyAbstract::init(container);
+		RealBarcodesMergeStrategy::get_barcodes_list(this->_barcodes_filename, this->_barcodes1, this->_barcodes2);
+
+		if (this->_barcodes1.size() == 0)
+		{
+			L_WARN << "WARNING: empty barcodes list";
+		}
+	}
+
+	void RealBarcodesMergeStrategy::release()
+	{
+		MergeStrategyAbstract::release();
+		this->_barcodes1.clear();
+		this->_barcodes2.clear();
 	}
 }
 }

@@ -1,22 +1,22 @@
 #include <Tools/Logs.h>
 #include <Tools/UtilFunctions.h>
-#include "BaseMergeStrategy.h"
+#include "SimpleMergeStrategy.h"
 
 namespace Estimation
 {
 namespace Merge
 {
-	const double BaseMergeStrategy::EPS = 0.00001;
+	const double SimpleMergeStrategy::EPS = 0.00001;
 
 	using Tools::IndexedValue;
 
-	void BaseMergeStrategy::merge(Estimation::CellsDataContainer &container, const s_uu_hash_t &umig_cells_counts,
-								  ids_t &filtered_cells) const
+	void SimpleMergeStrategy::merge_inited(Estimation::CellsDataContainer &container, const s_uu_hash_t &umig_cells_counts,
+								  ul_list_t &filtered_cells) const
 	{
 		int merges_count = 0;
 
 		ISIHM cb_reassigned_to_it;
-		ids_t cb_reassign_targets(container.cell_barcodes().size());
+		ul_list_t cb_reassign_targets(container.cell_barcodes().size());
 		std::iota(cb_reassign_targets.begin(), cb_reassign_targets.end(), 0);
 
 		L_TRACE << "merging linked tags ";
@@ -73,9 +73,9 @@ namespace Merge
 		L_INFO << "Done (" << merges_count << " merges performed)" << std::endl;
 	}
 
-	bool BaseMergeStrategy::merge(Estimation::CellsDataContainer &container, long target_cell_ind,
+	bool SimpleMergeStrategy::merge(Estimation::CellsDataContainer &container, long target_cell_ind,
 								  double target_cell_fraction, const IndexedValue &source_genes_count,
-								  ids_t &cb_reassign_targets, ISIHM &cb_reassigned_to_it) const
+								  ul_list_t &cb_reassign_targets, ISIHM &cb_reassigned_to_it) const
 	{
 		if (target_cell_ind < 0)
 			return false;
@@ -95,8 +95,8 @@ namespace Merge
 		return true;
 	}
 
-	size_t BaseMergeStrategy::get_umigs_intersect_top(Estimation::CellsDataContainer &container,
-													  const ids_t &cb_reassign_targets, const IndexedValue &processed_genes_count,
+	size_t SimpleMergeStrategy::get_umigs_intersect_top(Estimation::CellsDataContainer &container,
+													  const ul_list_t &cb_reassign_targets, const IndexedValue &processed_genes_count,
 													  const s_uu_hash_t &umigs_cells_counts, u_u_hash_t &umig_top) const
 	{
 		size_t umigs_count = 0;
@@ -127,9 +127,9 @@ namespace Merge
 		return umigs_count;
 	}
 
-	BaseMergeStrategy::BaseMergeStrategy(int min_genes_before_merge, int min_genes_after_merge,
+	SimpleMergeStrategy::SimpleMergeStrategy(int min_genes_before_merge, int min_genes_after_merge,
 										 int max_merge_edit_distance, double min_merge_fraction)
-			: AbstractMergeStrategy(min_genes_before_merge, min_genes_after_merge, max_merge_edit_distance,
+			: MergeStrategyBase(min_genes_before_merge, min_genes_after_merge, max_merge_edit_distance,
 									min_merge_fraction)
 	{}
 }

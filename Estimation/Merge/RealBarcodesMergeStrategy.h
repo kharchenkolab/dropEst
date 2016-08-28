@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Estimation/CellsDataContainer.h>
-#include "AbstractMergeStrategy.h"
+#include "MergeStrategyBase.h"
 
 namespace TestEstimator
 {
@@ -16,7 +16,7 @@ namespace Estimation
 {
 namespace Merge
 {
-	class RealBarcodesMergeStrategy : public AbstractMergeStrategy
+	class RealBarcodesMergeStrategy : public MergeStrategyBase
 	{
 		friend struct TestEstimator::testBarcodesFile;
 		friend struct TestEstimator::testUmigsIntersection;
@@ -28,14 +28,16 @@ namespace Merge
 		std::string _barcodes_filename;
 		size_t _barcode2_length;
 
+		names_t _barcodes1;
+		names_t _barcodes2;
+
 		static const int MAX_REAL_MERGE_EDIT_DISTANCE=5;
 
 	private:
-		ids_t get_real_neighbour_cbs(const Estimation::CellsDataContainer &container, const names_t &cbs1, const names_t &cbs2,
-									 const std::string &base_cb, const i_counter_t &dists1, const i_counter_t &dists2) const;
+		ul_list_t get_real_neighbour_cbs(const Estimation::CellsDataContainer &container, const std::string &base_cb,
+									 const i_counter_t &dists1, const i_counter_t &dists2) const;
 
-		long get_real_cb(const Estimation::CellsDataContainer &container, size_t base_cell_ind, const names_t &cbs1,
-						 const names_t &cbs2) const;
+		long get_real_cb(const Estimation::CellsDataContainer &container, size_t base_cell_ind) const;
 
 		double get_umigs_intersect_fraction(const Estimation::CellsDataContainer &container, size_t cell1_ind,
 											size_t cell2_ind) const;
@@ -43,19 +45,21 @@ namespace Merge
 		static void get_barcodes_list(const std::string &barcodes_filename, std::vector<std::string> &barcodes1,
 									  std::vector<std::string> &barcodes2);
 
-		static void fill_distances_to_cb(const std::string &cb_part1, const std::string &cb_part2, const names_t &cbs1,
-										 const names_t &cbs2, i_counter_t &dists1, i_counter_t &dists2);
+		void fill_distances_to_cb(const std::string &cb_part1, const std::string &cb_part2, i_counter_t &dists1,
+								  i_counter_t &dists2) const;
 
 	protected:
-		virtual long get_best_merge_target(const CellsDataContainer &container, size_t base_cell_ind, const ids_t &neighbour_cells) const;
+		virtual long get_best_merge_target(const CellsDataContainer &container, size_t base_cell_ind, const ul_list_t &neighbour_cells) const;
+		virtual void init(const Estimation::CellsDataContainer &container) override;
+		virtual void release() override;
 
 	public:
 		RealBarcodesMergeStrategy(const std::string &barcodes_filename, size_t barcode2_length,
 								  int min_genes_before_merge, int min_genes_after_merge,
 								  int max_merge_edit_distance, double min_merge_fraction);
 
-		virtual void merge(Estimation::CellsDataContainer &container, const s_uu_hash_t &umig_cells_counts,
-						   ids_t &filtered_cells) const override;
+		virtual void merge_inited(Estimation::CellsDataContainer &container, const s_uu_hash_t &umig_cells_counts,
+						   ul_list_t &filtered_cells) const override;
 	};
 }
 

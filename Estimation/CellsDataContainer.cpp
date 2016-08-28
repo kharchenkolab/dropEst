@@ -1,6 +1,6 @@
 #include "CellsDataContainer.h"
 
-#include "Estimation/Merge/IMergeStrategy.h"
+#include "Estimation/Merge/MergeStrategyAbstract.h"
 #include "Tools/Logs.h"
 #include "Tools/RefGenesContainer.h"
 
@@ -12,7 +12,7 @@ namespace Estimation
 {
 	using Tools::IndexedValue;
 
-	CellsDataContainer::CellsDataContainer(std::shared_ptr<Merge::IMergeStrategy> merge_strategy,
+	CellsDataContainer::CellsDataContainer(std::shared_ptr<Merge::MergeStrategyAbstract> merge_strategy,
 										   size_t top_print_size)
 		: _merge_strategy(merge_strategy)
 		, _top_print_size(top_print_size)
@@ -167,5 +167,22 @@ namespace Estimation
 	const CellsDataContainer::s_ul_hash_t& CellsDataContainer::cell_ids_by_cb() const
 	{
 		return this->_cell_ids_by_cb;
+	}
+
+	CellsDataContainer::s_ul_hash_t CellsDataContainer::umis_distribution() const
+	{
+		s_ul_hash_t umis_dist;
+		for (auto const &cell : this->filtered_cells_genes_counts_sorted)
+		{
+			for (auto const &gene : this->_cells_genes[cell.index])
+			{
+				for (auto const &umi : gene.second)
+				{
+					umis_dist[umi.first]++;
+				}
+			}
+		}
+
+		return umis_dist;
 	}
 }

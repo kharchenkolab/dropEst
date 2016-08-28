@@ -19,7 +19,7 @@ namespace Estimation
 {
 	namespace Merge
 	{
-		class IMergeStrategy;
+		class MergeStrategyAbstract;
 	}
 
 	class CellsDataContainer
@@ -40,7 +40,7 @@ namespace Estimation
 		typedef std::vector<bool> flags_t;
 
 	private:
-		std::shared_ptr<Merge::IMergeStrategy> _merge_strategy;
+		std::shared_ptr<Merge::MergeStrategyAbstract> _merge_strategy;
 
 		const size_t _top_print_size;
 
@@ -59,7 +59,7 @@ namespace Estimation
 		std::string get_cb_count_top_verbose(const i_counter_t &cells_genes_counts) const;
 
 	public:
-		CellsDataContainer(std::shared_ptr<Merge::IMergeStrategy> merge_strategy, size_t top_print_size);
+		CellsDataContainer(std::shared_ptr<Merge::MergeStrategyAbstract> merge_strategy, size_t top_print_size);
 
 		void merge_and_filter(const CellsDataContainer::s_uu_hash_t &umig_cells_counts);
 
@@ -88,5 +88,7 @@ namespace Estimation
 		void set_initialized();
 
 		const names_t &cell_barcodes() const;
+
+		s_ul_hash_t umis_distribution() const;
 	};
 }

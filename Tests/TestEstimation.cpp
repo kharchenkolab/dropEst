@@ -9,7 +9,7 @@
 
 #include <RInside.h>
 #include <Estimation/Merge/MergeStrategyFactory.h>
-#include <Estimation/Merge/BaseMergeStrategy.h>
+#include <Estimation/Merge/SimpleMergeStrategy.h>
 #include <Estimation/Merge/RealBarcodesMergeStrategy.h>
 
 using namespace Estimation;
@@ -17,7 +17,7 @@ using namespace Estimation;
 struct Fixture
 {
 	Fixture()
-		: base_strat(new Merge::BaseMergeStrategy(0, 0, 100, 0))
+		: base_strat(new Merge::SimpleMergeStrategy(0, 0, 100, 0))
 		, real_cb_strat(new Merge::RealBarcodesMergeStrategy(PROJ_DATA_PATH + std::string("/barcodes.txt"), 9, 0, 0, 100, 0))
 		, container(base_strat, 10)
 		, container_full(real_cb_strat, 1)
@@ -45,7 +45,7 @@ struct Fixture
 		this->container_full.set_initialized();
 	}
 
-	std::shared_ptr<Merge::BaseMergeStrategy> base_strat;
+	std::shared_ptr<Merge::SimpleMergeStrategy> base_strat;
 	std::shared_ptr<Merge::RealBarcodesMergeStrategy> real_cb_strat;
 
 	CellsDataContainer container;
@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 	BOOST_FIXTURE_TEST_CASE(testMerge, Fixture)
 	{
-		Merge::AbstractMergeStrategy::ISIHM cb_reassigned_to;
+		Merge::MergeStrategyBase::ISIHM cb_reassigned_to;
 		CellsDataContainer::ids_t cb_reassigned;
 		cb_reassigned.push_back(0);
 		cb_reassigned.push_back(1);
@@ -167,7 +167,10 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		std::vector<std::string> cbs1(ar_cbs1, ar_cbs1 + sizeof(ar_cbs1) / sizeof(ar_cbs1[0]));
 
 		CellsDataContainer::i_counter_t d1, d2;
-		Merge::RealBarcodesMergeStrategy::fill_distances_to_cb("ACT", "ACT", cbs1, cbs1, d1, d2);
+
+		this->real_cb_strat->_barcodes1 = cbs1;
+		this->real_cb_strat->_barcodes2 = cbs1;
+		this->real_cb_strat->fill_distances_to_cb("ACT", "ACT", d1, d2);
 
 		BOOST_CHECK_EQUAL(d1.size(), 3);
 		BOOST_CHECK_EQUAL(d2.size(), 3);
@@ -191,9 +194,11 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		CellsDataContainer::names_t cbs2(ar_cbs2, ar_cbs2 + sizeof(ar_cbs2) / sizeof(ar_cbs2[0]));
 
 		CellsDataContainer::i_counter_t d1, d2;
-		Merge::RealBarcodesMergeStrategy::fill_distances_to_cb("CAA", "TTAGGTCCG", cbs1, cbs2, d1, d2);
+		this->real_cb_strat->_barcodes1 = cbs1;
+		this->real_cb_strat->_barcodes2 = cbs2;
+		this->real_cb_strat->fill_distances_to_cb("CAA", "TTAGGTCCG", d1, d2);
 
-		CellsDataContainer::ids_t ids = this->real_cb_strat->get_real_neighbour_cbs(this->container_full, cbs1, cbs2, "CAATTAGGTCCG", d1, d2);
+		CellsDataContainer::ids_t ids = this->real_cb_strat->get_real_neighbour_cbs(this->container_full, "CAATTAGGTCCG", d1, d2);
 
 		BOOST_CHECK_EQUAL(ids.size(), 2);
 
@@ -204,8 +209,8 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		}
 
 		d1.clear(); d2.clear();
-		Merge::RealBarcodesMergeStrategy::fill_distances_to_cb("AAA", "TTAGGTCCC", cbs1, cbs2, d1, d2);
-		ids = this->real_cb_strat->get_real_neighbour_cbs(this->container_full, cbs1, cbs2, "CAATTAGGTCCG", d1, d2);
+		this->real_cb_strat->fill_distances_to_cb("AAA", "TTAGGTCCC", d1, d2);
+		ids = this->real_cb_strat->get_real_neighbour_cbs(this->container_full, "CAATTAGGTCCG", d1, d2);
 
 		BOOST_CHECK_EQUAL(ids.size(), 1);
 
@@ -221,13 +226,15 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		static const std::string ar_cbs2[] = {"TTAGGTCCA", "TTAGGGGCC", "TTAGGTCCC"};
 		CellsDataContainer::names_t cbs1(ar_cbs1, ar_cbs1 + sizeof(ar_cbs1) / sizeof(ar_cbs1[0]));
 		CellsDataContainer::names_t cbs2(ar_cbs2, ar_cbs2 + sizeof(ar_cbs2) / sizeof(ar_cbs2[0]));
+		this->real_cb_strat->_barcodes1 = cbs1;
+		this->real_cb_strat->_barcodes2 = cbs2;
 
-		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 0, cbs1, cbs2), 0);
-		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 1, cbs1, cbs2), 1);
-		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 2, cbs1, cbs2), 1);
-		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 3, cbs1, cbs2), 0);
-		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 4, cbs1, cbs2), 0);
-		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 5, cbs1, cbs2), 0);
+		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 0), 0);
+		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 1), 1);
+		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 2), 1);
+		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 3), 0);
+		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 4), 0);
+		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 5), 0);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testMergeByRealBarcodes, Fixture)
