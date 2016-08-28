@@ -119,6 +119,13 @@ namespace Merge
 		if (neighbour_cells.empty())
 			return -1;
 
+		return this->get_best_merge_target(container, base_cell_ind, neighbour_cells);
+
+	}
+
+	long RealBarcodesMergeStrategy::get_best_merge_target(const CellsDataContainer &container, size_t base_cell_ind,
+														  const IMergeStrategy::ids_t &neighbour_cells) const
+	{
 		double max_umigs_intersection_frac = 0;
 		size_t best_neighbour_cell_ind = neighbour_cells[0];
 		for (size_t neighbour_cell_ind: neighbour_cells)

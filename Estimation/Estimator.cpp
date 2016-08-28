@@ -1,8 +1,7 @@
 #include "Estimator.h"
 
-#include "BamProcessor.h"
-#include "FilledBamProcessor.h"
-#include "ReadMapBamProcessor.h"
+#include "Estimation/BamProcessing/BamProcessor.h"
+#include "Estimation/BamProcessing/BamProcessorFactory.h"
 #include <Estimation/Results/IndropResults.h>
 #include <Estimation/Results/BadCellsStats.h>
 #include <Estimation/Results/IndropResultsWithoutUmi.h>
@@ -261,19 +260,8 @@ namespace Estimation
 												 merge_tags, barcodes_filename, this->barcode2_length);
 
 		CellsDataContainer container(merge_strategy, Estimator::top_print_size);
-		std::shared_ptr<BamProcessor> bam_processor;
-		if (filled_bam)
-		{
-			bam_processor = std::make_shared<FilledBamProcessor>(this->read_prefix_length, gtf_filename);
-		}
-		else if (reads_params_names_str != "")
-		{
-			bam_processor = std::make_shared<ReadMapBamProcessor>(this->read_prefix_length, reads_params_names_str, gtf_filename);
-		}
-		else
-		{
-			bam_processor = std::make_shared<BamProcessor>(this->read_prefix_length, gtf_filename);
-		}
+		auto bam_processor = BamProcessing::BamProcessorFactory::get(filled_bam, reads_params_names_str,
+																	 gtf_filename, this->read_prefix_length);
 
 		auto umig_cells_counts = bam_processor->parse_bam_files(files, bam_output, container);
 		container.set_initialized();

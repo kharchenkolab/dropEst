@@ -3,6 +3,8 @@
 
 namespace Estimation
 {
+namespace BamProcessing
+{
 	class FilledBamProcessor : public BamProcessor
 	{
 	private:
@@ -13,4 +15,5 @@ namespace Estimation
 	public:
 		FilledBamProcessor(size_t read_prefix_length, const std::string & gtf_path);
 	};
+}
 }

@@ -1,6 +1,6 @@
 #include "BamProcessor.h"
 
-#include "Stats.h"
+#include "Estimation/Stats.h"
 #include "Tools/Logs.h"
 #include "Tools/ReadParameters.h"
 
@@ -9,12 +9,14 @@
 
 namespace Estimation
 {
+namespace BamProcessing
+{
 	const std::string BamProcessor::GENE_TAG = "GE";
 	const std::string BamProcessor::CB_TAG = "CB";
 	const std::string BamProcessor::UMI_TAG = "UB";
 
 	BamProcessor::BamProcessor(size_t read_prefix_length, const std::string &gtf_path)
-		: _read_prefix_length(read_prefix_length)
+			: _read_prefix_length(read_prefix_length)
 	{
 		if (gtf_path.length() != 0)
 		{
@@ -22,8 +24,8 @@ namespace Estimation
 		}
 	}
 
-	CellsDataContainer::s_uu_hash_t BamProcessor::parse_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams,
-									   CellsDataContainer &container) const
+	CellsDataContainer::s_uu_hash_t BamProcessor::parse_bam_files(const std::vector<std::string> &bam_files,
+																  bool print_result_bams, CellsDataContainer &container) const
 	{
 		CellsDataContainer::s_i_map_t cb_ids;
 		CellsDataContainer::s_uu_hash_t umig_cells_counts;
@@ -37,7 +39,7 @@ namespace Estimation
 	}
 
 	void BamProcessor::parse_bam_file(const std::string &bam_name, bool print_result_bam, CellsDataContainer::s_i_map_t &cells_ids,
-							   CellsDataContainer::s_uu_hash_t &umig_cells_counts, CellsDataContainer &container) const
+									  CellsDataContainer::s_uu_hash_t &umig_cells_counts, CellsDataContainer &container) const
 	{
 		this->init_temporaries_before_parsing(print_result_bam);
 
@@ -91,7 +93,8 @@ namespace Estimation
 
 			if (gene == "")
 			{
-				L_DEBUG << "NonEx: " << read_name << ", cell: " << cell_barcode << " UMI: " << umi << ", start: " << alignment.Position;
+				L_DEBUG << "NonEx: " << read_name << ", cell: " << cell_barcode << " UMI: " << umi << ", start: " <<
+						alignment.Position;
 				container.stats().inc(Stats::NON_EXONE_READS_PER_CHR_PER_CELL, cell_barcode, chr_name);
 				continue;
 			}
@@ -128,8 +131,8 @@ namespace Estimation
 	}
 
 	int BamProcessor::save_read_data(const std::string &chr_name, const std::string &cell_barcode, const std::string &umi,
-									  const std::string &gene, CellsDataContainer::s_i_map_t &cells_ids,
-									  CellsDataContainer::s_uu_hash_t &umig_cells_counts, CellsDataContainer &container)
+									 const std::string &gene, CellsDataContainer::s_i_map_t &cells_ids,
+									 CellsDataContainer::s_uu_hash_t &umig_cells_counts, CellsDataContainer &container)
 	{
 		int cell_id = container.add_record(cell_barcode, umi, gene, cells_ids);
 
@@ -155,7 +158,7 @@ namespace Estimation
 	{
 		if (!this->_genes_container.is_empty())
 			return this->_genes_container.get_gene_info(chr_name, alignment.Position,
-												 alignment.Position + alignment.Length).id();
+														alignment.Position + alignment.Length).id();
 
 		std::string gene;
 		if (!alignment.GetTag(BamProcessor::GENE_TAG, gene))
@@ -183,4 +186,5 @@ namespace Estimation
 
 	void BamProcessor::release_temporaries_after_parsing() const
 	{}
+}
 }

@@ -5,8 +5,10 @@
 
 namespace Estimation
 {
+namespace BamProcessing
+{
 	bool FilledBamProcessor::get_read_params(const BamTools::BamAlignment &alignment,
-	                                         Tools::ReadParameters &read_params) const
+											 Tools::ReadParameters &read_params) const
 	{
 		std::string barcode;
 		if (!alignment.GetTag(BamProcessor::CB_TAG, barcode))
@@ -30,8 +32,7 @@ namespace Estimation
 	}
 
 	FilledBamProcessor::FilledBamProcessor(size_t read_prefix_length, const std::string &gtf_path)
-		: BamProcessor(read_prefix_length, gtf_path)
+			: BamProcessor(read_prefix_length, gtf_path)
 	{}
-
-
+}
 }

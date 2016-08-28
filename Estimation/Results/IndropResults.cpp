@@ -2,6 +2,7 @@
 
 #include <Tools/Logs.h>
 #include <RInside.h>
+#include <Tools/UtilFunctions.h>
 
 namespace Estimation
 {
@@ -51,11 +52,7 @@ namespace Estimation
 		{
 			using namespace Rcpp;
 
-			RInside *R = RInside::instancePtr();
-			if (R == nullptr)
-			{
-				R = new RInside(0, 0);
-			}
+			RInside *R = Tools::init_r();
 			(*R)["d"] = this->get_main_r_vec(filename);
 			L_TRACE << "writing R data to " << filename;
 

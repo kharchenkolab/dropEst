@@ -9,6 +9,8 @@
 
 #include <RInside.h>
 #include <Estimation/Merge/MergeStrategyFactory.h>
+#include <Estimation/Merge/BaseMergeStrategy.h>
+#include <Estimation/Merge/RealBarcodesMergeStrategy.h>
 
 using namespace Estimation;
 

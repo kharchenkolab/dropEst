@@ -1,8 +1,5 @@
 #include "UtilFunctions.h"
 
-#include <string.h>
-#include <sstream>
-
 namespace Tools
 {
 	unsigned edit_distance(const char *s1, const char *s2)
@@ -57,6 +54,15 @@ namespace Tools
 		}
 
 		return std::string(rcs, s.length());
+	}
+
+	RInside* init_r()
+	{
+		RInside *r = RInside::instancePtr();
+		if (r == nullptr)
+			return new RInside(0, 0);
+
+		return r;
 	}
 }
 

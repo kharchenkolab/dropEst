@@ -24,7 +24,7 @@ find_package (R)
 if (R_FOUND)
     add_definitions(-DR_LIBS)
     set(INCLUDE_DIRS ${INCLUDE_DIRS} ${R_INCLUDE_DIRS})
-    set(EST_LIBRARIES ${R_LIBRARIES})
+    set(LIBRARIES ${R_LIBRARIES})
 endif()
 
 set(INCLUDE_DIRS ${Boost_INCLUDE_DIR} ${PROJECT_SOURCE_DIR} ${ZLIB_INCLUDE_DIRS} ${BAMTOOLS_INCLUDE_DIRS} ${INCLUDE_DIRS})
@@ -36,11 +36,11 @@ add_library(DropTools ${DropToolsSources})
 FILE(GLOB TagsSearchSources TagsSearch/*.cpp TagsSearch/Counters/*.cpp)
 add_library(TagsSearch ${TagsSearchSources})
 
-FILE(GLOB EstimationSources Estimation/*.cpp Estimation/Results/*.cpp Estimation/Merge/*.cpp)
+FILE(GLOB EstimationSources Estimation/*.cpp Estimation/Results/*.cpp Estimation/Merge/*.cpp Estimation/BamProcessing/*.cpp)
 add_library(Estimation ${EstimationSources})
 target_link_libraries(Estimation DropTools)
 
-set(LIBRARIES DropTools ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+set(LIBRARIES ${LIBRARIES} DropTools ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 set(EST_LIBRARIES ${EST_LIBRARIES} ${BAMTOOLS_LIBRARIES} ${ZLIB_LIBRARIES} ${LIBRARIES})
 
 add_executable(indroptag indroptag.cpp)

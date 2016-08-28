@@ -7,14 +7,16 @@
 
 namespace Estimation
 {
+namespace BamProcessing
+{
 	ReadMapBamProcessor::ReadMapBamProcessor(size_t read_prefix_length, const std::string & read_param_names,
-	                                         const std::string & gtf_path)
-		: BamProcessor(read_prefix_length, gtf_path)
-		, _read_param_names(read_param_names)
+											 const std::string & gtf_path)
+			: BamProcessor(read_prefix_length, gtf_path)
+			, _read_param_names(read_param_names)
 	{}
 
 	bool ReadMapBamProcessor::get_read_params(const BamTools::BamAlignment &alignment,
-	                                          Tools::ReadParameters &read_params) const
+											  Tools::ReadParameters &read_params) const
 	{
 		const std::string &read_name = alignment.Name;
 		auto iter = this->_reads_params.find(read_name);
@@ -97,5 +99,6 @@ namespace Estimation
 	{
 		this->_reads_params.clear();
 	}
+}
 }
 

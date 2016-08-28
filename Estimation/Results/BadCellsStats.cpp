@@ -3,6 +3,7 @@
 #include "Estimation/Stats.h"
 #include "Tools/Logs.h"
 #include <Rcpp.h>
+#include <Tools/UtilFunctions.h>
 
 namespace Estimation
 {
@@ -20,11 +21,7 @@ namespace Estimation
 			using namespace Rcpp;
 
 			L_TRACE << "writing R data to " << filename;
-			RInside *R = RInside::instancePtr();
-			if (R == nullptr)
-			{
-				R = new RInside(0, 0);
-			}
+			RInside *R = Tools::init_r();
 
 			(*R)["d"] = List::create(
 					Named("genes_reads") = wrap(this->genes_reads),

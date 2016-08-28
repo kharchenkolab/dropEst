@@ -46,6 +46,9 @@ namespace Merge
 		static void fill_distances_to_cb(const std::string &cb_part1, const std::string &cb_part2, const names_t &cbs1,
 										 const names_t &cbs2, i_counter_t &dists1, i_counter_t &dists2);
 
+	protected:
+		virtual long get_best_merge_target(const CellsDataContainer &container, size_t base_cell_ind, const ids_t &neighbour_cells) const;
+
 	public:
 		RealBarcodesMergeStrategy(const std::string &barcodes_filename, size_t barcode2_length,
 								  int min_genes_before_merge, int min_genes_after_merge,
