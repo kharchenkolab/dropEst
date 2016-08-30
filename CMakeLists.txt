@@ -62,6 +62,10 @@ add_executable (${TEST_EST} ${PROJECT_SOURCE_DIR}/Tests/TestEstimation.cpp)
 target_link_libraries (${TEST_EST} Estimation ${EST_LIBRARIES})
 add_test (${TEST_EST} ${TEST_EST})
 
+set (TEST_EST_MERGE_PROBS TestEstimationMergeProbs)
+add_executable (${TEST_EST_MERGE_PROBS} ${PROJECT_SOURCE_DIR}/Tests/TestEstimationMergeProbs.cpp)
+target_link_libraries (${TEST_EST_MERGE_PROBS} Estimation ${EST_LIBRARIES})
+add_test (${TEST_EST_MERGE_PROBS} ${TEST_EST_MERGE_PROBS})
 
 set (TEST_TOOLS TestTools)
 add_executable (${TEST_TOOLS} ${PROJECT_SOURCE_DIR}/Tests/TestTools.cpp)

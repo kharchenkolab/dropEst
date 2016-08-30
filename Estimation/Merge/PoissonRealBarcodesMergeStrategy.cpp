@@ -1,13 +1,15 @@
 #include "PoissonRealBarcodesMergeStrategy.h"
 
 #include <boost/iterator/transform_iterator.hpp>
-#include <RInside.h>
 #include <Tools/UtilFunctions.h>
+#include <Tools/Logs.h>
 
 namespace Estimation
 {
 namespace Merge
 {
+	const double PoissonRealBarcodesMergeStrategy::max_merge_prob = 1e-5;
+
 	const PoissonRealBarcodesMergeStrategy::s_ul_hash_t::key_type & PoissonRealBarcodesMergeStrategy::get_key(const s_ul_hash_t::value_type & pair)
 	{
 		return pair.first;
@@ -24,16 +26,26 @@ namespace Merge
 																 const ul_list_t &neighbour_cells) const
 	{
 		long best_target = -1;
-		double min_prob = 1;
+		double min_prob = 2;
 		for (auto cell_ind : neighbour_cells)
 		{
-			//TODO call get_bootstrap_intersect_prob
-			//TODO check if prob == -1
-			//TODO check if min prob is to high
+			double prob = this->get_bootstrap_intersect_prob(container, base_cell_ind, cell_ind);
+
+			container.stats().add(Stats::MERGE_PROB_BY_CELL, container.cell_barcode(base_cell_ind),
+								  container.cell_barcode(cell_ind), 1);
+			if (prob > min_prob)
+			{
+				min_prob = prob;
+				best_target = cell_ind;
+			}
 			//TODO Tests
+			//TODO Replace strings by ints in the bootstrap array
 		}
 
-		return RealBarcodesMergeStrategy::get_best_merge_target(container, base_cell_ind, neighbour_cells);
+		if (min_prob > PoissonRealBarcodesMergeStrategy::max_merge_prob)
+			return -1;
+
+		return best_target;
 	}
 
 	void PoissonRealBarcodesMergeStrategy::init(const Estimation::CellsDataContainer &container)
@@ -58,11 +70,13 @@ namespace Merge
 		this->_umis_distribution.clear();
 	}
 
-	double PoissonRealBarcodesMergeStrategy::get_bootstrap_intersect_prob(const genes_t &cell1_dist,
-																		  const genes_t &cell2_dist,
-																		  size_t intersect_size, size_t fit_size,
-																		  unsigned multiplies_count)
+	double PoissonRealBarcodesMergeStrategy::get_bootstrap_intersect_prob(const CellsDataContainer &container,
+																		  size_t cell1_ind, size_t cell2_ind,
+																		  size_t fit_size, unsigned multiplies_count) const
 	{
+		auto const &cell1_dist = container.cell_genes(cell1_ind);
+		auto const &cell2_dist = container.cell_genes(cell2_ind);
+		size_t intersect_size = RealBarcodesMergeStrategy::get_umigs_intersect_size(cell1_dist, cell2_dist);
 		if (intersect_size == 0)
 			return 1;
 
@@ -74,22 +88,29 @@ namespace Merge
 			sizes.reserve(repeats_count);
 			double prob = this->get_bootstrap_intersect_sizes(cell1_dist, cell2_dist, intersect_size, repeats_count, sizes);
 
-			if (prob > 0.05)
+			if (prob > 0.1)
 				return prob;
 		}
 
-		double estimated = -1;
+		double estimated = -1, prob = -1;
 		for (unsigned i = 1; i <= multiplies_count; ++i)
 		{
 			size_t repeats_count = fit_size * i;
 			sizes.clear();
 			sizes.reserve(repeats_count);
-			double prob = this->get_bootstrap_intersect_sizes(cell1_dist, cell2_dist, intersect_size, repeats_count, sizes);
+			prob = this->get_bootstrap_intersect_sizes(cell1_dist, cell2_dist, intersect_size, repeats_count, sizes);
 			estimated = this->estimate_by_r(sizes, intersect_size);
-			if (prob == 0 && estimated < 2 / sizes.size() || estimated / prob <= 4 && prob / estimated <= 4) // check for outliers
+			if (prob == 0 && estimated < 2 / sizes.size() || estimated > 0 && prob > 0 && estimated / prob <= 4 && prob / estimated <= 4) // check for outliers
+			{
+				//L_WARN << "Estimation: " << container.cell_barcode(cell1_ind) << ", " <<
+				//	   container.cell_barcode(cell2_ind) << "; probs: (" << estimated << ", " << prob << "), " <<
+				//			intersect_size;
 				return estimated;
+			}
 		}
 
+		L_WARN << "Not stable estimation: " << container.cell_barcode(cell1_ind) << ", " <<
+					container.cell_barcode(cell2_ind) << "; probs: (" << estimated << ", " << prob << ")";
 		return estimated;
 	}
 
@@ -108,23 +129,23 @@ namespace Merge
 		return intersection;
 	}
 
-	double PoissonRealBarcodesMergeStrategy::estimate_by_r(ul_list_t sizes, size_t val)
+	double PoissonRealBarcodesMergeStrategy::estimate_by_r(ul_list_t sizes, size_t val) const
 	{
 		(*this->_r)["sizes"] = sizes;
-		(*this->_r)["val"] = val;
+		(*this->_r)["val"] = val - 1;
 		this->_r->parseEvalQ("p_fit = fitdistr(sizes, \"poisson\")\n"
-							  "res <- dpois(lambda=p_fit$estimate[1], x = val)");
+//									 "write.csv(sizes, file = '~/Study/InDrop/c_estimation.csv')\n"
+							  "res <- ppois(lambda=p_fit$estimate[1], q = val, lower.tail=F)");
 		return (*this->_r)["res"];
 	}
 
 	double PoissonRealBarcodesMergeStrategy::get_bootstrap_intersect_sizes(const genes_t &cell1_dist,
 																		   const genes_t &cell2_dist,
 																		   size_t real_intersect_size,
-																		   size_t repeats_count, ul_list_t sizes)
+																		   size_t repeats_count, ul_list_t &sizes) const
 	{
-//		names_t common_genes(PoissonRealBarcodesMergeStrategy::intersect_keys(cell1_dist, cell2_dist));
 		size_t repeats_sum = 0;
-		for (int repeat_num = 0; repeat_num < repeats_count; ++repeat_num)
+		for (int repeat_num = 0; repeat_num < repeats_count; ++repeat_num) //TODO Optimize (common genes)
 		{
 			std::set<std::string> gene_set;
 			size_t intersect_size = 0;
@@ -135,13 +156,13 @@ namespace Merge
 				if (cell2_it == cell2_dist.end())
 					continue;
 
-				for (int choice_num = 0; choice_num < gene1_size; ++choice_num)
+				for (size_t choice_num = 0; choice_num < gene1_size; ++choice_num)
 				{
 					gene_set.emplace(this->_umis_bootstrap_distribution[rand() % this->_umis_bootstrap_distribution.size()]);
 				}
 
 				size_t gene2_size = cell2_it->second.size();
-				for (int choice_num = 0; choice_num < gene2_size; ++choice_num)
+				for (size_t choice_num = 0; choice_num < gene2_size; ++choice_num)
 				{
 					const std::string &umi = this->_umis_bootstrap_distribution[rand() % this->_umis_bootstrap_distribution.size()];
 					if (gene_set.find(umi) != gene_set.end())
@@ -154,7 +175,7 @@ namespace Merge
 			repeats_sum += intersect_size >= real_intersect_size;
 		}
 
-		return repeats_sum / repeats_count;
+		return repeats_sum / (double) repeats_count;
 	}
 }
 }

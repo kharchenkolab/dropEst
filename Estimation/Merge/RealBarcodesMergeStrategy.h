@@ -55,6 +55,8 @@ namespace Merge
 		virtual void init(const Estimation::CellsDataContainer &container) override;
 		virtual void release() override;
 
+		static size_t get_umigs_intersect_size(const genes_t &cell1_dist, const genes_t &cell2_dist);
+
 	public:
 		RealBarcodesMergeStrategy(const std::string &barcodes_filename, size_t barcode2_length,
 								  int min_genes_before_merge, int min_genes_after_merge,

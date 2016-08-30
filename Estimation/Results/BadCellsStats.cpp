@@ -37,6 +37,7 @@ namespace Estimation
 		            Named("merge_intersect_size") = wrap(stats.get_raw(Stats::MERGE_INTERSECT_SIZE_BY_CELL)),
 		            Named("merge_real_intersect_size") = wrap(stats.get_raw(Stats::MERGE_REAL_INTERSECT_SIZE_BY_CELL)),
 		            Named("merge_rejections") = wrap(stats.get_raw(Stats::MERGE_REJECTION_BY_CELL)),
+		            Named("merge_probs") = wrap(stats.get_raw(Stats::MERGE_PROB_BY_CELL)),
 		            Named("excluded_cells") = wrap(excluded_cells),
 		            Named("umi_per_cell") = wrap(stats.get_raw(Stats::UMI_PER_CELL))
 			);
