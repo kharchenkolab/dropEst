@@ -146,15 +146,16 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 	BOOST_FIXTURE_TEST_CASE(testUmigsIntersection, Fixture)
 	{
+		using namespace Merge;
 		auto cell_ids_by_cb = this->container_full.cell_ids_by_cb();
-		double is1 = this->real_cb_strat->get_umigs_intersect_fraction(this->container_full,
-				cell_ids_by_cb["AAATTAGGTCCA"], cell_ids_by_cb["CCCTTAGGTCCA"]);
+		double is1 = RealBarcodesMergeStrategy::get_umigs_intersect_fraction(this->container_full.cell_genes(cell_ids_by_cb["AAATTAGGTCCA"]),
+																			 this->container_full.cell_genes(cell_ids_by_cb["CCCTTAGGTCCA"]));
 
-		double is2 = this->real_cb_strat->get_umigs_intersect_fraction(this->container_full,
-				cell_ids_by_cb["AAATTAGGTCCC"], cell_ids_by_cb["AAATTAGGTCCG"]);
+		double is2 = RealBarcodesMergeStrategy::get_umigs_intersect_fraction(this->container_full.cell_genes(cell_ids_by_cb["AAATTAGGTCCC"]),
+																			 this->container_full.cell_genes(cell_ids_by_cb["AAATTAGGTCCG"]));
 
-		double is3 = this->real_cb_strat->get_umigs_intersect_fraction(this->container_full,
-				cell_ids_by_cb["AAATTAGGTCCA"], cell_ids_by_cb["AAATTAGGTCCC"]);
+		double is3 = RealBarcodesMergeStrategy::get_umigs_intersect_fraction(this->container_full.cell_genes(cell_ids_by_cb["AAATTAGGTCCA"]),
+																			 this->container_full.cell_genes(cell_ids_by_cb["AAATTAGGTCCC"]));
 
 		BOOST_CHECK_EQUAL(is1, 2. / 3);
 		BOOST_CHECK_EQUAL(is2, 1);
@@ -234,7 +235,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 2), 1);
 		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 3), 0);
 		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 4), 0);
-		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 5), 0);
+		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 5), 1);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testMergeByRealBarcodes, Fixture)
@@ -247,18 +248,19 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 			return;
 
 		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[0]).size(), 3);
-		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[1]).size(), 1);
+		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[1]).size(), 2);
 
-		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[0]).at("Gene1").size(), 2);
-		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[0]).at("Gene1").at("AAACCT"), 3);
+		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[0]).at("Gene1").size(), 1);
+		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[0]).at("Gene1").at("AAACCT"), 2);
 		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[0]).at("Gene2").size(), 1);
-		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[0]).at("Gene2").at("CCCCCT"), 4);
+		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[0]).at("Gene2").at("CCCCCT"), 3);
 		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[0]).at("Gene3").size(), 2);
 		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[0]).at("Gene3").at("ACCCCT"), 2);
 		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[0]).at("Gene3").at("CCATTC"), 1);
 
-		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[1]).at("Gene1").size(), 1);
-		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[0]).at("Gene1").at("CAACCT"), 2);
+		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[1]).at("Gene1").size(), 2);
+		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[1]).at("Gene2").size(), 1);
+		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[1]).at("Gene1").at("CAACCT"), 3);
 	}
 
 BOOST_AUTO_TEST_SUITE_END()
