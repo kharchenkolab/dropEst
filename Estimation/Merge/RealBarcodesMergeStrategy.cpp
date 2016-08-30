@@ -122,7 +122,8 @@ namespace Merge
 		size_t best_neighbour_cell_ind = neighbour_cells[0];
 		for (size_t neighbour_cell_ind: neighbour_cells)
 		{
-			double current_frac = this->get_umigs_intersect_fraction(container, base_cell_ind, neighbour_cell_ind);
+			double current_frac = RealBarcodesMergeStrategy::get_umigs_intersect_fraction(container.cell_genes(base_cell_ind),
+																	 container.cell_genes(neighbour_cell_ind));
 			if (max_umigs_intersection_frac < current_frac)
 			{
 				max_umigs_intersection_frac = current_frac;
@@ -191,17 +192,13 @@ namespace Merge
 		return neighbour_cbs;
 	}
 
-	double RealBarcodesMergeStrategy::get_umigs_intersect_fraction(const Estimation::CellsDataContainer &container,
-																   size_t cell1_ind, size_t cell2_ind) const
+	double RealBarcodesMergeStrategy::get_umigs_intersect_fraction(const genes_t &cell1_dist, const genes_t &cell2_dist)
 	{
-		const auto &cell1 = container.cell_genes(cell1_ind);
-		const auto &cell2 = container.cell_genes(cell2_ind);
-
-		auto gene1_it = cell1.begin();
-		auto gene2_it = cell2.begin();
+		auto gene1_it = cell1_dist.begin();
+		auto gene2_it = cell2_dist.begin();
 
 		size_t intersect_size = 0, cell1_umigs = 0, cell2_umigs= 0;
-		while (gene1_it != cell1.end() && gene2_it != cell2.end())
+		while (gene1_it != cell1_dist.end() && gene2_it != cell2_dist.end())
 		{
 			int comp_res = gene1_it->first.compare(gene2_it->first);
 			if (comp_res < 0)
@@ -244,6 +241,18 @@ namespace Merge
 			cell1_umigs += gene1_it->second.size();
 			cell2_umigs += gene2_it->second.size();
 			++gene1_it;
+			++gene2_it;
+		}
+
+		while (gene1_it != cell1_dist.end())
+		{
+			cell1_umigs += gene1_it->second.size();
+			++gene1_it;
+		}
+
+		while (gene2_it != cell2_dist.end())
+		{
+			cell2_umigs += gene2_it->second.size();
 			++gene2_it;
 		}
 

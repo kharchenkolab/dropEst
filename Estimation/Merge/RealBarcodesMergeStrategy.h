@@ -24,6 +24,9 @@ namespace Merge
 		friend struct TestEstimator::testRealNeighboursCbs;
 		friend struct TestEstimator::testRealNeighbours;
 
+	protected:
+		typedef Estimation::CellsDataContainer::genes_t genes_t;
+
 	private:
 		std::string _barcodes_filename;
 		size_t _barcode2_length;
@@ -39,8 +42,7 @@ namespace Merge
 
 		long get_real_cb(const Estimation::CellsDataContainer &container, size_t base_cell_ind) const;
 
-		double get_umigs_intersect_fraction(const Estimation::CellsDataContainer &container, size_t cell1_ind,
-											size_t cell2_ind) const;
+		static double get_umigs_intersect_fraction(const genes_t &cell1_dist, const genes_t &cell2_dist);
 
 		static void get_barcodes_list(const std::string &barcodes_filename, std::vector<std::string> &barcodes1,
 									  std::vector<std::string> &barcodes2);
