@@ -18,7 +18,7 @@ find_package (ZLIB REQUIRED)
 #set(BAMTOOLS_ROOT "/opt/bamtools-2.2.3/")
 find_package (BamTools REQUIRED)
 
-#set(R_ROOT "/home/vp76/local/lib64/R")
+set(R_ROOT "/home/victor/R/x86_64-pc-linux-gnu-library/3.2")
 find_package (R)
 
 if (R_FOUND)
@@ -49,6 +49,8 @@ target_link_libraries(indroptag TagsSearch ${LIBRARIES})
 add_executable(indropest indropest.cpp)
 target_link_libraries(indropest Estimation ${EST_LIBRARIES})
 
+add_executable(tests tests.cpp)
+target_link_libraries(tests Estimation ${EST_LIBRARIES})
 
 set (TEST_TS TestTagsSearch)
 add_executable (${TEST_TS} ${PROJECT_SOURCE_DIR}/Tests/TestTagsSearch.cpp)

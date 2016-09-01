@@ -20,12 +20,13 @@ namespace Merge
 
 	private:
 		typedef Estimation::CellsDataContainer::s_ul_hash_t s_ul_hash_t;
+		typedef int bs_umi_t;
 
 	private:
 		static const double max_merge_prob;
 
 		s_ul_hash_t _umis_distribution;
-		names_t _umis_bootstrap_distribution;
+		std::vector<bs_umi_t> _umis_bootstrap_distribution;
 		RInside* _r;
 
 	private:

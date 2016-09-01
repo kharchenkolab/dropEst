@@ -52,9 +52,11 @@ namespace Merge
 	{
 		RealBarcodesMergeStrategy::init(container);
 		this->_umis_distribution = container.umis_distribution();
+		int umi_ind = 0;
 		for (auto const &umi: this->_umis_distribution)
 		{
-			this->_umis_bootstrap_distribution.insert(this->_umis_bootstrap_distribution.end(), umi.second, umi.first);
+			this->_umis_bootstrap_distribution.insert(this->_umis_bootstrap_distribution.end(), umi.second, umi_ind);
+			++umi_ind;
 		}
 
 		this->_r = Tools::init_r();
@@ -144,7 +146,7 @@ namespace Merge
 			size_t intersect_size = 0;
 			for (auto const &gene : cell1_dist)
 			{
-				std::set<std::string> gene_set;
+				std::set<bs_umi_t> umis_set;
 				size_t cell1_gene_size = cell1_dist.at(gene.first).size();
 				auto cell2_it = cell2_dist.find(gene.first);
 				if (cell2_it == cell2_dist.end())
@@ -152,14 +154,14 @@ namespace Merge
 
 				for (size_t choice_num = 0; choice_num < cell1_gene_size; ++choice_num)
 				{
-					gene_set.emplace(this->_umis_bootstrap_distribution[rand() % this->_umis_bootstrap_distribution.size()]);
+					umis_set.emplace(this->_umis_bootstrap_distribution[rand() % this->_umis_bootstrap_distribution.size()]);
 				}
 
 				size_t cell2_gene_size = cell2_it->second.size();
 				for (size_t choice_num = 0; choice_num < cell2_gene_size; ++choice_num)
 				{
-					const std::string &umi = this->_umis_bootstrap_distribution[rand() % this->_umis_bootstrap_distribution.size()];
-					if (gene_set.find(umi) != gene_set.end())
+					const bs_umi_t &umi = this->_umis_bootstrap_distribution[rand() % this->_umis_bootstrap_distribution.size()];
+					if (umis_set.find(umi) != umis_set.end())
 					{
 						intersect_size++;
 					}

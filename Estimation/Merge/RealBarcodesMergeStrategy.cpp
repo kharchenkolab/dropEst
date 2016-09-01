@@ -206,7 +206,6 @@ namespace Estimation
 			}
 
 			size_t intersect_size = RealBarcodesMergeStrategy::get_umigs_intersect_size(cell1_dist, cell2_dist);
-			L_INFO << intersect_size << " " << cell1_umigs << " " << cell2_umigs;
 			return intersect_size / (double) std::min(cell1_umigs, cell2_umigs);
 		}
 
