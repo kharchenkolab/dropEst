@@ -1,24 +1,24 @@
 cmake_minimum_required(VERSION 2.8)
 
-#set(CMAKE_CXX_COMPILER /opt/gcc/4.8.5/bin/g++)
+set(CMAKE_CXX_COMPILER /opt/gcc/4.8.5/bin/g++)
 
 project(cp)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMake")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-deprecated -m64 -DBOOST_LOG_DYN_LINK")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-deprecated -m64 -DBOOST_LOG_DYN_LINK")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wno-deprecated -m64 -DBOOST_LOG_DYN_LINK -std=c++11")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -gdwarf-2 -g3 -Wno-deprecated -m64 -DBOOST_LOG_DYN_LINK -std=c++11")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -gdwarf-2 -g3 -Wno-deprecated -m64 -DBOOST_LOG_DYN_LINK -std=c++11")
 add_definitions(-DPROJ_DATA_PATH=\"${PROJECT_SOURCE_DIR}/data\")
 
-#set(BOOST_ROOT "/home/vp76/libs/boost_1_58_0/")
+set(BOOST_ROOT "/home/vp76/local/")
 find_package(Boost 1.54.0 COMPONENTS unit_test_framework thread system log iostreams REQUIRED)
 find_package (Threads REQUIRED)
 find_package (ZLIB REQUIRED)
 
-#set(BAMTOOLS_ROOT "/opt/bamtools-2.2.3/")
+set(BAMTOOLS_ROOT "/opt/bamtools-2.2.3/")
 find_package (BamTools REQUIRED)
 
-set(R_ROOT "/home/victor/R/x86_64-pc-linux-gnu-library/3.2")
+set(R_ROOT "/home/vp76/local/lib64/R")
 find_package (R)
 
 if (R_FOUND)
@@ -48,9 +48,6 @@ target_link_libraries(indroptag TagsSearch ${LIBRARIES})
 
 add_executable(indropest indropest.cpp)
 target_link_libraries(indropest Estimation ${EST_LIBRARIES})
-
-add_executable(tests tests.cpp)
-target_link_libraries(tests Estimation ${EST_LIBRARIES})
 
 set (TEST_TS TestTagsSearch)
 add_executable (${TEST_TS} ${PROJECT_SOURCE_DIR}/Tests/TestTagsSearch.cpp)
