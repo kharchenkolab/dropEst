@@ -72,6 +72,9 @@ BOOST_AUTO_TEST_SUITE(TestEstimatorMergeProbs)
 		BOOST_CHECK_EQUAL(this->real_cb_strat->_umis_distribution["TTTTTT"], 2);
 		BOOST_CHECK_EQUAL(this->real_cb_strat->_umis_distribution["TTCTTT"], 2);
 
+		BOOST_CHECK_EQUAL(this->container_full.cell_genes(5).size(), 2);
+		BOOST_CHECK_EQUAL(this->container_full.cell_genes(6).size(), 2);
+
 		std::map<std::string, int> distr;
 		for (auto const &umi : this->real_cb_strat->_umis_bootstrap_distribution)
 		{
@@ -88,14 +91,10 @@ BOOST_AUTO_TEST_SUITE(TestEstimatorMergeProbs)
 	BOOST_FIXTURE_TEST_CASE(testPoissonMergeProbs, Fixture)
 	{
 		this->real_cb_strat->init(this->container_full);
-		srand(49);
 		BOOST_CHECK_EQUAL(this->real_cb_strat->get_bootstrap_intersect_prob(this->container_full, 0, 1), 1);
 		BOOST_CHECK_LE(std::abs(this->real_cb_strat->get_bootstrap_intersect_prob(this->container_full, 1, 2) - 0.16), 0.05);
 		BOOST_CHECK_LE(std::abs(this->real_cb_strat->get_bootstrap_intersect_prob(this->container_full, 3, 4) - 0.15), 0.05);
-//		BOOST_CHECK_LE(std::abs(this->real_cb_strat->get_bootstrap_intersect_prob(this->container_full, 5, 6) - 0.021), 0.005);
-//		BOOST_CHECK_LE(std::abs(this->real_cb_strat->get_bootstrap_intersect_prob(this->container_full, 5, 6) - 0.045), 0.005);
-		BOOST_CHECK_LE(this->real_cb_strat->get_bootstrap_intersect_prob(this->container_full, 5, 6, 100000), 0.045);
-		//TODO Debug
+		BOOST_CHECK_LE(std::abs(this->real_cb_strat->get_bootstrap_intersect_prob(this->container_full, 5, 6, 100000) - 0.045), 0.01);
 	}
 
 BOOST_AUTO_TEST_SUITE_END()

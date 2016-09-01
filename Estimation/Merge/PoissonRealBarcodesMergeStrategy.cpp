@@ -95,18 +95,13 @@ namespace Merge
 		double estimated = -1, prob = -1;
 		for (unsigned i = 1; i <= multiplies_count; ++i)
 		{
-			size_t repeats_count = fit_size * i;
+			size_t repeats_count = fit_size * i; // TODO remove (it can fix only high probabilities, we don't care about it)
 			sizes.clear();
 			sizes.reserve(repeats_count);
 			prob = this->get_bootstrap_intersect_sizes(cell1_dist, cell2_dist, intersect_size, repeats_count, sizes);
 			estimated = this->estimate_by_r(sizes, intersect_size);
 			if (prob == 0 && estimated < 2 / sizes.size() || estimated > 0 && prob > 0 && estimated / prob <= 4 && prob / estimated <= 4) // check for outliers
-			{
-				//L_WARN << "Estimation: " << container.cell_barcode(cell1_ind) << ", " <<
-				//	   container.cell_barcode(cell2_ind) << "; probs: (" << estimated << ", " << prob << "), " <<
-				//			intersect_size;
 				return estimated;
-			}
 		}
 
 		L_WARN << "Not stable estimation: " << container.cell_barcode(cell1_ind) << ", " <<
@@ -134,7 +129,6 @@ namespace Merge
 		(*this->_r)["sizes"] = sizes;
 		(*this->_r)["val"] = val - 1;
 		this->_r->parseEvalQ("p_fit = fitdistr(sizes, \"poisson\")\n"
-//									 "write.csv(sizes, file = '~/Study/InDrop/c_estimation.csv')\n"
 							  "res <- ppois(lambda=p_fit$estimate[1], q = val, lower.tail=F)");
 		return (*this->_r)["res"];
 	}
@@ -147,22 +141,22 @@ namespace Merge
 		size_t repeats_sum = 0;
 		for (int repeat_num = 0; repeat_num < repeats_count; ++repeat_num) //TODO Optimize (common genes)
 		{
-			std::set<std::string> gene_set;
 			size_t intersect_size = 0;
 			for (auto const &gene : cell1_dist)
 			{
-				size_t gene1_size = cell1_dist.at(gene.first).size();
+				std::set<std::string> gene_set;
+				size_t cell1_gene_size = cell1_dist.at(gene.first).size();
 				auto cell2_it = cell2_dist.find(gene.first);
 				if (cell2_it == cell2_dist.end())
 					continue;
 
-				for (size_t choice_num = 0; choice_num < gene1_size; ++choice_num)
+				for (size_t choice_num = 0; choice_num < cell1_gene_size; ++choice_num)
 				{
 					gene_set.emplace(this->_umis_bootstrap_distribution[rand() % this->_umis_bootstrap_distribution.size()]);
 				}
 
-				size_t gene2_size = cell2_it->second.size();
-				for (size_t choice_num = 0; choice_num < gene2_size; ++choice_num)
+				size_t cell2_gene_size = cell2_it->second.size();
+				for (size_t choice_num = 0; choice_num < cell2_gene_size; ++choice_num)
 				{
 					const std::string &umi = this->_umis_bootstrap_distribution[rand() % this->_umis_bootstrap_distribution.size()];
 					if (gene_set.find(umi) != gene_set.end())
