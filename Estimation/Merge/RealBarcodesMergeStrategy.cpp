@@ -99,7 +99,7 @@ namespace Estimation
 			i_counter_t dists1, dists2;
 
 			std::string cb_part1 = base_cb.substr(0, base_cb.length() - this->_barcode2_length);
-			std::string cb_part2 = base_cb.substr(base_cb.length() - this->_barcode2_length + 1);
+			std::string cb_part2 = base_cb.substr(base_cb.length() - this->_barcode2_length);
 
 			this->fill_distances_to_cb(cb_part1, cb_part2, dists1, dists2);
 

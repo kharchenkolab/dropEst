@@ -182,7 +182,7 @@ namespace Tools
 			return GeneInfo();
 
 		GeneInfo::num_t chr_num = GeneInfo::parse_chr_name(chr_name);
-		const intervals_vec_t &current_intervals = this->_genes_intervals[chr_num];
+		const intervals_vec_t &current_intervals = this->_genes_intervals.at(chr_num); //TODO check if chr not in list - add empty and print warning
 		auto intercept_it = std::lower_bound(current_intervals.begin(), current_intervals.end(), start_pos,
 											 [](const Interval &interval, pos_t pos){ return interval.end_pos <= pos;});
 

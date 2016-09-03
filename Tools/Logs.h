@@ -16,4 +16,6 @@ namespace Tools
 						 const std::string &debug_file_name = "debug.log");
 
 	void init_test_logs(boost::log::trivial::severity_level level = boost::log::trivial::fatal);
+
+	void trace_time(const std::string &message);
 }

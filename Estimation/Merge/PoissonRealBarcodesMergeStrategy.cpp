@@ -33,13 +33,11 @@ namespace Merge
 
 			container.stats().add(Stats::MERGE_PROB_BY_CELL, container.cell_barcode(base_cell_ind),
 								  container.cell_barcode(cell_ind), 1);
-			if (prob > min_prob)
+			if (prob < min_prob)
 			{
 				min_prob = prob;
 				best_target = cell_ind;
 			}
-			//TODO Tests
-			//TODO Replace strings by ints in the bootstrap array
 		}
 
 		if (min_prob > PoissonRealBarcodesMergeStrategy::max_merge_prob)
@@ -52,12 +50,14 @@ namespace Merge
 	{
 		RealBarcodesMergeStrategy::init(container);
 		this->_umis_distribution = container.umis_distribution();
-		int umi_ind = 0;
+		bs_umi_t umi_ind = 0;
 		for (auto const &umi: this->_umis_distribution)
 		{
 			this->_umis_bootstrap_distribution.insert(this->_umis_bootstrap_distribution.end(), umi.second, umi_ind);
 			++umi_ind;
 		}
+
+		this->_umis_number = umi_ind;
 
 		this->_r = Tools::init_r();
 		this->_r->parseEvalQ("library(fitdistrplus)");
@@ -97,12 +97,12 @@ namespace Merge
 		double estimated = -1, prob = -1;
 		for (unsigned i = 1; i <= multiplies_count; ++i)
 		{
-			size_t repeats_count = fit_size * i; // TODO remove (it can fix only high probabilities, we don't care about it)
+			size_t repeats_count = fit_size * i; // TODO remove (it can fix only high probabilities, we don't care about it); replace 4 / size with std
 			sizes.clear();
 			sizes.reserve(repeats_count);
 			prob = this->get_bootstrap_intersect_sizes(cell1_dist, cell2_dist, intersect_size, repeats_count, sizes);
 			estimated = this->estimate_by_r(sizes, intersect_size);
-			if (prob == 0 && estimated < 2 / sizes.size() || estimated > 0 && prob > 0 && estimated / prob <= 4 && prob / estimated <= 4) // check for outliers
+			if (prob == 0 && estimated < 4. / repeats_count || estimated > 0 && prob > 0 && estimated / prob <= 4 && prob / estimated <= 4) // check for outliers
 				return estimated;
 		}
 
@@ -140,32 +140,41 @@ namespace Merge
 																		   size_t real_intersect_size,
 																		   size_t repeats_count, ul_list_t &sizes) const
 	{
+		std::vector<size_t >c1_dist, c2_dist;
+		for (auto const &item : cell1_dist)
+		{
+			if (cell2_dist.find(item.first) == cell2_dist.end())
+				continue;
+
+			c1_dist.push_back(item.second.size());
+			c2_dist.push_back(item.second.size());
+		}
+
 		size_t repeats_sum = 0;
-		for (int repeat_num = 0; repeat_num < repeats_count; ++repeat_num) //TODO Optimize (common genes)
+		std::vector<unsigned> intersection_marks(this->_umis_number, 0);
+		for (unsigned repeat_num = 1; repeat_num <= repeats_count; ++repeat_num)
 		{
 			size_t intersect_size = 0;
-			for (auto const &gene : cell1_dist)
+			auto cell2_it = c2_dist.begin();
+			for (auto const &cell1_gene_size : c1_dist)
 			{
-				std::set<bs_umi_t> umis_set;
-				size_t cell1_gene_size = cell1_dist.at(gene.first).size();
-				auto cell2_it = cell2_dist.find(gene.first);
-				if (cell2_it == cell2_dist.end())
-					continue;
-
 				for (size_t choice_num = 0; choice_num < cell1_gene_size; ++choice_num)
 				{
-					umis_set.emplace(this->_umis_bootstrap_distribution[rand() % this->_umis_bootstrap_distribution.size()]);
+					intersection_marks[this->_umis_bootstrap_distribution[rand() % this->_umis_bootstrap_distribution.size()]] = repeat_num;
 				}
 
-				size_t cell2_gene_size = cell2_it->second.size();
+				size_t cell2_gene_size = *cell2_it;
+
 				for (size_t choice_num = 0; choice_num < cell2_gene_size; ++choice_num)
 				{
-					const bs_umi_t &umi = this->_umis_bootstrap_distribution[rand() % this->_umis_bootstrap_distribution.size()];
-					if (umis_set.find(umi) != umis_set.end())
+					bs_umi_t umi = this->_umis_bootstrap_distribution[rand() % this->_umis_bootstrap_distribution.size()];
+					if (intersection_marks[umi] == repeat_num)
 					{
 						intersect_size++;
+						intersection_marks[umi] = 0;
 					}
 				}
+				++cell2_it;
 			}
 			sizes.push_back(intersect_size);
 			repeats_sum += intersect_size >= real_intersect_size;

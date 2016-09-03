@@ -62,7 +62,7 @@ namespace Tools
 		return this->_chr_num;
 	}
 
-	GeneInfo::num_t GeneInfo::parse_chr_name(const std::string &chr_name)
+	GeneInfo::num_t GeneInfo::parse_chr_name(const std::string &chr_name) //TODO Replace index by full name
 	{
 		return chr_name.length() > 2 ? (num_t)atoi(chr_name.substr(3).c_str()) : (num_t)atoi(chr_name.c_str());
 	}

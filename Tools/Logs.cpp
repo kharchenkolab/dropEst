@@ -57,5 +57,11 @@ namespace Tools
 	{
 		logging::core::get()->set_filter(logging::trivial::severity >= level);
 	}
+
+	void trace_time(const std::string &message)
+	{
+		time_t ctt = time(0);
+		L_TRACE << message << ": " << asctime(localtime(&ctt));
+	}
 }
 

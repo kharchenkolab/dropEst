@@ -7,6 +7,7 @@ namespace TestEstimatorMergeProbs
 {
 	struct testPoissonMergeProbs;
 	struct testPoissonMergeInit;
+	struct testPoissonMergeTime;
 }
 
 namespace Estimation
@@ -17,13 +18,16 @@ namespace Merge
 	{
 		friend struct TestEstimatorMergeProbs::testPoissonMergeProbs;
 		friend struct TestEstimatorMergeProbs::testPoissonMergeInit;
+		friend struct TestEstimatorMergeProbs::testPoissonMergeTime;
 
 	private:
 		typedef Estimation::CellsDataContainer::s_ul_hash_t s_ul_hash_t;
-		typedef int bs_umi_t;
+		typedef unsigned bs_umi_t;
 
 	private:
 		static const double max_merge_prob;
+
+		bs_umi_t _umis_number;
 
 		s_ul_hash_t _umis_distribution;
 		std::vector<bs_umi_t> _umis_bootstrap_distribution;

@@ -14,9 +14,12 @@ namespace Merge
 	void MergeStrategyAbstract::merge(Estimation::CellsDataContainer &container, const s_uu_hash_t &umig_cells_counts,
 									  ul_list_t &filtered_cells)
 	{
+		Tools::trace_time("Start merge");
 		this->init(container);
+		Tools::trace_time("Merge initialized");
 		this->merge_inited(container, umig_cells_counts, filtered_cells);
 		this->release();
+		Tools::trace_time("Merge finished");
 	}
 
 	void MergeStrategyAbstract::init(const Estimation::CellsDataContainer &container)

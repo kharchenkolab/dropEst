@@ -151,7 +151,7 @@ namespace BamProcessing
 
 	std::string BamProcessor::get_result_bam_name(const std::string &bam_name)
 	{
-		return bam_name.substr(0, bam_name.find_last_of(".")) + ".corrected.bam";
+		return bam_name.substr(0, bam_name.find_last_of(".")) + ".tagged.bam";
 	}
 
 	std::string BamProcessor::get_gene(const std::string &chr_name, BamTools::BamAlignment alignment) const

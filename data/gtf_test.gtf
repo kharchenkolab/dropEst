@@ -24,3 +24,9 @@ chr2    unknown exon    100000   110000   .       +       .       gene_id "CHR2_
 chr2    unknown exon    120000   130000   .       +       .       gene_id "CHR2_GENE2"; gene_name "CHR2_GENE2"; p_id "P1230"; transcript_id "NM_001005484"; tss_id "TSS14428";
 chr2    unknown exon    34609   35174   .       -       .       gene_id "FAM138A"; gene_name "FAM138A"; transcript_id "NR_026818_1"; tss_id "TSS8403";
 chr2    unknown exon    34611   35176   .       -       .       gene_id "FAM138F"; gene_name "FAM138F"; transcript_id "NR_026820_1"; tss_id "TSS8403";
+chrX    unknown exon    100000   110000   .       +       .       gene_id "CHR2_GENE"; gene_name "CHR2_GENE"; p_id "P1230"; transcript_id "NM_001005484"; tss_id "TSS14428";
+chrX    unknown exon    120000   130000   .       +       .       gene_id "CHR2_GENE2"; gene_name "CHR2_GENE2"; p_id "P1230"; transcript_id "NM_001005484"; tss_id "TSS14428";
+chrX    unknown exon    34609   35174   .       -       .       gene_id "FAM138A"; gene_name "FAM138A"; transcript_id "NR_026818_1"; tss_id "TSS8403";
+chrM    unknown exon    100000   110000   .       +       .       gene_id "CHR2_GENE"; gene_name "CHR2_GENE"; p_id "P1230"; transcript_id "NM_001005484"; tss_id "TSS14428";
+chrM    unknown exon    120000   130000   .       +       .       gene_id "CHR2_GENE2"; gene_name "CHR2_GENE2"; p_id "P1230"; transcript_id "NM_001005484"; tss_id "TSS14428";
+chrM    unknown exon    34609   35174   .       -       .       gene_id "FAM138A"; gene_name "FAM138A"; transcript_id "NR_026818_1"; tss_id "TSS8403";

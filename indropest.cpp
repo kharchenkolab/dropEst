@@ -34,22 +34,28 @@ struct Params
 	string log_prefix = "";
 	string output_name = "";
 	string reads_params_file = "";
-
-	void check_files_existence()
-	{
-		if (this->barcodes_filename != "" && !std::ifstream(this->barcodes_filename))
-			throw std::runtime_error("Can't open barcodes file '" + this->barcodes_filename + "'");
-
-		if (this->config_file_name != "" && !std::ifstream(this->config_file_name))
-			throw std::runtime_error("Can't open config file '" + this->config_file_name + "'");
-
-		if (this->gtf_filename != "" && !std::ifstream(this->gtf_filename))
-			throw std::runtime_error("Can't open GTF file '" + this->gtf_filename + "'");
-
-		if (this->reads_params_file != "" && !std::ifstream(this->reads_params_file))
-			throw std::runtime_error("Can't open reads file '" + this->reads_params_file + "'");
-	}
 };
+
+void check_files_existence(const Params &params, const vector<string> &bam_files)
+{
+	if (params.barcodes_filename != "" && !std::ifstream(params.barcodes_filename))
+		throw std::runtime_error("Can't open barcodes file '" + params.barcodes_filename + "'");
+
+	if (params.config_file_name != "" && !std::ifstream(params.config_file_name))
+		throw std::runtime_error("Can't open config file '" + params.config_file_name + "'");
+
+	if (params.gtf_filename != "" && !std::ifstream(params.gtf_filename))
+		throw std::runtime_error("Can't open GTF file '" + params.gtf_filename + "'");
+
+	if (params.reads_params_file != "" && !std::ifstream(params.reads_params_file))
+		throw std::runtime_error("Can't open reads file '" + params.reads_params_file + "'");
+
+	for (auto const &file : bam_files)
+	{
+		if (!std::ifstream(file))
+			throw std::runtime_error("Can't open BAM file '" + file + "'");
+	}
+}
 
 static void usage()
 {
@@ -60,7 +66,7 @@ static void usage()
 	"[-l, --log-prefix logs_name] [-r, --reads-params filename] -c config.xml file1.bam [file2.bam ...] "
 	"[-b | --bam-output] [-B | --barcodes filename] [-f, --filled-bam]" << endl;
 	cerr << "OPTIONS:\n";
-	cerr << "\t-b, --bam-output: print corrected bam files" << endl;
+	cerr << "\t-b, --bam-output: print tagged bam files" << endl;
 	cerr << "\t-B, --barcodes: path to barcodes file" << endl;
 	cerr << "\t-c, --config filename: xml file with estimation parameters" << endl;
 	cerr << "\t-f, --filled-bam: bam file already contains genes/barcodes tags" << endl;
@@ -193,8 +199,6 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	params.check_files_existence();
-
 	if (params.log_prefix.length() != 0)
 	{
 		params.log_prefix += "_";
@@ -207,13 +211,14 @@ int main(int argc, char **argv)
 		files.push_back(string(argv[optind++]));
 	}
 
+	check_files_existence(params, files);
+
 	boost::property_tree::ptree pt;
 	read_xml(params.config_file_name, pt);
 
-	time_t ctt = time(0);
 	try
 	{
-		L_TRACE << "Run: " << asctime(localtime(&ctt));
+		Tools::trace_time("Run");
 		Estimator estimator(pt.get_child("config.Estimation"));
 		CellsDataContainer container = estimator.get_cells_container(files, params.merge_tags, params.bam_output,
 		                                                             params.filled_bam, params.reads_params_file,
@@ -223,8 +228,7 @@ int main(int argc, char **argv)
 		{
 			Results::IndropResult results = estimator.get_results(container, params.not_filtered, params.reads_output);
 		
-			ctt = time(0);
-			L_TRACE << "Done: " << asctime(localtime(&ctt));
+			Tools::trace_time("Done");
 
 			if (params.text_output)
 			{
@@ -248,6 +252,5 @@ int main(int argc, char **argv)
 		L_ERR << err.what();
 		return 1;
 	}
-	ctt = time(0);
-	L_TRACE << "All done: " << asctime(localtime(&ctt));
+	Tools::trace_time("All done");
 }
