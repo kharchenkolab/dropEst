@@ -2,9 +2,10 @@
 
 namespace Tools
 {
-	GeneInfo::GeneInfo(const std::string &chr_name, std::string id, pos_t start_pos, pos_t end_pos)
+	GeneInfo::GeneInfo(const std::string &chr_name, const std::string &id, const std::string &name, pos_t start_pos, pos_t end_pos)
 			: _chr_name(chr_name)
 			, _id(id)
+			, _name(name == id ? "" : name)
 			, _start_pos(start_pos)
 			, _end_pos(end_pos)
 	{}
@@ -30,14 +31,19 @@ namespace Tools
 		this->_end_pos= std::max(this->_end_pos, other._end_pos);
 	}
 
-	std::string GeneInfo::chr_name() const
+	const std::string& GeneInfo::chr_name() const
 	{
 		return this->_chr_name;
 	}
 
-	std::string GeneInfo::id() const
+	const std::string& GeneInfo::id() const
 	{
 		return this->_id;
+	}
+
+	const std::string& GeneInfo::name() const
+	{
+		return this->_name == "" ? this->_id : this->_name;
 	}
 
 	GeneInfo::pos_t GeneInfo::start_pos() const

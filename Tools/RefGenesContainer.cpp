@@ -9,6 +9,8 @@
 #include <map>
 #include <unordered_map>
 #include <string.h>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
 
 
 namespace Tools
@@ -35,7 +37,14 @@ namespace Tools
 		if (gtf_in.fail())
 			throw std::runtime_error("Can't open GTF file: '" + gtf_filename + "'");
 
-		while (std::getline(gtf_in, record))
+		boost::iostreams::filtering_istream gz_fs;
+		if (gtf_filename.substr(gtf_filename.length() - 3) == ".gz")
+		{
+			gz_fs.push(boost::iostreams::gzip_decompressor());
+		}
+		gz_fs.push(gtf_in);
+
+		while (std::getline(gz_fs, record))
 		{
 			GeneInfo info;
 			try
@@ -145,7 +154,8 @@ namespace Tools
 			return GeneInfo();
 
 		auto gene_it = genes.begin();
-		std::string id = gene_it->id();
+		std::string id = gene_it->id(), name = gene_it->name();
+
 		if (genes.size() > 1 && this->_single_gene_names.find(id) != this->_single_gene_names.end())
 			return GeneInfo();
 
@@ -157,6 +167,7 @@ namespace Tools
 				return GeneInfo();
 
 			id += "," + gene_it->id();
+			name += "," + gene_it->name();
 
 			if (chr_name != gene_it->chr_name())
 				throw std::runtime_error("Can't use genes from different chromosomes: " + genes.begin()->chr_name() +
@@ -165,7 +176,7 @@ namespace Tools
 			end_pos = gene_it->end_pos();
 		}
 
-		return GeneInfo(genes.begin()->chr_name(), id, genes.begin()->start_pos(), end_pos);
+		return GeneInfo(genes.begin()->chr_name(), id, name, genes.begin()->start_pos(), end_pos);
 	}
 
 	GeneInfo RefGenesContainer::get_gene_info(const std::string &chr_name, pos_t start_pos, pos_t end_pos) const
@@ -227,8 +238,8 @@ namespace Tools
 		if (columns[0] == "." || columns[3] == "." || columns[4] == "." || columns.size() == 9)
 			return result;
 
-		std::string id = "";
-		for (size_t attrib_ind = 8; attrib_ind < columns.size(); ++attrib_ind)
+		std::string id, name;
+		for (size_t attrib_ind = 8; attrib_ind < columns.size() - 1; ++attrib_ind)
 		{
 			std::string key = columns[attrib_ind];
 			std::string value = columns[attrib_ind + 1];
@@ -236,11 +247,15 @@ namespace Tools
 			if (key == "gene_id")
 			{
 				id = value.substr(1, value.length() - 3);
-				break;
+			}
+
+			if (key == "gene_name")
+			{
+				name = value.substr(1, value.length() - 3);
 			}
 		}
 
-		return GeneInfo(columns[0], id, strtoul(columns[3].c_str(), NULL, 10), strtoul(columns[4].c_str(), NULL, 10));
+		return GeneInfo(columns[0], id, name, strtoul(columns[3].c_str(), NULL, 10), strtoul(columns[4].c_str(), NULL, 10));
 	}
 
 	RefGenesContainer::gene_event_t RefGenesContainer::genes_to_events(const genes_vec_t &genes)

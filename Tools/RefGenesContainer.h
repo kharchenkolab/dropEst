@@ -28,12 +28,13 @@ namespace Tools
 	public:
 		typedef unsigned long pos_t;
 
-		class ChrNotFoundException : public std::exception
+		class ChrNotFoundException : public std::runtime_error
 		{
 		public:
 			const std::string chr_name;
 			ChrNotFoundException(const std::string &chr_name)
-				: chr_name(chr_name)
+				: std::runtime_error("Can't find chromosome " + chr_name)
+				, chr_name(chr_name)
 			{}
 		};
 

@@ -173,7 +173,7 @@ namespace BamProcessing
 	{
 		if (!this->_genes_container.is_empty())
 			return this->_genes_container.get_gene_info(chr_name, alignment.Position,
-														alignment.Position + alignment.Length).id();
+														alignment.Position + alignment.Length).name();
 
 		std::string gene;
 		if (!alignment.GetTag(BamProcessor::GENE_TAG, gene))

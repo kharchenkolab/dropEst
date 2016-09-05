@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 
 	BOOST_FIXTURE_TEST_CASE(testInitGtf, Fixture)
 	{
-		const std::string gtf_filename = PROJ_DATA_PATH + (std::string)("/gtf_test.gtf");
+		const std::string gtf_filename = PROJ_DATA_PATH + (std::string)("/gtf/gtf_test.gtf.gz");
 		RefGenesContainer genes_container(gtf_filename);
 
 		BOOST_CHECK_EQUAL(genes_container._genes_intervals.size(), 3);
@@ -153,7 +153,7 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 	BOOST_FIXTURE_TEST_CASE(testGenesNames, Fixture)
 	{
 		init_test_logs(boost::log::trivial::info);
-		const std::string gtf_filename = PROJ_DATA_PATH + (std::string)("/gtf_test.gtf");
+		const std::string gtf_filename = PROJ_DATA_PATH + (std::string)("/gtf/gtf_test.gtf.gz");
 		RefGenesContainer genes_container(gtf_filename);
 
 		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 11874, 12627).id(), "DDX11L1");
@@ -167,8 +167,8 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chrX", 0, 34608).id(), "");
 		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chrX", 34609, 34612).id(), "FAM138A");
 		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chrX", 34609, 35174).id(), "FAM138A");
-		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chrX", 100000, 110000).id(), "CHRX_GENE,CHRX_GENE2");
-		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chrX", 100000, 130000).id(), "CHRX_GENE,CHRX_GENE2");
+		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chrX", 100000, 110000).name(), "CHRX_GENE,CHRX_GENE2");
+		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chrX", 100000, 130000).name(), "CHRX_GENE,CHRX_GENE2");
 
 		BOOST_CHECK_THROW(genes_container.get_gene_info("chr3", 0, 100), RefGenesContainer::ChrNotFoundException);
 		BOOST_CHECK_THROW(genes_container.get_gene_info("chrM", 100000, 130000), RefGenesContainer::ChrNotFoundException);
@@ -180,8 +180,7 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 //
 //		time_t t0 = clock();
 //		std::cout << "Start init " << std::endl;
-////		RefGenesContainer genes_container(PROJ_DATA_PATH + (std::string) "/gencode.v24.chr_patch_hapl_scaff.annotation.gtf");
-//		RefGenesContainer genes_container(PROJ_DATA_PATH + (std::string) "/Homo_sapiens.GRCh38.84.chr_patch_hapl_scaff.gtf");
+//		RefGenesContainer genes_container(PROJ_DATA_PATH + (std::string) "/gtf/gencode.v19.annotation.gtf.gz");
 //		double t_len = (clock() - t0) / (CLOCKS_PER_SEC / 1000.0);
 //		std::cout << "End init: " << t_len << "ms" << std::endl;
 //
@@ -192,7 +191,7 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 //		{
 //			int sp = rand() % 1000000;
 //			t0 = clock();
-//			genes_container.get_gene_info("chr3", sp, sp + rand() % 1000000);
+//			genes_container.get_gene_info("chr10", sp, sp + rand() % 1000000);
 //			t_len += (clock() - t0) / (CLOCKS_PER_SEC / 1000.0);
 //		}
 //		std::cout << "End 100000 search: " << t_len << "ms" << std::endl;
