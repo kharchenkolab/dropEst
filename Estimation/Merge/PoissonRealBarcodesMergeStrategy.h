@@ -26,6 +26,7 @@ namespace Merge
 
 	private:
 		static const double max_merge_prob;
+		static const double max_real_cb_merge_prob;
 
 		bs_umi_t _umis_number;
 
@@ -37,15 +38,12 @@ namespace Merge
 		double get_bootstrap_intersect_prob(const CellsDataContainer &container, size_t cell1_ind, size_t cell2_ind,
 											size_t fit_size = 3000, unsigned multiplies_count = 4) const;
 
-		static const s_ul_hash_t::key_type & get_key(const s_ul_hash_t::value_type & pair);
-		static const names_t intersect_keys(const s_ul_hash_t &map1, const s_ul_hash_t &map2);
-
 	protected:
-		virtual long get_best_merge_target(const CellsDataContainer &container, size_t base_cell_ind, const ul_list_t &neighbour_cells) const override;
-
 		virtual void init(const Estimation::CellsDataContainer &container) override;
-
 		virtual void release() override;
+
+		virtual long get_best_merge_target(const CellsDataContainer &container, size_t base_cell_ind, const ul_list_t &neighbour_cells) const override;
+		virtual long get_max_merge_dist(long min_real_cb_dist) const override;
 
 	public:
 		PoissonRealBarcodesMergeStrategy(const std::string &barcodes_filename, size_t barcode2_length,

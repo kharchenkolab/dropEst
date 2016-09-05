@@ -31,7 +31,7 @@ namespace Estimation
 		typedef boost::unordered_map<std::string, size_t> s_ul_hash_t;
 		typedef boost::unordered_map<std::string, u_u_hash_t> s_uu_hash_t;
 
-		typedef std::map<std::string, int> s_i_map_t;
+		typedef std::map<std::string, size_t> s_i_map_t;
 		typedef std::map<std::string, s_i_map_t> genes_t;
 
 		typedef std::vector<Tools::IndexedValue> i_counter_t;
@@ -63,7 +63,7 @@ namespace Estimation
 
 		void merge_and_filter(const CellsDataContainer::s_uu_hash_t &umig_cells_counts);
 
-		int add_record(const std::string &cell_barcode, const std::string &umi, const std::string &gene, s_i_map_t &cells_ids);
+		size_t add_record(const std::string &cell_barcode, const std::string &umi, const std::string &gene, s_i_map_t &cells_ids);
 
 		void merge(size_t source_cell_ind, size_t target_cell_ind);
 

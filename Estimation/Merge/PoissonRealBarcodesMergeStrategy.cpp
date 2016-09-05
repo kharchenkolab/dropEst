@@ -9,11 +9,7 @@ namespace Estimation
 namespace Merge
 {
 	const double PoissonRealBarcodesMergeStrategy::max_merge_prob = 1e-5;
-
-	const PoissonRealBarcodesMergeStrategy::s_ul_hash_t::key_type & PoissonRealBarcodesMergeStrategy::get_key(const s_ul_hash_t::value_type & pair)
-	{
-		return pair.first;
-	}
+	const double PoissonRealBarcodesMergeStrategy::max_real_cb_merge_prob = 1e-7;
 
 	PoissonRealBarcodesMergeStrategy::PoissonRealBarcodesMergeStrategy(const std::string &barcodes_filename, size_t barcode2_length,
 																	   int min_genes_before_merge, int min_genes_after_merge,
@@ -25,6 +21,11 @@ namespace Merge
 	long PoissonRealBarcodesMergeStrategy::get_best_merge_target(const CellsDataContainer &container, size_t base_cell_ind,
 																 const ul_list_t &neighbour_cells) const
 	{
+		bool is_base_cb_real = base_cell_ind == neighbour_cells[0];
+		double max_merge_prob = is_base_cb_real
+								? PoissonRealBarcodesMergeStrategy::max_merge_prob
+								: PoissonRealBarcodesMergeStrategy::max_real_cb_merge_prob;
+
 		long best_target = -1;
 		double min_prob = 2;
 		for (auto cell_ind : neighbour_cells)
@@ -40,8 +41,8 @@ namespace Merge
 			}
 		}
 
-		if (min_prob > PoissonRealBarcodesMergeStrategy::max_merge_prob)
-			return -1;
+		if (min_prob > max_merge_prob)
+			return is_base_cb_real ? (long) base_cell_ind : -1;
 
 		return best_target;
 	}
@@ -111,21 +112,6 @@ namespace Merge
 		return estimated;
 	}
 
-	const PoissonRealBarcodesMergeStrategy::names_t PoissonRealBarcodesMergeStrategy::intersect_keys(const s_ul_hash_t &map1, const s_ul_hash_t &map2)
-	{
-		typedef const s_ul_hash_t::key_type & (*get_key_t)(const s_ul_hash_t::value_type &);
-		typedef boost::transform_iterator<get_key_t, s_ul_hash_t::const_iterator> key_iterator_t;
-
-		names_t intersection;
-		std::set_intersection(key_iterator_t(map1.begin(), PoissonRealBarcodesMergeStrategy::get_key),
-							  key_iterator_t(map1.end(), PoissonRealBarcodesMergeStrategy::get_key),
-							  key_iterator_t(map2.begin(), PoissonRealBarcodesMergeStrategy::get_key),
-							  key_iterator_t(map2.end(), PoissonRealBarcodesMergeStrategy::get_key),
-							  std::back_inserter(intersection));
-
-		return intersection;
-	}
-
 	double PoissonRealBarcodesMergeStrategy::estimate_by_r(ul_list_t sizes, size_t val) const
 	{
 		(*this->_r)["sizes"] = sizes;
@@ -181,6 +167,11 @@ namespace Merge
 		}
 
 		return repeats_sum / (double) repeats_count;
+	}
+
+	long PoissonRealBarcodesMergeStrategy::get_max_merge_dist(long min_real_cb_dist) const
+	{
+		return min_real_cb_dist == 0 ? 2 : min_real_cb_dist + 1;
 	}
 }
 }

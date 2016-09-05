@@ -103,9 +103,6 @@ namespace Estimation
 
 			this->fill_distances_to_cb(cb_part1, cb_part2, dists1, dists2);
 
-			if (dists1[0].value == 0 && dists2[0].value == 0)
-				return base_cell_ind;
-
 			L_DEBUG <<"Get real neighbours to " << base_cb;
 			ul_list_t neighbour_cells = this->get_real_neighbour_cbs(container, base_cb, dists1, dists2);
 			if (neighbour_cells.empty())
@@ -118,6 +115,9 @@ namespace Estimation
 		long RealBarcodesMergeStrategy::get_best_merge_target(const CellsDataContainer &container, size_t base_cell_ind,
 															  const MergeStrategyAbstract::ul_list_t &neighbour_cells) const
 		{
+			if (neighbour_cells[0] == base_cell_ind)
+				return base_cell_ind;
+
 			double max_umigs_intersection_frac = 0;
 			size_t best_neighbour_cell_ind = neighbour_cells[0];
 			for (size_t neighbour_cell_ind: neighbour_cells)
@@ -165,14 +165,17 @@ namespace Estimation
 				}
 			}
 
+			ul_list_t neighbour_cbs;
+			if (real_cell_inds.empty())
+				return neighbour_cbs;
+
 			sort(real_cell_inds.begin(), real_cell_inds.end(), [](const tuple_t &t1, const tuple_t &t2){ return std::get<2>(t1) < std::get<2>(t2);});
 
-			ul_list_t neighbour_cbs;
-			long prev_dist = std::numeric_limits<long>::max();
+			long max_dist = this->get_max_merge_dist(std::get<2>(real_cell_inds.front()));
 			for (auto const & inds: real_cell_inds)
 			{
 				long cur_ed = std::get<2>(inds);
-				if (cur_ed > prev_dist && !neighbour_cbs.empty())
+				if (cur_ed > max_dist && !neighbour_cbs.empty())
 					break;
 
 				std::string current_cb = this->_barcodes1[std::get<0>(inds)] + this->_barcodes2[std::get<1>(inds)];
@@ -186,7 +189,6 @@ namespace Estimation
 				{
 					container.stats().add(Estimation::Stats::MERGE_REJECTION_BY_CELL, current_cb, base_cb, cur_ed);
 				}
-				prev_dist = cur_ed;
 			}
 
 			return neighbour_cbs;
@@ -300,6 +302,11 @@ namespace Estimation
 			MergeStrategyAbstract::release();
 			this->_barcodes1.clear();
 			this->_barcodes2.clear();
+		}
+
+		long RealBarcodesMergeStrategy::get_max_merge_dist(long min_real_cb_dist) const
+		{
+			return min_real_cb_dist;
 		}
 	}
 }

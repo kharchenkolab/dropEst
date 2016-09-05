@@ -28,7 +28,7 @@ namespace Estimation
 		this->update_cells_genes_counts(this->_merge_strategy->min_genes_after_merge(), false);
 	}
 
-	int CellsDataContainer::add_record(const string &cell_barcode, const string &umi, const string &gene, s_i_map_t &cells_ids)
+	size_t CellsDataContainer::add_record(const string &cell_barcode, const string &umi, const string &gene, s_i_map_t &cells_ids)
 	{
 		if (this->_is_initialized)
 			throw runtime_error("Container is already initialized");
@@ -40,7 +40,7 @@ namespace Estimation
 			this->_cell_ids_by_cb[cell_barcode] = this->_cell_barcodes.size();
 			this->_cell_barcodes.push_back(cell_barcode);
 		}
-		int cell_id = res.first->second;
+		size_t cell_id = res.first->second;
 		this->_cells_genes[cell_id][gene][umi]++;
 
 		L_DEBUG << "CB/UMI=" << this->_cells_genes[cell_id][gene][umi] << " gene=" <<

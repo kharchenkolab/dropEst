@@ -30,6 +30,7 @@ namespace Estimation
 		            Named("cell_nonexone_reads_per_chr") = wrap(stats.get_raw(Stats::NON_EXONE_READS_PER_CHR_PER_CELL)),
 		            Named("reads_per_umig") = wrap(stats.get_raw(Stats::READS_PER_UMIG_PER_CELL)),
 		            Named("reads_per_umi") = wrap(stats.get_raw(Stats::READS_PER_UMI_PER_CELL)),
+		            Named("umis_per_chr") = wrap(stats.get_raw(Stats::EXONE_UMIS_PER_CHR_PER_CELL)),
 
 		            Named("merges_count") = wrap(stats.get_raw_stat(Stats::MERGES_COUNT_PER_CB)),
 

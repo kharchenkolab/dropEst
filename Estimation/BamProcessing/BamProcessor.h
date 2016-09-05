@@ -37,7 +37,7 @@ namespace Estimation
 
 			std::string get_gene(const std::string &chr_name, BamTools::BamAlignment alignment) const;
 
-			static int save_read_data(const std::string &chr_name, const std::string &cell_barcode, const std::string &umi,
+			static size_t save_read_data(const std::string &chr_name, const std::string &cell_barcode, const std::string &umi,
 									  const std::string &gene, CellsDataContainer::s_i_map_t &cells_ids,
 									  CellsDataContainer::s_uu_hash_t &umig_cells_counts, CellsDataContainer &container);
 

@@ -59,7 +59,7 @@ namespace BamProcessing
 		}
 
 		BamAlignment alignment;
-		int max_cell_id = 0;
+		size_t max_cell_id = 0;
 		long total_reads = 0, exonic_reads = 0;
 		std::unordered_set<std::string> unexpected_chromosomes;
 
@@ -145,11 +145,11 @@ namespace BamProcessing
 		return true;
 	}
 
-	int BamProcessor::save_read_data(const std::string &chr_name, const std::string &cell_barcode, const std::string &umi,
+	size_t BamProcessor::save_read_data(const std::string &chr_name, const std::string &cell_barcode, const std::string &umi,
 									 const std::string &gene, CellsDataContainer::s_i_map_t &cells_ids,
 									 CellsDataContainer::s_uu_hash_t &umig_cells_counts, CellsDataContainer &container)
 	{
-		int cell_id = container.add_record(cell_barcode, umi, gene, cells_ids);
+		size_t cell_id = container.add_record(cell_barcode, umi, gene, cells_ids);
 
 		std::string umig = umi + gene;
 		umig_cells_counts[umig][cell_id]++;
@@ -161,6 +161,12 @@ namespace BamProcessing
 		container.stats().inc(Stats::READS_PER_UMIG_PER_CELL, cell_barcode, umig);
 		container.stats().inc(Stats::EXONE_READS_PER_CHR_PER_CELL, cell_barcode, chr_name);
 		container.stats().inc(Stats::UMI_PER_CELL, cell_barcode, umi);
+
+		if (container.cell_genes(cell_id).at(gene).at(umi) == 1)
+		{
+			container.stats().inc(Stats::EXONE_UMIS_PER_CHR_PER_CELL, cell_barcode, chr_name);
+		}
+
 		return cell_id;
 	}
 

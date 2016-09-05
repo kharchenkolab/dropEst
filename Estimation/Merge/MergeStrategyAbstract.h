@@ -15,7 +15,7 @@ namespace Merge
 		typedef boost::unordered_map<size_t, size_t> u_u_hash_t;
 		typedef boost::unordered_map<std::string, u_u_hash_t> s_uu_hash_t;
 
-		typedef std::map<std::string, int> s_i_map_t;
+		typedef std::map<std::string, size_t> s_i_map_t;
 
 		typedef std::vector<Tools::IndexedValue> i_counter_t;
 		typedef std::vector<size_t> ul_list_t;
