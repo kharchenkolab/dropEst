@@ -136,7 +136,7 @@ namespace Estimation
 //		                     base_cb, max_umigs_intersection_frac);
 
 			if (max_umigs_intersection_frac < this->_min_merge_fraction)
-				return base_cell_ind;
+				return -1;
 
 			return best_neighbour_cell_ind;
 		}
@@ -206,7 +206,7 @@ namespace Estimation
 			}
 
 			size_t intersect_size = RealBarcodesMergeStrategy::get_umigs_intersect_size(cell1_dist, cell2_dist);
-			return intersect_size / (double) std::min(cell1_umigs, cell2_umigs);
+			return 0.5 * (intersect_size / (double) cell1_umigs + intersect_size / (double) cell2_umigs);
 		}
 
 		size_t RealBarcodesMergeStrategy::get_umigs_intersect_size(const genes_t &cell1_dist, const genes_t &cell2_dist)
