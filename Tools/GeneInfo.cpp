@@ -7,9 +7,7 @@ namespace Tools
 			, _id(id)
 			, _start_pos(start_pos)
 			, _end_pos(end_pos)
-	{
-		this->_chr_num = GeneInfo::parse_chr_name(chr_name);
-	}
+	{}
 
 	bool GeneInfo::is_valid() const
 	{
@@ -55,15 +53,5 @@ namespace Tools
 	GeneInfo::pos_t GeneInfo::size() const
 	{
 		return this->end_pos() - this->start_pos();
-	}
-
-	GeneInfo::num_t GeneInfo::chr_num() const
-	{
-		return this->_chr_num;
-	}
-
-	GeneInfo::num_t GeneInfo::parse_chr_name(const std::string &chr_name) //TODO Replace index by full name
-	{
-		return chr_name.length() > 2 ? (num_t)atoi(chr_name.substr(3).c_str()) : (num_t)atoi(chr_name.c_str());
 	}
 }

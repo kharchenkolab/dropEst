@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <unordered_set>
+#include <unordered_map>
 
 namespace TestTools
 {
@@ -27,6 +28,15 @@ namespace Tools
 	public:
 		typedef unsigned long pos_t;
 
+		class ChrNotFoundException : public std::exception
+		{
+		public:
+			const std::string chr_name;
+			ChrNotFoundException(const std::string &chr_name)
+				: chr_name(chr_name)
+			{}
+		};
+
 	private:
 		typedef std::set<GeneInfo> genes_set;
 		struct Interval
@@ -40,9 +50,13 @@ namespace Tools
 		typedef std::multimap<pos_t, const GeneInfo*> gene_event_t;
 		typedef std::vector<GeneInfo> genes_vec_t;
 		typedef std::vector<Interval> intervals_vec_t;
+		typedef std::unordered_map<std::string, intervals_vec_t> intervals_map_t;
 
 	private:
-		std::vector<intervals_vec_t> _genes_intervals;
+		static const int min_interval_len;
+		static const double read_intersection_significant_part;
+
+		intervals_map_t _genes_intervals;
 		std::unordered_set<std::string> _single_gene_names;
 		bool _is_empty;
 

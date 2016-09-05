@@ -61,6 +61,8 @@ namespace BamProcessing
 		BamAlignment alignment;
 		int max_cell_id = 0;
 		long total_reads = 0, exonic_reads = 0;
+		std::unordered_set<std::string> unexpected_chromosomes;
+
 		while (reader.GetNextAlignment(alignment))
 		{
 			total_reads++;
@@ -85,7 +87,20 @@ namespace BamProcessing
 			std::string cell_barcode = read_params.cell_barcode(), umi = read_params.umi_barcode();
 			container.stats().inc(Stats::READS_PER_UMI_PER_CELL, cell_barcode, umi);
 
-			std::string gene = this->get_gene(chr_name, alignment);
+			std::string gene;
+			try
+			{
+				gene = this->get_gene(chr_name, alignment);
+			}
+			catch (Tools::RefGenesContainer::ChrNotFoundException ex)
+			{
+				if (unexpected_chromosomes.emplace(ex.chr_name).second)
+				{
+					L_WARN << "WARNING: Can't find chromosome '" << ex.chr_name << "'";
+				}
+				continue;
+			}
+
 			if (print_result_bam)
 			{
 				BamProcessor::write_alignment(writer, alignment, gene, read_params);

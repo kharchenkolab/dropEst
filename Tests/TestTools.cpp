@@ -117,37 +117,37 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 		RefGenesContainer genes_container(gtf_filename);
 
 		BOOST_CHECK_EQUAL(genes_container._genes_intervals.size(), 3);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][0].start_pos, 11874);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][0].end_pos, 14209);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][1].start_pos, 14362);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][1].end_pos, 18366);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][2].start_pos, 24321);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][2].end_pos, 29370);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][3].start_pos, 34611);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][3].end_pos, 35174);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][4].start_pos, 35277);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][4].end_pos, 35481);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][5].start_pos, 69091);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][5].end_pos, 69500);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][0].start_pos, 11874);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][0].end_pos, 14209);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][1].start_pos, 14362);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][1].end_pos, 18366);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][2].start_pos, 24321);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][2].end_pos, 29370);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][3].start_pos, 34611);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][3].end_pos, 35174);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][4].start_pos, 35277);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][4].end_pos, 35481);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][5].start_pos, 69091);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][5].end_pos, 69500);
 
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][6].start_pos, 69500);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][6].end_pos, 69791);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][7].start_pos, 69791);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][7].end_pos, 70008);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][8].start_pos, 70008);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][8].end_pos, 71005);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][9].start_pos, 71005);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][9].end_pos, 72008);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][6].start_pos, 69500);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][6].end_pos, 69791);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][7].start_pos, 69791);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][7].end_pos, 70008);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][8].start_pos, 70008);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][8].end_pos, 71005);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][9].start_pos, 71005);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][9].end_pos, 72008);
 
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][0].genes.size(), 1);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][3].genes.size(), 2);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][4].genes.size(), 2);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][6].genes.size(), 2);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][7].genes.size(), 3);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][8].genes.size(), 2);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1][9].genes.size(), 1);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[1].size(), 10);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals[2].size(), 3);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][0].genes.size(), 1);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][3].genes.size(), 2);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][4].genes.size(), 2);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][6].genes.size(), 2);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][7].genes.size(), 3);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][8].genes.size(), 2);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][9].genes.size(), 1);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"].size(), 10);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr2"].size(), 3);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testGenesNames, Fixture)
@@ -160,21 +160,18 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 17106, 17742).id(), "WASH7P");
 		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 17106, 24748).id(), "");
 		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 30000, 31000).id(), "");
-		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 34621, 35074).id(), "FAM138A,FAM138F");
+		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 34621, 35074).id(), "");
 //		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 69791, 69793).id(), "AR4F5,BR4F5,OR4F5");
 //		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 50000, 69793).id(), "AR4F5,BR4F5,OR4F5");
 //		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 35277, 69793).id(), "AR4F5,BR4F5,FAM138A,FAM138F,OR4F5");
-		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 69791, 69793).id(), "");
-		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 50000, 69793).id(), "OR4F5");
-		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 35277, 69793).id(), "");
-		BOOST_CHECK_NO_THROW(genes_container.get_gene_info("chr1", 35277, 105000));
-		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 34621, 35074).id(), "FAM138A,FAM138F");
-	}
+		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chrX", 0, 34608).id(), "");
+		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chrX", 34609, 34612).id(), "FAM138A");
+		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chrX", 34609, 35174).id(), "FAM138A");
+		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chrX", 100000, 110000).id(), "CHRX_GENE,CHRX_GENE2");
+		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chrX", 100000, 130000).id(), "CHRX_GENE,CHRX_GENE2");
 
-	BOOST_FIXTURE_TEST_CASE(testOther, Fixture)
-	{
-		BOOST_CHECK_EQUAL(GeneInfo::parse_chr_name("chr17"), 17);
-		BOOST_CHECK_EQUAL(GeneInfo::parse_chr_name("chr17_ctg5_hap1"), 17);
+		BOOST_CHECK_THROW(genes_container.get_gene_info("chr3", 0, 100), RefGenesContainer::ChrNotFoundException);
+		BOOST_CHECK_THROW(genes_container.get_gene_info("chrM", 100000, 130000), RefGenesContainer::ChrNotFoundException);
 	}
 
 //	BOOST_FIXTURE_TEST_CASE(testGtfPerformance, Fixture) //Uncomment to print performance
