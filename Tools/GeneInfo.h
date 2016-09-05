@@ -15,21 +15,22 @@ namespace Tools
 		friend struct TestTools::testGtf;
 		friend struct TestTools::testGeneMerge;
 	public:
-		typedef unsigned int num_t;
 		typedef unsigned long pos_t;
 
 	private:
 		std::string _chr_name = "";
 		std::string _id = "";
+		std::string _name = "";
 		pos_t _start_pos;
 		pos_t _end_pos;
 
 	public:
 		GeneInfo() = default;
-		GeneInfo(const std::string &chr_name, std::string id, pos_t start_pos, pos_t end_pos);
+		GeneInfo(const std::string &chr_name, const std::string &id, const std::string &name, pos_t start_pos, pos_t end_pos);
 
-		std::string chr_name() const;
-		std::string id() const;
+		const std::string& chr_name() const;
+		const std::string& id() const;
+		const std::string& name() const;
 		pos_t start_pos() const;
 		pos_t end_pos() const;
 		pos_t size() const;
