@@ -24,22 +24,22 @@ struct Fixture
 	{
 		Tools::init_test_logs(boost::log::trivial::info);
 		CellsDataContainer::s_i_map_t cells_ids;
-		this->container_full.add_record("AAATTAGGTCCA", "AAACCT", "Gene1", cells_ids);
+		this->container_full.add_record("AAATTAGGTCCA", "AAACCT", "Gene1", cells_ids); //0
 		this->container_full.add_record("AAATTAGGTCCA", "CCCCCT", "Gene2", cells_ids);
 		this->container_full.add_record("AAATTAGGTCCA", "ACCCCT", "Gene3", cells_ids);
 
-		this->container_full.add_record("AAATTAGGTCCC", "CAACCT", "Gene1", cells_ids);
+		this->container_full.add_record("AAATTAGGTCCC", "CAACCT", "Gene1", cells_ids); //1
 
-		this->container_full.add_record("AAATTAGGTCCG", "CAACCT", "Gene1", cells_ids);
+		this->container_full.add_record("AAATTAGGTCCG", "CAACCT", "Gene1", cells_ids); //2
 
-		this->container_full.add_record("AAATTAGGTCGG", "AAACCT", "Gene1", cells_ids);
+		this->container_full.add_record("AAATTAGGTCGG", "AAACCT", "Gene1", cells_ids); //3
 		this->container_full.add_record("AAATTAGGTCGG", "CCCCCT", "Gene2", cells_ids);
 
-		this->container_full.add_record("CCCTTAGGTCCA", "CCATTC", "Gene3", cells_ids);
+		this->container_full.add_record("CCCTTAGGTCCA", "CCATTC", "Gene3", cells_ids); //4
 		this->container_full.add_record("CCCTTAGGTCCA", "CCCCCT", "Gene2", cells_ids);
 		this->container_full.add_record("CCCTTAGGTCCA", "ACCCCT", "Gene3", cells_ids);
 
-		this->container_full.add_record("CAATTAGGTCCG", "CAACCT", "Gene1", cells_ids);
+		this->container_full.add_record("CAATTAGGTCCG", "CAACCT", "Gene1", cells_ids); //5
 		this->container_full.add_record("CAATTAGGTCCG", "AAACCT", "Gene1", cells_ids);
 		this->container_full.add_record("CAATTAGGTCCG", "CCCCCT", "Gene2", cells_ids);
 		this->container_full.set_initialized();
@@ -235,7 +235,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 2), 1);
 		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 3), 0);
 		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 4), 0);
-		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 5), 1);
+		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 5), 0);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testMergeByRealBarcodes, Fixture)
@@ -248,19 +248,18 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 			return;
 
 		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[0]).size(), 3);
-		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[1]).size(), 2);
+		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[1]).size(), 1);
 
-		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[0]).at("Gene1").size(), 1);
-		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[0]).at("Gene1").at("AAACCT"), 2);
+		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[0]).at("Gene1").size(), 2);
+		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[0]).at("Gene1").at("AAACCT"), 3);
 		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[0]).at("Gene2").size(), 1);
-		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[0]).at("Gene2").at("CCCCCT"), 3);
+		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[0]).at("Gene2").at("CCCCCT"), 4);
 		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[0]).at("Gene3").size(), 2);
 		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[0]).at("Gene3").at("ACCCCT"), 2);
 		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[0]).at("Gene3").at("CCATTC"), 1);
 
-		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[1]).at("Gene1").size(), 2);
-		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[1]).at("Gene2").size(), 1);
-		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[1]).at("Gene1").at("CAACCT"), 3);
+		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[1]).at("Gene1").size(), 1);
+		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[1]).at("Gene1").at("CAACCT"), 2);
 	}
 
 BOOST_AUTO_TEST_SUITE_END()
