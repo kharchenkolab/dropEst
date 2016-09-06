@@ -129,28 +129,28 @@ namespace Merge
 		std::vector<size_t >c1_dist, c2_dist;
 		for (auto const &item : cell1_dist)
 		{
-			if (cell2_dist.find(item.first) == cell2_dist.end())
+			auto const& cell2_it = cell2_dist.find(item.first);
+			if (cell2_it == cell2_dist.end())
 				continue;
 
 			c1_dist.push_back(item.second.size());
-			c2_dist.push_back(item.second.size());
+			c2_dist.push_back(cell2_it->second.size());
 		}
 
 		size_t repeats_sum = 0;
-		std::vector<unsigned> intersection_marks(this->_umis_number, 0);
+		std::vector<bs_umi_t> intersection_marks(this->_umis_number, 0);
 		for (unsigned repeat_num = 1; repeat_num <= repeats_count; ++repeat_num)
 		{
 			size_t intersect_size = 0;
-			auto cell2_it = c2_dist.begin();
-			for (auto const &cell1_gene_size : c1_dist)
+			for (auto c1_it = c1_dist.begin(), c2_it = c2_dist.begin(); c1_it != c1_dist.end(); ++c1_it, ++c2_it)
 			{
+				size_t cell1_gene_size = *c1_it;
 				for (size_t choice_num = 0; choice_num < cell1_gene_size; ++choice_num)
 				{
 					intersection_marks[this->_umis_bootstrap_distribution[rand() % this->_umis_bootstrap_distribution.size()]] = repeat_num;
 				}
 
-				size_t cell2_gene_size = *cell2_it;
-
+				size_t cell2_gene_size = *c2_it;
 				for (size_t choice_num = 0; choice_num < cell2_gene_size; ++choice_num)
 				{
 					bs_umi_t umi = this->_umis_bootstrap_distribution[rand() % this->_umis_bootstrap_distribution.size()];
@@ -160,7 +160,6 @@ namespace Merge
 						intersection_marks[umi] = 0;
 					}
 				}
-				++cell2_it;
 			}
 			sizes.push_back(intersect_size);
 			repeats_sum += intersect_size >= real_intersect_size;
