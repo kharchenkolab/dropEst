@@ -36,7 +36,7 @@ namespace Merge
 
 	private:
 		double get_bootstrap_intersect_prob(const CellsDataContainer &container, size_t cell1_ind, size_t cell2_ind,
-											size_t fit_size = 3000, unsigned multiplies_count = 4) const;
+											size_t repeats_count = 700, unsigned multiplies_count = 3) const;
 
 	protected:
 		virtual void init(const Estimation::CellsDataContainer &container) override;

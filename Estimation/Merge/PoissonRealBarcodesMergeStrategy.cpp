@@ -75,8 +75,9 @@ namespace Merge
 
 	double PoissonRealBarcodesMergeStrategy::get_bootstrap_intersect_prob(const CellsDataContainer &container,
 																		  size_t cell1_ind, size_t cell2_ind,
-																		  size_t fit_size, unsigned multiplies_count) const
+																		  size_t repeats_count, unsigned multiplies_count) const
 	{
+		const size_t test_sample_size = 100;
 		auto const &cell1_dist = container.cell_genes(cell1_ind);
 		auto const &cell2_dist = container.cell_genes(cell2_ind);
 		size_t intersect_size = RealBarcodesMergeStrategy::get_umigs_intersect_size(cell1_dist, cell2_dist);
@@ -85,39 +86,36 @@ namespace Merge
 
 		ul_list_t sizes;
 
-		for (size_t repeats_count = 100; repeats_count < 1001 && repeats_count < fit_size; repeats_count += 900)
+		sizes.reserve(test_sample_size);
+		double prob = this->get_bootstrap_intersect_sizes(cell1_dist, cell2_dist, intersect_size, test_sample_size, sizes);
+
+		if (prob > 0.05) // Just to speed up
+			return prob;
+
+		for (unsigned i = 0; i < multiplies_count; ++i)
 		{
 			sizes.clear();
 			sizes.reserve(repeats_count);
-			double prob = this->get_bootstrap_intersect_sizes(cell1_dist, cell2_dist, intersect_size, repeats_count, sizes);
+			this->get_bootstrap_intersect_sizes(cell1_dist, cell2_dist, intersect_size, repeats_count, sizes);
+			double estimated = this->estimate_by_r(sizes, intersect_size);
 
-			if (prob > 0.1)
-				return prob;
-		}
-
-		double estimated = -1, prob = -1;
-		for (unsigned i = 1; i <= multiplies_count; ++i)
-		{
-			size_t repeats_count = fit_size * i; // TODO remove (it can fix only high probabilities, we don't care about it); replace 4 / size with std
-			sizes.clear();
-			sizes.reserve(repeats_count);
-			prob = this->get_bootstrap_intersect_sizes(cell1_dist, cell2_dist, intersect_size, repeats_count, sizes);
-			estimated = this->estimate_by_r(sizes, intersect_size);
-			if (prob == 0 && estimated < 4. / repeats_count || estimated > 0 && prob > 0 && estimated / prob <= 4 && prob / estimated <= 4) // check for outliers
+			if (estimated != -1)
 				return estimated;
+
+			repeats_count *= 2;
 		}
 
-		L_WARN << "Not stable estimation: " << container.cell_barcode(cell1_ind) << ", " <<
-					container.cell_barcode(cell2_ind) << "; probs: (" << estimated << ", " << prob << ")";
-		return estimated;
+		return 2;
 	}
 
 	double PoissonRealBarcodesMergeStrategy::estimate_by_r(ul_list_t sizes, size_t val) const
 	{
 		(*this->_r)["sizes"] = sizes;
-		(*this->_r)["val"] = val - 1;
-		this->_r->parseEvalQ("p_fit = fitdistr(sizes, \"poisson\")\n"
-							  "res <- ppois(lambda=p_fit$estimate[1], q = val, lower.tail=F)");
+		(*this->_r)["val"] = val;
+		this->_r->parseEvalQ("p_fit <- fitdistr(sizes, \"poisson\")\n"
+							  "res <- ppois(lambda=p_fit$estimate[1], q = val - 1, lower.tail=F)\n"
+							  "res_upper <- ppois(lambda=p_fit$estimate[1] + 3 * p_fit$sd, q = val - 1, lower.tail=F)\n"
+							  "if (res_upper > 4 * res) {res <- -1}\n"); // Check that we have enough observations
 		return (*this->_r)["res"];
 	}
 
