@@ -29,22 +29,22 @@ namespace Estimation
 			if (not_filtered)
 			{
 				L_TRACE << "Fill exone results";
-				stats.get(Stats::EXONE_READS_PER_CHR_PER_CELL, this->ex_cell_names, this->chr_names,
+				stats.get(Stats::EXONE_READS_PER_CHR_PER_CELL, this->ex_cell_names, this->ex_chr_names,
 						  this->ex_cells_chr_reads_counts);
-				this->chr_names.clear();
+
 				L_TRACE << "Fill nonexone results";
-				stats.get(Stats::NON_EXONE_READS_PER_CHR_PER_CELL, this->nonex_cell_names, this->chr_names,
+				stats.get(Stats::NON_EXONE_READS_PER_CHR_PER_CELL, this->nonex_cell_names, this->nonex_chr_names,
 						  this->nonex_cells_chr_reads_counts);
 			}
 			else
 			{
 				L_TRACE << "Fill exone results";
 				stats.get_filtered(Stats::EXONE_READS_PER_CHR_PER_CELL, this->cm.cell_names, this->ex_cell_names,
-								   this->chr_names, this->ex_cells_chr_reads_counts);
-				this->chr_names.clear();
+								   this->ex_chr_names, this->ex_cells_chr_reads_counts);
+
 				L_TRACE << "Fill nonexone results";
 				stats.get_filtered(Stats::NON_EXONE_READS_PER_CHR_PER_CELL, this->cm.cell_names,
-								   this->nonex_cell_names, this->chr_names, this->nonex_cells_chr_reads_counts);
+								   this->nonex_cell_names, this->nonex_chr_names, this->nonex_cells_chr_reads_counts);
 			}
 		}
 
@@ -58,14 +58,14 @@ namespace Estimation
 
 			R->parseEvalQ(
 					"d$ex_cells_chr_counts<-as.data.frame(matrix(d$ex_cells_chr_counts, length(d$ex_counts_cell_names), "
-							"length(d$counts_chr_names), byrow = TRUE), row.names = d$ex_counts_cell_names); "
-							"colnames(d$ex_cells_chr_counts)<-d$counts_chr_names; d$ex_counts_cell_names<-NULL;");
+							"length(d$ex_chr_names), byrow = TRUE), row.names = d$ex_counts_cell_names); "
+							"colnames(d$ex_cells_chr_counts)<-d$ex_chr_names; d$ex_counts_cell_names<-NULL; d$ex_chr_names<-NULL");
 
 			R->parseEvalQ(
 					"d$nonex_cells_chr_counts<-as.data.frame(matrix(d$nonex_cells_chr_counts, length(d$nonex_counts_cell_names), "
-							"length(d$counts_chr_names), byrow = TRUE), row.names = d$nonex_counts_cell_names); "
-							"colnames(d$nonex_cells_chr_counts)<-d$counts_chr_names; d$nonex_counts_cell_names<-NULL;"
-							"d$counts_chr_names<-NULL;");
+							"length(d$nonex_chr_names), byrow = TRUE), row.names = d$nonex_counts_cell_names); "
+							"colnames(d$nonex_cells_chr_counts)<-d$nonex_chr_names; d$nonex_counts_cell_names<-NULL;"
+							"d$nonex_chr_names<-NULL;");
 
 			R->parseEvalQ("saveRDS(d, '" + filename + "')");
 			L_TRACE << "Done";
@@ -81,7 +81,8 @@ namespace Estimation
 						 Named("nonex_cells_chr_counts") = wrap(this->nonex_cells_chr_reads_counts),
 						 Named("ex_counts_cell_names") = wrap(this->ex_cell_names),
 						 Named("nonex_counts_cell_names") = wrap(this->nonex_cell_names),
-						 Named("counts_chr_names") = wrap(this->chr_names),
+						 Named("ex_chr_names") = wrap(this->ex_chr_names),
+						 Named("nonex_chr_names") = wrap(this->nonex_chr_names),
 						 Named("rpu") = wrap(this->reads_per_umi),
 						 Named("umig.cov") = wrap(this->umig_covered),
 						 Named("reads_by_umig") = wrap(this->reads_by_umig),

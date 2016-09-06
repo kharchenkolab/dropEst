@@ -120,7 +120,6 @@ namespace Estimation
 		size_t size = unmerged_cells.size() * gene_counts.size();
 		count_matrix.resize(size);
 		gene_names_header.reserve(gene_counts.size());
-		L_TRACE << "Empty matrix created";
 
 		for (size_t i = 0; i < gene_counts.size(); i++)
 		{

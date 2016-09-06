@@ -28,7 +28,8 @@ namespace Estimation
 									Named("nonex_cells_chr_counts") = wrap(this->nonex_cells_chr_reads_counts),
 									Named("ex_counts_cell_names") = wrap(this->ex_cell_names),
 									Named("nonex_counts_cell_names") = wrap(this->nonex_cell_names),
-									Named("counts_chr_names") = wrap(this->chr_names),
+									Named("ex_chr_names") = wrap(this->ex_chr_names),
+									Named("nonex_chr_names") = wrap(this->nonex_chr_names),
 									Named("exone_reads_by_cb") = wrap(this->exone_reads_by_cb),
 									Named("fname") = wrap(filename));
 			}

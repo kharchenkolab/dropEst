@@ -43,7 +43,8 @@ namespace Estimation
 			Stats::int_list_t nonex_cells_chr_reads_counts;
 			Stats::str_list_t ex_cell_names;
 			Stats::str_list_t nonex_cell_names;
-			Stats::str_list_t chr_names;
+			Stats::str_list_t ex_chr_names;
+			Stats::str_list_t nonex_chr_names;
 
 			std::vector<double> reads_per_umi;
 			Stats::int_list_t umig_covered;
