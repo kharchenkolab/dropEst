@@ -21,7 +21,7 @@ namespace Merge
 	long PoissonRealBarcodesMergeStrategy::get_best_merge_target(const CellsDataContainer &container, size_t base_cell_ind,
 																 const ul_list_t &neighbour_cells) const
 	{
-		bool is_base_cb_real = base_cell_ind == neighbour_cells[0];
+		bool is_base_cb_real = (base_cell_ind == neighbour_cells[0]);
 		double max_merge_prob = is_base_cb_real
 								? PoissonRealBarcodesMergeStrategy::max_merge_prob
 								: PoissonRealBarcodesMergeStrategy::max_real_cb_merge_prob;
@@ -30,6 +30,9 @@ namespace Merge
 		double min_prob = 2;
 		for (auto cell_ind : neighbour_cells)
 		{
+			if (cell_ind == base_cell_ind)
+				continue;
+
 			double prob = this->get_bootstrap_intersect_prob(container, base_cell_ind, cell_ind);
 
 			container.stats().add(Stats::MERGE_PROB_BY_CELL, container.cell_barcode(base_cell_ind),
