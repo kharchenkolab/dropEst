@@ -35,8 +35,8 @@ namespace Merge
 
 			double prob = this->get_bootstrap_intersect_prob(container, base_cell_ind, cell_ind);
 
-			container.stats().add(Stats::MERGE_PROB_BY_CELL, container.cell_barcode(base_cell_ind),
-								  container.cell_barcode(cell_ind), 1);
+			container.stats().set(Stats::MERGE_PROB_BY_CELL, container.cell_barcode(base_cell_ind),
+								  container.cell_barcode(cell_ind), prob);
 			if (prob < min_prob)
 			{
 				min_prob = prob;

@@ -39,14 +39,20 @@ namespace Estimation
 			MERGE_REAL_INTERSECT_SIZE_BY_CELL,
 			MERGE_EDIT_DISTANCE_BY_CELL,
 			MERGE_REJECTION_BY_CELL,
-			MERGE_PROB_BY_CELL,
 			S_S_STAT_SIZE
+		};
+
+		enum StrStrFloatType
+		{
+			MERGE_PROB_BY_CELL,
+			S_S_FLOAT_SIZE
 		};
 
 	public:
 		typedef boost::unordered_map<std::string, int> s_cnt_t;
 		typedef boost::unordered_set<std::string> str_set_t;
 		typedef boost::unordered_map<std::string, s_cnt_t> ss_cnt_t;
+		typedef boost::unordered_map<std::string, boost::unordered_map<std::string, double>> ss_float_t;
 
 	private:
 		s_cnt_t _cell_counters[CELL_STAT_SIZE];
@@ -55,6 +61,7 @@ namespace Estimation
 		str_set_t _str_cell_subtypes[CELL_S_STAT_SIZE];
 
 		ss_cnt_t _str_str_counters[S_S_STAT_SIZE];
+		ss_float_t _str_str_stats[S_S_FLOAT_SIZE];
 
 	private:
 		void fill_by_types(const s_cnt_t &counter, const str_list_t &types, int_list_t &counts) const;
@@ -68,6 +75,7 @@ namespace Estimation
 		const s_cnt_t& get_raw_stat(CellStatType stat) const;
 
 		void add(StrStrStatType stat, const std::string &base_type, const std::string &subtype, long value);
+		void set(StrStrFloatType stat, const std::string &base_type, const std::string &subtype, double value);
 
 		void inc(CellStrStatType stat, const std::string &cell_barcode, const std::string &subtype);
 		void get(CellStrStatType stat, str_list_t &types, str_list_t &subtypes, int_list_t &counts) const;
@@ -78,6 +86,7 @@ namespace Estimation
 
 		const ss_cnt_t& get_raw(CellStrStatType stat) const;
 		const ss_cnt_t& get_raw(StrStrStatType stat) const;
+		const ss_float_t& get_raw(StrStrFloatType stat) const;
 
 		void merge(const ids_t &reassigned, const str_list_t &cell_names);
 	};

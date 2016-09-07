@@ -174,6 +174,13 @@ static Params parse_cmd_params(int argc, char **argv)
 		return params;
 	}
 
+	if (!params.merge_tags && params.barcodes_filename != "")
+	{
+		cerr << "indropset: you should provide barcodes list only for merge procedure (you can't use -B without -m)" << endl;
+		params.cant_parse = true;
+		return params;
+	}
+
 	if (params.output_name == "")
 	{
 		if (params.text_output)
@@ -182,7 +189,7 @@ static Params parse_cmd_params(int argc, char **argv)
 		}
 		else
 		{
-			params.output_name = "cell.counts.bin";
+			params.output_name = "cell.counts";
 		}
 	}
 

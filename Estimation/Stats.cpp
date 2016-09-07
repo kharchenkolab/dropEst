@@ -137,13 +137,24 @@ namespace Estimation
 		return true;
 	}
 
-	const Stats::ss_cnt_t &Stats::get_raw(Stats::CellStrStatType stat) const
+	const Stats::ss_cnt_t &Stats::get_raw(CellStrStatType stat) const
 	{
 		return this->_str_cell_counters[stat];
 	}
 
-	const Stats::ss_cnt_t &Stats::get_raw(Stats::StrStrStatType stat) const
+	const Stats::ss_cnt_t &Stats::get_raw(StrStrStatType stat) const
 	{
 		return this->_str_str_counters[stat];
+	}
+
+	void Stats::set(StrStrFloatType stat, const std::string &base_type, const std::string &subtype, double value)
+	{
+		this->_str_str_stats[stat][base_type][subtype] = value;
+	}
+
+	const Stats::ss_float_t &Stats::get_raw(StrStrFloatType stat) const
+	{
+		return this->_str_str_stats[stat];
+
 	}
 }
