@@ -129,11 +129,10 @@ namespace Estimation
 					max_umigs_intersection_frac = current_frac;
 					best_neighbour_cell_ind = neighbour_cell_ind;
 				}
-//			this->_stats.add(Stats::MERGE_INTERSECT_SIZE_BY_CELL, this->_cell_barcodes[neighbour_cell_ind],
-//			                     base_cb, umigs_intersection_size);
+
+				container.stats().set(Stats::MERGE_PROB_BY_CELL, container.cell_barcode(base_cell_ind),
+									  container.cell_barcode(neighbour_cell_ind), current_frac);
 			}
-//		this->_stats.add(Stats::MERGE_REAL_INTERSECT_SIZE_BY_CELL, this->_cell_barcodes[best_neighbour_cell_ind],
-//		                     base_cb, max_umigs_intersection_frac);
 
 			if (max_umigs_intersection_frac < this->_min_merge_fraction)
 				return -1;

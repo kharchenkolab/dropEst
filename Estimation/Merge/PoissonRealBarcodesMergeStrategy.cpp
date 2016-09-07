@@ -29,7 +29,7 @@ namespace Merge
 
 		long best_target = -1;
 		double min_prob = 2;
-		for (auto cell_ind : neighbour_cells)
+		for (size_t cell_ind : neighbour_cells)
 		{
 			if (cell_ind == base_cell_ind)
 				continue;
