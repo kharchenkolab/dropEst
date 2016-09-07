@@ -30,10 +30,14 @@ namespace BamProcessing
 		CellsDataContainer::s_i_map_t cb_ids;
 		CellsDataContainer::s_uu_hash_t umig_cells_counts;
 
+		this->init_temporaries_before_parsing(print_result_bams);
+
 		for (auto const &file : bam_files)
 		{
 			this->parse_bam_file(file, print_result_bams, cb_ids, umig_cells_counts, container);
 		}
+
+		this->release_temporaries_after_parsing();
 
 		return umig_cells_counts;
 	}
@@ -41,8 +45,6 @@ namespace BamProcessing
 	void BamProcessor::parse_bam_file(const std::string &bam_name, bool print_result_bam, CellsDataContainer::s_i_map_t &cells_ids,
 									  CellsDataContainer::s_uu_hash_t &umig_cells_counts, CellsDataContainer &container) const
 	{
-		this->init_temporaries_before_parsing(print_result_bam);
-
 		using namespace BamTools;
 		L_TRACE << "Start reading bam file: " + bam_name;
 
@@ -125,7 +127,6 @@ namespace BamProcessing
 		reader.Close();
 		writer.Close();
 
-		this->release_temporaries_after_parsing();
 		L_TRACE << "Done (" << total_reads << " total reads; " << exonic_reads << " exonic reads; "
 				<< max_cell_id + 1 << " cell barcodes)";
 	}

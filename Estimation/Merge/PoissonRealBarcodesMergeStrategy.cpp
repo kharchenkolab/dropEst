@@ -1,6 +1,5 @@
 #include "PoissonRealBarcodesMergeStrategy.h"
 
-#include <boost/iterator/transform_iterator.hpp>
 #include <Tools/UtilFunctions.h>
 #include <Tools/Logs.h>
 
@@ -25,6 +24,8 @@ namespace Merge
 		double max_merge_prob = is_base_cb_real
 								? PoissonRealBarcodesMergeStrategy::max_merge_prob
 								: PoissonRealBarcodesMergeStrategy::max_real_cb_merge_prob;
+
+		max_merge_prob /= neighbour_cells.size();
 
 		long best_target = -1;
 		double min_prob = 2;
