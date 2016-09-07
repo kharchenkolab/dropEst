@@ -1,12 +1,9 @@
 cmake_minimum_required(VERSION 2.8)
 
-set(CMAKE_CXX_COMPILER /opt/gcc/4.8.5/bin/g++)
-
 project(cp)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMake")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-deprecated -m64 -DBOOST_LOG_DYN_LINK")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wno-deprecated -m64 -DBOOST_LOG_DYN_LINK -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wno-deprecated -m64 -DBOOST_LOG_DYN_LINK -std=c++11")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -gdwarf-2 -g3 -Wno-deprecated -m64 -DBOOST_LOG_DYN_LINK -std=c++11")
 add_definitions(-DPROJ_DATA_PATH=\"${PROJECT_SOURCE_DIR}/data\")
 
@@ -19,15 +16,9 @@ set(BAMTOOLS_ROOT "/opt/bamtools-2.2.3/")
 find_package (BamTools REQUIRED)
 
 set(R_ROOT "/home/vp76/local/lib64/R")
-find_package (R)
+find_package (R REQUIRED)
 
-if (R_FOUND)
-    add_definitions(-DR_LIBS)
-    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${R_INCLUDE_DIRS})
-    set(LIBRARIES ${R_LIBRARIES})
-endif()
-
-set(INCLUDE_DIRS ${Boost_INCLUDE_DIR} ${PROJECT_SOURCE_DIR} ${ZLIB_INCLUDE_DIRS} ${BAMTOOLS_INCLUDE_DIRS} ${INCLUDE_DIRS})
+set(INCLUDE_DIRS ${Boost_INCLUDE_DIR} ${PROJECT_SOURCE_DIR} ${ZLIB_INCLUDE_DIRS} ${BAMTOOLS_INCLUDE_DIRS} ${R_INCLUDE_DIRS})
 include_directories(${INCLUDE_DIRS})
 
 FILE(GLOB DropToolsSources Tools/*.cpp)
@@ -40,7 +31,7 @@ FILE(GLOB EstimationSources Estimation/*.cpp Estimation/Results/*.cpp Estimation
 add_library(Estimation ${EstimationSources})
 target_link_libraries(Estimation DropTools)
 
-set(LIBRARIES ${LIBRARIES} DropTools ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+set(LIBRARIES ${R_LIBRARIES} DropTools ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 set(EST_LIBRARIES ${EST_LIBRARIES} ${BAMTOOLS_LIBRARIES} ${ZLIB_LIBRARIES} ${LIBRARIES})
 
 add_executable(indroptag indroptag.cpp)
