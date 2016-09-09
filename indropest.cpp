@@ -7,6 +7,7 @@
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
+#include <omp.h>
 
 #include "Estimation/Estimator.h"
 #include "Estimation/Results/ResultPrinter.h"
@@ -34,6 +35,7 @@ struct Params
 	string log_prefix = "";
 	string output_name = "";
 	string reads_params_file = "";
+	int num_of_threads = 1;
 };
 
 void check_files_existence(const Params &params, const vector<string> &bam_files)
@@ -75,6 +77,7 @@ static void usage()
 	cerr << "\t-m, --merge-cell-tags : merge linked cell tags" << endl;
 	cerr << "\t-n, --not-filtered : print data for all cells" << endl;
 	cerr << "\t-o, --output-file filename : output file name" << endl;
+	cerr << "\t-p, --parallel number_of_threads : number of threads" << endl;
 	cerr << "\t-r, --reads-params filename: file or files with serialized params from tags search step. If there are several files then it should be in quotes and splitted by space" << endl;
 	cerr << "\t-R, --reads-output: print count matrix for reads and don't use UMI statistics" << endl;
 	cerr << "\t-t, --text-output : write out text matrix" << endl;
@@ -97,13 +100,14 @@ static Params parse_cmd_params(int argc, char **argv)
 			{"merge-cell-tags", no_argument,       0, 'm'},
 			{"not-filtered",	no_argument, 	   0, 'n'},
 			{"output-file",     required_argument, 0, 'o'},
+			{"parallel",     required_argument, 0, 'p'},
 			{"reads-params",     required_argument, 0, 'r'},
 			{"reads-output",     no_argument, 		0, 'R'},
 			{"text-output",     no_argument,       0, 't'},
 			{"verbose",         no_argument,       0, 'v'},
 			{0, 0,                                 0, 0}
 	};
-	while ((c = getopt_long(argc, argv, "bB:c:fg:l:mno:r:Rtv", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "bB:c:fg:l:mno:p:r:Rtv", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -134,6 +138,9 @@ static Params parse_cmd_params(int argc, char **argv)
 			case 'o' :
 				params.output_name = string(optarg);
 				break;
+			case 'p' :
+				params.num_of_threads = atoi(optarg);
+				break;
 			case 'r' :
 				params.reads_params_file = string(optarg);
 				break;
@@ -147,7 +154,7 @@ static Params parse_cmd_params(int argc, char **argv)
 				params.verbose = true;
 				break;
 			default:
-				cerr << "indropest: unknown arguments passed" << endl;
+				cerr << "indropest: unknown arguments passed: '" << c <<"'"  << endl;
 				params.cant_parse = true;
 				return params;
 		}
@@ -177,6 +184,13 @@ static Params parse_cmd_params(int argc, char **argv)
 	if (!params.merge_tags && params.barcodes_filename != "")
 	{
 		cerr << "indropset: you should provide barcodes list only for merge procedure (you can't use -B without -m)" << endl;
+		params.cant_parse = true;
+		return params;
+	}
+
+	if (params.num_of_threads < 1)
+	{
+		cerr << "The number of threads should be positive" << endl;
 		params.cant_parse = true;
 		return params;
 	}
@@ -222,6 +236,8 @@ int main(int argc, char **argv)
 
 	boost::property_tree::ptree pt;
 	read_xml(params.config_file_name, pt);
+
+	omp_set_num_threads(params.num_of_threads);
 
 	try
 	{

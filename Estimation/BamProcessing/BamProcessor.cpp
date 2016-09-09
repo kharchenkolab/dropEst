@@ -35,8 +35,7 @@ namespace BamProcessing
 
 		#pragma omp parallel for \
 				default(none)\
-				shared(print_result_bams, cb_ids, umig_cells_counts, container, bam_files) \
-				num_threads(4)
+				shared(print_result_bams, cb_ids, umig_cells_counts, container, bam_files)
 		for (size_t i = 0; i < bam_files.size(); ++i)
 		{
 			this->parse_bam_file(bam_files[i], print_result_bams, cb_ids, umig_cells_counts, container);

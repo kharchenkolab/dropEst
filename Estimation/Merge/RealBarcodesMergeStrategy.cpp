@@ -35,41 +35,52 @@ namespace Estimation
 			size_t tag_index = 0, merges_count = 0;
 
 			std::vector<long> real_cell_inds(container.cell_barcodes().size());
-			auto const& cell_genes_counts = container.cells_genes_counts_sorted();
+			auto const& cell_genes_counts = container.cells_genes_counts_sorted(); // if (this->need_parallel())\
 
-//TODO num_threads
-#pragma omp parallel for if (this->need_parallel())\
-				default(none)\
-				shared(cell_genes_counts, real_cell_inds, container) \
-				num_threads(4)
-			for (long genes_count_id = cell_genes_counts.size() - 1; genes_count_id >= 0; --genes_count_id)
+			size_t chunk_size = cell_genes_counts.size() / (20 * omp_get_thread_num());
+			if (chunk_size == 0)
 			{
+				chunk_size = 1;
+			}
+			
+#pragma omp parallel for schedule(dynamic, chunk_size) \
+				default(none)\
+				shared(cell_genes_counts, real_cell_inds, container)
+			for (size_t genes_count_id = 0; genes_count_id < cell_genes_counts.size(); ++genes_count_id)
+			{
+				if (genes_count_id % 1000 == 0)
+					printf("Genes count: %lu\n", genes_count_id);
 				size_t index = cell_genes_counts[genes_count_id].index;
 				real_cell_inds[index] = this->get_real_cb(container, index);
 			}
 
-			for (const IndexedValue &genes_count : boost::adaptors::reverse(container.cells_genes_counts_sorted()))
+			for (size_t genes_count_id = 0; genes_count_id < cell_genes_counts.size(); ++genes_count_id)
 			{
 				if (++tag_index % 1000 == 0)
 				{
 					L_TRACE << "Total " << tag_index << " tags processed, " << merges_count << " cells merged";
 				}
 
-				long real_cell_ind = real_cell_inds[genes_count.index];
+				long real_cell_ind = real_cell_inds[genes_count_id];
 
-				if (real_cell_ind == genes_count.index)
+				while (real_cell_ind >= 0 && real_cell_inds[real_cell_ind] != real_cell_ind)
 				{
-					is_cell_real[genes_count.index] = true;
+					real_cell_ind = real_cell_inds[real_cell_ind];
+				}
+
+				if (real_cell_ind == genes_count_id)
+				{
+					is_cell_real[genes_count_id] = true;
 					continue;
 				}
 
 				if (real_cell_ind < 0)
 				{
-					container.exclude_cell(genes_count.index);
+					container.exclude_cell(genes_count_id);
 					continue;
 				}
 
-				this->merge_force(container, genes_count.index, (size_t)real_cell_ind, cb_reassign_targets, cb_reassigned_to_it);
+				this->merge_force(container, genes_count_id, (size_t)real_cell_ind, cb_reassign_targets, cb_reassigned_to_it);
 				merges_count++;
 			}
 			L_INFO << "Total " << merges_count << " merges";
