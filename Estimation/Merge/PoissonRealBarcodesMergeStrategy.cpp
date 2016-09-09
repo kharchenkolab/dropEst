@@ -36,6 +36,7 @@ namespace Merge
 
 			double prob = this->get_bootstrap_intersect_prob(container, base_cell_ind, cell_ind);
 
+			#pragma omp critical(MERGE_PROB_BY_CELL)
 			container.stats().set(Stats::MERGE_PROB_BY_CELL, container.cell_barcode(base_cell_ind),
 								  container.cell_barcode(cell_ind), prob);
 			if (prob < min_prob)
@@ -173,6 +174,11 @@ namespace Merge
 	long PoissonRealBarcodesMergeStrategy::get_max_merge_dist(long min_real_cb_dist) const
 	{
 		return min_real_cb_dist == 0 ? 2 : min_real_cb_dist + 1;
+	}
+
+	bool PoissonRealBarcodesMergeStrategy::need_parallel() const
+	{
+		return true;
 	}
 }
 }

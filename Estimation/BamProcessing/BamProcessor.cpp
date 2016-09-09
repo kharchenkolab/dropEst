@@ -6,6 +6,7 @@
 
 #include <api/BamReader.h>
 #include <api/BamWriter.h>
+#include <omp.h>
 
 namespace Estimation
 {
@@ -32,10 +33,16 @@ namespace BamProcessing
 
 		this->init_temporaries_before_parsing(print_result_bams);
 
-		for (auto const &file : bam_files)
+		#pragma omp parallel for \
+				default(none)\
+				shared(print_result_bams, cb_ids, umig_cells_counts, container, bam_files) \
+				num_threads(4)
+		for (size_t i = 0; i < bam_files.size(); ++i)
 		{
-			this->parse_bam_file(file, print_result_bams, cb_ids, umig_cells_counts, container);
+			this->parse_bam_file(bam_files[i], print_result_bams, cb_ids, umig_cells_counts, container);
 		}
+
+		Tools::trace_time("Bams parsed");
 
 		this->release_temporaries_after_parsing();
 
@@ -68,9 +75,9 @@ namespace BamProcessing
 		while (reader.GetNextAlignment(alignment))
 		{
 			total_reads++;
-			if (total_reads % 1000000 == 0)
+			if (total_reads % 2000000 == 0)
 			{
-				L_TRACE << "Total " << total_reads << " reads processed (" << exonic_reads << " exonic reads)";
+				L_TRACE << "Total " << total_reads << " reads processed (" << exonic_reads << " exonic reads), " << bam_name;
 			}
 
 			if (alignment.Length < this->_read_prefix_length)
@@ -87,6 +94,8 @@ namespace BamProcessing
 				continue;
 
 			std::string cell_barcode = read_params.cell_barcode(), umi = read_params.umi_barcode();
+
+			#pragma omp critical(READS_PER_UMI_PER_CELL)
 			container.stats().inc(Stats::READS_PER_UMI_PER_CELL, cell_barcode, umi);
 
 			std::string gene;
@@ -110,22 +119,29 @@ namespace BamProcessing
 
 			if (gene == "")
 			{
-				L_DEBUG << "NonEx: " << read_name << ", cell: " << cell_barcode << " UMI: " << umi << ", start: " <<
-						alignment.Position;
+//				L_DEBUG << "NonEx: " << read_name << ", cell: " << cell_barcode << " UMI: " << umi << ", start: " <<
+//						alignment.Position;
+
+				#pragma omp critical(NON_EXONE_READS_PER_CHR_PER_CELL)
 				container.stats().inc(Stats::NON_EXONE_READS_PER_CHR_PER_CELL, cell_barcode, chr_name);
+
 				continue;
 			}
 
 			exonic_reads++;
-			L_DEBUG << "Exonic: " << read_name << ", cell: " << cell_barcode << " UMI: " << umi << ", prefix: "
-					<< alignment.QueryBases.substr(this->_read_prefix_length) << "\tGene:" << gene;
+//			L_DEBUG << "Exonic: " << read_name << ", cell: " << cell_barcode << " UMI: " << umi << ", prefix: "
+//					<< alignment.QueryBases.substr(this->_read_prefix_length) << "\tGene:" << gene;
 
 			max_cell_id = std::max(BamProcessor::save_read_data(chr_name, cell_barcode, umi, gene, cells_ids,
-																umig_cells_counts, container), max_cell_id);
+																	umig_cells_counts, container), max_cell_id);
 		}
 
 		reader.Close();
-		writer.Close();
+
+		if (print_result_bam)
+		{
+			writer.Close();
+		}
 
 		L_TRACE << "Done (" << total_reads << " total reads; " << exonic_reads << " exonic reads; "
 				<< max_cell_id + 1 << " cell barcodes)";
@@ -150,22 +166,28 @@ namespace BamProcessing
 									 const std::string &gene, CellsDataContainer::s_i_map_t &cells_ids,
 									 CellsDataContainer::s_uu_hash_t &umig_cells_counts, CellsDataContainer &container)
 	{
-		size_t cell_id = container.add_record(cell_barcode, umi, gene, cells_ids);
-
+		size_t cell_id;
 		std::string umig = umi + gene;
-		umig_cells_counts[umig][cell_id]++;
 
-		L_DEBUG << "UMIg=" << umig_cells_counts[umig].size();
-
-		container.stats().inc(Stats::EXONE_READS_PER_CB, cell_barcode);
-
-		container.stats().inc(Stats::READS_PER_UMIG_PER_CELL, cell_barcode, umig);
-		container.stats().inc(Stats::EXONE_READS_PER_CHR_PER_CELL, cell_barcode, chr_name);
-		container.stats().inc(Stats::UMI_PER_CELL, cell_barcode, umi);
-
-		if (container.cell_genes(cell_id).at(gene).at(umi) == 1)
+		#pragma omp critical(CONTAINER)
 		{
-			container.stats().inc(Stats::EXONE_UMIS_PER_CHR_PER_CELL, cell_barcode, chr_name);
+			cell_id = container.add_record(cell_barcode, umi, gene, cells_ids);
+			umig_cells_counts[umig][cell_id]++;
+
+			if (container.cell_genes(cell_id).at(gene).at(umi) == 1)
+			{
+				container.stats().inc(Stats::EXONE_UMIS_PER_CHR_PER_CELL, cell_barcode, chr_name);
+			}
+		}
+//		L_DEBUG << "UMIg=" << umig_cells_counts[umig].size();
+
+		#pragma omp critical(STATS)
+		{
+			container.stats().inc(Stats::EXONE_READS_PER_CB, cell_barcode);
+
+			container.stats().inc(Stats::READS_PER_UMIG_PER_CELL, cell_barcode, umig);
+			container.stats().inc(Stats::EXONE_READS_PER_CHR_PER_CELL, cell_barcode, chr_name);
+			container.stats().inc(Stats::UMI_PER_CELL, cell_barcode, umi);
 		}
 
 		return cell_id;

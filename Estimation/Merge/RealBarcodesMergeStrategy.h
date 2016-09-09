@@ -57,6 +57,8 @@ namespace Merge
 		virtual long get_best_merge_target(const CellsDataContainer &container, size_t base_cell_ind, const ul_list_t &neighbour_cells) const;
 		virtual long get_max_merge_dist(long min_real_cb_dist) const;
 
+		virtual bool need_parallel() const;
+
 		static size_t get_umigs_intersect_size(const genes_t &cell1_dist, const genes_t &cell2_dist);
 
 	public:

@@ -4,6 +4,8 @@
 #include <Tools/UtilFunctions.h>
 #include "RealBarcodesMergeStrategy.h"
 
+#include <omp.h>
+
 namespace Estimation
 {
 	namespace Merge
@@ -32,6 +34,20 @@ namespace Estimation
 
 			size_t tag_index = 0, merges_count = 0;
 
+			std::vector<long> real_cell_inds(container.cell_barcodes().size());
+			auto const& cell_genes_counts = container.cells_genes_counts_sorted();
+
+//TODO num_threads
+#pragma omp parallel for if (this->need_parallel())\
+				default(none)\
+				shared(cell_genes_counts, real_cell_inds, container) \
+				num_threads(4)
+			for (long genes_count_id = cell_genes_counts.size() - 1; genes_count_id >= 0; --genes_count_id)
+			{
+				size_t index = cell_genes_counts[genes_count_id].index;
+				real_cell_inds[index] = this->get_real_cb(container, index);
+			}
+
 			for (const IndexedValue &genes_count : boost::adaptors::reverse(container.cells_genes_counts_sorted()))
 			{
 				if (++tag_index % 1000 == 0)
@@ -39,7 +55,7 @@ namespace Estimation
 					L_TRACE << "Total " << tag_index << " tags processed, " << merges_count << " cells merged";
 				}
 
-				long real_cell_ind = this->get_real_cb(container, genes_count.index);
+				long real_cell_ind = real_cell_inds[genes_count.index];
 
 				if (real_cell_ind == genes_count.index)
 				{
@@ -103,7 +119,7 @@ namespace Estimation
 
 			this->fill_distances_to_cb(cb_part1, cb_part2, dists1, dists2);
 
-			L_DEBUG <<"Get real neighbours to " << base_cb;
+//			L_DEBUG <<"Get real neighbours to " << base_cb;
 			ul_list_t neighbour_cells = this->get_real_neighbour_cbs(container, base_cb, dists1, dists2);
 			if (neighbour_cells.empty())
 				return -1;
@@ -130,6 +146,7 @@ namespace Estimation
 					best_neighbour_cell_ind = neighbour_cell_ind;
 				}
 
+				#pragma omp critical(MERGE_PROB_BY_CELL)
 				container.stats().set(Stats::MERGE_PROB_BY_CELL, container.cell_barcode(base_cell_ind),
 									  container.cell_barcode(neighbour_cell_ind), current_frac);
 			}
@@ -308,6 +325,11 @@ namespace Estimation
 		long RealBarcodesMergeStrategy::get_max_merge_dist(long min_real_cb_dist) const
 		{
 			return min_real_cb_dist;
+		}
+
+		bool RealBarcodesMergeStrategy::need_parallel() const
+		{
+			return false;
 		}
 	}
 }
