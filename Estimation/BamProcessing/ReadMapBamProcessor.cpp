@@ -19,15 +19,25 @@ namespace BamProcessing
 											  Tools::ReadParameters &read_params) const
 	{
 		const std::string &read_name = alignment.Name;
-		auto iter = this->_reads_params.find(read_name);
-		if (iter == this->_reads_params.end())
+		Tools::reads_params_map_t::const_iterator iter;
+		bool read_not_found;
+		#pragma omp critical(READ_PARAMS)
+		{
+			iter = this->_reads_params.find(read_name);
+			read_not_found = (iter == this->_reads_params.end());
+
+			if (!read_not_found)
+			{
+				read_params = iter->second;
+				this->_reads_params.erase(iter);
+			}
+		}
+
+		if (read_not_found)
 		{
 			L_WARN << "WARNING: can't find read_name in map: " << read_name;
 			return false;
 		}
-
-		read_params = iter->second;
-		this->_reads_params.erase(iter);
 
 		if (read_params.is_empty())
 		{
