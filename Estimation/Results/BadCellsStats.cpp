@@ -20,7 +20,8 @@ namespace Estimation
 		{
 			using namespace Rcpp;
 
-			L_TRACE << "writing R data to " << filename;
+			Tools::trace_time("Writing R data to " + filename);
+
 			RInside *R = Tools::init_r();
 
 			(*R)["d"] = List::create(
@@ -44,7 +45,7 @@ namespace Estimation
 			);
 
 			R->parseEvalQ("saveRDS(d, '" + filename + "')");
-			L_TRACE << "Done";
+			Tools::trace_time("Done");
 		}
 	}
 }

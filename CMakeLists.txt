@@ -44,12 +44,12 @@ target_link_libraries(indroptag TagsSearch ${LIBRARIES})
 add_executable(indropest indropest.cpp)
 target_link_libraries(indropest Estimation ${EST_LIBRARIES})
 
+
 set (TEST_TS TestTagsSearch)
 add_executable (${TEST_TS} ${PROJECT_SOURCE_DIR}/Tests/TestTagsSearch.cpp)
 target_link_libraries (${TEST_TS} TagsSearch ${LIBRARIES})
 enable_testing ()
 add_test (${TEST_TS} ${TEST_TS})
-
 
 set (TEST_EST TestEstimation)
 add_executable (${TEST_EST} ${PROJECT_SOURCE_DIR}/Tests/TestEstimation.cpp)

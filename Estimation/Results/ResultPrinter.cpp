@@ -11,7 +11,7 @@ namespace Estimation
 	{
 		void ResultPrinter::print_text_table(const std::string &output_name, const CountMatrix &count_matrix)
 		{
-			L_TRACE << "Writing output matrix to " << output_name << " ";
+			Tools::trace_time("Writing output matrix to " + output_name);
 
 			std::ofstream output_file(output_name.c_str(), std::ios_base::out);
 			if (output_file.fail())
@@ -39,7 +39,7 @@ namespace Estimation
 
 			output_file.close();
 
-			L_TRACE << "Done";
+			Tools::trace_time("Done");
 		}
 
 		void ResultPrinter::print_fields(const std::string &output_suffix, const IndropResult &results)

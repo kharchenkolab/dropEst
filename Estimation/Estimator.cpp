@@ -45,25 +45,23 @@ namespace Estimation
 		ids_t filtered_cells = container.filtered_cells();
 		if (filtered_cells.empty())
 		{
-			L_WARN << "WARNING: filtered cells is empty. Maybe its too strict treshold or you forgot to run 'merge_and_filter'";
+			L_WARN << "WARNING: filtered cells is empty. Maybe its too strict threshold or you forgot to run 'merge_and_filter'";
 		}
 
 		L_TRACE << this->get_cb_top_verbose(container, filtered_cells);
 
 		L_TRACE << filtered_cells.size() << " valid (with >=" << this->min_genes_after_merge << " genes) cells with ";
 
-		s_counter_t gene_counts(this->count_genes(container, filtered_cells));
+		names_t gene_names(this->get_gene_names_sorted(container, filtered_cells));
 
-		L_TRACE << "compiling count matrix ... ";
-		names_t cell_names(this->get_unmerged_names(container, filtered_cells));
+		Tools::trace_time("Compiling count matrix");
+		names_t cell_names(this->get_filtered_cell_names(container, filtered_cells));
 
-		names_t gene_names;
-		ints_t umis_table;
-		this->fill_count_matrix(filtered_cells, gene_counts, container, gene_names, umis_table, reads_output);
+		ints_t count_matrix = this->get_count_matrix(filtered_cells, gene_names, container, reads_output);
 
-		L_TRACE << "Done";
+		Tools::trace_time("Done");
 
-		Results::CountMatrix cm(cell_names, gene_names, umis_table);
+		Results::CountMatrix cm(cell_names, gene_names, count_matrix);
 		return reads_output ? Results::IndropResultsWithoutUmi(cm, container.stats(), not_filtered)
 			   : this->get_indrop_results(cm, container, filtered_cells, not_filtered);
 	}
@@ -78,11 +76,11 @@ namespace Estimation
 									  this->get_umis_per_genes_per_cells_count(container), container.excluded_cells());
 	}
 
-	Estimator::s_counter_t Estimator::count_genes(const CellsDataContainer &genes_container,
-												  const ids_t &unmerged_cells) const
+	Estimator::names_t Estimator::get_gene_names_sorted(const CellsDataContainer &genes_container,
+														const ids_t &unmerged_cells) const
 	{
 		SIHM counter;
-	for (size_t cell_index: unmerged_cells)
+		for (size_t cell_index: unmerged_cells)
 		{
 			const CellsDataContainer::genes_t &cell_genes = genes_container.cell_genes(cell_index);
 			for (CellsDataContainer::genes_t::const_iterator gm_it = cell_genes.begin(); gm_it != cell_genes.end(); ++gm_it)
@@ -97,11 +95,17 @@ namespace Estimation
 		sort(gene_counts.begin(), gene_counts.end(), comp_counters);
 
 		L_TRACE << this->get_genes_top_verbose(gene_counts);
-		return gene_counts;
+
+		names_t gene_names(gene_counts.size());
+		for (int i = 0; i < gene_counts.size(); ++i)
+		{
+			gene_names[i] = gene_counts[i].first;
+		}
+		return gene_names;
 	}
 
-	Estimator::names_t Estimator::get_unmerged_names(const CellsDataContainer &genes_container,
-													 const ids_t &unmerged_cells) const
+	Estimator::names_t Estimator::get_filtered_cell_names(const CellsDataContainer &genes_container,
+														  const ids_t &unmerged_cells) const
 	{
 		names_t cell_names;
 		cell_names.reserve(unmerged_cells.size());
@@ -112,44 +116,41 @@ namespace Estimation
 		return cell_names;
 	}
 
-	void Estimator::fill_count_matrix(const ids_t &unmerged_cells, const s_counter_t &gene_counts,
-									  const CellsDataContainer &genes_container, names_t &gene_names_header,
-									  ints_t &count_matrix, bool reads_output) const
+	Estimator::ints_t Estimator::get_count_matrix(const ids_t &unmerged_cells, const names_t &gene_names,
+									  const CellsDataContainer &genes_container, bool reads_output) const
 	{
-//		return;
-		size_t size = unmerged_cells.size() * gene_counts.size();
-		count_matrix.resize(size);
-		gene_names_header.reserve(gene_counts.size());
+		ints_t count_matrix(unmerged_cells.size() * gene_names.size(), 0);
+		std::unordered_map<std::string, size_t> gene_ids;
 
-		for (size_t i = 0; i < gene_counts.size(); i++)
+		for (size_t i = 0; i < gene_names.size(); ++i)
 		{
-			const string gene_name = gene_counts[i].first;
-			gene_names_header.push_back(gene_name);
-			for (size_t j = 0; j < unmerged_cells.size(); j++)
-			{
-				auto const &cur_genes = genes_container.cell_genes(unmerged_cells[j]);
-				auto res = cur_genes.find(gene_name);
+			gene_ids[gene_names[i]] = i;
+		}
 
+		for (size_t col = 0; col < unmerged_cells.size(); col++)
+		{
+			for (auto const &gene_it : genes_container.cell_genes(unmerged_cells[col]))
+			{
+				size_t row = gene_ids[gene_it.first];
 				long cell_value = 0;
 
-				if (res != cur_genes.end())
+				if (reads_output)
 				{
-					if (reads_output)
+					for (auto const &umi : gene_it.second)
 					{
-						for (auto const &umi : res->second)
-						{
-							cell_value += umi.second;
-						}
-					}
-					else
-					{
-						cell_value = res->second.size();
+						cell_value += umi.second;
 					}
 				}
+				else
+				{
+					cell_value = gene_it.second.size();
+				}
 
-				count_matrix[(i * unmerged_cells.size()) + j] = cell_value;
+				count_matrix[(row * unmerged_cells.size()) + col] = cell_value;
 			}
 		}
+
+		return count_matrix;
 	}
 
 	Results::IndropResult Estimator::get_indrop_results(const Results::CountMatrix &cm, const CellsDataContainer &genes_container,
@@ -170,20 +171,20 @@ namespace Estimation
 													   const ids_t &unmerged_cells) const
 	{
 		doubles_t reads_per_umis;
+		reads_per_umis.reserve(unmerged_cells.size());
+
 		for (size_t j = 0; j < unmerged_cells.size(); j++)
 		{
 			size_t umis_count = 0;
 			double reads_per_umi = 0.0;
-			const CellsDataContainer::genes_t &cell_genes = genes_container.cell_genes(unmerged_cells[j]);
-			for (CellsDataContainer::genes_t::const_iterator gene_rec_it = cell_genes.begin();
-				 gene_rec_it != cell_genes.end(); ++gene_rec_it)
+			for (auto const &gene_rec : genes_container.cell_genes(unmerged_cells[j]))
 			{
-				for (CellsDataContainer::s_i_map_t::const_iterator umi_rec_it = gene_rec_it->second.begin();
-					 umi_rec_it != gene_rec_it->second.end(); ++umi_rec_it)
+				for (auto const &umi_rec : gene_rec.second)
 				{
-					reads_per_umi += umi_rec_it->second;
-					umis_count++;
+					reads_per_umi += umi_rec.second;
 				}
+
+				umis_count += gene_rec.second.size();
 			}
 			reads_per_umi /= umis_count;
 			reads_per_umis.push_back(reads_per_umi);
@@ -199,8 +200,7 @@ namespace Estimation
 		for (const Tools::IndexedValue &gene_count : boost::adaptors::reverse(genes_container.cells_genes_counts_sorted()))
 		{
 			int new_umigs = 0;
-			const CellsDataContainer::genes_t &cell_genes = genes_container.cell_genes(gene_count.index);
-			for (auto const &gene_rec : cell_genes)
+			for (auto const &gene_rec : genes_container.cell_genes(gene_count.index))
 			{
 				for (auto const &umi_rec: gene_rec.second)
 				{

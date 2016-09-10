@@ -54,7 +54,7 @@ namespace Estimation
 
 			RInside *R = Tools::init_r();
 			(*R)["d"] = this->get_main_r_vec(filename);
-			L_TRACE << "writing R data to " << filename;
+			Tools::trace_time("Writing R data to " + filename);
 
 			R->parseEvalQ(
 					"d$ex_cells_chr_counts<-as.data.frame(matrix(d$ex_cells_chr_counts, length(d$ex_counts_cell_names), "
@@ -67,8 +67,11 @@ namespace Estimation
 							"colnames(d$nonex_cells_chr_counts)<-d$nonex_chr_names; d$nonex_counts_cell_names<-NULL;"
 							"d$nonex_chr_names<-NULL;");
 
+			R->parseEvalQ("d$cm <- matrix(d$cm, length(d$gene.names), length(d$cell.names), byrow=T);"
+								  "rownames(d$cm) <- d$gene.names; colnames(d$cm) <- d$cell.names");
+
 			R->parseEvalQ("saveRDS(d, '" + filename + "')");
-			L_TRACE << "Done";
+			Tools::trace_time("Done");
 		}
 
 		Rcpp::List IndropResult::get_main_r_vec(const std::string &filename) const

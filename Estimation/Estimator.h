@@ -56,13 +56,12 @@ namespace Estimation
 		                                       const std::string &barcodes_filename);
 
 	private:
-		names_t get_unmerged_names(const CellsDataContainer &genes_container, const ids_t &unmerged_cells) const;
+		names_t get_filtered_cell_names(const CellsDataContainer &genes_container, const ids_t &unmerged_cells) const;
 
-		void fill_count_matrix(const ids_t &unmerged_cells, const s_counter_t &gene_counts,
-							   const CellsDataContainer &genes_container,
-							   names_t &gene_names_header, ints_t &count_matrix, bool reads_output) const;
+		ints_t get_count_matrix(const ids_t &unmerged_cells, const names_t &gene_names,
+							   const CellsDataContainer &genes_container, bool reads_output) const;
 
-		s_counter_t count_genes(const CellsDataContainer &genes_container, const ids_t &unmerged_cells) const;
+		names_t get_gene_names_sorted(const CellsDataContainer &genes_container, const ids_t &unmerged_cells) const;
 
 		doubles_t get_reads_per_umis(const CellsDataContainer &genes_container, const ids_t &unmerged_cells) const;
 
