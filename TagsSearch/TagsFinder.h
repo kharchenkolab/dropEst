@@ -47,8 +47,8 @@ namespace TagsSearch
 
 		std::string results_to_string(long total_reads_read) const;
 		len_t get_trim_position(len_t spacer_end, const std::string &r1_seq, const std::string &r2_seq);
-		Tools::ReadParameters fill_parameters(const std::string &r1_seq, const std::string &r2_id,
-											  std::string &r2_seq, std::string &r2_quality_str);
+		Tools::ReadParameters parse_and_trim(const std::string &r1_seq, const std::string &r2_id,
+											 std::string &r2_seq, std::string &r2_quality_str);
 
 	public:
 		TagsFinder()

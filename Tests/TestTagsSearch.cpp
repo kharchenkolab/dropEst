@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_SUITE(TestTagsSearch)
 		std::string r1_seq = "TAGTTTCGGAGTGTTTGCTTGTGACGCCTTACCTTGCCCGCGACTTTTTTTTTTT";
 		std::string r2_seq = "TCTTCCACTAATAGTTATGTCATCCCTCTTATTAATCATCATCCTAGCCCTAAGTCTGGCCTATGAGTCACTACAAAAAGGATTAGACTGAACCG";
 		std::string r2_quality_str = "1>111@1@111@33AA3BAA33DE1AA0FF3DA33AB3AF3D2A12110AB000DFGD01F10A121A11A2BFB110/AA0ABG111A111BF>";
-		Tools::ReadParameters res = tags_finder.fill_parameters(r1_seq, "r2_id", r2_seq, r2_quality_str);
+		Tools::ReadParameters res = tags_finder.parse_and_trim(r1_seq, "r2_id", r2_seq, r2_quality_str);
 		BOOST_CHECK_EQUAL(res.is_empty(), false);
 		BOOST_CHECK_EQUAL(res.cell_barcode(), "TAGTTTCGACCTTGCC");
 	}
@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_SUITE(TestTagsSearch)
 		std::string r1_seq = "TGACCATTACTGAGTGATTGCTTGTGACGCCTTAAGCGTACAGATTATTTT";
 		std::string r2_seq = "GACTGGTTGAAATTGATGATTGACATTAATAATGA";
 		std::string r2_quality_str = "GACTGGTTGAAATTGATGATTGACATTAATAATGA";
-		Tools::ReadParameters res = tags_finder.fill_parameters(r1_seq, "r2_id", r2_seq, r2_quality_str);
+		Tools::ReadParameters res = tags_finder.parse_and_trim(r1_seq, "r2_id", r2_seq, r2_quality_str);
 		BOOST_CHECK_EQUAL(res.is_empty(), false);
 	}
 
@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE(TestSpacerFinder)
 
-	BOOST_FIXTURE_TEST_CASE(test1, Fixture)
+	BOOST_FIXTURE_TEST_CASE(testTotal, Fixture)
 	{
 		std::string r1_line2 = "TAGTCTAGGAGTGATTGCTTGTGACGCCTTTCATCCTTATAATATTTTTTTTTTT";
 		auto spacer_pos = spacer_finder.find_spacer(r1_line2);
@@ -97,12 +97,21 @@ BOOST_AUTO_TEST_SUITE(TestSpacerFinder)
 		BOOST_CHECK_EQUAL(spacer_finder.parse_umi_barcode(r1_line2, spacer_pos.second), "ATAATA");
 	}
 
-	BOOST_FIXTURE_TEST_CASE(test2, Fixture)
+	BOOST_FIXTURE_TEST_CASE(testSuffix, Fixture)
 	{
 		std::string r1_line2 = "TAGTTTCGGAGTGTTTGCTTGTGACGCCTTACCTTGCCCGCGACTTTTTTTTTTT";
 		auto spacer_pos = spacer_finder.find_spacer(r1_line2);
 		BOOST_CHECK_EQUAL(spacer_pos.first, 8);
 		BOOST_CHECK_EQUAL(spacer_pos.second, 30);
 	}
+
+	BOOST_FIXTURE_TEST_CASE(testPrefix, Fixture)
+	{
+		std::string r1_line2 = "TAGTCTAGGAGTGATTGCTTGTGACGGGTTTCATCCTTATAATATTTTTTTTTTT";
+		auto spacer_pos = spacer_finder.find_spacer(r1_line2);
+		BOOST_CHECK_EQUAL(spacer_pos.first, 8);
+		BOOST_CHECK_EQUAL(spacer_pos.second, 30);
+	}
+
 
 BOOST_AUTO_TEST_SUITE_END()

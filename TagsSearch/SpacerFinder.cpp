@@ -89,19 +89,18 @@ namespace TagsSearch
 	std::pair<SpacerFinder::len_t, SpacerFinder::len_t> SpacerFinder::find_spacer_partial(const string &seq)
 	{
 		len_t suffix_pos = seq.rfind(this->spacer_suffix, this->spacer_max_suffix_start);
-		len_t prefix_pos = suffix_pos - this->spacer.length() + this->spacer_suffix.length();
+		len_t spacer_pos = suffix_pos - this->spacer.length() + this->spacer_suffix.length();
 
 		if (suffix_pos == string::npos || suffix_pos < this->spacer_min_suffix_start)
 		{
-			prefix_pos = seq.find(this->spacer_prefix, this->spacer_min_pos);
-			if (prefix_pos == string::npos || prefix_pos > this->spacer_max_pos)
+			spacer_pos = seq.find(this->spacer_prefix, this->spacer_min_pos);
+			if (spacer_pos == string::npos || spacer_pos > this->spacer_max_pos)
 				return std::make_pair(SpacerFinder::ERR_CODE, SpacerFinder::ERR_CODE);
 		}
-//			return std::make_pair(SpacerFinder::ERR_CODE, SpacerFinder::ERR_CODE);
 
-		L_DEBUG << "-- match at " << prefix_pos;
+		L_DEBUG << "-- match at " << spacer_pos;
 
-		int ed = Tools::edit_distance(this->spacer.c_str(), seq.substr(prefix_pos, this->spacer.length()).c_str());
+		int ed = Tools::edit_distance(this->spacer.c_str(), seq.substr(spacer_pos, this->spacer.length()).c_str());
 
 		L_DEBUG << "Edit distance = " << ed;
 
@@ -109,19 +108,18 @@ namespace TagsSearch
 			return std::make_pair(SpacerFinder::ERR_CODE, SpacerFinder::ERR_CODE);
 
 		this->outcomes.inc(OutcomesCounter::SPACER_MODIFIED);
-		return std::make_pair(prefix_pos, suffix_pos + this->spacer_suffix.length());
+		return std::make_pair(spacer_pos, spacer_pos + this->spacer.length());
 	}
 
 	string SpacerFinder::parse_cell_barcode(const string &seq, len_t spacer_start, len_t spacer_end) const
 	{
 		string barcode = seq.substr(spacer_end, this->barcode_length);
-		string res = seq.substr(0, spacer_start) + barcode;
 		if (barcode.length() != this->barcode_length)
 		{
-			L_ERR << "Barcode is shorter then it should be (" << this->barcode_length << "): " << res;
+			L_ERR << "Barcode is shorter then it should be (" << this->barcode_length << "): " << barcode;
 		}
 
-		return res;
+		return seq.substr(0, spacer_start) + barcode;
 	}
 
 	string SpacerFinder::parse_umi_barcode(const string &seq, len_t spacer_end) const

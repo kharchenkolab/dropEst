@@ -114,7 +114,7 @@ namespace TagsSearch
 				L_TRACE << "Total " << total_reads_read << " read (" << parsed_reads << " parsed)";
 			}
 
-			Tools::ReadParameters params = this->fill_parameters(r1_seq, r2_id, r2_seq, r2_quality_str);
+			Tools::ReadParameters params = this->parse_and_trim(r1_seq, r2_id, r2_seq, r2_quality_str);
 
 			++total_reads_read;
 			if (params.is_empty())
@@ -208,8 +208,8 @@ namespace TagsSearch
 		return r2_trim;
 	}
 
-	Tools::ReadParameters TagsFinder::fill_parameters(const string &r1_seq, const string &r2_id, string &r2_seq,
-													  string &r2_quality_str)
+	Tools::ReadParameters TagsFinder::parse_and_trim(const string &r1_seq, const string &r2_id, string &r2_seq,
+													 string &r2_quality_str)
 	{
 		if (r2_seq.length() != r2_quality_str.length())
 			throw std::runtime_error("Read " + r2_id + " have different length of sequence and quality string: '" +
@@ -247,10 +247,10 @@ namespace TagsSearch
 
 		L_DEBUG << " trimmed:" << r2_seq;
 
-		if (r2_trim > this->min_align_len)
-			return Tools::ReadParameters(r2_id, cell_barcode, umi_barcode);
+		if (r2_trim < this->min_align_len)
+			return Tools::ReadParameters();
 
-		return Tools::ReadParameters();
+		return Tools::ReadParameters(r2_id, cell_barcode, umi_barcode);
 	}
 
 }
