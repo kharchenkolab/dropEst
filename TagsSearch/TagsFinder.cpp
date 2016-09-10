@@ -114,7 +114,7 @@ namespace TagsSearch
 				L_TRACE << "Total " << total_reads_read << " read (" << parsed_reads << " parsed)";
 			}
 
-			Tools::ReadParameters params = this->fill_parameters(r1_seq, r2_id, r2_seq, r2_description, r2_quality_str);
+			Tools::ReadParameters params = this->fill_parameters(r1_seq, r2_id, r2_seq, r2_quality_str);
 
 			++total_reads_read;
 			if (params.is_empty())
@@ -209,7 +209,7 @@ namespace TagsSearch
 	}
 
 	Tools::ReadParameters TagsFinder::fill_parameters(const string &r1_seq, const string &r2_id, string &r2_seq,
-													  const string &r2_description, string &r2_quality_str)
+													  string &r2_quality_str)
 	{
 		if (r2_seq.length() != r2_quality_str.length())
 			throw std::runtime_error("Read " + r2_id + " have different length of sequence and quality string: '" +

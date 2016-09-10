@@ -34,24 +34,12 @@ namespace Estimation
 
 			size_t tag_index = 0, merges_count = 0;
 
-			std::vector<long> real_cell_inds(container.cell_barcodes().size());
-			auto const& cell_genes_counts = container.cells_genes_counts_sorted(); // if (this->need_parallel())\
+			auto const& cell_genes_counts = container.cells_genes_counts_sorted();
+			std::vector<long> target_cell_inds(cell_genes_counts.size(), 0);
 
-			size_t chunk_size = cell_genes_counts.size() / (20 * omp_get_thread_num());
-			if (chunk_size == 0)
-			{
-				chunk_size = 1;
-			}
-			
-#pragma omp parallel for schedule(dynamic, chunk_size) \
-				default(none)\
-				shared(cell_genes_counts, real_cell_inds, container)
 			for (size_t genes_count_id = 0; genes_count_id < cell_genes_counts.size(); ++genes_count_id)
 			{
-				if (genes_count_id % 1000 == 0)
-					printf("Genes count: %lu\n", genes_count_id);
-				size_t index = cell_genes_counts[genes_count_id].index;
-				real_cell_inds[index] = this->get_real_cb(container, index);
+				target_cell_inds[genes_count_id] = this->get_real_cb(container, cell_genes_counts[genes_count_id].index);
 			}
 
 			for (size_t genes_count_id = 0; genes_count_id < cell_genes_counts.size(); ++genes_count_id)
@@ -61,26 +49,23 @@ namespace Estimation
 					L_TRACE << "Total " << tag_index << " tags processed, " << merges_count << " cells merged";
 				}
 
-				long real_cell_ind = real_cell_inds[genes_count_id];
-
-				while (real_cell_ind >= 0 && real_cell_inds[real_cell_ind] != real_cell_ind)
+				size_t base_cell_ind = cell_genes_counts[genes_count_id].index;
+				long target_cell_ind = target_cell_inds[genes_count_id];
+				if (target_cell_ind < 0)
 				{
-					real_cell_ind = real_cell_inds[real_cell_ind];
-				}
-
-				if (real_cell_ind == genes_count_id)
-				{
-					is_cell_real[genes_count_id] = true;
+					container.exclude_cell(base_cell_ind);
 					continue;
 				}
 
-				if (real_cell_ind < 0)
+				if (target_cell_ind == base_cell_ind)
 				{
-					container.exclude_cell(genes_count_id);
+					is_cell_real[base_cell_ind] = true;
 					continue;
 				}
 
-				this->merge_force(container, genes_count_id, (size_t)real_cell_ind, cb_reassign_targets, cb_reassigned_to_it);
+				target_cell_ind = cb_reassign_targets[target_cell_ind]; // For the case when real barcodes could be merged too
+
+				this->merge_force(container, base_cell_ind, (size_t)target_cell_ind, cb_reassign_targets, cb_reassigned_to_it);
 				merges_count++;
 			}
 			L_INFO << "Total " << merges_count << " merges";

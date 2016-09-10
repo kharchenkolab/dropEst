@@ -24,22 +24,22 @@ struct Fixture
 	{
 		Tools::init_test_logs(boost::log::trivial::info);
 		CellsDataContainer::s_i_map_t cells_ids;
-		this->container_full.add_record("AAATTAGGTCCA", "AAACCT", "Gene1", cells_ids); //0
+		this->container_full.add_record("AAATTAGGTCCA", "AAACCT", "Gene1", cells_ids); //0, real
 		this->container_full.add_record("AAATTAGGTCCA", "CCCCCT", "Gene2", cells_ids);
 		this->container_full.add_record("AAATTAGGTCCA", "ACCCCT", "Gene3", cells_ids);
 
-		this->container_full.add_record("AAATTAGGTCCC", "CAACCT", "Gene1", cells_ids); //1
+		this->container_full.add_record("AAATTAGGTCCC", "CAACCT", "Gene1", cells_ids); //1, real
 
-		this->container_full.add_record("AAATTAGGTCCG", "CAACCT", "Gene1", cells_ids); //2
+		this->container_full.add_record("AAATTAGGTCCG", "CAACCT", "Gene1", cells_ids); //2, false
 
-		this->container_full.add_record("AAATTAGGTCGG", "AAACCT", "Gene1", cells_ids); //3
+		this->container_full.add_record("AAATTAGGTCGG", "AAACCT", "Gene1", cells_ids); //3, false
 		this->container_full.add_record("AAATTAGGTCGG", "CCCCCT", "Gene2", cells_ids);
 
-		this->container_full.add_record("CCCTTAGGTCCA", "CCATTC", "Gene3", cells_ids); //4
+		this->container_full.add_record("CCCTTAGGTCCA", "CCATTC", "Gene3", cells_ids); //4, false
 		this->container_full.add_record("CCCTTAGGTCCA", "CCCCCT", "Gene2", cells_ids);
 		this->container_full.add_record("CCCTTAGGTCCA", "ACCCCT", "Gene3", cells_ids);
 
-		this->container_full.add_record("CAATTAGGTCCG", "CAACCT", "Gene1", cells_ids); //5
+		this->container_full.add_record("CAATTAGGTCCG", "CAACCT", "Gene1", cells_ids); //5, false
 		this->container_full.add_record("CAATTAGGTCCG", "AAACCT", "Gene1", cells_ids);
 		this->container_full.add_record("CAATTAGGTCCG", "CCCCCT", "Gene2", cells_ids);
 		this->container_full.set_initialized();
