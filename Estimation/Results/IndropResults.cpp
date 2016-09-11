@@ -1,49 +1,56 @@
 #include "IndropResults.h"
 
-#include <Tools/Logs.h>
 #include <RInside.h>
+
+#include <Estimation/CellsDataContainer.h>
+#include <Tools/Logs.h>
 #include <Tools/UtilFunctions.h>
 
 namespace Estimation
 {
 	namespace Results
 	{
-		IndropResult::IndropResult(const CountMatrix &cm, const Stats &stats, const std::vector<double> &reads_per_umi,
-		                           const int_list_t &umig_covered, bool not_filtered)
+		IndropResult::IndropResult(const CountMatrix &cm, const CellsDataContainer &container,
+								   const std::vector<double> &reads_per_umi, const int_list_t &umig_covered, bool not_filtered)
 				: cm(cm)
 				, reads_per_umi(reads_per_umi)
 				, umig_covered(umig_covered)
-				, exone_reads_by_cb(stats.get(Stats::EXONE_READS_PER_CB))
 		{
-			Stats::ss_cnt_t reads_by_umig_map(stats.get_raw(Stats::READS_PER_UMIG_PER_CELL));
-
-			for (auto const& cell : reads_by_umig_map)
+			for (size_t cell_ind = 0; cell_ind < container.cell_barcodes().size(); ++cell_ind)
 			{
-				for (auto const& reads_cnt : cell.second)
+				const auto &cb = container.cell_barcode(cell_ind);
+				size_t sum_reads = 0;
+				for (auto const& gene : container.cell_genes(cell_ind))
 				{
-					this->reads_by_umig_cbs.push_back(cell.first);
-					this->reads_by_umig.push_back(reads_cnt.second);
+					for (auto const &umi : gene.second)
+					{
+						this->reads_by_umig_cbs.push_back(cb);
+						this->reads_by_umig.push_back(umi.second);
+						sum_reads += umi.second;
+					}
 				}
+
+				this->exone_reads_by_cb.push_back(sum_reads);
 			}
 
 			if (not_filtered)
 			{
 				L_TRACE << "Fill exone results";
-				stats.get(Stats::EXONE_READS_PER_CHR_PER_CELL, this->ex_cell_names, this->ex_chr_names,
+				container.stats().get(Stats::EXONE_READS_PER_CHR_PER_CELL, this->ex_cell_names, this->ex_chr_names,
 						  this->ex_cells_chr_reads_counts);
 
 				L_TRACE << "Fill nonexone results";
-				stats.get(Stats::NON_EXONE_READS_PER_CHR_PER_CELL, this->nonex_cell_names, this->nonex_chr_names,
+				container.stats().get(Stats::NON_EXONE_READS_PER_CHR_PER_CELL, this->nonex_cell_names, this->nonex_chr_names,
 						  this->nonex_cells_chr_reads_counts);
 			}
 			else
 			{
 				L_TRACE << "Fill exone results";
-				stats.get_filtered(Stats::EXONE_READS_PER_CHR_PER_CELL, this->cm.cell_names, this->ex_cell_names,
+				container.stats().get_filtered(Stats::EXONE_READS_PER_CHR_PER_CELL, this->cm.cell_names, this->ex_cell_names,
 								   this->ex_chr_names, this->ex_cells_chr_reads_counts);
 
 				L_TRACE << "Fill nonexone results";
-				stats.get_filtered(Stats::NON_EXONE_READS_PER_CHR_PER_CELL, this->cm.cell_names,
+				container.stats().get_filtered(Stats::NON_EXONE_READS_PER_CHR_PER_CELL, this->cm.cell_names,
 								   this->nonex_cell_names, this->nonex_chr_names, this->nonex_cells_chr_reads_counts);
 			}
 		}

@@ -19,14 +19,12 @@ namespace Estimation
 		private:
 			ss_cnt_t genes_reads;
 			ss_cnt_t genes_umis;
-			std::vector<std::string> excluded_cells;
 
 		public:
 
-			void save_rds(const Stats &stats, const std::string &filename) const;
+			void save_rds(const CellsDataContainer &container, const std::string &filename) const;
 
-			BadCellsStats(const ss_cnt_t &genes_reads, const ss_cnt_t &genes_umis,
-			              const std::vector<std::string> &excluded_cells);
+			BadCellsStats(const ss_cnt_t &genes_reads, const ss_cnt_t &genes_umis);
 		};
 	}
 }

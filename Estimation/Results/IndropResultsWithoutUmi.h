@@ -11,11 +11,8 @@ namespace Estimation
 		class IndropResultsWithoutUmi : public IndropResult
 		{
 		public:
-			IndropResultsWithoutUmi()
-			{ };
-
-			IndropResultsWithoutUmi(const CountMatrix &cm, const Stats &stats, bool not_filtered)
-				: IndropResult(cm, stats, std::vector<double>(), int_list_t(), not_filtered)
+			IndropResultsWithoutUmi(const CountMatrix &cm, const CellsDataContainer &container, bool not_filtered)
+				: IndropResult(cm, container, std::vector<double>(), int_list_t(), not_filtered)
 			{}
 
 			virtual Rcpp::List get_main_r_vec(const std::string &filename) const override

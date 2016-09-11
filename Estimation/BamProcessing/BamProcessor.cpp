@@ -94,9 +94,6 @@ namespace BamProcessing
 
 			std::string cell_barcode = read_params.cell_barcode(), umi = read_params.umi_barcode();
 
-			#pragma omp critical(READS_PER_UMI_PER_CELL)
-			container.stats().inc(Stats::READS_PER_UMI_PER_CELL, cell_barcode, umi);
-
 			std::string gene;
 			try
 			{
@@ -167,26 +164,25 @@ namespace BamProcessing
 	{
 		size_t cell_id;
 		std::string umig = umi + gene;
+		bool new_umi;
 
 		#pragma omp critical(CONTAINER)
 		{
 			cell_id = container.add_record(cell_barcode, umi, gene, cells_ids);
 			umig_cells_counts[umig][cell_id]++;
 
-			if (container.cell_genes(cell_id).at(gene).at(umi) == 1)
-			{
-				container.stats().inc(Stats::EXONE_UMIS_PER_CHR_PER_CELL, cell_barcode, chr_name);
-			}
+			new_umi = (container.cell_genes(cell_id).at(gene).at(umi) == 1);
 		}
 //		L_DEBUG << "UMIg=" << umig_cells_counts[umig].size();
 
 		#pragma omp critical(STATS)
 		{
-			container.stats().inc(Stats::EXONE_READS_PER_CB, cell_barcode);
+			if (new_umi)
+			{
+				container.stats().inc(Stats::EXONE_UMIS_PER_CHR_PER_CELL, cell_barcode, chr_name);
+			}
 
-			container.stats().inc(Stats::READS_PER_UMIG_PER_CELL, cell_barcode, umig);
 			container.stats().inc(Stats::EXONE_READS_PER_CHR_PER_CELL, cell_barcode, chr_name);
-			container.stats().inc(Stats::UMI_PER_CELL, cell_barcode, umi);
 		}
 
 		return cell_id;

@@ -8,6 +8,7 @@
 
 namespace Estimation
 {
+	class CellsDataContainer;
 	namespace Results
 	{
 		class CountMatrix
@@ -52,10 +53,7 @@ namespace Estimation
 			Stats::str_list_t reads_by_umig_cbs;
 			Stats::int_list_t exone_reads_by_cb;
 
-			IndropResult()
-			{ };
-
-			IndropResult(const CountMatrix &cm, const Stats &stats, const std::vector<double> &reads_per_umi,
+			IndropResult(const CountMatrix &cm, const CellsDataContainer &container, const std::vector<double> &reads_per_umi,
 			             const int_list_t &umig_covered, bool not_filtered);
 
 			virtual void save_rds(const std::string &filename) const;

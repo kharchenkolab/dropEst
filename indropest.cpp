@@ -267,7 +267,7 @@ int main(int argc, char **argv)
 			L_TRACE << "Get bad cells results";
 			Results::BadCellsStats bad_cells_results = estimator.get_bad_cells_results(container);
 			L_TRACE << "Done";
-			bad_cells_results.save_rds(container.stats(), params.output_name + ".bc.rds");
+			bad_cells_results.save_rds(container, params.output_name + ".bc.rds");
 		}
 	}
 	catch (std::runtime_error err)

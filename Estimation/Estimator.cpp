@@ -62,7 +62,7 @@ namespace Estimation
 		Tools::trace_time("Done");
 
 		Results::CountMatrix cm(cell_names, gene_names, count_matrix);
-		return reads_output ? Results::IndropResultsWithoutUmi(cm, container.stats(), not_filtered)
+		return reads_output ? Results::IndropResultsWithoutUmi(cm, container, not_filtered)
 			   : this->get_indrop_results(cm, container, filtered_cells, not_filtered);
 	}
 
@@ -73,7 +73,7 @@ namespace Estimation
 			L_WARN << "WARNING: filtered cells is empty. Maybe its too strict treshold or you forgot to run 'merge_and_filter'";
 		}
 		return Results::BadCellsStats(this->get_reads_per_genes_per_cells_count(container),
-									  this->get_umis_per_genes_per_cells_count(container), container.excluded_cells());
+									  this->get_umis_per_genes_per_cells_count(container));
 	}
 
 	Estimator::names_t Estimator::get_gene_names_sorted(const CellsDataContainer &genes_container,
@@ -164,7 +164,7 @@ namespace Estimation
 		ints_t umig_coverage(this->get_umig_coverage(genes_container));
 		L_TRACE << "UMIg coverage";
 
-		return Results::IndropResult(cm, genes_container.stats(), reads_per_umis, umig_coverage, not_filtered);
+		return Results::IndropResult(cm, genes_container, reads_per_umis, umig_coverage, not_filtered);
 	}
 
 	Estimator::doubles_t Estimator::get_reads_per_umis(const CellsDataContainer &genes_container,
@@ -279,7 +279,7 @@ namespace Estimation
 			auto &cell = result[cell_barcode];
 			for (auto const &gene : genes_container.cell_genes(cell_id))
 			{
-				cell[gene.first] = gene.second.size();
+				cell[gene.first] = (unsigned)gene.second.size();
 			}
 		}
 
