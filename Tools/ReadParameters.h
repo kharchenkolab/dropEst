@@ -20,7 +20,7 @@ namespace Tools
 		ReadParameters(const std::string &monolithic_params_string, bool save_read_name=true);
 		ReadParameters(const ReadParameters &source);
 		ReadParameters(const std::string &read_name, const std::string &cell_barcode, const std::string &umi_barcode);
-		std::string to_monolithic_string() const;
+		std::string to_monolithic_string(const std::string &fake_name="") const;
 
 		std::string read_name_safe() const;
 		const std::string& read_name() const;

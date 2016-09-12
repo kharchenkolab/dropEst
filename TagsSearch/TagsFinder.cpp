@@ -123,15 +123,15 @@ namespace TagsSearch
 			++parsed_reads;
 
 			string text;
+			std::string new_id = file_uid + std::to_string(total_reads_read);
 			if (save_reads_names)
 			{
-				std::string new_id = file_uid + std::to_string(total_reads_read);
 				text = "@" + new_id;
 				files_processor.write_read_params(new_id, params);
 			}
 			else
 			{
-				text = params.to_monolithic_string();
+				text = params.to_monolithic_string(new_id);
 			}
 
 			text += "\n" + r2_seq + "\n" + r2_description + "\n" + r2_quality_str + "\n";

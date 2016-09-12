@@ -71,6 +71,18 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 		BOOST_CHECK_EQUAL(rp.cell_barcode(), "ATTTG");
 		BOOST_CHECK_EQUAL(rp.umi_barcode(), "ATAT");
 
+		ReadParameters rp2 = ReadParameters(rp.to_monolithic_string());
+		BOOST_CHECK_EQUAL(rp2.read_name(), rp.read_name());
+		BOOST_CHECK_EQUAL(rp2.read_name_safe(), rp2.read_name());
+		BOOST_CHECK_EQUAL(rp2.cell_barcode(), rp.cell_barcode());
+		BOOST_CHECK_EQUAL(rp2.umi_barcode(), rp.umi_barcode());
+
+		rp2 = ReadParameters(rp.to_monolithic_string("1111"));
+		BOOST_CHECK_EQUAL(rp2.read_name(), "1111");
+		BOOST_CHECK_EQUAL(rp2.read_name_safe(), rp2.read_name());
+		BOOST_CHECK_EQUAL(rp2.cell_barcode(), rp.cell_barcode());
+		BOOST_CHECK_EQUAL(rp2.umi_barcode(), rp.umi_barcode());
+
 		BOOST_CHECK_THROW(ReadParameters("ATTTG#ATAT"), std::runtime_error);
 	}
 

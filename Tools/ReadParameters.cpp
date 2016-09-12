@@ -75,10 +75,10 @@ namespace Tools
 		return this->_is_empty;
 	}
 
-	std::string ReadParameters::to_monolithic_string() const
+	std::string ReadParameters::to_monolithic_string(const std::string &fake_name) const
 	{
 		std::ostringstream text;
-		text << this->_read_name << '!' << this->_cell_barcode << '#' << this->_umi_barcode;
+		text << (fake_name.length() == 0 ? this->_read_name : fake_name) << '!' << this->_cell_barcode << '#' << this->_umi_barcode;
 		return text.str();
 	}
 }
