@@ -33,6 +33,8 @@ namespace BamProcessing
 
 		this->init_temporaries_before_parsing(print_result_bams);
 
+		Tools::trace_time("Start parse bams");
+
 		#pragma omp parallel for \
 				default(none)\
 				shared(print_result_bams, cb_ids, umig_cells_counts, container, bam_files)

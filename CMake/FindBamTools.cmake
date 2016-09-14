@@ -1,10 +1,6 @@
 # FindBam
 # --------
 # You can set BAM_ROOT variable to specify path
-# Result Variables
-# ^^^^^^^^^^^^^^^^
-#
-# You can set BAMTOOLS_ROOT to specify BamTools path
 #
 # This module defines the following variables:
 #
@@ -13,7 +9,7 @@
 #   BAMTOOLS_FOUND - true if BAM has been found and can be used
 
 find_path(BAMTOOLS_INCLUDE_DIR api/BamReader.h PATHS ${BAMTOOLS_ROOT}/include PATH_SUFFIXES bamtools)
-find_library(BAMTOOLS_LIBRARY bamtools PATHS ${BAMTOOLS_ROOT}/lib)
+find_library(BAMTOOLS_LIBRARY bamtools PATHS ${BAMTOOLS_ROOT}/lib PATH_SUFFIXES bamtools)
 
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(BAMTOOLS

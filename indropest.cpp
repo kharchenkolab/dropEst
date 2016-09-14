@@ -15,6 +15,7 @@
 #include "Estimation/Results/BadCellsStats.h"
 #include "Tools/Logs.h"
 #include "Tools/RefGenesContainer.h"
+#include "Tools/UtilFunctions.h"
 
 using namespace std;
 using namespace Estimation;
@@ -236,9 +237,9 @@ int main(int argc, char **argv)
 
 	boost::property_tree::ptree pt;
 	read_xml(params.config_file_name, pt);
-
+#ifdef _OPENMP
 	omp_set_num_threads(params.num_of_threads);
-
+#endif
 	try
 	{
 		Tools::trace_time("Run");
