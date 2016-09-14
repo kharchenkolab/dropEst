@@ -28,7 +28,8 @@ namespace Estimation
 		typedef std::vector<std::pair<std::string, int> > s_counter_t;
 		typedef std::vector<double> doubles_t;
 		typedef CellsDataContainer::names_t names_t;
-		typedef std::vector<long> ints_t;
+		typedef std::vector<int> i_list_t;
+		typedef std::vector<long> l_list_t;
 		typedef CellsDataContainer::ids_t ids_t;
 
 	public:
@@ -58,14 +59,14 @@ namespace Estimation
 	private:
 		names_t get_filtered_cell_names(const CellsDataContainer &genes_container, const ids_t &unmerged_cells) const;
 
-		ints_t get_count_matrix(const ids_t &unmerged_cells, const names_t &gene_names,
+		i_list_t get_count_matrix(const ids_t &unmerged_cells, const names_t &gene_names,
 							   const CellsDataContainer &genes_container, bool reads_output) const;
 
 		names_t get_gene_names_sorted(const CellsDataContainer &genes_container, const ids_t &unmerged_cells) const;
 
 		doubles_t get_reads_per_umis(const CellsDataContainer &genes_container, const ids_t &unmerged_cells) const;
 
-		ints_t get_umig_coverage(const CellsDataContainer &genes_container) const;
+		l_list_t get_umig_coverage(const CellsDataContainer &genes_container) const;
 
 		Results::IndropResult get_indrop_results(const Results::CountMatrix &cm, const CellsDataContainer &genes_conteiner,
 										const ids_t &unmerged_cells, bool not_filtered) const;

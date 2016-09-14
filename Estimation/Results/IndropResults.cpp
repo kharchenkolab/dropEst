@@ -25,6 +25,7 @@ namespace Estimation
 					for (auto const &umi : gene.second)
 					{
 						this->reads_by_umig_cbs.push_back(cb);
+						this->reads_by_umig_umis.push_back(umi.first);
 						this->reads_by_umig.push_back(umi.second);
 						sum_reads += umi.second;
 					}
@@ -97,6 +98,7 @@ namespace Estimation
 						 Named("umig.cov") = wrap(this->umig_covered),
 						 Named("reads_by_umig") = wrap(this->reads_by_umig),
 						 Named("reads_by_umig_cbs") = wrap(this->reads_by_umig_cbs),
+						 Named("reads_by_umig_umis") = wrap(this->reads_by_umig_umis),
 						 Named("exone_reads_by_cb") = wrap(this->exone_reads_by_cb),
 						 Named("fname") = wrap(filename));
 		}

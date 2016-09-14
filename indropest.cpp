@@ -38,7 +38,7 @@ struct Params
 	int num_of_threads = 1;
 };
 
-void check_files_existence(const Params &params, const vector<string> &bam_files)
+static void check_files_existence(const Params &params, const vector<string> &bam_files)
 {
 	if (params.barcodes_filename != "" && !std::ifstream(params.barcodes_filename))
 		throw std::runtime_error("Can't open barcodes file '" + params.barcodes_filename + "'");

@@ -15,7 +15,7 @@ namespace Estimation
 		{
 		public:
 			typedef std::vector<std::string> s_list_t;
-			typedef std::vector<long> i_list_t;
+			typedef std::vector<int> i_list_t;
 
 		public:
 			s_list_t cell_names;
@@ -51,6 +51,7 @@ namespace Estimation
 			Stats::int_list_t umig_covered;
 			Stats::int_list_t reads_by_umig;
 			Stats::str_list_t reads_by_umig_cbs;
+			Stats::str_list_t reads_by_umig_umis;
 			Stats::int_list_t exone_reads_by_cb;
 
 			IndropResult(const CountMatrix &cm, const CellsDataContainer &container, const std::vector<double> &reads_per_umi,

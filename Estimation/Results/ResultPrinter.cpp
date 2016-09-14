@@ -41,52 +41,5 @@ namespace Estimation
 
 			Tools::trace_time("Done");
 		}
-
-		void ResultPrinter::print_fields(const std::string &output_suffix, const IndropResult &results)
-		{
-			throw std::runtime_error("print_fields not implemented");
-//	std::ofstream of("ex_names" + output_suffix);
-//	for (auto & name : results.exon_chr_count_names)
-//	{
-//		of << name << "\n";
-//	}
-//	of.close();
-//	of.open("ex_counts" + output_suffix);
-//	for (auto & val : results.exon_chr_counts)
-//	{
-//		of << val << "\n";
-//	}
-//	of.close();
-//	of.open("merge_n" + output_suffix);
-//	for (auto & val : results.merge_n)
-//	{
-//		of << val << "\n";
-//	}
-//	of.close();
-//	of.open("nonex_names" + output_suffix);
-//	for (auto & val : results.non_exon_chr_count_names)
-//	{
-//		of << val << "\n";
-//	}
-//	of.close();
-//	of.open("nonex_counts" + output_suffix);
-//	for (auto & val : results.non_exon_chr_counts)
-//	{
-//		of << val << "\n";
-//	}
-//	of.close();
-//	of.open("reads_per_umi" + output_suffix);
-//	for (auto & val : results.reads_per_umi)
-//	{
-//		of << val << "\n";
-//	}
-//	of.close();
-//	of.open("umig_covered" + output_suffix);
-//	for (auto & val : results.umig_covered)
-//	{
-//		of << val << "\n";
-//	}
-//	of.close();
-		}
 	}
 }

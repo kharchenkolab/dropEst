@@ -57,7 +57,7 @@ namespace Estimation
 		Tools::trace_time("Compiling count matrix");
 		names_t cell_names(this->get_filtered_cell_names(container, filtered_cells));
 
-		ints_t count_matrix = this->get_count_matrix(filtered_cells, gene_names, container, reads_output);
+		i_list_t count_matrix = this->get_count_matrix(filtered_cells, gene_names, container, reads_output);
 
 		Tools::trace_time("Done");
 
@@ -116,10 +116,10 @@ namespace Estimation
 		return cell_names;
 	}
 
-	Estimator::ints_t Estimator::get_count_matrix(const ids_t &unmerged_cells, const names_t &gene_names,
+	Estimator::i_list_t Estimator::get_count_matrix(const ids_t &unmerged_cells, const names_t &gene_names,
 									  const CellsDataContainer &genes_container, bool reads_output) const
 	{
-		ints_t count_matrix(unmerged_cells.size() * gene_names.size(), 0);
+		i_list_t count_matrix(unmerged_cells.size() * gene_names.size(), 0);
 		std::unordered_map<std::string, size_t> gene_ids;
 
 		for (size_t i = 0; i < gene_names.size(); ++i)
@@ -132,7 +132,7 @@ namespace Estimation
 			for (auto const &gene_it : genes_container.cell_genes(unmerged_cells[col]))
 			{
 				size_t row = gene_ids[gene_it.first];
-				long cell_value = 0;
+				int cell_value = 0;
 
 				if (reads_output)
 				{
@@ -161,7 +161,7 @@ namespace Estimation
 		doubles_t reads_per_umis(this->get_reads_per_umis(genes_container, unmerged_cells));
 		L_TRACE << "reads/UMI";
 
-		ints_t umig_coverage(this->get_umig_coverage(genes_container));
+		l_list_t umig_coverage(this->get_umig_coverage(genes_container));
 		L_TRACE << "UMIg coverage";
 
 		return Results::IndropResult(cm, genes_container, reads_per_umis, umig_coverage, not_filtered);
@@ -193,9 +193,9 @@ namespace Estimation
 		return reads_per_umis;
 	}
 
-	Estimator::ints_t Estimator::get_umig_coverage(const CellsDataContainer &genes_container) const
+	Estimator::l_list_t Estimator::get_umig_coverage(const CellsDataContainer &genes_container) const
 	{
-		ints_t umig_coverage;
+		l_list_t umig_coverage;
 		s_set umigs_seen;
 		for (const Tools::IndexedValue &gene_count : boost::adaptors::reverse(genes_container.cells_genes_counts_sorted()))
 		{
