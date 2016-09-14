@@ -28,9 +28,10 @@ namespace Estimation
 			const size_t _read_prefix_length;
 			Tools::RefGenesContainer _genes_container;
 
+
 		private:
 			void parse_bam_file(const std::string &bam_name, bool print_result_bam, CellsDataContainer::s_i_map_t &cells_ids,
-								CellsDataContainer::s_uu_hash_t &umig_cells_counts, CellsDataContainer &container) const;
+					    CellsDataContainer::s_uu_hash_t &umig_cells_counts, CellsDataContainer &container, long &total_reads, long &total_exonic_reads) const;
 
 			void write_alignment(BamTools::BamWriter &writer, BamTools::BamAlignment &alignment, const std::string &gene,
 								 const Tools::ReadParameters &parameters) const;

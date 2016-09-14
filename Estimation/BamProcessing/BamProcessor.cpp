@@ -7,6 +7,7 @@
 #include <api/BamReader.h>
 #include <api/BamWriter.h>
 #include <omp.h>
+#include <iomanip>
 
 namespace Estimation
 {
@@ -31,17 +32,21 @@ namespace BamProcessing
 		CellsDataContainer::s_i_map_t cb_ids;
 		CellsDataContainer::s_uu_hash_t umig_cells_counts;
 
+		long total_reads=0, total_exonic_reads=0; // keep track of the tally across all BAM files
+
 		this->init_temporaries_before_parsing(print_result_bams);
 
 		Tools::trace_time("Start parse bams");
 
 		#pragma omp parallel for \
 				default(none)\
-				shared(print_result_bams, cb_ids, umig_cells_counts, container, bam_files)
+		  shared(print_result_bams, cb_ids, umig_cells_counts, container, bam_files, total_reads, total_exonic_reads)
 		for (size_t i = 0; i < bam_files.size(); ++i)
 		{
-			this->parse_bam_file(bam_files[i], print_result_bams, cb_ids, umig_cells_counts, container);
+	  this->parse_bam_file(bam_files[i], print_result_bams, cb_ids, umig_cells_counts, container, total_reads, total_exonic_reads);
 		}
+		// report total stats
+		//L_TRACE << "Total: " << total_reads << " reads; " << total_exonic_reads << std::setprecision(3) << " ("<< (100.0*total_exonic_reads/total_reads) <<"%) exonic; " << cb_ids.size() << " CBs";
 
 		Tools::trace_time("Bams parsed");
 
@@ -51,10 +56,10 @@ namespace BamProcessing
 	}
 
 	void BamProcessor::parse_bam_file(const std::string &bam_name, bool print_result_bam, CellsDataContainer::s_i_map_t &cells_ids,
-									  CellsDataContainer::s_uu_hash_t &umig_cells_counts, CellsDataContainer &container) const
+	    CellsDataContainer::s_uu_hash_t &umig_cells_counts, CellsDataContainer &container, long &total_reads, long &total_exonic_reads) const
 	{
 		using namespace BamTools;
-		L_TRACE << "Start reading bam file: " + bam_name;
+		//L_TRACE << "Start reading bam file: " + bam_name;
 
 		BamReader reader;
 		BamWriter writer;
@@ -70,20 +75,20 @@ namespace BamProcessing
 
 		BamAlignment alignment;
 		size_t max_cell_id = 0;
-		long total_reads = 0, exonic_reads = 0;
+		long n_reads = 0, exonic_reads = 0;
 		std::unordered_set<std::string> unexpected_chromosomes;
 
 		while (reader.GetNextAlignment(alignment))
 		{
-			total_reads++;
-			if (total_reads % 2000000 == 0)
+			n_reads++;
+			if (n_reads % 2000000 == 0)
 			{
-				L_TRACE << "Total " << total_reads << " reads processed (" << exonic_reads << " exonic reads)";
+	  //				L_TRACE << "Total " << n_reads << " reads processed (" << exonic_reads << " exonic reads)";
 			}
 
 			if (alignment.Length < this->_read_prefix_length)
 			{
-				L_WARN << "WARNING: read is shorter than read_prefix_length. total_reads=" << total_reads;
+				L_WARN << "WARNING: read is shorter than read_prefix_length. n_reads=" << n_reads;
 				continue;
 			}
 
@@ -140,9 +145,11 @@ namespace BamProcessing
 		{
 			writer.Close();
 		}
-
-		L_TRACE << "Done (" << total_reads << " total reads; " << exonic_reads << " exonic reads; "
-				<< max_cell_id + 1 << " cell barcodes)";
+  
+  total_reads+=n_reads; total_exonic_reads+=exonic_reads; 
+  //L_TRACE << bam_name << ": " << n_reads << " reads; " << exonic_reads << std::setprecision(3) << " ("<< (100.0*exonic_reads/n_reads) <<"%) exonic; " << (max_cell_id + 1) << " CBs";
+  L_TRACE << bam_name << ": " << total_reads << " total reads; " << total_exonic_reads << std::setprecision(3) << " ("<< (100.0*total_exonic_reads/total_reads) <<"%) exonic; " << (max_cell_id + 1) << " CBs";
+  
 	}
 
 	bool BamProcessor::get_read_params(const BamTools::BamAlignment &alignment, Tools::ReadParameters &read_params) const
