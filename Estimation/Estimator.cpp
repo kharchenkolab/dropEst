@@ -28,6 +28,7 @@ namespace Estimation
 		, min_genes_after_merge(config.get<unsigned>("min_genes_after_merge"))
 		, barcode2_length(config.get<size_t>("barcode2_length", 0))
 		, min_genes_before_merge(config.get<unsigned>("min_genes_before_merge"))
+		, merge_type(config.get<std::string>("merge", ""))
 	{
 		if (this->min_genes_after_merge > 0 && this->min_genes_after_merge < this->min_genes_before_merge)
 		{
@@ -256,7 +257,7 @@ namespace Estimation
 		std::shared_ptr<Merge::MergeStrategyAbstract> merge_strategy =
 				Merge::MergeStrategyFactory::get(this->min_merge_fraction, this->min_genes_before_merge,
 												 this->min_genes_after_merge, this->max_merge_edit_distance,
-												 merge_tags, barcodes_filename, this->barcode2_length);
+												 merge_tags, barcodes_filename, this->barcode2_length, this->merge_type);
 
 		CellsDataContainer container(merge_strategy, Estimator::top_print_size);
 		auto bam_processor = BamProcessing::BamProcessorFactory::get(filled_bam, reads_params_names_str,

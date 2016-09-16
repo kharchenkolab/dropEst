@@ -38,6 +38,11 @@ namespace Merge
 		double get_bootstrap_intersect_prob(const CellsDataContainer &container, size_t cell1_ind, size_t cell2_ind,
 											size_t repeats_count = 700, unsigned multiplies_count = 3) const;
 
+		double estimate_by_r(ul_list_t vector, size_t i) const;
+
+		double get_bootstrap_intersect_sizes(const genes_t &cell1_dist, const genes_t &cell2_dist,
+											 size_t real_intersect_size, size_t repeats_count, ul_list_t &sizes) const;
+
 	protected:
 		virtual void init(const Estimation::CellsDataContainer &container) override;
 		virtual void release() override;
@@ -51,11 +56,6 @@ namespace Merge
 		PoissonRealBarcodesMergeStrategy(const std::string &barcodes_filename, size_t barcode2_length,
 										 int min_genes_before_merge, int min_genes_after_merge,
 										 int max_merge_edit_distance, double min_merge_fraction);
-
-		double estimate_by_r(ul_list_t vector, size_t i) const;
-
-		double get_bootstrap_intersect_sizes(const genes_t &cell1_dist, const genes_t &cell2_dist,
-											 size_t real_intersect_size, size_t repeats_count, ul_list_t &sizes) const;
 	};
 }
 }

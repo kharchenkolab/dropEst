@@ -101,6 +101,13 @@ Params parse_cmd_params(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+	std::string command_line;
+	for (int i = 0; i < argc; ++i)
+	{
+		command_line += argv[i];
+		command_line += " ";
+	}
+
 	Params params = parse_cmd_params(argc, argv);
 
 	if (params.cant_parse)
@@ -111,6 +118,8 @@ int main(int argc, char **argv)
 		params.log_prefix += "_";
 	}
 	Tools::init_log(params.verbose, false, params.log_prefix + "tag_main.log", params.log_prefix + "tag_debug.log");
+
+	L_TRACE << command_line;
 
 	boost::property_tree::ptree pt;
 	read_xml(params.config_file_name, pt);

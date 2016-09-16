@@ -213,6 +213,13 @@ static Params parse_cmd_params(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+	std::string command_line;
+	for (int i = 0; i < argc; ++i)
+	{
+		command_line += argv[i];
+		command_line += " ";
+	}
+
 	Params params = parse_cmd_params(argc, argv);
 
 	if (params.cant_parse)
@@ -227,6 +234,7 @@ int main(int argc, char **argv)
 	}
 	Tools::init_log(params.verbose, false, params.log_prefix + "est_main.log", params.log_prefix + "est_debug.log");
 
+	L_TRACE << command_line;
 	vector<string> files;
 	while (optind < argc)
 	{

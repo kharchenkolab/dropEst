@@ -46,6 +46,8 @@ namespace Estimation
 		const size_t barcode2_length;
 		unsigned min_genes_before_merge;
 
+		const std::string merge_type;
+
 	public:
 		Estimator(const boost::property_tree::ptree &config);
 
