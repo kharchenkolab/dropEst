@@ -25,7 +25,7 @@ struct Params
 	string r2_file_name;
 	string config_file_name;
 
-	Params() : cant_parse(false), verbose(false), base_name(""), log_prefix("")
+  Params() : cant_parse(false), verbose(false), base_name(""), log_prefix(""), save_reads_names(false)
 	{}
 };
 
@@ -86,7 +86,6 @@ Params parse_cmd_params(int argc, char **argv)
 		params.cant_parse = true;
 		return params;
 	}
-
 	params.r1_file_name = string(argv[optind++]);
 	params.r2_file_name = string(argv[optind++]);
 	params.config_file_name = string(argv[optind++]);
