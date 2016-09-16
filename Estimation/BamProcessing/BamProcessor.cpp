@@ -40,10 +40,10 @@ namespace BamProcessing
 
 		#pragma omp parallel for \
 				default(none)\
-		  shared(print_result_bams, cb_ids, umig_cells_counts, container, bam_files, total_reads, total_exonic_reads)
+				shared(print_result_bams, cb_ids, umig_cells_counts, container, bam_files, total_reads, total_exonic_reads)
 		for (size_t i = 0; i < bam_files.size(); ++i)
 		{
-	  this->parse_bam_file(bam_files[i], print_result_bams, cb_ids, umig_cells_counts, container, total_reads, total_exonic_reads);
+			this->parse_bam_file(bam_files[i], print_result_bams, cb_ids, umig_cells_counts, container, total_reads, total_exonic_reads);
 		}
 		// report total stats
 		//L_TRACE << "Total: " << total_reads << " reads; " << total_exonic_reads << std::setprecision(3) << " ("<< (100.0*total_exonic_reads/total_reads) <<"%) exonic; " << cb_ids.size() << " CBs";
@@ -56,7 +56,8 @@ namespace BamProcessing
 	}
 
 	void BamProcessor::parse_bam_file(const std::string &bam_name, bool print_result_bam, CellsDataContainer::s_i_map_t &cells_ids,
-	    CellsDataContainer::s_uu_hash_t &umig_cells_counts, CellsDataContainer &container, long &total_reads, long &total_exonic_reads) const
+									  CellsDataContainer::s_uu_hash_t &umig_cells_counts, CellsDataContainer &container,
+									  long &total_reads, long &total_exonic_reads) const
 	{
 		using namespace BamTools;
 		//L_TRACE << "Start reading bam file: " + bam_name;
@@ -83,7 +84,7 @@ namespace BamProcessing
 			n_reads++;
 			if (n_reads % 2000000 == 0)
 			{
-	  //				L_TRACE << "Total " << n_reads << " reads processed (" << exonic_reads << " exonic reads)";
+//				L_TRACE << "Total " << n_reads << " reads processed (" << exonic_reads << " exonic reads)";
 			}
 
 			if (alignment.Length < this->_read_prefix_length)
@@ -145,11 +146,14 @@ namespace BamProcessing
 		{
 			writer.Close();
 		}
-  
-  total_reads+=n_reads; total_exonic_reads+=exonic_reads; 
-  //L_TRACE << bam_name << ": " << n_reads << " reads; " << exonic_reads << std::setprecision(3) << " ("<< (100.0*exonic_reads/n_reads) <<"%) exonic; " << (max_cell_id + 1) << " CBs";
-  L_TRACE << bam_name << ": " << total_reads << " total reads; " << total_exonic_reads << std::setprecision(3) << " ("<< (100.0*total_exonic_reads/total_reads) <<"%) exonic; " << (max_cell_id + 1) << " CBs";
-  
+
+		#pragma omp critical(READS_NUMBER)
+		{
+			total_reads+=n_reads; total_exonic_reads+=exonic_reads;
+			//L_TRACE << bam_name << ": " << n_reads << " reads; " << exonic_reads << std::setprecision(3) << " ("<< (100.0*exonic_reads/n_reads) <<"%) exonic; " << (max_cell_id + 1) << " CBs";
+			L_TRACE << bam_name << ": " << total_reads << " total reads; " << total_exonic_reads << std::setprecision(3)
+					<< " ("<< (100.0*total_exonic_reads/total_reads) <<"%) exonic; " << (max_cell_id + 1) << " CBs";
+		}
 	}
 
 	bool BamProcessor::get_read_params(const BamTools::BamAlignment &alignment, Tools::ReadParameters &read_params) const
