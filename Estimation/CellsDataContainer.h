@@ -47,6 +47,7 @@ namespace Estimation
 		std::vector<genes_t> _cells_genes; //cell_id -> gen_name -> umi -> count
 		names_t _cell_barcodes;
 		flags_t _is_cell_excluded;
+		flags_t _is_cell_merged;
 		s_ul_hash_t _cell_ids_by_cb;
 		ids_t _filtered_cells;
 
@@ -85,9 +86,11 @@ namespace Estimation
 
 		names_t excluded_cells() const;
 
+		bool is_cell_merged(size_t cell_id) const;
+
 		void set_initialized();
 
-		const names_t &cell_barcodes() const;
+		const names_t &cell_barcodes_raw() const;
 
 		s_ul_hash_t umis_distribution() const;
 	};

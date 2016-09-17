@@ -23,13 +23,13 @@ namespace Estimation
 		void Merge::RealBarcodesMergeStrategy::merge_inited(Estimation::CellsDataContainer &container,
 															const s_uu_hash_t &umig_cells_counts, ul_list_t &filtered_cells) const
 		{
-			std::vector<bool> is_cell_real(container.cell_barcodes().size(), false);
+			std::vector<bool> is_cell_real(container.cell_barcodes_raw().size(), false);
 
 			if (this->_barcodes1.size() == 0)
 				return;
 
 			ISIHM cb_reassigned_to_it;
-			ul_list_t cb_reassign_targets(container.cell_barcodes().size());
+			ul_list_t cb_reassign_targets(container.cell_barcodes_raw().size());
 			std::iota(cb_reassign_targets.begin(), cb_reassign_targets.end(), 0);
 
 			size_t tag_index = 0, merges_count = 0;
@@ -80,7 +80,7 @@ namespace Estimation
 				filtered_cells.push_back(gene_count.index);
 			}
 
-			container.stats().merge(cb_reassign_targets, container.cell_barcodes());
+			container.stats().merge(cb_reassign_targets, container.cell_barcodes_raw());
 		}
 
 		void RealBarcodesMergeStrategy::get_barcodes_list(const std::string &barcodes_filename, names_t &barcodes1,

@@ -18,9 +18,6 @@ find_package (BamTools REQUIRED)
 set(R_ROOT "/home/vp76/local/lib64/R")
 find_package (R REQUIRED)
 
-message("Incl: ${R_INCLUDE_DIRS}")
-message("Libs: ${R_LIBRARIES}")
-
 set(INCLUDE_DIRS ${Boost_INCLUDE_DIR} ${PROJECT_SOURCE_DIR} ${ZLIB_INCLUDE_DIRS} ${BAMTOOLS_INCLUDE_DIRS} ${R_INCLUDE_DIRS})
 include_directories(${INCLUDE_DIRS})
 

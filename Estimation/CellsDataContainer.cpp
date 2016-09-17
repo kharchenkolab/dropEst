@@ -25,7 +25,7 @@ namespace Estimation
 			throw runtime_error("You must initialize container");
 
 		this->_merge_strategy->merge(*this, umig_cells_counts, this->_filtered_cells);
-		this->update_cells_genes_counts(this->_merge_strategy->min_genes_after_merge(), false);
+		this->update_cells_genes_counts(this->_merge_strategy->min_genes_after_merge());
 	}
 
 	size_t CellsDataContainer::add_record(const string &cell_barcode, const string &umi, const string &gene, s_i_map_t &cells_ids)
@@ -51,18 +51,21 @@ namespace Estimation
 
 	void CellsDataContainer::merge(size_t source_cell_ind, size_t target_cell_ind)
 	{
+		auto &target_cell = this->_cells_genes.at(target_cell_ind);
 		for (auto const &gene: this->_cells_genes[source_cell_ind])
 		{
 			for (auto const &umi_count: gene.second)
 			{
-				this->_cells_genes[target_cell_ind][gene.first][umi_count.first] += umi_count.second;
+				target_cell[gene.first][umi_count.first] += umi_count.second;
 			}
 		}
+
+		this->_is_cell_merged.at(source_cell_ind) = true;
 	}
 
 	void CellsDataContainer::exclude_cell(size_t index)
 	{
-		this->_is_cell_excluded[index] = true;
+		this->_is_cell_excluded.at(index) = true;
 	}
 
 	void CellsDataContainer::update_cells_genes_counts(int threshold, bool logs)
@@ -120,7 +123,7 @@ namespace Estimation
 
 	const CellsDataContainer::genes_t &CellsDataContainer::cell_genes(size_t index) const
 	{
-		return this->_cells_genes[index];
+		return this->_cells_genes.at(index);
 	}
 
 	const CellsDataContainer::i_counter_t &CellsDataContainer::cells_genes_counts_sorted() const
@@ -133,7 +136,7 @@ namespace Estimation
 		return this->_cell_barcodes[index];
 	}
 
-	const CellsDataContainer::names_t& CellsDataContainer::cell_barcodes() const
+	const CellsDataContainer::names_t& CellsDataContainer::cell_barcodes_raw() const
 	{
 		return this->_cell_barcodes;
 	}
@@ -146,6 +149,7 @@ namespace Estimation
 	void CellsDataContainer::set_initialized()
 	{
 		this->_is_cell_excluded = flags_t(this->_cell_barcodes.size(), false);
+		this->_is_cell_merged = flags_t(this->_cell_barcodes.size(), false);
 		this->update_cells_genes_counts(this->_merge_strategy->min_genes_before_merge());
 		this->_is_initialized = true;
 	}
@@ -184,5 +188,10 @@ namespace Estimation
 		}
 
 		return umis_dist;
+	}
+
+	bool CellsDataContainer::is_cell_merged(size_t cell_id) const
+	{
+		return this->_is_cell_merged.at(cell_id);
 	}
 }

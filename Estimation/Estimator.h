@@ -61,23 +61,18 @@ namespace Estimation
 	private:
 		names_t get_filtered_cell_names(const CellsDataContainer &genes_container, const ids_t &unmerged_cells) const;
 
-		i_list_t get_count_matrix(const ids_t &unmerged_cells, const names_t &gene_names,
+		i_list_t get_count_matrix(const ids_t &filtered_cells, const names_t &gene_names,
 							   const CellsDataContainer &genes_container, bool reads_output) const;
 
-		names_t get_gene_names_sorted(const CellsDataContainer &genes_container, const ids_t &unmerged_cells) const;
+		names_t get_gene_names_sorted(const CellsDataContainer &genes_container, const ids_t &filtered_cells) const;
 
-		doubles_t get_reads_per_umis(const CellsDataContainer &genes_container, const ids_t &unmerged_cells) const;
+		doubles_t get_reads_per_umis(const CellsDataContainer &genes_container, const ids_t &filtered_cells) const;
 
 		l_list_t get_umig_coverage(const CellsDataContainer &genes_container) const;
 
 		Results::IndropResult get_indrop_results(const Results::CountMatrix &cm, const CellsDataContainer &genes_conteiner,
 										const ids_t &unmerged_cells, bool not_filtered) const;
 
-		std::string get_cb_top_verbose(const CellsDataContainer &genes_container, const ids_t &unmerged_cells) const;
-
 		std::string get_genes_top_verbose(const s_counter_t &genes_count) const;
-
-		ss_u_hash_t get_umis_per_genes_per_cells_count(const CellsDataContainer &genes_container) const;
-		ss_u_hash_t get_reads_per_genes_per_cells_count(const CellsDataContainer &genes_container) const;
 	};
 }

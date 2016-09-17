@@ -16,8 +16,11 @@ namespace Estimation
 				, reads_per_umi(reads_per_umi)
 				, umig_covered(umig_covered)
 		{
-			for (size_t cell_ind = 0; cell_ind < container.cell_barcodes().size(); ++cell_ind)
+			for (size_t cell_ind = 0; cell_ind < container.cell_barcodes_raw().size(); ++cell_ind)
 			{
+				if (container.is_cell_merged(cell_ind))
+					continue;
+
 				const auto &cb = container.cell_barcode(cell_ind);
 				size_t sum_reads = 0;
 				for (auto const& gene : container.cell_genes(cell_ind))

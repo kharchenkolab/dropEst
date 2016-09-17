@@ -16,7 +16,7 @@ namespace Merge
 		int merges_count = 0;
 
 		ISIHM cb_reassigned_to_it;
-		ul_list_t cb_reassign_targets(container.cell_barcodes().size());
+		ul_list_t cb_reassign_targets(container.cell_barcodes_raw().size());
 		std::iota(cb_reassign_targets.begin(), cb_reassign_targets.end(), 0);
 
 		L_TRACE << "merging linked tags ";
@@ -63,7 +63,7 @@ namespace Merge
 			}
 		}
 
-		container.stats().merge(cb_reassign_targets, container.cell_barcodes());
+		container.stats().merge(cb_reassign_targets, container.cell_barcodes_raw());
 
 		if (filtered_cells.size() > 1)
 		{

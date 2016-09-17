@@ -18,7 +18,7 @@ struct Fixture
 {
 	Fixture()
 		: base_strat(new Merge::SimpleMergeStrategy(0, 0, 100, 0))
-		, real_cb_strat(new Merge::RealBarcodesMergeStrategy(PROJ_DATA_PATH + std::string("/barcodes.txt"), 9, 0, 0, 100, 0))
+		, real_cb_strat(new Merge::RealBarcodesMergeStrategy(PROJ_DATA_PATH + std::string("/barcodes.txt"), 9, 0, 0, 7, 0))
 		, container(base_strat, 10)
 		, container_full(real_cb_strat, 1)
 	{
@@ -42,6 +42,8 @@ struct Fixture
 		this->container_full.add_record("CAATTAGGTCCG", "CAACCT", "Gene1", cells_ids); //5, false
 		this->container_full.add_record("CAATTAGGTCCG", "AAACCT", "Gene1", cells_ids);
 		this->container_full.add_record("CAATTAGGTCCG", "CCCCCT", "Gene2", cells_ids);
+
+		this->container_full.add_record("AAAAAAAAAAAA", "CCCCCT", "Gene2", cells_ids); //6, false, excluded
 		this->container_full.set_initialized();
 	}
 
@@ -92,6 +94,8 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		container._cells_genes[1]["G1"]["UMI1"] = 3;
 		container._cells_genes[1]["G1"]["UMI3"] = 5;
 		container._cells_genes[1]["G2"]["UMI2"] = 7;
+
+		container.set_initialized();
 
 		base_strat->merge(container, 1, 1, Tools::IndexedValue(0, 3), cb_reassigned, cb_reassigned_to); //merge 0 to 1
 
@@ -242,10 +246,10 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	{
 		this->container_full.merge_and_filter(CellsDataContainer::s_uu_hash_t());
 
+		BOOST_CHECK_EQUAL(this->container_full.cell_barcodes_raw().size(), 7);
 		BOOST_CHECK_EQUAL(this->container_full.filtered_cells().size(), 2);
 
-		if (this->container_full.filtered_cells().size() < 2)
-			return;
+		BOOST_REQUIRE(this->container_full.filtered_cells().size() >= 2);
 
 		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[0]).size(), 3);
 		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[1]).size(), 1);
@@ -260,6 +264,16 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[1]).at("Gene1").size(), 1);
 		BOOST_CHECK_EQUAL(this->container_full.cell_genes(this->container_full.filtered_cells()[1]).at("Gene1").at("CAACCT"), 2);
+
+		BOOST_CHECK(!this->container_full.is_cell_merged(0));
+		BOOST_CHECK(!this->container_full.is_cell_merged(1));
+		BOOST_CHECK(this->container_full.is_cell_merged(2));
+		BOOST_CHECK(this->container_full.is_cell_merged(3));
+		BOOST_CHECK(this->container_full.is_cell_merged(4));
+		BOOST_CHECK(this->container_full.is_cell_merged(5));
+		BOOST_CHECK(!this->container_full.is_cell_merged(6));
+
+		BOOST_CHECK_EQUAL(this->container_full.excluded_cells().size(), 1);
 	}
 
 BOOST_AUTO_TEST_SUITE_END()
