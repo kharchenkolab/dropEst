@@ -12,6 +12,11 @@ namespace TestEstimator
 	struct testRealNeighbours;
 }
 
+namespace TestEstimatorMergeProbs
+{
+	struct testPoissonMergeRejections;
+}
+
 namespace Estimation
 {
 namespace Merge
@@ -23,6 +28,7 @@ namespace Merge
 		friend struct TestEstimator::testFillDistances;
 		friend struct TestEstimator::testRealNeighboursCbs;
 		friend struct TestEstimator::testRealNeighbours;
+		friend struct TestEstimatorMergeProbs::testPoissonMergeRejections;
 
 	protected:
 		typedef Estimation::CellsDataContainer::genes_t genes_t;

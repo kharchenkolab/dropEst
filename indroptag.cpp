@@ -25,7 +25,7 @@ struct Params
 	string r2_file_name;
 	string config_file_name;
 
-  Params() : cant_parse(false), verbose(false), base_name(""), log_prefix(""), save_reads_names(false)
+	Params() : cant_parse(false), verbose(false), base_name(""), log_prefix(""), save_reads_names(false)
 	{}
 };
 

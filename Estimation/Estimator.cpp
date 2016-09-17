@@ -85,6 +85,8 @@ namespace Estimation
 			}
 		}
 
+		L_TRACE << "\n" << counter.size() << " genes";
+
 		s_counter_t gene_counts(counter.begin(), counter.end());
 		sort(gene_counts.begin(), gene_counts.end(), comp_counters);
 

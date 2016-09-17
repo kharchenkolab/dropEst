@@ -133,7 +133,7 @@ namespace Estimation
 
 	const string &CellsDataContainer::cell_barcode(size_t index) const
 	{
-		return this->_cell_barcodes[index];
+		return this->_cell_barcodes.at(index);
 	}
 
 	const CellsDataContainer::names_t& CellsDataContainer::cell_barcodes_raw() const

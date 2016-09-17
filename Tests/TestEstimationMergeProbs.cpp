@@ -49,6 +49,8 @@ struct Fixture
 		this->container_full.add_record("CCCCCCCCCCCC", "CCCCCT", "Gene2", cells_ids);
 		this->container_full.add_record("CCCCCCCCCCCC", "TTTTTT", "Gene2", cells_ids);
 		this->container_full.add_record("CCCCCCCCCCCC", "TTCTTT", "Gene2", cells_ids);
+
+		this->container_full.add_record("TAATTAGGTCCA", "AAAAAA", "Gene4", cells_ids);
 		this->container_full.set_initialized();
 	}
 
@@ -62,7 +64,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimatorMergeProbs)
 	BOOST_FIXTURE_TEST_CASE(testPoissonMergeInit, Fixture)
 	{
 		this->real_cb_strat->init(this->container_full);
-		BOOST_CHECK_EQUAL(this->real_cb_strat->_umis_distribution.size(), 7);
+		BOOST_CHECK_EQUAL(this->real_cb_strat->_umis_distribution.size(), 8);
 
 		BOOST_CHECK_EQUAL(this->real_cb_strat->_umis_distribution["AAACCT"], 4);
 		BOOST_CHECK_EQUAL(this->real_cb_strat->_umis_distribution["CCCCCT"], 5);
@@ -71,6 +73,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimatorMergeProbs)
 		BOOST_CHECK_EQUAL(this->real_cb_strat->_umis_distribution["CCATTC"], 1);
 		BOOST_CHECK_EQUAL(this->real_cb_strat->_umis_distribution["TTTTTT"], 2);
 		BOOST_CHECK_EQUAL(this->real_cb_strat->_umis_distribution["TTCTTT"], 2);
+		BOOST_CHECK_EQUAL(this->real_cb_strat->_umis_distribution["AAAAAA"], 1);
 
 		BOOST_CHECK_EQUAL(this->container_full.cell_genes(5).size(), 2);
 		BOOST_CHECK_EQUAL(this->container_full.cell_genes(6).size(), 2);
@@ -94,6 +97,12 @@ BOOST_AUTO_TEST_SUITE(TestEstimatorMergeProbs)
 		BOOST_CHECK_LE(std::abs(this->real_cb_strat->get_bootstrap_intersect_prob(this->container_full, 1, 2) - 0.16), 0.05);
 		BOOST_CHECK_LE(std::abs(this->real_cb_strat->get_bootstrap_intersect_prob(this->container_full, 3, 4) - 0.15), 0.05);
 		BOOST_CHECK_LE(std::abs(this->real_cb_strat->get_bootstrap_intersect_prob(this->container_full, 5, 6, 100000) - 0.045), 0.01);
+	}
+
+	BOOST_FIXTURE_TEST_CASE(testPoissonMergeRejections, Fixture)
+	{
+		this->real_cb_strat->init(this->container_full);
+		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 7), -1);
 	}
 
 BOOST_AUTO_TEST_SUITE_END()

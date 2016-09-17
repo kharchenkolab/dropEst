@@ -8,6 +8,7 @@ namespace TestEstimatorMergeProbs
 	struct testPoissonMergeProbs;
 	struct testPoissonMergeInit;
 	struct testPoissonMergeTime;
+	struct testPoissonMergeRejections;
 }
 
 namespace Estimation
@@ -19,6 +20,7 @@ namespace Merge
 		friend struct TestEstimatorMergeProbs::testPoissonMergeProbs;
 		friend struct TestEstimatorMergeProbs::testPoissonMergeInit;
 		friend struct TestEstimatorMergeProbs::testPoissonMergeTime;
+		friend struct TestEstimatorMergeProbs::testPoissonMergeRejections;
 
 	private:
 		typedef Estimation::CellsDataContainer::s_ul_hash_t s_ul_hash_t;
