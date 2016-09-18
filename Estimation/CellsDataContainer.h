@@ -93,5 +93,7 @@ namespace Estimation
 		const names_t &cell_barcodes_raw() const;
 
 		s_ul_hash_t umis_distribution() const;
+
+		std::string merge_type() const;
 	};
 }

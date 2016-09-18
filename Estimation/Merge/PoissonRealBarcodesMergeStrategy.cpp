@@ -54,7 +54,6 @@ namespace Merge
 
 	void PoissonRealBarcodesMergeStrategy::init(const Estimation::CellsDataContainer &container)
 	{
-		L_TRACE << "Poisson merge selected";
 		RealBarcodesMergeStrategy::init(container);
 		this->_umis_distribution = container.umis_distribution();
 		bs_umi_t umi_ind = 0;
@@ -180,6 +179,11 @@ namespace Merge
 	bool PoissonRealBarcodesMergeStrategy::need_parallel() const
 	{
 		return true;
+	}
+
+	std::string PoissonRealBarcodesMergeStrategy::merge_type() const
+	{
+		return "Poisson";
 	}
 }
 }

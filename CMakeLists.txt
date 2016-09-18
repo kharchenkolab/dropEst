@@ -6,6 +6,7 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMake")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wno-deprecated -m64 -DBOOST_LOG_DYN_LINK -std=c++11 -fopenmp")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -gdwarf-2 -g3 -Wno-deprecated -m64 -DBOOST_LOG_DYN_LINK -std=c++11")
 add_definitions(-DPROJ_DATA_PATH=\"${PROJECT_SOURCE_DIR}/data\")
+add_definitions(-DPROJ_BIN_PATH=\"${CMAKE_CURRENT_BINARY_DIR}\")
 
 set(BOOST_ROOT "/home/vp76/local/")
 find_package(Boost 1.54.0 COMPONENTS unit_test_framework thread system log iostreams REQUIRED)
@@ -43,6 +44,10 @@ target_link_libraries(indroptag TagsSearch ${LIBRARIES})
 
 add_executable(indropest indropest.cpp)
 target_link_libraries(indropest Estimation ${EST_LIBRARIES})
+
+add_custom_command(TARGET indropest POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/scripts/Report/*.R ${CMAKE_CURRENT_BINARY_DIR}/)
 
 
 set (TEST_TS TestTagsSearch)

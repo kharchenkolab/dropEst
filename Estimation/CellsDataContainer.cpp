@@ -24,6 +24,7 @@ namespace Estimation
 		if (!this->_is_initialized)
 			throw runtime_error("You must initialize container");
 
+		L_TRACE << this->_merge_strategy->merge_type() << " merge selected";
 		this->_merge_strategy->merge(*this, umig_cells_counts, this->_filtered_cells);
 		this->update_cells_genes_counts(this->_merge_strategy->min_genes_after_merge());
 	}
@@ -193,5 +194,10 @@ namespace Estimation
 	bool CellsDataContainer::is_cell_merged(size_t cell_id) const
 	{
 		return this->_is_cell_merged.at(cell_id);
+	}
+
+	std::string CellsDataContainer::merge_type() const
+	{
+		return this->_merge_strategy->merge_type();
 	}
 }

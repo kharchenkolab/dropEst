@@ -268,7 +268,7 @@ int main(int argc, char **argv)
 				params.output_name += ".bin";
 			}
 
-			results.save_rds(params.output_name);
+			results.save_rds(container, params.output_name);
 		}
 
 //		if (false)

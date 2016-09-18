@@ -327,5 +327,10 @@ namespace Estimation
 		{
 			return false;
 		}
+
+		std::string RealBarcodesMergeStrategy::merge_type() const
+		{
+			return "RealCBs";
+		}
 	}
 }

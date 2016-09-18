@@ -74,6 +74,8 @@ namespace Merge
 
 		virtual void merge_inited(Estimation::CellsDataContainer &container, const s_uu_hash_t &umig_cells_counts,
 						   ul_list_t &filtered_cells) const override;
+
+		virtual std::string merge_type() const override;
 	};
 }
 

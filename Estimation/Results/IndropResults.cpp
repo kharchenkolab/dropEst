@@ -6,6 +6,8 @@
 #include <Tools/Logs.h>
 #include <Tools/UtilFunctions.h>
 
+#include "boost/filesystem.hpp"
+
 namespace Estimation
 {
 	namespace Results
@@ -59,29 +61,37 @@ namespace Estimation
 			}
 		}
 
-		void IndropResult::save_rds(const std::string &filename) const
+		void IndropResult::save_rds(const CellsDataContainer &container, const std::string &filename) const
 		{
 			using namespace Rcpp;
 
 			RInside *R = Tools::init_r();
-			(*R)["d"] = this->get_main_r_vec(filename);
+			(*R)["data"] = this->get_main_r_vec(filename);
 			Tools::trace_time("Writing R data to " + filename);
 
 			R->parseEvalQ(
-					"d$ex_cells_chr_counts<-as.data.frame(matrix(d$ex_cells_chr_counts, length(d$ex_counts_cell_names), "
-							"length(d$ex_chr_names), byrow = TRUE), row.names = d$ex_counts_cell_names); "
-							"colnames(d$ex_cells_chr_counts)<-d$ex_chr_names; d$ex_counts_cell_names<-NULL; d$ex_chr_names<-NULL");
+					"data$ex_cells_chr_counts<-as.data.frame(matrix(data$ex_cells_chr_counts, length(data$ex_counts_cell_names), "
+							"length(data$ex_chr_names), byrow = TRUE), row.names = data$ex_counts_cell_names); "
+							"colnames(data$ex_cells_chr_counts)<-data$ex_chr_names; data$ex_counts_cell_names<-NULL; data$ex_chr_names<-NULL");
 
 			R->parseEvalQ(
-					"d$nonex_cells_chr_counts<-as.data.frame(matrix(d$nonex_cells_chr_counts, length(d$nonex_counts_cell_names), "
-							"length(d$nonex_chr_names), byrow = TRUE), row.names = d$nonex_counts_cell_names); "
-							"colnames(d$nonex_cells_chr_counts)<-d$nonex_chr_names; d$nonex_counts_cell_names<-NULL;"
-							"d$nonex_chr_names<-NULL;");
+					"data$nonex_cells_chr_counts<-as.data.frame(matrix(data$nonex_cells_chr_counts, length(data$nonex_counts_cell_names), "
+							"length(data$nonex_chr_names), byrow = TRUE), row.names = data$nonex_counts_cell_names); "
+							"colnames(data$nonex_cells_chr_counts)<-data$nonex_chr_names; data$nonex_counts_cell_names<-NULL;"
+							"data$nonex_chr_names<-NULL;");
 
-			R->parseEvalQ("d$cm <- matrix(d$cm, length(d$gene.names), length(d$cell.names), byrow=T);"
-								  "rownames(d$cm) <- d$gene.names; colnames(d$cm) <- d$cell.names");
+			R->parseEvalQ("data$cm <- matrix(data$cm, length(data$gene.names), length(data$cell.names), byrow=T);"
+								  "rownames(data$cm) <- data$gene.names; colnames(data$cm) <- data$cell.names");
 
-			R->parseEvalQ("saveRDS(d, '" + filename + "')");
+			(*R)["report_data"] = this->get_report_r_vec(container);
+//			R->parseEval((std::string)"source('" + PROJ_BIN_PATH + "/Builder.R', echo=TRUE, verbose=TRUE)");
+			R->parseEval((std::string)"source('" + PROJ_BIN_PATH + "/Builder.R')");
+			boost::filesystem::remove("Report.log");
+			boost::filesystem::remove("Report.aux");
+			boost::filesystem::remove("Report.tex");
+			boost::filesystem::remove_all("figures");
+
+			R->parseEvalQ("saveRDS(data, '" + filename + "')");
 			Tools::trace_time("Done");
 		}
 
@@ -104,6 +114,15 @@ namespace Estimation
 						 Named("reads_by_umig_umis") = wrap(this->reads_by_umig_umis),
 						 Named("exone_reads_by_cb") = wrap(this->exone_reads_by_cb),
 						 Named("fname") = wrap(filename));
+		}
+
+		Rcpp::List IndropResult::get_report_r_vec(const CellsDataContainer &container) const
+		{
+			using namespace Rcpp;
+			return List::create(Named("merge_type") = wrap(container.merge_type()),
+								Named("merge_probs") = wrap(container.stats().get_raw(Stats::MERGE_PROB_BY_CELL)),
+								Named("report_script") = wrap(PROJ_BIN_PATH + (std::string)"/Report.R")
+			);
 		}
 	}
 }

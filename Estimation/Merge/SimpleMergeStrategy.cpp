@@ -132,5 +132,10 @@ namespace Merge
 			: MergeStrategyBase(min_genes_before_merge, min_genes_after_merge, max_merge_edit_distance,
 									min_merge_fraction)
 	{}
+
+	std::string SimpleMergeStrategy::merge_type() const
+	{
+		return "Simple";
+	}
 }
 }

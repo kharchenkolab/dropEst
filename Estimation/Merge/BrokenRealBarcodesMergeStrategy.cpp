@@ -34,7 +34,6 @@ namespace Merge
 
 	void BrokenRealBarcodesMergeStrategy::init(const Estimation::CellsDataContainer &container)
 	{
-		L_TRACE << "Broken merge selected";
 		RealBarcodesMergeStrategy::init(container);
 		srand(48);
 	}
@@ -42,6 +41,11 @@ namespace Merge
 	long BrokenRealBarcodesMergeStrategy::get_max_merge_dist(long min_real_cb_dist) const
 	{
 		return min_real_cb_dist == 0 ? 0 : min_real_cb_dist + 10;
+	}
+
+	std::string BrokenRealBarcodesMergeStrategy::merge_type() const
+	{
+		return "Broken";
 	}
 }
 }

@@ -37,6 +37,7 @@ namespace Merge
 
 		virtual void init(const Estimation::CellsDataContainer &container);
 		virtual void release();
+		virtual std::string merge_type() const = 0;
 
 		int min_genes_before_merge() const;
 		int min_genes_after_merge() const;

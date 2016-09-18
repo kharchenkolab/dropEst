@@ -20,20 +20,20 @@ namespace Estimation
 			for (auto cell_id : container.filtered_cells())
 			{
 				std::string cell_barcode = container.cell_barcode(cell_id);
-				auto &cell = genes_umis[cell_barcode];
-				auto &cell_umis = reads_per_umi[cell_barcode];
-				auto &cell_umigs = reads_per_umig[cell_barcode];
-				size_t sum_reads = 0;
 
-				for (auto const &gene : container.cell_genes(cell_id))
+				auto &cell_umis = genes_umis[cell_barcode];
+				auto &cell_reads_p_umis = reads_per_umi[cell_barcode];
+				auto &cell_reads_p_umigs = reads_per_umig[cell_barcode];
+
+				for (auto const &gene_umis : container.cell_genes(cell_id))
 				{
-					cell[gene.first] = (unsigned)gene.second.size();
-					auto &current_gene = genes_reads[cell_barcode][gene.first];
-					for (auto const &umi : gene.second)
+					cell_umis[gene_umis.first] = (unsigned)gene_umis.second.size();
+					auto &current_gene = genes_reads[cell_barcode][gene_umis.first];
+					for (auto const &umi_reads : gene_umis.second)
 					{
-						current_gene += umi.second;
-						cell_umis[umi.first] += umi.second;
-						cell_umigs[umi.first + gene.first] = (unsigned)umi.second;
+						current_gene += umi_reads.second;
+						cell_reads_p_umis[umi_reads.first] += umi_reads.second;
+						cell_reads_p_umigs[umi_reads.first + gene_umis.first] = (unsigned)umi_reads.second;
 					}
 				}
 			}
