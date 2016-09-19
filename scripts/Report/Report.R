@@ -25,15 +25,15 @@ header <- "
 \\titlespacing{\\section}{0pt}{*0.5}{*1}
 "
 
-opts_knit$set(header=header)
-opts_chunk$set(fig.path = 'figures/f-', dev = 'pdf', echo=FALSE, out.width='.8\\linewidth')
+#opts_knit$set(header=header)
+opts_chunk$set(fig.path = 'figures/f-', echo=FALSE, out.width='.8\\linewidth')
 
-#'\fontsize{14}{2}\selectfont
+#\fontsize{14}{2}\selectfont
 
 theme_set(theme_gray(base_size = 18))
 
 #+Report
-#'\section{Merge}
+#\section{Merge}
 probs_hist <- qplot(max_merge_probs, bins=100, xlab=merge_xlabel, ylab='Number of cells', col=I("black"))
 if (probs_threshold >= 0) {
     probs_hist <- probs_hist + geom_vline(aes(xintercept=probs_threshold, color='Optimal'), show.legend=TRUE) +
