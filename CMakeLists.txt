@@ -9,7 +9,7 @@ add_definitions(-DPROJ_DATA_PATH=\"${PROJECT_SOURCE_DIR}/data\")
 add_definitions(-DPROJ_BIN_PATH=\"${CMAKE_CURRENT_BINARY_DIR}\")
 
 set(BOOST_ROOT "/home/vp76/local/")
-find_package(Boost 1.54.0 COMPONENTS unit_test_framework thread system log iostreams REQUIRED)
+find_package(Boost 1.54.0 COMPONENTS unit_test_framework thread system log iostreams filesystem REQUIRED)
 find_package (Threads REQUIRED)
 find_package (ZLIB REQUIRED)
 
@@ -46,7 +46,7 @@ add_executable(indropest indropest.cpp)
 target_link_libraries(indropest Estimation ${EST_LIBRARIES})
 
 add_custom_command(TARGET indropest POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
+        COMMAND cp
         ${CMAKE_SOURCE_DIR}/scripts/Report/*.R ${CMAKE_CURRENT_BINARY_DIR}/)
 
 
