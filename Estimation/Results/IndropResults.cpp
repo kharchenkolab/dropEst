@@ -86,10 +86,10 @@ namespace Estimation
 			(*R)["report_data"] = this->get_report_r_vec(container);
 //			R->parseEval((std::string)"source('" + PROJ_BIN_PATH + "/Builder.R', echo=TRUE, verbose=TRUE)");
 			R->parseEval((std::string)"source('" + PROJ_BIN_PATH + "/Builder.R')");
-			boost::filesystem::remove("Report.log");
-			boost::filesystem::remove("Report.aux");
-			boost::filesystem::remove("Report.tex");
-			boost::filesystem::remove_all("figures");
+//			boost::filesystem::remove("Report.log");
+//			boost::filesystem::remove("Report.aux");
+//			boost::filesystem::remove("Report.tex");
+//			boost::filesystem::remove_all("figures");
 
 			R->parseEvalQ("saveRDS(data, '" + filename + "')");
 			Tools::trace_time("Done");

@@ -32,9 +32,9 @@ get_otsu_threshold <- function(probs) {
   return(threshold)
 }
 
-#report_data <- readRDS('~/InDrop/Data/local_run/SRR.rds.bc.rds')
+#report_data <- readRDS('~/Data/SRR1784310/est_10_17_test_poisson/SRR.rds.bc.rds')
 #report_data$merge_type <- 'RealCBs'
-#report_data$report_script <- '~/InDrop/Projects/cp_stable/scripts/Report/Report.R'
+#report_data$report_script <- '~/cp/build/Report.R'
 
 max_merge_probs <- unlist(lapply(report_data$merge_probs, max))
 if (report_data$merge_type == "Poisson") {
@@ -51,4 +51,4 @@ if (report_data$merge_type == "Poisson") {
 nonzero_neighbours_num = unlist(lapply(report_data$merge_probs, function(x) sum(x > 0)))
 #setwd('/home/viktor/InDrop/Data/local_run/')
 
-spin(report_data$report_script, format='Rtex')
+spin(report_data$report_script, format='Rmd')
