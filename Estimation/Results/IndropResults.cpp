@@ -6,8 +6,6 @@
 #include <Tools/Logs.h>
 #include <Tools/UtilFunctions.h>
 
-#include "boost/filesystem.hpp"
-
 namespace Estimation
 {
 	namespace Results
@@ -86,10 +84,8 @@ namespace Estimation
 			(*R)["report_data"] = this->get_report_r_vec(container);
 //			R->parseEval((std::string)"source('" + PROJ_BIN_PATH + "/Builder.R', echo=TRUE, verbose=TRUE)");
 			R->parseEval((std::string)"source('" + PROJ_BIN_PATH + "/Builder.R')");
-//			boost::filesystem::remove("Report.log");
-//			boost::filesystem::remove("Report.aux");
-//			boost::filesystem::remove("Report.tex");
-//			boost::filesystem::remove_all("figures");
+
+			R->parseEvalQ("data$filtered_cbs <- names(umis_counts)[cell_type == 'Bad']"); // Use report variable
 
 			R->parseEvalQ("saveRDS(data, '" + filename + "')");
 			Tools::trace_time("Done");
@@ -121,7 +117,7 @@ namespace Estimation
 			using namespace Rcpp;
 			return List::create(Named("merge_type") = wrap(container.merge_type()),
 								Named("merge_probs") = wrap(container.stats().get_raw(Stats::MERGE_PROB_BY_CELL)),
-								Named("report_script") = wrap(PROJ_BIN_PATH + (std::string)"/Report.R")
+								Named("scripts_folder") = wrap((std::string)PROJ_BIN_PATH)
 			);
 		}
 	}

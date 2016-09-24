@@ -1,40 +1,13 @@
 library(knitr)
+library(ggplot2)
 
-get_otsu_threshold <- function(probs) {
-  probs_sorted <- sort(probs)
-  
-  total <- length(probs_sorted)
-  w_sum <- sum(probs_sorted)
-  
-  sum_b <- 0
-  w_b <- 0
-  w_f <- 0
-  var_max <- 0
-  threshold <- 0
-  
-  t <- probs_sorted[1]
-  for (t in probs_sorted) {
-    w_b <- w_b + 1
-    w_f <- total - w_b
-    if (w_f == 0) break
-    sum_b <- sum_b + t
+MC_CORES <- 1
+source(paste0(report_data$scripts_folder, '/Functions.R'))
 
-    m_b <- sum_b / w_b
-    m_f <- (w_sum - sum_b) / w_f
-    
-    var_between <- w_b * w_f * (m_b - m_f) ** 2
-    if (var_between > var_max) {
-      var_max <- var_between
-      threshold <- t
-    }
-  }
-  
-  return(threshold)
-}
-
-#report_data <- readRDS('~/Data/SRR1784310/est_10_17_test_poisson/SRR.rds.bc.rds')
-#report_data$merge_type <- 'RealCBs'
-#report_data$report_script <- '~/cp/build/Report.R'
+#Merge
+#report_data <- readRDS('~/InDrop/Data/local_run/SRR.rds.bc.rds')
+#report_data$merge_type <- 'Poisson'
+#report_data$scripts_folder <- '~/InDrop/Projects/cp_stable/scripts/Report/'
 
 max_merge_probs <- unlist(lapply(report_data$merge_probs, max))
 if (report_data$merge_type == "Poisson") {
@@ -49,6 +22,43 @@ if (report_data$merge_type == "Poisson") {
 }
 
 nonzero_neighbours_num = unlist(lapply(report_data$merge_probs, function(x) sum(x > 0)))
-#setwd('/home/viktor/InDrop/Data/local_run/')
 
-spin(report_data$report_script, format='Rmd')
+#Bad Cells
+#data <- readRDS('~/InDrop/Data/local_run/SRR.rds')
+
+genesets <- get_genesets(data$gene.names)
+umis_counts <- sort(apply(data$cm, 2, sum), decreasing = T)
+
+genes_fracs <- mclapply(genesets, function(gs) apply(data$cm, 2, function(cell) sum(cell[gs]) / sum(cell))[names(umis_counts)], mc.cores=MC_CORES)
+umi_num_plot_info <- get_cells_number(umis_counts, min(100, as.integer(0.1 * length(umis_counts))))
+
+real_cbs_num_adj <- as.integer(umi_num_plot_info$cells_number * 0.6)
+em_results <- mclapply(genes_fracs, function(frac) get_em(frac, real_cbs_num_adj), mc.cores=MC_CORES)
+
+gene_frac_plots <- list()
+separate_inds <- !unlist(lapply(em_results, is.null))
+
+cell_type <- rep('Good', length(umis_counts))
+
+if (sum(separate_inds) >= 2) {
+  multivar_em <- init.EM(as.data.frame(genes_fracs[separate_inds]), nclass = 2, lab=c(rep(1, real_cbs_num_adj), rep(0, length(umis_counts) - real_cbs_num_adj)), method = "Rnd.EM")
+  cell_type[multivar_em$class == 2] <- 'Bad'
+
+  for (n1 in names(genes_fracs)) {
+    if (is.null(em_results[[n1]])) next;
+    frac1 <- genes_fracs[[n1]]
+    for (n2 in names(genes_fracs)) {
+      if (is.null(em_results[[n2]])) next;
+      frac2 <- genes_fracs[[n2]]
+      class1 <- data.frame(x=frac1[multivar_em$class == 2], y=frac2[multivar_em$class == 2])
+      class1$d <- densCols(class1$x, class1$y, colramp = colorRampPalette(c("white", blues9)))
+      class2 <- data.frame(x=frac1[multivar_em$class == 1], y=frac2[multivar_em$class == 1])
+      class2$d <- densCols(class2$x, class2$y, colramp = colorRampPalette(c("yellow", "orange", "red")))
+      gene_frac_plots[[paste0(n1, n2)]] <- ggplot(rbind(class1, class2)) + geom_point(aes(x, y, col = d), size = 1) + scale_color_identity() + labs(x=n1, y=n2)
+    }
+  }
+}
+
+#Generate report
+#setwd('~/InDrop/Data/local_run/')
+spin(paste0(report_data$scripts_folder, '/Report.R'), format='Rmd')

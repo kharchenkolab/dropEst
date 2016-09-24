@@ -186,6 +186,18 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 		BOOST_CHECK_THROW(genes_container.get_gene_info("chrM", 100000, 130000), RefGenesContainer::ChrNotFoundException);
 	}
 
+	BOOST_FIXTURE_TEST_CASE(testR, Fixture)
+	{
+		auto R = init_r();
+		R->parseEval("library(ggplot2)\n"
+					 "library(grid)\n"
+					 "library(gridExtra)\n"
+					 "library(knitr)\n"
+					 "library(fitdistrplus)");
+
+		R->parseEval((std::string)"source('" + PROJ_BIN_PATH + "/Functions.R')");
+	}
+
 //	BOOST_FIXTURE_TEST_CASE(testGtfPerformance, Fixture) //Uncomment to print performance
 //	{
 //		init_test_logs(boost::log::trivial::info);
