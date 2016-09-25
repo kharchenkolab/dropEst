@@ -237,10 +237,10 @@ namespace Estimation
 		auto bam_processor = BamProcessing::BamProcessorFactory::get(filled_bam, reads_params_names_str,
 																	 gtf_filename, this->read_prefix_length);
 
-		auto umig_cells_counts = bam_processor->parse_bam_files(files, bam_output, container);
+		bam_processor->parse_bam_files(files, bam_output, container);
 		container.set_initialized();
 
-		container.merge_and_filter(umig_cells_counts);
+		container.merge_and_filter();
 		return container;
 	}
 }

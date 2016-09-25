@@ -62,7 +62,7 @@ namespace Estimation
 	public:
 		CellsDataContainer(std::shared_ptr<Merge::MergeStrategyAbstract> merge_strategy, size_t top_print_size);
 
-		void merge_and_filter(const CellsDataContainer::s_uu_hash_t &umig_cells_counts);
+		void merge_and_filter();
 
 		size_t add_record(const std::string &cell_barcode, const std::string &umi, const std::string &gene, s_i_map_t &cells_ids);
 

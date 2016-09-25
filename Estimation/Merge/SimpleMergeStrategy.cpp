@@ -10,9 +10,23 @@ namespace Merge
 
 	using Tools::IndexedValue;
 
-	void SimpleMergeStrategy::merge_inited(Estimation::CellsDataContainer &container, const s_uu_hash_t &umig_cells_counts,
-								  ul_list_t &filtered_cells) const
+	void SimpleMergeStrategy::merge_inited(Estimation::CellsDataContainer &container, ul_list_t &filtered_cells) const
 	{
+		Tools::trace_time("Fill UMIgs-cells");
+		sul_l_map_t umig_cell_ids;
+		for (size_t cell_id : filtered_cells)
+		{
+			for (auto const &gene : container.cell_genes(cell_id))
+			{
+				for (auto const &umi : gene.second)
+				{
+					auto res = umig_cell_ids.emplace(std::make_pair(umi.first + gene.first, sul_set_t()));
+					res.first->second.emplace(cell_id);
+				}
+			}
+		}
+		Tools::trace_time("UMIgs-cells filled");
+
 		int merges_count = 0;
 
 		ISIHM cb_reassigned_to_it;
@@ -31,7 +45,7 @@ namespace Merge
 
 			u_u_hash_t umigs_intersect_top;
 			size_t umigs_count = this->get_umigs_intersect_top(container, cb_reassign_targets, genes_count,
-															   umig_cells_counts, umigs_intersect_top);
+															   umig_cell_ids, umigs_intersect_top);
 
 			long top_cell_ind = -1;
 			double top_cb_fraction = -1;
@@ -97,7 +111,7 @@ namespace Merge
 
 	size_t SimpleMergeStrategy::get_umigs_intersect_top(Estimation::CellsDataContainer &container,
 													  const ul_list_t &cb_reassign_targets, const IndexedValue &processed_genes_count,
-													  const s_uu_hash_t &umigs_cells_counts, u_u_hash_t &umig_top) const
+													  const sul_l_map_t &umig_cell_ids, u_u_hash_t &umig_top) const
 	{
 		size_t umigs_count = 0;
 		for (auto const &gene: container.cell_genes(processed_genes_count.index))
@@ -108,10 +122,9 @@ namespace Merge
 			for (auto const &umi_count: umis)
 			{
 				std::string umig = umi_count.first + gene_name;
-				const u_u_hash_t &umig_cells = umigs_cells_counts.at(umig);
-				for (auto const &cell : umig_cells)
+				const auto &umig_cells = umig_cell_ids.at(umig);
+				for (size_t cell_with_same_umig_id : umig_cells)
 				{
-					size_t cell_with_same_umig_id = cell.first;
 					size_t reassign_target = cb_reassign_targets[cell_with_same_umig_id]; //if not reassigned then cell_with_same_umig_id
 					if (reassign_target == processed_genes_count.index)
 						continue;

@@ -11,16 +11,17 @@ namespace Merge
 	class SimpleMergeStrategy : public MergeStrategyBase
 	{
 	private:
+		typedef boost::unordered_set<size_t> sul_set_t;
+		typedef boost::unordered_map<std::string, sul_set_t> sul_l_map_t;
 		static const double EPS;
 
 	private:
 		size_t get_umigs_intersect_top(Estimation::CellsDataContainer &container, const ul_list_t &cb_reassigned,
 									   const Tools::IndexedValue &processed_genes_count,
-									   const s_uu_hash_t &umigs_cells_counts, u_u_hash_t &umig_top) const;
+									   const sul_l_map_t &umig_cell_ids, u_u_hash_t &umig_top) const;
 
 	protected:
-		virtual void merge_inited(Estimation::CellsDataContainer &container, const s_uu_hash_t &umig_cells_counts,
-								  ul_list_t &filtered_cells) const override;
+		virtual void merge_inited(Estimation::CellsDataContainer &container, ul_list_t &filtered_cells) const override;
 
 	public:
 		SimpleMergeStrategy(int min_genes_before_merge, int min_genes_after_merge, int max_merge_edit_distance,

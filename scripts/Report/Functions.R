@@ -1,5 +1,3 @@
-library(org.Mm.eg.db)
-library(GO.db)
 library(EMCluster)
 
 get_otsu_threshold <- function(probs) {
@@ -32,27 +30,6 @@ get_otsu_threshold <- function(probs) {
     }
 
     return(threshold)
-}
-
-
-get_genesets <- function(genes) {
-    # translate gene names to ids
-    ids <- unlist(lapply(mget(genes, org.Mm.egALIAS2EG, ifnotfound = NA), function(x) x[1]))
-    rids <- names(ids); names(rids) <- ids
-    # convert GO lists from ids to gene names
-    go.env <- lapply(mget(ls(org.Mm.egGO2ALLEGS), org.Mm.egGO2ALLEGS), function(x) as.character(na.omit(rids[x])));
-    names(go.env) <- paste(names(go.env),unlist(lapply(mget(names(go.env),GOTERM),function(x) x@Term)))
-
-    genesets <- list(
-    apoptotic=unique(go.env$`GO:0006915 apoptotic process`),
-    cytoplasm=unique(go.env$`GO:0005737 cytoplasm`),
-    extracellular=unique(go.env$`GO:0005576 extracellular region`),
-    membrane=unique(go.env$`GO:0016020 membrane`),
-    metabolic=unique(go.env$`GO:0008152 metabolic process`),
-    ribosome=unique(go.env$`GO:0005840 ribosome`),
-    mitochondrion=unique(go.env$`GO:0005739 mitochondrion`)
-    )
-    return(genesets)
 }
 
 get_em <- function(fraction, good_number) {

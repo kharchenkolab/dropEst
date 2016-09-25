@@ -193,6 +193,7 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 					 "library(grid)\n"
 					 "library(gridExtra)\n"
 					 "library(knitr)\n"
+					 "library(parallel)\n"
 					 "library(fitdistrplus)");
 
 		R->parseEval((std::string)"source('" + PROJ_BIN_PATH + "/Functions.R')");

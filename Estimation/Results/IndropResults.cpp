@@ -59,7 +59,8 @@ namespace Estimation
 			}
 		}
 
-		void IndropResult::save_rds(const CellsDataContainer &container, const std::string &filename) const
+		void IndropResult::save_results(const CellsDataContainer &container, const std::string &filename,
+										const std::string &genesets_file, unsigned num_of_threads) const
 		{
 			using namespace Rcpp;
 
@@ -81,11 +82,13 @@ namespace Estimation
 			R->parseEvalQ("data$cm <- matrix(data$cm, length(data$gene.names), length(data$cell.names), byrow=T);"
 								  "rownames(data$cm) <- data$gene.names; colnames(data$cm) <- data$cell.names");
 
-			(*R)["report_data"] = this->get_report_r_vec(container);
-//			R->parseEval((std::string)"source('" + PROJ_BIN_PATH + "/Builder.R', echo=TRUE, verbose=TRUE)");
-			R->parseEval((std::string)"source('" + PROJ_BIN_PATH + "/Builder.R')");
-
-			R->parseEvalQ("data$filtered_cbs <- names(umis_counts)[cell_type == 'Bad']"); // Use report variable
+			if (genesets_file != "")
+			{
+				(*R)["report_data"] = this->get_report_r_vec(container, genesets_file, num_of_threads);
+				R->parseEval((std::string)"source('" + PROJ_BIN_PATH + "/Builder.R')");
+//				R->parseEval((std::string)"source('" + PROJ_BIN_PATH + "/Builder.R', echo=TRUE, verbose=TRUE)");
+				R->parseEvalQ("data$filtered_cbs <- names(umis_counts)[cell_type == 'Bad']"); // Use report variable
+			}
 
 			R->parseEvalQ("saveRDS(data, '" + filename + "')");
 			Tools::trace_time("Done");
@@ -112,12 +115,15 @@ namespace Estimation
 						 Named("fname") = wrap(filename));
 		}
 
-		Rcpp::List IndropResult::get_report_r_vec(const CellsDataContainer &container) const
+		Rcpp::List IndropResult::get_report_r_vec(const CellsDataContainer &container, const std::string &genesets_file,
+												  unsigned num_of_threads) const
 		{
 			using namespace Rcpp;
 			return List::create(Named("merge_type") = wrap(container.merge_type()),
 								Named("merge_probs") = wrap(container.stats().get_raw(Stats::MERGE_PROB_BY_CELL)),
-								Named("scripts_folder") = wrap((std::string)PROJ_BIN_PATH)
+								Named("scripts_folder") = wrap((std::string)PROJ_BIN_PATH),
+								Named("genesets_file") = wrap(genesets_file),
+								Named("num_of_threads") = wrap(num_of_threads)
 			);
 		}
 	}

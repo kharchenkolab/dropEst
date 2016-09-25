@@ -19,13 +19,13 @@ namespace Estimation
 		, _is_initialized(false)
 	{}
 
-	void CellsDataContainer::merge_and_filter(const s_uu_hash_t &umig_cells_counts)
+	void CellsDataContainer::merge_and_filter()
 	{
 		if (!this->_is_initialized)
 			throw runtime_error("You must initialize container");
 
 		L_TRACE << this->_merge_strategy->merge_type() << " merge selected";
-		this->_merge_strategy->merge(*this, umig_cells_counts, this->_filtered_cells);
+		this->_merge_strategy->merge(*this, this->_filtered_cells);
 		this->update_cells_genes_counts(this->_merge_strategy->min_genes_after_merge());
 	}
 

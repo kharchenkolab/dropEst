@@ -11,8 +11,7 @@ namespace Merge
 	class FilteringMergeStrategy : public MergeStrategyAbstract
 	{
 	protected:
-		virtual void merge_inited(Estimation::CellsDataContainer &container, const s_uu_hash_t &umig_cells_counts,
-							  ul_list_t &filtered_cells) const override
+		virtual void merge_inited(Estimation::CellsDataContainer &container, ul_list_t &filtered_cells) const override
 		{
 			for (auto const &gene_count : boost::adaptors::reverse(container.cells_genes_counts_sorted()))
 			{

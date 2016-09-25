@@ -20,8 +20,7 @@ namespace Estimation
 				, _barcode2_length(barcode2_length)
 		{}
 
-		void Merge::RealBarcodesMergeStrategy::merge_inited(Estimation::CellsDataContainer &container,
-															const s_uu_hash_t &umig_cells_counts, ul_list_t &filtered_cells) const
+		void Merge::RealBarcodesMergeStrategy::merge_inited(Estimation::CellsDataContainer &container, ul_list_t &filtered_cells) const
 		{
 			std::vector<bool> is_cell_real(container.cell_barcodes_raw().size(), false);
 

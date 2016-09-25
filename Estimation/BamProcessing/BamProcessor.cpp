@@ -26,11 +26,9 @@ namespace BamProcessing
 		}
 	}
 
-	CellsDataContainer::s_uu_hash_t BamProcessor::parse_bam_files(const std::vector<std::string> &bam_files,
-																  bool print_result_bams, CellsDataContainer &container) const
+	void BamProcessor::parse_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams, CellsDataContainer &container) const
 	{
 		CellsDataContainer::s_i_map_t cb_ids;
-		CellsDataContainer::s_uu_hash_t umig_cells_counts;
 
 		long total_reads=0, total_exonic_reads=0; // keep track of the tally across all BAM files
 
@@ -40,10 +38,10 @@ namespace BamProcessing
 
 		#pragma omp parallel for \
 				default(none)\
-				shared(print_result_bams, cb_ids, umig_cells_counts, container, bam_files, total_reads, total_exonic_reads)
+				shared(print_result_bams, cb_ids, container, bam_files, total_reads, total_exonic_reads)
 		for (size_t i = 0; i < bam_files.size(); ++i)
 		{
-			this->parse_bam_file(bam_files[i], print_result_bams, cb_ids, umig_cells_counts, container, total_reads, total_exonic_reads);
+			this->parse_bam_file(bam_files[i], print_result_bams, cb_ids, container, total_reads, total_exonic_reads);
 		}
 		// report total stats
 		//L_TRACE << "Total: " << total_reads << " reads; " << total_exonic_reads << std::setprecision(3) << " ("<< (100.0*total_exonic_reads/total_reads) <<"%) exonic; " << cb_ids.size() << " CBs";
@@ -51,13 +49,10 @@ namespace BamProcessing
 		Tools::trace_time("Bams parsed");
 
 		this->release_temporaries_after_parsing();
-
-		return umig_cells_counts;
 	}
 
 	void BamProcessor::parse_bam_file(const std::string &bam_name, bool print_result_bam, CellsDataContainer::s_i_map_t &cells_ids,
-									  CellsDataContainer::s_uu_hash_t &umig_cells_counts, CellsDataContainer &container,
-									  long &total_reads, long &total_exonic_reads) const
+									  CellsDataContainer &container, long &total_reads, long &total_exonic_reads) const
 	{
 		using namespace BamTools;
 		//L_TRACE << "Start reading bam file: " + bam_name;
@@ -137,7 +132,7 @@ namespace BamProcessing
 //					<< alignment.QueryBases.substr(this->_read_prefix_length) << "\tGene:" << gene;
 
 			max_cell_id = std::max(BamProcessor::save_read_data(chr_name, cell_barcode, umi, gene, cells_ids,
-																	umig_cells_counts, container), max_cell_id);
+																	container), max_cell_id);
 		}
 
 		reader.Close();
@@ -173,7 +168,7 @@ namespace BamProcessing
 
 	size_t BamProcessor::save_read_data(const std::string &chr_name, const std::string &cell_barcode, const std::string &umi,
 									 const std::string &gene, CellsDataContainer::s_i_map_t &cells_ids,
-									 CellsDataContainer::s_uu_hash_t &umig_cells_counts, CellsDataContainer &container)
+									 CellsDataContainer &container)
 	{
 		size_t cell_id;
 		std::string umig = umi + gene;
@@ -182,11 +177,8 @@ namespace BamProcessing
 		#pragma omp critical(CONTAINER)
 		{
 			cell_id = container.add_record(cell_barcode, umi, gene, cells_ids);
-			umig_cells_counts[umig][cell_id]++;
-
 			new_umi = (container.cell_genes(cell_id).at(gene).at(umi) == 1);
 		}
-//		L_DEBUG << "UMIg=" << umig_cells_counts[umig].size();
 
 		#pragma omp critical(STATS)
 		{

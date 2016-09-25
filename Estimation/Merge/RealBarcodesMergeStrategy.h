@@ -72,8 +72,7 @@ namespace Merge
 								  int min_genes_before_merge, int min_genes_after_merge,
 								  int max_merge_edit_distance, double min_merge_fraction);
 
-		virtual void merge_inited(Estimation::CellsDataContainer &container, const s_uu_hash_t &umig_cells_counts,
-						   ul_list_t &filtered_cells) const override;
+		virtual void merge_inited(Estimation::CellsDataContainer &container, ul_list_t &filtered_cells) const override;
 
 		virtual std::string merge_type() const override;
 	};

@@ -146,6 +146,8 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		boost::unordered_map<std::string, int> map;
 		map["chr1"]++;
 		BOOST_CHECK_EQUAL(map["chr1"], 1);
+		map.emplace(std::make_pair("chr1", 0));
+		BOOST_CHECK_EQUAL(map["chr1"], 1);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testUmigsIntersection, Fixture)
@@ -244,7 +246,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 	BOOST_FIXTURE_TEST_CASE(testMergeByRealBarcodes, Fixture)
 	{
-		this->container_full.merge_and_filter(CellsDataContainer::s_uu_hash_t());
+		this->container_full.merge_and_filter();
 
 		BOOST_CHECK_EQUAL(this->container_full.cell_barcodes_raw().size(), 7);
 		BOOST_CHECK_EQUAL(this->container_full.filtered_cells().size(), 2);

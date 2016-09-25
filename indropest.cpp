@@ -36,6 +36,7 @@ struct Params
 	string log_prefix = "";
 	string output_name = "";
 	string reads_params_file = "";
+	string genesets_rds = "";
 	int num_of_threads = 1;
 };
 
@@ -46,6 +47,9 @@ static void check_files_existence(const Params &params, const vector<string> &ba
 
 	if (params.config_file_name != "" && !std::ifstream(params.config_file_name))
 		throw std::runtime_error("Can't open config file '" + params.config_file_name + "'");
+
+	if (params.genesets_rds != "" && !std::ifstream(params.genesets_rds))
+		throw std::runtime_error("Can't open genesets file '" + params.genesets_rds + "'");
 
 	if (params.gtf_filename != "" && !std::ifstream(params.gtf_filename))
 		throw std::runtime_error("Can't open GTF file '" + params.gtf_filename + "'");
@@ -96,6 +100,7 @@ static Params parse_cmd_params(int argc, char **argv)
 			{"barcodes",     	required_argument, 	   0, 'B'},
 			{"config",     		required_argument, 0, 'c'},
 			{"filled-bam",     	no_argument,       0, 'f'},
+			{"genesets_rds",	required_argument, 0, 'G'},
 			{"gtf",     		required_argument, 0, 'g'},
 			{"log-prefix",		required_argument, 0, 'l'},
 			{"merge-cell-tags", no_argument,       0, 'm'},
@@ -108,7 +113,7 @@ static Params parse_cmd_params(int argc, char **argv)
 			{"verbose",         no_argument,       0, 'v'},
 			{0, 0,                                 0, 0}
 	};
-	while ((c = getopt_long(argc, argv, "bB:c:fg:l:mno:p:r:Rtv", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "bB:c:fG:g:l:mno:p:r:Rtv", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -123,6 +128,9 @@ static Params parse_cmd_params(int argc, char **argv)
 				break;
 			case 'f' :
 				params.filled_bam = true;
+				break;
+			case 'G' :
+				params.genesets_rds = string(optarg);
 				break;
 			case 'g' :
 				params.gtf_filename = string(optarg);
@@ -165,35 +173,30 @@ static Params parse_cmd_params(int argc, char **argv)
 	{
 		cerr << "indropset: at least one bam file must be supplied" << endl;
 		params.cant_parse = true;
-		return params;
 	}
 
 	if (params.config_file_name == "")
 	{
 		cerr << "indropset: config file must be supplied" << endl;
 		params.cant_parse = true;
-		return params;
 	}
 
 	if (params.filled_bam && params.reads_params_file != "")
 	{
 		cerr << "indropset: only one genes source must be provided (you can't use -r and -f at the same time)" << endl;
 		params.cant_parse = true;
-		return params;
 	}
 
 	if (!params.merge_tags && params.barcodes_filename != "")
 	{
 		cerr << "indropset: you should provide barcodes list only for merge procedure (you can't use -B without -m)" << endl;
 		params.cant_parse = true;
-		return params;
 	}
 
 	if (params.num_of_threads < 1)
 	{
 		cerr << "The number of threads should be positive" << endl;
 		params.cant_parse = true;
-		return params;
 	}
 
 	if (params.output_name == "")
@@ -241,8 +244,6 @@ int main(int argc, char **argv)
 		files.push_back(string(argv[optind++]));
 	}
 
-	check_files_existence(params, files);
-
 	boost::property_tree::ptree pt;
 	read_xml(params.config_file_name, pt);
 #ifdef _OPENMP
@@ -250,6 +251,8 @@ int main(int argc, char **argv)
 #endif
 	try
 	{
+		check_files_existence(params, files);
+
 		Tools::trace_time("Run");
 		Estimator estimator(pt.get_child("config.Estimation"));
 		CellsDataContainer container = estimator.get_cells_container(files, params.merge_tags, params.bam_output,
@@ -268,7 +271,7 @@ int main(int argc, char **argv)
 				params.output_name += ".bin";
 			}
 
-			results.save_rds(container, params.output_name);
+			results.save_results(container, params.output_name, params.genesets_rds, params.num_of_threads);
 		}
 
 //		if (false)

@@ -39,7 +39,8 @@ namespace Estimation
 
 		private:
 			virtual Rcpp::List get_main_r_vec(const std::string &filename) const;
-			virtual Rcpp::List get_report_r_vec(const CellsDataContainer &container) const;
+			virtual Rcpp::List get_report_r_vec(const CellsDataContainer &container, const std::string &genesets_file,
+												unsigned num_of_threads) const;
 
 		public:
 			CountMatrix cm;
@@ -61,7 +62,8 @@ namespace Estimation
 			IndropResult(const CountMatrix &cm, const CellsDataContainer &container, const std::vector<double> &reads_per_umi,
 			             const int_list_t &umig_covered, bool not_filtered);
 
-			virtual void save_rds(const CellsDataContainer &container, const std::string &filename) const;
+			virtual void save_results(const CellsDataContainer &container, const std::string &filename,
+									  const std::string &genesets_file, unsigned num_of_threads) const;
 		};
 	}
 }

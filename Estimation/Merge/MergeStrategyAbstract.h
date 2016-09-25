@@ -13,7 +13,6 @@ namespace Merge
 	{
 	public:
 		typedef boost::unordered_map<size_t, size_t> u_u_hash_t;
-		typedef boost::unordered_map<std::string, u_u_hash_t> s_uu_hash_t;
 
 		typedef std::map<std::string, size_t> s_i_map_t;
 
@@ -26,14 +25,12 @@ namespace Merge
 		const int _min_genes_after_merge;
 
 	protected:
-		virtual void merge_inited(Estimation::CellsDataContainer &container, const s_uu_hash_t &umig_cells_counts,
-						   ul_list_t &filtered_cells) const = 0;
+		virtual void merge_inited(Estimation::CellsDataContainer &container, ul_list_t &filtered_cells) const = 0;
 
 	public:
 		MergeStrategyAbstract(int min_genes_before_merge, int min_genes_after_merge);
 
-		void merge(Estimation::CellsDataContainer &container, const s_uu_hash_t &umig_cells_counts,
-				   ul_list_t &filtered_cells);
+		void merge(Estimation::CellsDataContainer &container, ul_list_t &filtered_cells);
 
 		virtual void init(const Estimation::CellsDataContainer &container);
 		virtual void release();
