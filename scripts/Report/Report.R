@@ -35,7 +35,7 @@ qplot(nonzero_neighbours_num, bins=10, xlab='Number of the neighboues with nonze
 #'<h3>Cells number</h3>
 ggplot() + geom_line(aes(x=1:length(umis_counts), y=umis_counts, color=umi_num_plot_info$colors), size=1, alpha=0.7) +
   ggtitle(paste0(umi_num_plot_info$cells_number, ' cells')) +
-  scale_y_log10(breaks=logspace(1, max(umis_counts), 20)) + scale_x_log10(breaks=logspace(1, length(umis_counts), 20)) +
+  scale_y_log10(breaks=logspace(1, max(umis_counts), 10)) + scale_x_log10(breaks=logspace(1, length(umis_counts), 10)) +
   scale_color_manual(name='Cell type', values = c('red', 'blue')) + labs(x='Rank', y='#UMI') + theme(legend.position=c(0.8, 0.9))
 
 #+BadCells

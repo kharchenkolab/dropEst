@@ -12,7 +12,7 @@ source(paste0(report_data$scripts_folder, '/Functions.R'))
 #report_data$genesets_file <- '~/InDrop/Projects/cp_stable/data/genesets_mouse.rds'
 #report_data$num_of_threads <- 4
 
-print("Prepare merge info")
+cat("Prepare merge info\n")
 max_merge_probs <- unlist(lapply(report_data$merge_probs, max))
 if (report_data$merge_type == "Poisson") {
   max_merge_probs <- max_merge_probs[max_merge_probs < 1]
@@ -24,27 +24,30 @@ if (report_data$merge_type == "Poisson") {
   merge_xlabel <- 'Common UMIgs fraction (only >0)'
   probs_threshold <- get_otsu_threshold(max_merge_probs)
 }
+cat("Finished\n")
 
 nonzero_neighbours_num = unlist(lapply(report_data$merge_probs, function(x) sum(x > 0)))
 
 #Bad Cells
 #data <- readRDS('~/InDrop/Data/local_run/SRR.rds')
-print("Prepare bad cells info")
+cat("Prepare bad cells info\n")
 
 genesets <- readRDS(report_data$genesets_file)
+genesets <- mclapply(genesets, function(gs) intersect(gs, data$gene.names), mc.cores=MC_CORES)
+
 umis_counts <- sort(apply(data$cm, 2, sum), decreasing = T)
 
-print("Calculating genes fracs...")
+cat("Calculating genes fracs...\n")
 genes_fracs <- mclapply(genesets, function(gs) apply(data$cm, 2, function(cell) sum(cell[gs]) / sum(cell))[names(umis_counts)], mc.cores=MC_CORES)
-print("Finished")
+cat("Finished\n")
 
 umi_num_plot_info <- get_cells_number(umis_counts, min(100, as.integer(0.1 * length(umis_counts))))
 
 real_cbs_num_adj <- as.integer(umi_num_plot_info$cells_number * 0.6)
 
-print('Running EM...')
+cat('Running EM...\n')
 em_results <- mclapply(genes_fracs, function(frac) get_em(frac, real_cbs_num_adj), mc.cores=MC_CORES)
-print('Finished')
+cat('Finished\n')
 
 gene_frac_plots <- list()
 separate_inds <- !unlist(lapply(em_results, is.null))
