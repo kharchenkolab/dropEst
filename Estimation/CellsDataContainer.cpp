@@ -71,29 +71,29 @@ namespace Estimation
 
 	void CellsDataContainer::update_cells_genes_counts(int threshold, bool logs)
 	{
-		this->filtered_cells_genes_counts_sorted.clear(); // <genes_count,cell_id> pairs
+		this->_filtered_cells_genes_counts_sorted.clear(); // <genes_count,cell_id> pairs
 		for (size_t i = 0; i < this->_cells_genes.size(); i++)
 		{
-			if (this->_is_cell_excluded[i])
+			if (this->_is_cell_excluded[i] || this->_is_cell_merged[i])
 				continue;
 
 			size_t genes_count = this->_cells_genes[i].size();
 			if (genes_count >= threshold)
 			{
-				this->filtered_cells_genes_counts_sorted.push_back(IndexedValue(i, genes_count));
+				this->_filtered_cells_genes_counts_sorted.push_back(IndexedValue(i, genes_count));
 			}
 		}
 
 		if (logs)
 		{
-			L_TRACE << this->filtered_cells_genes_counts_sorted.size() << " CBs with more than " << threshold << " genes";
+			L_TRACE << this->_filtered_cells_genes_counts_sorted.size() << " CBs with more than " << threshold << " genes";
 		}
 
-		sort(this->filtered_cells_genes_counts_sorted.begin(), this->filtered_cells_genes_counts_sorted.end(), IndexedValue::value_less);
+		sort(this->_filtered_cells_genes_counts_sorted.begin(), this->_filtered_cells_genes_counts_sorted.end(), IndexedValue::value_less);
 
 		if (logs)
 		{
-			L_TRACE << this->get_cb_count_top_verbose(this->filtered_cells_genes_counts_sorted);
+			L_TRACE << this->get_cb_count_top_verbose(this->_filtered_cells_genes_counts_sorted);
 		}
 	}
 
@@ -129,7 +129,7 @@ namespace Estimation
 
 	const CellsDataContainer::i_counter_t &CellsDataContainer::cells_genes_counts_sorted() const
 	{
-		return this->filtered_cells_genes_counts_sorted;
+		return this->_filtered_cells_genes_counts_sorted;
 	}
 
 	const string &CellsDataContainer::cell_barcode(size_t index) const
@@ -177,7 +177,7 @@ namespace Estimation
 	CellsDataContainer::s_ul_hash_t CellsDataContainer::umis_distribution() const
 	{
 		s_ul_hash_t umis_dist;
-		for (auto const &cell : this->filtered_cells_genes_counts_sorted)
+		for (auto const &cell : this->_filtered_cells_genes_counts_sorted)
 		{
 			for (auto const &gene : this->_cells_genes[cell.index])
 			{

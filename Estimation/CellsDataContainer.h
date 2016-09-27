@@ -51,7 +51,7 @@ namespace Estimation
 		s_ul_hash_t _cell_ids_by_cb;
 		ids_t _filtered_cells;
 
-		i_counter_t filtered_cells_genes_counts_sorted;
+		i_counter_t _filtered_cells_genes_counts_sorted;
 		bool _is_initialized;
 
 		mutable Stats _stats;
