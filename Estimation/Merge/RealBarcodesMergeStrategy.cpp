@@ -31,23 +31,21 @@ namespace Estimation
 			ul_list_t cb_reassign_targets(container.cell_barcodes_raw().size());
 			std::iota(cb_reassign_targets.begin(), cb_reassign_targets.end(), 0);
 
-			size_t tag_index = 0, merges_count = 0;
-
 			auto const& cell_genes_counts = container.cells_genes_counts_sorted();
-			std::vector<long> target_cell_inds(cell_genes_counts.size(), 0);
+			std::vector<long> target_cell_inds(cell_genes_counts.size());
 
 			for (size_t genes_count_id = 0; genes_count_id < cell_genes_counts.size(); ++genes_count_id)
 			{
 				target_cell_inds[genes_count_id] = this->get_real_cb(container, cell_genes_counts[genes_count_id].index);
+				if (genes_count_id % 1000 == 0)
+				{
+					L_TRACE << "Total " << genes_count_id << " tags processed";
+				}
 			}
 
+			size_t merges_count = 0;
 			for (size_t genes_count_id = 0; genes_count_id < cell_genes_counts.size(); ++genes_count_id)
 			{
-				if (++tag_index % 1000 == 0)
-				{
-					L_TRACE << "Total " << tag_index << " tags processed, " << merges_count << " cells merged";
-				}
-
 				size_t base_cell_ind = cell_genes_counts[genes_count_id].index;
 				long target_cell_ind = target_cell_inds[genes_count_id];
 				if (target_cell_ind < 0)
@@ -56,13 +54,15 @@ namespace Estimation
 					continue;
 				}
 
-				if (target_cell_ind == base_cell_ind)
+				is_cell_real[target_cell_ind] = true;
+				if (target_cell_ind != cb_reassign_targets.at(target_cell_ind))
 				{
-					is_cell_real[base_cell_ind] = true;
-					continue;
+					is_cell_real[target_cell_ind] = false;
+					target_cell_ind = cb_reassign_targets.at(target_cell_ind); // For the case when real barcodes could be merged too
 				}
 
-				target_cell_ind = cb_reassign_targets[target_cell_ind]; // For the case when real barcodes could be merged too
+				if (target_cell_ind == base_cell_ind)
+					continue;
 
 				this->merge_force(container, base_cell_ind, (size_t)target_cell_ind, cb_reassign_targets, cb_reassigned_to_it);
 				merges_count++;
@@ -191,7 +191,8 @@ namespace Estimation
 
 				std::string current_cb = this->_barcodes1[std::get<0>(inds)] + this->_barcodes2[std::get<1>(inds)];
 				auto const current_cell_it = container.cell_ids_by_cb().find(current_cb);
-				if (current_cell_it != container.cell_ids_by_cb().end())
+				if (current_cell_it != container.cell_ids_by_cb().end() &&
+						container.cell_genes(current_cell_it->second).size() >= this->min_genes_before_merge())
 				{
 					neighbour_cbs.push_back(current_cell_it->second);
 					container.stats().add(Estimation::Stats::MERGE_EDIT_DISTANCE_BY_CELL, current_cb, base_cb, cur_ed);
