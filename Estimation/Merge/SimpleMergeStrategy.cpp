@@ -12,22 +12,9 @@ namespace Merge
 
 	void SimpleMergeStrategy::merge_inited(Estimation::CellsDataContainer &container, ul_list_t &filtered_cells) const
 	{
-		Tools::trace_time("Fill UMIgs-cells");
-		sul_l_map_t umig_cell_ids;
-		for (size_t cell_id : filtered_cells)
-		{
-			for (auto const &gene : container.cell_genes(cell_id))
-			{
-				for (auto const &umi : gene.second)
-				{
-					auto res = umig_cell_ids.emplace(std::make_pair(umi.first + gene.first, sul_set_t()));
-					res.first->second.emplace(cell_id);
-				}
-			}
-		}
-		Tools::trace_time("UMIgs-cells filled");
+		sul_l_map_t umig_cell_ids = SimpleMergeStrategy::get_umigs_map(container);
 
-		int merges_count = 0;
+		size_t merges_count = 0;
 
 		ISIHM cb_reassigned_to_it;
 		ul_list_t cb_reassign_targets(container.cell_barcodes_raw().size());
@@ -43,14 +30,14 @@ namespace Merge
 				L_TRACE << "Total " << tag_index << " tags processed, " << merges_count << " cells merged";
 			}
 
-			u_u_hash_t umigs_intersect_top;
-			size_t umigs_count = this->get_umigs_intersect_top(container, cb_reassign_targets, genes_count,
-															   umig_cell_ids, umigs_intersect_top);
+			u_u_hash_t cells_with_common_umigs;
+			size_t umigs_count = this->get_cells_with_common_umigs(container, cb_reassign_targets, genes_count,
+																   umig_cell_ids, cells_with_common_umigs);
 
 			long top_cell_ind = -1;
 			double top_cb_fraction = -1;
 			long top_cb_genes_count = -1;
-			for (auto const &cell: umigs_intersect_top)
+			for (auto const &cell: cells_with_common_umigs)
 			{
 				size_t cell_ind = cell.first;
 				double cb_fraction = cell.second / (double) umigs_count;
@@ -109,9 +96,10 @@ namespace Merge
 		return true;
 	}
 
-	size_t SimpleMergeStrategy::get_umigs_intersect_top(Estimation::CellsDataContainer &container,
-													  const ul_list_t &cb_reassign_targets, const IndexedValue &processed_genes_count,
-													  const sul_l_map_t &umig_cell_ids, u_u_hash_t &umig_top) const
+	size_t SimpleMergeStrategy::get_cells_with_common_umigs(Estimation::CellsDataContainer &container,
+															const ul_list_t &cb_reassign_targets,
+															const IndexedValue &processed_genes_count,
+															const sul_l_map_t &umig_cell_ids, u_u_hash_t &umig_top) const
 	{
 		size_t umigs_count = 0;
 		for (auto const &gene: container.cell_genes(processed_genes_count.index))
@@ -125,7 +113,7 @@ namespace Merge
 				const auto &umig_cells = umig_cell_ids.at(umig);
 				for (size_t cell_with_same_umig_id : umig_cells)
 				{
-					size_t reassign_target = cb_reassign_targets[cell_with_same_umig_id]; //if not reassigned then cell_with_same_umig_id
+					size_t reassign_target = cb_reassign_targets.at(cell_with_same_umig_id); //if not reassigned then cell_with_same_umig_id
 					if (reassign_target == processed_genes_count.index)
 						continue;
 
@@ -149,6 +137,24 @@ namespace Merge
 	std::string SimpleMergeStrategy::merge_type() const
 	{
 		return "Simple";
+	}
+
+	SimpleMergeStrategy::sul_l_map_t SimpleMergeStrategy::get_umigs_map(const CellsDataContainer& container)
+	{
+		sul_l_map_t umig_cell_ids;
+		for (auto const &genes_count : container.cells_genes_counts_sorted())
+		{
+			for (auto const &gene : container.cell_genes(genes_count.index))
+			{
+				for (auto const &umi : gene.second)
+				{
+					auto res = umig_cell_ids.emplace(std::make_pair(umi.first + gene.first, sul_set_t()));
+					res.first->second.emplace(genes_count.index);
+				}
+			}
+		}
+
+		return umig_cell_ids;
 	}
 }
 }

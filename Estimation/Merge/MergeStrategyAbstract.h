@@ -12,8 +12,6 @@ namespace Merge
 	class MergeStrategyAbstract
 	{
 	public:
-		typedef boost::unordered_map<size_t, size_t> u_u_hash_t;
-
 		typedef std::map<std::string, size_t> s_i_map_t;
 
 		typedef std::vector<Tools::IndexedValue> i_counter_t;
