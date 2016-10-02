@@ -71,49 +71,6 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 //		R.parseEvalQ("saveRDS(saved_vec, 'test_rds.rds')");
 	}
 
-	BOOST_FIXTURE_TEST_CASE(testMerge, Fixture)
-	{
-		Merge::MergeStrategyBase::ISIHM cb_reassigned_to;
-		CellsDataContainer::ids_t cb_reassigned;
-		cb_reassigned.push_back(0);
-		cb_reassigned.push_back(1);
-		cb_reassigned.push_back(2);
-
-		std::string cb1 = "CCCCCCCCCCCCC";
-		std::string cb2 = "CCCCCCCCCCCCA";
-		std::string cb3 = "CCCCCCCCCCCAA";
-		container._cell_barcodes.push_back(cb1);
-		container._cell_barcodes.push_back(cb2);
-		container._cell_barcodes.push_back(cb3);
-
-		container._cells_genes.resize(2);
-		container._cells_genes[0]["G1"]["UMI1"] = 1;
-		container._cells_genes[0]["G1"]["UMI2"] = 1;
-		container._cells_genes[0]["G2"]["UMI1"] = 1;
-
-		container._cells_genes[1]["G1"]["UMI1"] = 3;
-		container._cells_genes[1]["G1"]["UMI3"] = 5;
-		container._cells_genes[1]["G2"]["UMI2"] = 7;
-
-		container.set_initialized();
-
-		base_strat->merge(container, 1, 1, Tools::IndexedValue(0, 3), cb_reassigned, cb_reassigned_to); //merge 0 to 1
-
-		BOOST_CHECK_EQUAL(cb_reassigned[0], 1);
-		BOOST_CHECK_EQUAL(cb_reassigned[1], 1);
-		BOOST_CHECK_EQUAL(cb_reassigned[2], 2);
-
-		BOOST_CHECK_EQUAL(cb_reassigned_to.size(), 1);
-		BOOST_CHECK_EQUAL(cb_reassigned_to[1].size(), 1);
-		BOOST_CHECK_EQUAL(cb_reassigned_to[1].count(0), 1);
-
-		BOOST_CHECK_EQUAL(container._cells_genes[1]["G1"]["UMI1"], 4);
-		BOOST_CHECK_EQUAL(container._cells_genes[1]["G1"]["UMI2"], 1);
-		BOOST_CHECK_EQUAL(container._cells_genes[1]["G2"]["UMI1"], 1);
-		BOOST_CHECK_EQUAL(container._cells_genes[1]["G1"]["UMI3"], 5);
-		BOOST_CHECK_EQUAL(container._cells_genes[1]["G2"]["UMI2"], 7);
-	}
-
 	BOOST_FIXTURE_TEST_CASE(testBarcodesFile, Fixture)
 	{
 		std::vector<std::string> cb1;
@@ -154,16 +111,16 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	{
 		using namespace Merge;
 		auto cell_ids_by_cb = this->container_full.cell_ids_by_cb();
-		double is1 = RealBarcodesMergeStrategy::get_umigs_intersect_fraction(this->container_full.cell_genes(cell_ids_by_cb["AAATTAGGTCCA"]),
-																			 this->container_full.cell_genes(cell_ids_by_cb["CCCTTAGGTCCA"]));
+		long is1 = RealBarcodesMergeStrategy::get_umigs_intersect_size(this->container_full.cell_genes(cell_ids_by_cb["AAATTAGGTCCA"]),
+																		 this->container_full.cell_genes(cell_ids_by_cb["CCCTTAGGTCCA"]));
 
-		double is2 = RealBarcodesMergeStrategy::get_umigs_intersect_fraction(this->container_full.cell_genes(cell_ids_by_cb["AAATTAGGTCCC"]),
-																			 this->container_full.cell_genes(cell_ids_by_cb["AAATTAGGTCCG"]));
+		long is2 = RealBarcodesMergeStrategy::get_umigs_intersect_size(this->container_full.cell_genes(cell_ids_by_cb["AAATTAGGTCCC"]),
+																		 this->container_full.cell_genes(cell_ids_by_cb["AAATTAGGTCCG"]));
 
-		double is3 = RealBarcodesMergeStrategy::get_umigs_intersect_fraction(this->container_full.cell_genes(cell_ids_by_cb["AAATTAGGTCCA"]),
-																			 this->container_full.cell_genes(cell_ids_by_cb["AAATTAGGTCCC"]));
+		long is3 = RealBarcodesMergeStrategy::get_umigs_intersect_size(this->container_full.cell_genes(cell_ids_by_cb["AAATTAGGTCCA"]),
+																		 this->container_full.cell_genes(cell_ids_by_cb["AAATTAGGTCCC"]));
 
-		BOOST_CHECK_EQUAL(is1, 2. / 3);
+		BOOST_CHECK_EQUAL(is1, 2);
 		BOOST_CHECK_EQUAL(is2, 1);
 		BOOST_CHECK_EQUAL(is3, 0);
 	}
@@ -236,12 +193,12 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		this->real_cb_strat->_barcodes1 = cbs1;
 		this->real_cb_strat->_barcodes2 = cbs2;
 
-		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 0), 0);
-		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 1), 1);
-		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 2), 1);
-		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 3), 0);
-		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 4), 0);
-		BOOST_CHECK_EQUAL(this->real_cb_strat->get_real_cb(this->container_full, 5), 0);
+		BOOST_CHECK_EQUAL(this->real_cb_strat->get_merge_target(this->container_full, 0), 0);
+		BOOST_CHECK_EQUAL(this->real_cb_strat->get_merge_target(this->container_full, 1), 1);
+		BOOST_CHECK_EQUAL(this->real_cb_strat->get_merge_target(this->container_full, 2), 1);
+		BOOST_CHECK_EQUAL(this->real_cb_strat->get_merge_target(this->container_full, 3), 0);
+		BOOST_CHECK_EQUAL(this->real_cb_strat->get_merge_target(this->container_full, 4), 0);
+		BOOST_CHECK_EQUAL(this->real_cb_strat->get_merge_target(this->container_full, 5), 0);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testMergeByRealBarcodes, Fixture)

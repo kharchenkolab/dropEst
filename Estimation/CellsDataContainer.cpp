@@ -149,9 +149,23 @@ namespace Estimation
 
 	void CellsDataContainer::set_initialized()
 	{
+		if (this->_is_initialized)
+			throw std::runtime_error("Container is already initialized");
+
 		this->_is_cell_excluded = flags_t(this->_cell_barcodes.size(), false);
 		this->_is_cell_merged = flags_t(this->_cell_barcodes.size(), false);
 		this->update_cells_genes_counts(this->_merge_strategy->min_genes_before_merge());
+
+		this->_cell_sizes.resize(this->_cells_genes.size());
+		for (size_t i = 0; i < this->_cells_genes.size(); ++i)
+		{
+			size_t cell_size = 0;
+			for (auto const &gene: this->_cells_genes[i])
+			{
+				cell_size += gene.second.size();
+			}
+			this->_cell_sizes[i] = cell_size;
+		}
 		this->_is_initialized = true;
 	}
 
@@ -199,5 +213,10 @@ namespace Estimation
 	std::string CellsDataContainer::merge_type() const
 	{
 		return this->_merge_strategy->merge_type();
+	}
+
+	const size_t CellsDataContainer::cell_size(size_t cell_index) const
+	{
+		return this->_cell_sizes.at(cell_index);
 	}
 }

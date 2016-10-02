@@ -1,11 +1,72 @@
 #include <Tools/Logs.h>
 #include <Estimation/CellsDataContainer.h>
+#include <Tools/IndexedValue.h>
+#include <boost/range/adaptor/reversed.hpp>
 #include "MergeStrategyBase.h"
 
 namespace Estimation
 {
 namespace Merge
 {
+void Merge::MergeStrategyBase::merge_inited(CellsDataContainer &container, ul_list_t &filtered_cells) const
+{
+	std::vector<bool> is_cell_real(container.cell_barcodes_raw().size(), false);
+
+	ISIHM cb_reassigned_to_it;
+	ul_list_t cb_reassign_targets(container.cell_barcodes_raw().size());
+	std::iota(cb_reassign_targets.begin(), cb_reassign_targets.end(), 0);
+
+	auto const& cell_genes_counts = container.cells_genes_counts_sorted();
+	std::vector<long> target_cell_inds(cell_genes_counts.size());
+
+	for (size_t genes_count_id = 0; genes_count_id < cell_genes_counts.size(); ++genes_count_id)
+	{
+		target_cell_inds[genes_count_id] = this->get_merge_target(container, cell_genes_counts[genes_count_id].index);
+		if (genes_count_id % 1000 == 0)
+		{
+			L_TRACE << "Total " << genes_count_id << " tags processed";
+		}
+	}
+
+	size_t merges_count = 0;
+	for (size_t genes_count_id = 0; genes_count_id < cell_genes_counts.size(); ++genes_count_id)
+	{
+		size_t base_cell_ind = cell_genes_counts[genes_count_id].index;
+		long target_cell_ind = target_cell_inds[genes_count_id];
+		if (target_cell_ind < 0)
+		{
+			container.exclude_cell(base_cell_ind);
+			continue;
+		}
+
+		is_cell_real[target_cell_ind] = true;
+		if (target_cell_ind != cb_reassign_targets.at(target_cell_ind))
+		{
+			is_cell_real[target_cell_ind] = false;
+			target_cell_ind = cb_reassign_targets[target_cell_ind]; // For the case when real barcodes could be merged too
+		}
+
+		if (target_cell_ind == base_cell_ind)
+			continue;
+
+		this->merge_force(container, base_cell_ind, (size_t)target_cell_ind, cb_reassign_targets, cb_reassigned_to_it);
+		merges_count++;
+	}
+	L_INFO << "Total " << merges_count << " merges";
+
+	container.update_cells_genes_counts(this->min_genes_after_merge(), false);
+	for (const Tools::IndexedValue &gene_count : boost::adaptors::reverse(container.cells_genes_counts_sorted())) // Don't change the order! Simple merge use it in get_cells_with_common_umigs
+	{
+		if (!is_cell_real[gene_count.index])
+			continue;
+
+		L_DEBUG << "Add cell to filtered: " << gene_count.value << " " << gene_count.index;
+		filtered_cells.push_back(gene_count.index);
+	}
+
+	container.stats().merge(cb_reassign_targets, container.cell_barcodes_raw());
+}
+
 void MergeStrategyBase::reassign(size_t cell_id, size_t target_cell_id, ul_list_t &cb_reassign_targets,
 											ISIHM &cb_reassigned_to_it) const
 {
@@ -36,12 +97,63 @@ void MergeStrategyBase::merge_force(Estimation::CellsDataContainer &container, s
 	this->reassign(src_cell_id, target_cell_ind, cb_reassign_targets, cb_reassigned_to_it);
 }
 
-MergeStrategyBase::MergeStrategyBase(int min_genes_before_merge, int min_genes_after_merge,
-												int max_merge_edit_distance, double min_merge_fraction)
+MergeStrategyBase::MergeStrategyBase(int min_genes_before_merge, int min_genes_after_merge, int max_merge_edit_distance,
+									 double min_merge_fraction)
 	: MergeStrategyAbstract(min_genes_before_merge, min_genes_after_merge)
 	, _max_merge_edit_distance(max_merge_edit_distance)
 	, _min_merge_fraction(min_merge_fraction)
 {}
 
+
+size_t MergeStrategyBase::get_umigs_intersect_size(const genes_t &cell1_dist, const genes_t &cell2_dist)
+{
+	std::map<std::string, s_i_map_t>::const_iterator gene1_it = cell1_dist.begin(); //Not unordered!!!
+	std::map<std::string, s_i_map_t>::const_iterator gene2_it = cell2_dist.begin();
+
+	size_t intersect_size = 0;
+	while (gene1_it != cell1_dist.end() && gene2_it != cell2_dist.end())
+	{
+		int comp_res = gene1_it->first.compare(gene2_it->first);
+		if (comp_res < 0)
+		{
+			gene1_it++;
+			continue;
+		}
+
+		if (comp_res > 0)
+		{
+			gene2_it++;
+			continue;
+		}
+
+		auto umi1_it = gene1_it->second.begin();
+		auto umi2_it = gene2_it->second.begin();
+
+		while (umi1_it != gene1_it->second.end() && umi2_it != gene2_it->second.end())
+		{
+			comp_res = umi1_it->first.compare(umi2_it->first);
+			if (comp_res < 0)
+			{
+				++umi1_it;
+				continue;
+			}
+
+			if (comp_res > 0)
+			{
+				++umi2_it;
+				continue;
+			}
+
+			++intersect_size;
+			++umi2_it;
+			++umi1_it;
+		}
+
+		++gene1_it;
+		++gene2_it;
+	}
+
+	return intersect_size;
+}
 }
 }

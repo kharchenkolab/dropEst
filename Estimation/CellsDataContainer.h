@@ -27,15 +27,14 @@ namespace Estimation
 		friend struct TestEstimator::testMerge;
 
 	public:
-		typedef boost::unordered_map<size_t, size_t> u_u_hash_t;
 		typedef boost::unordered_map<std::string, size_t> s_ul_hash_t;
-		typedef boost::unordered_map<std::string, u_u_hash_t> s_uu_hash_t;
 
 		typedef std::map<std::string, size_t> s_i_map_t;
 		typedef std::map<std::string, s_i_map_t> genes_t;
 
 		typedef std::vector<Tools::IndexedValue> i_counter_t;
 		typedef std::vector<size_t> ids_t;
+		typedef std::vector<size_t> counts_t;
 		typedef std::vector<std::string> names_t;
 		typedef std::vector<bool> flags_t;
 
@@ -51,6 +50,7 @@ namespace Estimation
 		s_ul_hash_t _cell_ids_by_cb;
 		ids_t _filtered_cells;
 
+		counts_t _cell_sizes;
 		i_counter_t _filtered_cells_genes_counts_sorted;
 		bool _is_initialized;
 
@@ -91,6 +91,8 @@ namespace Estimation
 		void set_initialized();
 
 		const names_t &cell_barcodes_raw() const;
+
+		size_t const cell_size(size_t cell_index) const;
 
 		s_ul_hash_t umis_distribution() const;
 

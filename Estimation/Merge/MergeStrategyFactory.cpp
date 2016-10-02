@@ -5,6 +5,7 @@
 #include "PoissonRealBarcodesMergeStrategy.h"
 #include "RealBarcodesMergeStrategy.h"
 #include "SimpleMergeStrategy.h"
+#include "PoissonSimpleMergeStrategy.h"
 
 namespace Estimation
 {
@@ -20,8 +21,15 @@ namespace Merge
 			return std::shared_ptr<MergeStrategyAbstract>(new FilteringMergeStrategy(min_genes_before_merge, min_genes_after_merge));
 
 		if (barcodes_filename == "")
+		{
+			if (merge_type == "poisson")
+				return std::shared_ptr<MergeStrategyAbstract>(new PoissonSimpleMergeStrategy(min_genes_before_merge, min_genes_after_merge,
+																					  max_merge_edit_distance, min_merge_fraction));
+
 			return std::shared_ptr<MergeStrategyAbstract>(new SimpleMergeStrategy(min_genes_before_merge, min_genes_after_merge,
 																				  max_merge_edit_distance, min_merge_fraction));
+		}
+
 		if (merge_type == "")
 			return std::shared_ptr<MergeStrategyAbstract>(new RealBarcodesMergeStrategy(barcodes_filename, barcode2_length,
 																						min_genes_before_merge, min_genes_after_merge,

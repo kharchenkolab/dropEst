@@ -20,68 +20,6 @@ namespace Estimation
 				, _barcode2_length(barcode2_length)
 		{}
 
-		void Merge::RealBarcodesMergeStrategy::merge_inited(Estimation::CellsDataContainer &container, ul_list_t &filtered_cells) const
-		{
-			std::vector<bool> is_cell_real(container.cell_barcodes_raw().size(), false);
-
-			if (this->_barcodes1.size() == 0)
-				return;
-
-			ISIHM cb_reassigned_to_it;
-			ul_list_t cb_reassign_targets(container.cell_barcodes_raw().size());
-			std::iota(cb_reassign_targets.begin(), cb_reassign_targets.end(), 0);
-
-			auto const& cell_genes_counts = container.cells_genes_counts_sorted();
-			std::vector<long> target_cell_inds(cell_genes_counts.size());
-
-			for (size_t genes_count_id = 0; genes_count_id < cell_genes_counts.size(); ++genes_count_id)
-			{
-				target_cell_inds[genes_count_id] = this->get_real_cb(container, cell_genes_counts[genes_count_id].index);
-				if (genes_count_id % 1000 == 0)
-				{
-					L_TRACE << "Total " << genes_count_id << " tags processed";
-				}
-			}
-
-			size_t merges_count = 0;
-			for (size_t genes_count_id = 0; genes_count_id < cell_genes_counts.size(); ++genes_count_id)
-			{
-				size_t base_cell_ind = cell_genes_counts[genes_count_id].index;
-				long target_cell_ind = target_cell_inds[genes_count_id];
-				if (target_cell_ind < 0)
-				{
-					container.exclude_cell(base_cell_ind);
-					continue;
-				}
-
-				is_cell_real[target_cell_ind] = true;
-				if (target_cell_ind != cb_reassign_targets.at(target_cell_ind))
-				{
-					is_cell_real[target_cell_ind] = false;
-					target_cell_ind = cb_reassign_targets.at(target_cell_ind); // For the case when real barcodes could be merged too
-				}
-
-				if (target_cell_ind == base_cell_ind)
-					continue;
-
-				this->merge_force(container, base_cell_ind, (size_t)target_cell_ind, cb_reassign_targets, cb_reassigned_to_it);
-				merges_count++;
-			}
-			L_INFO << "Total " << merges_count << " merges";
-
-			container.update_cells_genes_counts(this->min_genes_after_merge(), false);
-			for (const IndexedValue &gene_count : boost::adaptors::reverse(container.cells_genes_counts_sorted()))
-			{
-				if (!is_cell_real[gene_count.index])
-					continue;
-
-				L_DEBUG << "Add cell to filtered: " << gene_count.value << " " << gene_count.index;
-				filtered_cells.push_back(gene_count.index);
-			}
-
-			container.stats().merge(cb_reassign_targets, container.cell_barcodes_raw());
-		}
-
 		void RealBarcodesMergeStrategy::get_barcodes_list(const std::string &barcodes_filename, names_t &barcodes1,
 														  names_t &barcodes2)
 		{
@@ -104,7 +42,7 @@ namespace Estimation
 			}
 		}
 
-		long RealBarcodesMergeStrategy::get_real_cb(const Estimation::CellsDataContainer &container, size_t base_cell_ind) const
+		long RealBarcodesMergeStrategy::get_merge_target(const Estimation::CellsDataContainer &container, size_t base_cell_ind) const
 		{
 			std::string base_cb = container.cell_barcode(base_cell_ind);
 			i_counter_t dists1, dists2;
@@ -133,8 +71,10 @@ namespace Estimation
 			size_t best_neighbour_cell_ind = neighbour_cells[0];
 			for (size_t neighbour_cell_ind: neighbour_cells)
 			{
-				double current_frac = RealBarcodesMergeStrategy::get_umigs_intersect_fraction(container.cell_genes(base_cell_ind),
-																							  container.cell_genes(neighbour_cell_ind));
+				size_t intersect_size = RealBarcodesMergeStrategy::get_umigs_intersect_size(container.cell_genes(base_cell_ind),
+																							container.cell_genes(neighbour_cell_ind));
+				double current_frac =  0.5 * intersect_size *( 1. / container.cell_size(base_cell_ind) + 1. / container.cell_size(neighbour_cell_ind));
+
 				if (max_umigs_intersection_frac < current_frac)
 				{
 					max_umigs_intersection_frac = current_frac;
@@ -208,74 +148,6 @@ namespace Estimation
 			return neighbour_cbs;
 		}
 
-		double RealBarcodesMergeStrategy::get_umigs_intersect_fraction(const genes_t &cell1_dist, const genes_t &cell2_dist)
-		{
-			size_t cell1_umigs = 0, cell2_umigs= 0;
-			for (auto const &gene : cell1_dist)
-			{
-				cell1_umigs += gene.second.size();
-			}
-
-			for (auto const &gene : cell2_dist)
-			{
-				cell2_umigs += gene.second.size();
-			}
-
-			size_t intersect_size = RealBarcodesMergeStrategy::get_umigs_intersect_size(cell1_dist, cell2_dist);
-			return 0.5 * (intersect_size / (double) cell1_umigs + intersect_size / (double) cell2_umigs);
-		}
-
-		size_t RealBarcodesMergeStrategy::get_umigs_intersect_size(const genes_t &cell1_dist, const genes_t &cell2_dist)
-		{
-			std::map<std::string, s_i_map_t>::const_iterator gene1_it = cell1_dist.begin(); //Not unordered!!!
-			std::map<std::string, s_i_map_t>::const_iterator gene2_it = cell2_dist.begin();
-
-			size_t intersect_size = 0;
-			while (gene1_it != cell1_dist.end() && gene2_it != cell2_dist.end())
-			{
-				int comp_res = gene1_it->first.compare(gene2_it->first);
-				if (comp_res < 0)
-				{
-					gene1_it++;
-					continue;
-				}
-
-				if (comp_res > 0)
-				{
-					gene2_it++;
-					continue;
-				}
-
-				auto umi1_it = gene1_it->second.begin();
-				auto umi2_it = gene2_it->second.begin();
-
-				while (umi1_it != gene1_it->second.end() && umi2_it != gene2_it->second.end())
-				{
-					comp_res = umi1_it->first.compare(umi2_it->first);
-					if (comp_res < 0)
-					{
-						++umi1_it;
-						continue;
-					}
-
-					if (comp_res > 0)
-					{
-						++umi2_it;
-						continue;
-					}
-
-					++intersect_size;
-					++umi2_it;
-					++umi1_it;
-				}
-
-				++gene1_it;
-				++gene2_it;
-			}
-
-			return intersect_size;
-		}
-
 		void RealBarcodesMergeStrategy::fill_distances_to_cb(const std::string &cb_part1, const std::string &cb_part2,
 															 i_counter_t &dists1, i_counter_t &dists2) const
 		{
@@ -306,16 +178,14 @@ namespace Estimation
 			RealBarcodesMergeStrategy::get_barcodes_list(this->_barcodes_filename, this->_barcodes1, this->_barcodes2);
 
 			if (this->_barcodes1.size() == 0)
-			{
-				L_WARN << "WARNING: empty barcodes list";
-			}
+				throw std::runtime_error("ERROR: empty barcodes list");
 		}
 
 		void RealBarcodesMergeStrategy::release()
 		{
-			MergeStrategyAbstract::release();
 			this->_barcodes1.clear();
 			this->_barcodes2.clear();
+			MergeStrategyAbstract::release();
 		}
 
 		long RealBarcodesMergeStrategy::get_max_merge_dist(long min_real_cb_dist) const
