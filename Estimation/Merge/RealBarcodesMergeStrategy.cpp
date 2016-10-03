@@ -134,7 +134,7 @@ namespace Estimation
 				auto const current_cell_it = container.cell_ids_by_cb().find(current_cb);
 				if (current_cell_it != container.cell_ids_by_cb().end() &&
 						container.cell_genes(current_cell_it->second).size() >= this->min_genes_before_merge() &&
-						container.cell_size(current_cell_it->second) > container.cell_size(base_cell_ind))
+						container.cell_size(current_cell_it->second) >= container.cell_size(base_cell_ind)) // Should pass equal sizes because it should pass current cell
 				{
 					neighbour_cbs.push_back(current_cell_it->second);
 					container.stats().add(Estimation::Stats::MERGE_EDIT_DISTANCE_BY_CELL, current_cb, base_cb, cur_ed);
