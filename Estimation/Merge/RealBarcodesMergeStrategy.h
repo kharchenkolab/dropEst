@@ -40,7 +40,7 @@ namespace Merge
 		static const int MAX_REAL_MERGE_EDIT_DISTANCE=5;
 
 	private:
-		ul_list_t get_real_neighbour_cbs(const CellsDataContainer &container, const std::string &base_cb,
+		ul_list_t get_real_neighbour_cbs(const CellsDataContainer &container, size_t base_cell_ind,
 									 const i_counter_t &dists1, const i_counter_t &dists2) const;
 
 		static void get_barcodes_list(const std::string &barcodes_filename, std::vector<std::string> &barcodes1,

@@ -53,7 +53,7 @@ namespace Estimation
 			this->fill_distances_to_cb(cb_part1, cb_part2, dists1, dists2);
 
 //			L_DEBUG <<"Get real neighbours to " << base_cb;
-			ul_list_t neighbour_cells = this->get_real_neighbour_cbs(container, base_cb, dists1, dists2);
+			ul_list_t neighbour_cells = this->get_real_neighbour_cbs(container, base_cell_ind, dists1, dists2);
 			if (neighbour_cells.empty())
 				return -1;
 
@@ -93,10 +93,11 @@ namespace Estimation
 		}
 
 		RealBarcodesMergeStrategy::ul_list_t RealBarcodesMergeStrategy::get_real_neighbour_cbs(const Estimation::CellsDataContainer &container,
-																							   const std::string &base_cb,
+																							   size_t base_cell_ind,
 																							   const i_counter_t &dists1,
 																							   const i_counter_t &dists2) const
 		{
+			const std::string &base_cb = container.cell_barcode(base_cell_ind);
 			typedef std::tuple<size_t, size_t, long> tuple_t;
 			std::vector<tuple_t> real_cell_inds;
 			for (size_t ind1 = 0; ind1 < dists1.size(); ++ind1)
@@ -132,7 +133,8 @@ namespace Estimation
 				std::string current_cb = this->_barcodes1[std::get<0>(inds)] + this->_barcodes2[std::get<1>(inds)];
 				auto const current_cell_it = container.cell_ids_by_cb().find(current_cb);
 				if (current_cell_it != container.cell_ids_by_cb().end() &&
-						container.cell_genes(current_cell_it->second).size() >= this->min_genes_before_merge())
+						container.cell_genes(current_cell_it->second).size() >= this->min_genes_before_merge() &&
+						container.cell_size(current_cell_it->second) > container.cell_size(base_cell_ind))
 				{
 					neighbour_cbs.push_back(current_cell_it->second);
 					container.stats().add(Estimation::Stats::MERGE_EDIT_DISTANCE_BY_CELL, current_cb, base_cb, cur_ed);
