@@ -22,7 +22,7 @@ struct Fixture
 		, container(base_strat, 10)
 		, container_full(real_cb_strat, 1)
 	{
-		Tools::init_test_logs(boost::log::trivial::info);
+		Tools::init_test_logs(boost::log::trivial::info); //TODO Fix tests!!!
 		CellsDataContainer::s_i_map_t cells_ids;
 		this->container_full.add_record("AAATTAGGTCCA", "AAACCT", "Gene1", cells_ids); //0, real
 		this->container_full.add_record("AAATTAGGTCCA", "CCCCCT", "Gene2", cells_ids);
@@ -162,7 +162,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		this->real_cb_strat->_barcodes2 = cbs2;
 		this->real_cb_strat->fill_distances_to_cb("CAA", "TTAGGTCCG", d1, d2);
 
-		CellsDataContainer::ids_t ids = this->real_cb_strat->get_real_neighbour_cbs(this->container_full, "CAATTAGGTCCG", d1, d2);
+		CellsDataContainer::ids_t ids = this->real_cb_strat->get_real_neighbour_cbs(this->container_full, this->container_full.cell_ids_by_cb().at("CAATTAGGTCCG"), d1, d2);
 
 		BOOST_CHECK_EQUAL(ids.size(), 2);
 
@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 		d1.clear(); d2.clear();
 		this->real_cb_strat->fill_distances_to_cb("AAA", "TTAGGTCCC", d1, d2);
-		ids = this->real_cb_strat->get_real_neighbour_cbs(this->container_full, "CAATTAGGTCCG", d1, d2);
+		ids = this->real_cb_strat->get_real_neighbour_cbs(this->container_full, this->container_full.cell_ids_by_cb().at("CAATTAGGTCCG"), d1, d2);
 
 		BOOST_CHECK_EQUAL(ids.size(), 1);
 
