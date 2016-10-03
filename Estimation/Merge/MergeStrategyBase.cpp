@@ -54,7 +54,7 @@ void Merge::MergeStrategyBase::merge_inited(CellsDataContainer &container, ul_li
 	}
 	L_INFO << "Total " << merges_count << " merges";
 
-	container.update_cells_genes_counts(this->min_genes_after_merge(), false);
+	container.update_cell_sizes(this->min_genes_after_merge(), false);
 	for (const Tools::IndexedValue &gene_count : boost::adaptors::reverse(container.cells_genes_counts_sorted())) // Don't change the order! Simple merge use it in get_cells_with_common_umigs
 	{
 		if (!is_cell_real[gene_count.index])

@@ -70,7 +70,7 @@ namespace Estimation
 
 		void exclude_cell(size_t index);
 
-		void update_cells_genes_counts(int threshold, bool logs = true);
+		void update_cell_sizes(int threshold, bool logs = true);
 
 		const s_ul_hash_t& cell_ids_by_cb() const;
 

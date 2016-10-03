@@ -142,7 +142,7 @@ namespace Estimation
 					container.stats().add(Estimation::Stats::MERGE_REJECTION_BY_CELL, current_cb, base_cb, cur_ed);
 				}
 
-				max_dist = std::max(max_dist, cur_ed); // If there are no cells one specified distance
+				max_dist = std::max(max_dist, cur_ed); // If there are no cells on specified distance
 			}
 
 			return neighbour_cbs;

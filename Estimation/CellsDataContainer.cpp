@@ -26,7 +26,7 @@ namespace Estimation
 
 		L_TRACE << this->_merge_strategy->merge_type() << " merge selected";
 		this->_merge_strategy->merge(*this, this->_filtered_cells);
-		this->update_cells_genes_counts(this->_merge_strategy->min_genes_after_merge());
+		this->update_cell_sizes(this->_merge_strategy->min_genes_after_merge());
 	}
 
 	size_t CellsDataContainer::add_record(const string &cell_barcode, const string &umi, const string &gene, s_i_map_t &cells_ids)
@@ -69,7 +69,7 @@ namespace Estimation
 		this->_is_cell_excluded.at(index) = true;
 	}
 
-	void CellsDataContainer::update_cells_genes_counts(int threshold, bool logs)
+	void CellsDataContainer::update_cell_sizes(int threshold, bool logs)
 	{
 		this->_filtered_cells_genes_counts_sorted.clear(); // <genes_count,cell_id> pairs
 		for (size_t i = 0; i < this->_cells_genes.size(); i++)
@@ -82,6 +82,18 @@ namespace Estimation
 			{
 				this->_filtered_cells_genes_counts_sorted.push_back(IndexedValue(i, genes_count));
 			}
+		}
+
+		this->_cell_sizes.clear();
+		this->_cell_sizes.resize(this->_cells_genes.size());
+		for (size_t i = 0; i < this->_cells_genes.size(); ++i)
+		{
+			size_t cell_size = 0;
+			for (auto const &gene: this->_cells_genes[i])
+			{
+				cell_size += gene.second.size();
+			}
+			this->_cell_sizes[i] = cell_size;
 		}
 
 		if (logs)
@@ -154,18 +166,8 @@ namespace Estimation
 
 		this->_is_cell_excluded = flags_t(this->_cell_barcodes.size(), false);
 		this->_is_cell_merged = flags_t(this->_cell_barcodes.size(), false);
-		this->update_cells_genes_counts(this->_merge_strategy->min_genes_before_merge());
 
-		this->_cell_sizes.resize(this->_cells_genes.size());
-		for (size_t i = 0; i < this->_cells_genes.size(); ++i)
-		{
-			size_t cell_size = 0;
-			for (auto const &gene: this->_cells_genes[i])
-			{
-				cell_size += gene.second.size();
-			}
-			this->_cell_sizes[i] = cell_size;
-		}
+		this->update_cell_sizes(this->_merge_strategy->min_genes_before_merge());
 		this->_is_initialized = true;
 	}
 
