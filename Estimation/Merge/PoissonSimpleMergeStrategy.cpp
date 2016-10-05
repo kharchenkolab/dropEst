@@ -30,7 +30,11 @@ long PoissonSimpleMergeStrategy::get_merge_target(const Estimation::CellsDataCon
 	if (neighbour_cells.size() == 0)
 		return base_cell_ind;
 
-	return this->_target_estimator.get_best_merge_target(container, base_cell_ind, neighbour_cells);
+	long target = this->_target_estimator.get_best_merge_target(container, base_cell_ind, neighbour_cells);
+	if (target != -1)
+		return target;
+
+	return base_cell_ind;
 }
 
 void PoissonSimpleMergeStrategy::init(const CellsDataContainer &container)

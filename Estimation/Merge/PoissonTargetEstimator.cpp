@@ -88,23 +88,23 @@ double PoissonTargetEstimator::get_bootstrap_intersect_prob(const CellsDataConta
 	if (prob > 0.05) // Just to speed up
 		return prob;
 
+	double estimated = -1;
 	for (unsigned i = 0; i < multiplies_count; ++i)
 	{
 		sizes.clear();
 		sizes.reserve(repeats_count);
 		this->get_bootstrap_intersect_sizes(cell1_dist, cell2_dist, intersect_size, repeats_count, sizes);
 
-		double estimated;
 		#pragma omp critical(R_CALL)
 		estimated = this->estimate_by_r(sizes, intersect_size);
 
-		if (estimated != -1)
+		if (estimated >= 0)
 			return estimated;
 
 		repeats_count *= 2;
 	}
 
-	return 2;
+	return -estimated;
 }
 
 double PoissonTargetEstimator::estimate_by_r(ul_list_t sizes, size_t val) const
@@ -113,8 +113,9 @@ double PoissonTargetEstimator::estimate_by_r(ul_list_t sizes, size_t val) const
 	(*this->_r)["val"] = val;
 	this->_r->parseEvalQ("p_fit <- fitdistr(sizes, \"poisson\")\n"
 								 "res <- ppois(lambda=p_fit$estimate[1], q = val - 1, lower.tail=F)\n"
-								 "res_upper <- ppois(lambda=p_fit$estimate[1] + 3 * p_fit$sd, q = val - 1, lower.tail=F)\n"
-								 "if (res_upper > 4 * res) {res <- -1}\n"); // Check that we have enough observations
+								 "res_upper <- max(ppois(lambda=p_fit$estimate[1] + 3 * p_fit$sd, q = val - 1, lower.tail=F),"
+								 "ppois(lambda=max(p_fit$estimate[1] - 3 * p_fit$sd, 0), q = val - 1, lower.tail=F))\n"
+								 "if (res_upper > 4 * res) {res <- -res_upper}\n"); // Check that we have enough observations
 	return (*this->_r)["res"];
 }
 
