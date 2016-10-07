@@ -49,7 +49,6 @@ namespace Estimation
 		            Named("merges_count") = wrap(container.stats().get_raw_stat(Stats::MERGES_COUNT_PER_CB)),
 
 		            Named("merge_edit_distance") = wrap(container.stats().get_raw(Stats::MERGE_EDIT_DISTANCE_BY_CELL)),
-		            Named("merge_rejections") = wrap(container.stats().get_raw(Stats::MERGE_REJECTION_BY_CELL)),
 		            Named("merge_probs") = wrap(container.stats().get_raw(Stats::MERGE_PROB_BY_CELL)),
 		            Named("excluded_cells") = wrap(container.excluded_cells()),
 		            Named("umi_per_cell") = wrap(reads_per_umi)

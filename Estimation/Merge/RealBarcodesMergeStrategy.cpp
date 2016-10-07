@@ -123,7 +123,13 @@ namespace Estimation
 
 			sort(real_cell_inds.begin(), real_cell_inds.end(), [](const tuple_t &t1, const tuple_t &t2){ return std::get<2>(t1) < std::get<2>(t2);});
 
-			long max_dist = this->get_max_merge_dist(std::get<2>(real_cell_inds.front()));
+			auto const &nearest_cell_inf = real_cell_inds.front();
+			long min_real_cb_dist = std::get<2>(nearest_cell_inf);
+			container.stats().add(Stats::MERGE_EDIT_DISTANCE_BY_CELL, container.cell_barcode(base_cell_ind),
+								  this->_barcodes1[std::get<0>(nearest_cell_inf)] + this->_barcodes2[std::get<1>(nearest_cell_inf)],
+								  min_real_cb_dist);
+
+			long max_dist = this->get_max_merge_dist(min_real_cb_dist);
 			for (auto const & inds: real_cell_inds)
 			{
 				long cur_ed = std::get<2>(inds);
@@ -137,11 +143,6 @@ namespace Estimation
 						container.cell_size(current_cell_it->second) >= container.cell_size(base_cell_ind)) // Should pass equal sizes because it should pass current cell
 				{
 					neighbour_cbs.push_back(current_cell_it->second);
-					container.stats().add(Estimation::Stats::MERGE_EDIT_DISTANCE_BY_CELL, current_cb, base_cb, cur_ed);
-				}
-				else
-				{
-					container.stats().add(Estimation::Stats::MERGE_REJECTION_BY_CELL, current_cb, base_cb, cur_ed);
 				}
 
 				max_dist = std::max(max_dist, cur_ed); // If there are no cells on specified distance

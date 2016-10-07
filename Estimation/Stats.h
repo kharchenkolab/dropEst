@@ -32,7 +32,6 @@ namespace Estimation
 		enum StrStrStatType
 		{
 			MERGE_EDIT_DISTANCE_BY_CELL,
-			MERGE_REJECTION_BY_CELL,
 			S_S_STAT_SIZE
 		};
 
