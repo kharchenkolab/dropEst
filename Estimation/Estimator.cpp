@@ -1,7 +1,6 @@
 #include "Estimator.h"
 
 #include "Estimation/BamProcessing/BamProcessor.h"
-#include "Estimation/BamProcessing/BamProcessorFactory.h"
 #include <Estimation/Results/IndropResults.h>
 #include <Estimation/Results/BadCellsStats.h>
 #include <Estimation/Results/IndropResultsWithoutUmi.h>
@@ -9,6 +8,7 @@
 #include "Tools/Logs.h"
 
 #include <boost/range/adaptor/reversed.hpp>
+#include <Estimation/BamProcessing/BamController.h>
 
 using namespace std;
 
@@ -22,8 +22,7 @@ namespace Estimation
 	}
 
 	Estimator::Estimator(const boost::property_tree::ptree &config)
-		: read_prefix_length(config.get<size_t>("read_prefix_length"))
-		, min_merge_fraction(config.get<double>("min_merge_fraction"))
+		: min_merge_fraction(config.get<double>("min_merge_fraction"))
 		, max_merge_edit_distance(config.get<unsigned>("max_merge_edit_distance"))
 		, min_genes_after_merge(config.get<unsigned>("min_genes_after_merge"))
 		, barcode2_length(config.get<size_t>("barcode2_length", 0))
@@ -43,24 +42,23 @@ namespace Estimation
 
 	Results::IndropResult Estimator::get_results(const CellsDataContainer &container, bool not_filtered, bool reads_output)
 	{
-		ids_t filtered_cells = container.filtered_cells();
-		if (filtered_cells.empty())
+		if (container.filtered_cells().empty())
 		{
 			L_WARN << "WARNING: filtered cells is empty. Maybe its too strict threshold or you forgot to run 'merge_and_filter'";
 		}
 
-		names_t gene_names(this->get_gene_names_sorted(container, filtered_cells));
+		names_t gene_names(this->get_gene_names_sorted(container));
 
 		Tools::trace_time("Compiling count matrix");
-		names_t cell_names(this->get_filtered_cell_names(container, filtered_cells));
+		names_t cell_names(this->get_filtered_cell_names(container));
 
-		i_list_t count_matrix = this->get_count_matrix(filtered_cells, gene_names, container, reads_output);
+		i_list_t count_matrix = this->get_count_matrix(gene_names, container, reads_output);
 
 		Tools::trace_time("Done");
 
 		Results::CountMatrix cm(cell_names, gene_names, count_matrix);
 		return reads_output ? Results::IndropResultsWithoutUmi(cm, container, not_filtered)
-			   : this->get_indrop_results(cm, container, filtered_cells, not_filtered);
+			   : this->get_indrop_results(cm, container, not_filtered);
 	}
 
 	Results::BadCellsStats Estimator::get_bad_cells_results(const CellsDataContainer &container)
@@ -72,11 +70,10 @@ namespace Estimation
 		return Results::BadCellsStats();
 	}
 
-	Estimator::names_t Estimator::get_gene_names_sorted(const CellsDataContainer &genes_container,
-														const ids_t &filtered_cells) const
+	Estimator::names_t Estimator::get_gene_names_sorted(const CellsDataContainer &genes_container) const
 	{
 		SIHM counter;
-		for (size_t cell_index: filtered_cells)
+		for (size_t cell_index : genes_container.filtered_cells())
 		{
 			const CellsDataContainer::genes_t &cell_genes = genes_container.cell_genes(cell_index);
 			for (CellsDataContainer::genes_t::const_iterator gm_it = cell_genes.begin(); gm_it != cell_genes.end(); ++gm_it)
@@ -100,22 +97,21 @@ namespace Estimation
 		return gene_names;
 	}
 
-	Estimator::names_t Estimator::get_filtered_cell_names(const CellsDataContainer &genes_container,
-														  const ids_t &unmerged_cells) const
+	Estimator::names_t Estimator::get_filtered_cell_names(const CellsDataContainer &genes_container) const
 	{
 		names_t cell_names;
-		cell_names.reserve(unmerged_cells.size());
-		for (auto const &cell_id : unmerged_cells)
+		cell_names.reserve(genes_container.filtered_cells().size());
+		for (auto const &cell_id : genes_container.filtered_cells())
 		{
 			cell_names.push_back(genes_container.cell_barcode(cell_id));
 		}
 		return cell_names;
 	}
 
-	Estimator::i_list_t Estimator::get_count_matrix(const ids_t &filtered_cells, const names_t &gene_names,
-									  const CellsDataContainer &genes_container, bool reads_output) const
+	Estimator::i_list_t Estimator::get_count_matrix(const names_t &gene_names, const CellsDataContainer &genes_container,
+													bool reads_output) const
 	{
-		i_list_t count_matrix(filtered_cells.size() * gene_names.size(), 0);
+		i_list_t count_matrix(genes_container.filtered_cells().size() * gene_names.size(), 0);
 		std::unordered_map<std::string, size_t> gene_ids;
 
 		for (size_t i = 0; i < gene_names.size(); ++i)
@@ -123,9 +119,9 @@ namespace Estimation
 			gene_ids[gene_names[i]] = i;
 		}
 
-		for (size_t col = 0; col < filtered_cells.size(); col++)
+		for (size_t col = 0; col < genes_container.filtered_cells().size(); col++)
 		{
-			for (auto const &gene_it : genes_container.cell_genes(filtered_cells[col]))
+			for (auto const &gene_it : genes_container.cell_genes(genes_container.filtered_cells()[col]))
 			{
 				size_t row = gene_ids[gene_it.first];
 				int cell_value = 0;
@@ -142,7 +138,7 @@ namespace Estimation
 					cell_value = gene_it.second.size();
 				}
 
-				count_matrix[(row * filtered_cells.size()) + col] = cell_value;
+				count_matrix[(row * genes_container.filtered_cells().size()) + col] = cell_value;
 			}
 		}
 
@@ -150,11 +146,11 @@ namespace Estimation
 	}
 
 	Results::IndropResult Estimator::get_indrop_results(const Results::CountMatrix &cm, const CellsDataContainer &genes_container,
-											   const ids_t &unmerged_cells, bool not_filtered) const
+														bool not_filtered) const
 	{
 		L_TRACE << "compiling diagnostic stats: ";
 
-		doubles_t reads_per_umis(this->get_reads_per_umis(genes_container, unmerged_cells));
+		doubles_t reads_per_umis(this->get_reads_per_umis(genes_container));
 		L_TRACE << "reads/UMI";
 
 		l_list_t umig_coverage(this->get_umig_coverage(genes_container));
@@ -163,17 +159,16 @@ namespace Estimation
 		return Results::IndropResult(cm, genes_container, reads_per_umis, umig_coverage, not_filtered);
 	}
 
-	Estimator::doubles_t Estimator::get_reads_per_umis(const CellsDataContainer &genes_container,
-													   const ids_t &filtered_cells) const
+	Estimator::doubles_t Estimator::get_reads_per_umis(const CellsDataContainer &genes_container) const
 	{
 		doubles_t reads_per_umis;
-		reads_per_umis.reserve(filtered_cells.size());
+		reads_per_umis.reserve(genes_container.filtered_cells().size());
 
-		for (size_t j = 0; j < filtered_cells.size(); j++)
+		for (size_t j = 0; j < genes_container.filtered_cells().size(); j++)
 		{
 			size_t umis_count = 0;
 			double reads_per_umi = 0.0;
-			for (auto const &gene_rec : genes_container.cell_genes(filtered_cells[j]))
+			for (auto const &gene_rec : genes_container.cell_genes(genes_container.filtered_cells()[j]))
 			{
 				for (auto const &umi_rec : gene_rec.second)
 				{
@@ -234,13 +229,16 @@ namespace Estimation
 												 merge_tags, barcodes_filename, this->barcode2_length, this->merge_type);
 
 		CellsDataContainer container(merge_strategy, Estimator::top_print_size);
-		auto bam_processor = BamProcessing::BamProcessorFactory::get(filled_bam, reads_params_names_str,
-																	 gtf_filename, this->read_prefix_length);
-
-		bam_processor->parse_bam_files(files, bam_output, container);
+		BamProcessing::BamController::parse_bam_files(files, bam_output, filled_bam, reads_params_names_str,
+													  gtf_filename, container);
 		container.set_initialized();
 
 		container.merge_and_filter();
 		return container;
+	}
+
+	void Estimator::write_filtered_bam(const Estimator::names_t &files, const CellsDataContainer &container)
+	{
+		//TODO
 	}
 }

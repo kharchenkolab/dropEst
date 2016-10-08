@@ -11,14 +11,16 @@ namespace Merge
 			, _min_genes_after_merge(min_genes_after_merge)
 	{}
 
-	void MergeStrategyAbstract::merge(Estimation::CellsDataContainer &container, ul_list_t &filtered_cells)
+	MergeStrategyAbstract::ul_list_t MergeStrategyAbstract::merge(CellsDataContainer &container)
 	{
 		Tools::trace_time("Start merge");
 		this->init(container);
 		Tools::trace_time("Merge initialized");
-		this->merge_inited(container, filtered_cells);
+		ul_list_t targets = this->merge_inited(container);
 		this->release();
 		Tools::trace_time("Merge finished");
+
+		return targets;
 	}
 
 	void MergeStrategyAbstract::init(const Estimation::CellsDataContainer &container)

@@ -43,7 +43,7 @@ namespace Merge
 		void merge_force(Estimation::CellsDataContainer &container, size_t src_cell_id, size_t target_cell_ind,
 						 ul_list_t &cb_reassign_targets, ISIHM &cb_reassigned_to_it) const;
 
-		virtual void merge_inited(Estimation::CellsDataContainer &container, ul_list_t &filtered_cells) const;
+		virtual ul_list_t merge_inited(Estimation::CellsDataContainer &container) const override;
 		virtual long get_merge_target(const Estimation::CellsDataContainer &container, size_t base_cell_ind) const = 0;
 	};
 }

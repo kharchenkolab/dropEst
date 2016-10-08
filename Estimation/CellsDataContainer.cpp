@@ -25,8 +25,16 @@ namespace Estimation
 			throw runtime_error("You must initialize container");
 
 		L_TRACE << this->_merge_strategy->merge_type() << " merge selected";
-		this->_merge_strategy->merge(*this, this->_filtered_cells);
+		this->_merge_targets = this->_merge_strategy->merge(*this);
+		this->stats().merge(this->_merge_targets, this->cell_barcodes_raw());
+		
 		this->update_cell_sizes(this->_merge_strategy->min_genes_after_merge());
+
+		this->_filtered_cells.clear();
+		for (auto const &val : this->cells_genes_counts_sorted())
+		{
+			this->_filtered_cells.push_back(val.index);
+		}
 	}
 
 	size_t CellsDataContainer::add_record(const string &cell_barcode, const string &umi, const string &gene, s_i_map_t &cells_ids)
@@ -69,7 +77,7 @@ namespace Estimation
 		this->_is_cell_excluded.at(index) = true;
 	}
 
-	void CellsDataContainer::update_cell_sizes(int threshold, bool logs)
+	void CellsDataContainer::update_cell_sizes(int genes_threshold, bool logs)
 	{
 		this->_filtered_cells_genes_counts_sorted.clear(); // <genes_count,cell_id> pairs
 		for (size_t i = 0; i < this->_cells_genes.size(); i++)
@@ -78,7 +86,7 @@ namespace Estimation
 				continue;
 
 			size_t genes_count = this->_cells_genes[i].size();
-			if (genes_count >= threshold)
+			if (genes_count >= genes_threshold)
 			{
 				this->_filtered_cells_genes_counts_sorted.push_back(IndexedValue(i, genes_count));
 			}
@@ -98,7 +106,7 @@ namespace Estimation
 
 		if (logs)
 		{
-			L_TRACE << this->_filtered_cells_genes_counts_sorted.size() << " CBs with more than " << threshold << " genes";
+			L_TRACE << this->_filtered_cells_genes_counts_sorted.size() << " CBs with more than " << genes_threshold << " genes";
 		}
 
 		sort(this->_filtered_cells_genes_counts_sorted.begin(), this->_filtered_cells_genes_counts_sorted.end(), IndexedValue::value_less);

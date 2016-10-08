@@ -8,10 +8,8 @@ namespace Estimation
 {
 namespace Merge
 {
-void Merge::MergeStrategyBase::merge_inited(CellsDataContainer &container, ul_list_t &filtered_cells) const
+MergeStrategyAbstract::ul_list_t MergeStrategyBase::merge_inited(CellsDataContainer &container) const
 {
-	std::vector<bool> is_cell_real(container.cell_barcodes_raw().size(), false);
-
 	ISIHM cb_reassigned_to_it;
 	ul_list_t cb_reassign_targets(container.cell_barcodes_raw().size());
 	std::iota(cb_reassign_targets.begin(), cb_reassign_targets.end(), 0);
@@ -39,10 +37,8 @@ void Merge::MergeStrategyBase::merge_inited(CellsDataContainer &container, ul_li
 			continue;
 		}
 
-		is_cell_real[target_cell_ind] = true;
 		if (target_cell_ind != cb_reassign_targets.at(target_cell_ind))
 		{
-			is_cell_real[target_cell_ind] = false;
 			target_cell_ind = cb_reassign_targets[target_cell_ind]; // For the case when real barcodes could be merged too
 		}
 
@@ -55,16 +51,8 @@ void Merge::MergeStrategyBase::merge_inited(CellsDataContainer &container, ul_li
 	L_INFO << "Total " << merges_count << " merges";
 
 	container.update_cell_sizes(this->min_genes_after_merge(), false);
-	for (const Tools::IndexedValue &gene_count : boost::adaptors::reverse(container.cells_genes_counts_sorted())) // Don't change the order! Simple merge use it in get_cells_with_common_umigs
-	{
-		if (!is_cell_real[gene_count.index])
-			continue;
 
-		L_DEBUG << "Add cell to filtered: " << gene_count.value << " " << gene_count.index;
-		filtered_cells.push_back(gene_count.index);
-	}
-
-	container.stats().merge(cb_reassign_targets, container.cell_barcodes_raw());
+	return cb_reassign_targets;
 }
 
 void MergeStrategyBase::reassign(size_t cell_id, size_t target_cell_id, ul_list_t &cb_reassign_targets,

@@ -19,11 +19,6 @@ namespace Merge
 		return min_real_cb_dist == 0 ? 2 : min_real_cb_dist + 1;
 	}
 
-	bool PoissonRealBarcodesMergeStrategy::need_parallel() const
-	{
-		return true;
-	}
-
 	std::string PoissonRealBarcodesMergeStrategy::merge_type() const
 	{
 		return "Poisson";

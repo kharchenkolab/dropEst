@@ -23,12 +23,12 @@ namespace Merge
 		const int _min_genes_after_merge;
 
 	protected:
-		virtual void merge_inited(Estimation::CellsDataContainer &container, ul_list_t &filtered_cells) const = 0;
+		virtual ul_list_t merge_inited(Estimation::CellsDataContainer &container) const = 0;
 
 	public:
 		MergeStrategyAbstract(int min_genes_before_merge, int min_genes_after_merge);
 
-		void merge(Estimation::CellsDataContainer &container, ul_list_t &filtered_cells);
+		ul_list_t merge(Estimation::CellsDataContainer &container);
 
 		virtual void init(const Estimation::CellsDataContainer &container);
 		virtual void release();

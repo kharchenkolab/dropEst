@@ -1,5 +1,5 @@
 #include <Tools/Logs.h>
-#include "ReadMapBamProcessor.h"
+#include "ReadMapParamsParser.h"
 
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
@@ -9,28 +9,25 @@ namespace Estimation
 {
 namespace BamProcessing
 {
-	ReadMapBamProcessor::ReadMapBamProcessor(size_t read_prefix_length, const std::string & read_param_names,
-											 const std::string & gtf_path)
-			: BamProcessor(read_prefix_length, gtf_path)
-			, _read_param_names(read_param_names)
-	{}
+	ReadMapParamsParser::ReadMapParamsParser(const std::string &gtf_path, bool save_read_names,
+												 const std::string &read_param_names)
+			: ReadsParamsParser(gtf_path)
+	{
+		this->init(read_param_names, save_read_names);
+	}
 
-	bool ReadMapBamProcessor::get_read_params(const BamTools::BamAlignment &alignment,
-											  Tools::ReadParameters &read_params) const
+	bool ReadMapParamsParser::get_read_params(const BamTools::BamAlignment &alignment,
+											  Tools::ReadParameters &read_params)
 	{
 		const std::string &read_name = alignment.Name;
-		Tools::reads_params_map_t::const_iterator iter;
-		bool read_not_found;
-		#pragma omp critical(READ_PARAMS)
-		{
-			iter = this->_reads_params.find(read_name);
-			read_not_found = (iter == this->_reads_params.end());
 
-			if (!read_not_found)
-			{
-				read_params = iter->second;
-				this->_reads_params.erase(iter);
-			}
+		auto iter = this->_reads_params.find(read_name);
+		bool read_not_found = (iter == this->_reads_params.end());
+
+		if (!read_not_found)
+		{
+			read_params = iter->second;
+			this->_reads_params.erase(iter);
 		}
 
 		if (read_not_found)
@@ -48,10 +45,10 @@ namespace BamProcessing
 		return true;
 	}
 
-	void ReadMapBamProcessor::init_temporaries_before_parsing(bool save_read_name) const
+	void ReadMapParamsParser::init(const std::string & read_param_names, bool save_read_name)
 	{
 		std::vector<std::string> params_names;
-		boost::split(params_names, this->_read_param_names, boost::is_any_of(" \t"));
+		boost::split(params_names, read_param_names, boost::is_any_of(" \t"));
 		size_t total_reads_count = 0;
 		L_TRACE << "Start loading reads names";
 		for (auto const &name : params_names)
@@ -105,7 +102,7 @@ namespace BamProcessing
 		L_TRACE << "All reads names were loaded";
 	}
 
-	void ReadMapBamProcessor::release_temporaries_after_parsing() const
+	ReadMapParamsParser::~ReadMapParamsParser()
 	{
 		this->_reads_params.clear();
 	}

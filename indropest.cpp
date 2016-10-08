@@ -25,6 +25,7 @@ struct Params
 	bool bam_output = false;
 	bool cant_parse = false;
 	bool filled_bam = false;
+	bool filtered_bam = false;
 	bool merge_tags = false;
 	bool not_filtered = false;
 	bool reads_output = false;
@@ -32,11 +33,11 @@ struct Params
 	bool verbose = false;
 	string barcodes_filename = "";
 	string config_file_name = "";
+	string genesets_rds = "";
 	string gtf_filename = "";
 	string log_prefix = "";
 	string output_name = "";
 	string reads_params_file = "";
-	string genesets_rds = "";
 	int num_of_threads = 1;
 };
 
@@ -71,12 +72,13 @@ static void usage()
 	cerr <<
 	"\tindropest [-t, --text-output] [-m|--merge-cell-tags] [-v|--verbose] [-n | --not-filtered] [-g | --gtf filename]"
 	"[-l, --log-prefix logs_name] [-r, --reads-params filename] -c config.xml file1.bam [file2.bam ...] "
-	"[-b | --bam-output] [-B | --barcodes filename] [-f, --filled-bam]" << endl;
+	"[-b | --bam-output] [-B | --barcodes filename] [-f, --filled-bam] [-F, --filtered-bam]" << endl;
 	cerr << "OPTIONS:\n";
 	cerr << "\t-b, --bam-output: print tagged bam files" << endl;
 	cerr << "\t-B, --barcodes: path to barcodes file" << endl;
 	cerr << "\t-c, --config filename: xml file with estimation parameters" << endl;
 	cerr << "\t-f, --filled-bam: bam file already contains genes/barcodes tags" << endl;
+	cerr << "\t-F, --filtered-bam: print tagged bam file after the merge and filtration" << endl;
 	cerr << "\t-g, --gtf filename: gtf file with genes annotations" << endl;
 	cerr << "\t-l, --log-prefix : logs prefix" << endl;
 	cerr << "\t-m, --merge-cell-tags : merge linked cell tags" << endl;
@@ -100,6 +102,7 @@ static Params parse_cmd_params(int argc, char **argv)
 			{"barcodes",     	required_argument, 	   0, 'B'},
 			{"config",     		required_argument, 0, 'c'},
 			{"filled-bam",     	no_argument,       0, 'f'},
+			{"filtered-bam",    no_argument,		0, 'F'},
 			{"genesets_rds",	required_argument, 0, 'G'},
 			{"gtf",     		required_argument, 0, 'g'},
 			{"log-prefix",		required_argument, 0, 'l'},
@@ -128,6 +131,9 @@ static Params parse_cmd_params(int argc, char **argv)
 				break;
 			case 'f' :
 				params.filled_bam = true;
+				break;
+			case 'F' :
+				params.filtered_bam = true;
 				break;
 			case 'G' :
 				params.genesets_rds = string(optarg);

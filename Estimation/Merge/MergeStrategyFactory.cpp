@@ -1,7 +1,7 @@
 #include "MergeStrategyFactory.h"
 
 #include "BrokenRealBarcodesMergeStrategy.h"
-#include "FilteringMergeStrategy.h"
+#include "DummyMergeStrategy.h"
 #include "PoissonRealBarcodesMergeStrategy.h"
 #include "RealBarcodesMergeStrategy.h"
 #include "SimpleMergeStrategy.h"
@@ -18,7 +18,7 @@ namespace Merge
 							  const std::string &merge_type)
 	{
 		if (!merge_tags)
-			return std::shared_ptr<MergeStrategyAbstract>(new FilteringMergeStrategy(min_genes_before_merge, min_genes_after_merge));
+			return std::shared_ptr<MergeStrategyAbstract>(new DummyMergeStrategy(min_genes_before_merge, min_genes_after_merge));
 
 		if (barcodes_filename == "")
 		{

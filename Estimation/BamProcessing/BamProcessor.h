@@ -1,11 +1,8 @@
 #pragma once
+#include <Estimation/CellsDataContainer.h>
 
-#include "Estimation/CellsDataContainer.h"
-#include "Tools/RefGenesContainer.h"
-
-#include <string>
-#include <vector>
 #include <api/BamAlignment.h>
+#include <api/BamReader.h>
 #include <api/BamWriter.h>
 
 namespace Tools
@@ -19,42 +16,29 @@ namespace Estimation
 	{
 		class BamProcessor
 		{
-		protected:
-			static const std::string GENE_TAG;
-			static const std::string CB_TAG;
-			static const std::string UMI_TAG;
-
 		private:
-			const size_t _read_prefix_length;
-			Tools::RefGenesContainer _genes_container;
+			CellsDataContainer &container;
+			CellsDataContainer::s_i_map_t cells_ids;
+			const bool print_bam;
+			size_t total_exonic_reads;
+			size_t total_reads;
 
-
-		private:
-			void parse_bam_file(const std::string &bam_name, bool print_result_bam, CellsDataContainer::s_i_map_t &cells_ids,
-								CellsDataContainer &container, long &total_reads, long &total_exonic_reads) const;
-
-			void write_alignment(BamTools::BamWriter &writer, BamTools::BamAlignment &alignment, const std::string &gene,
-								 const Tools::ReadParameters &parameters) const;
-
-			std::string get_gene(const std::string &chr_name, BamTools::BamAlignment alignment) const;
-
-			static size_t save_read_data(const std::string &chr_name, const std::string &cell_barcode, const std::string &umi,
-									  const std::string &gene, CellsDataContainer::s_i_map_t &cells_ids,
-									  CellsDataContainer &container);
-
-			static std::string get_result_bam_name(const std::string &bam_name);
+			BamTools::BamWriter writer;
 
 		protected:
-			virtual bool get_read_params(const BamTools::BamAlignment &alignment, Tools::ReadParameters &read_params) const;
+			virtual std::string get_result_bam_name(const std::string &bam_name) const;
 
 		public:
-			BamProcessor(size_t read_prefix_length, const std::string &gtf_path);
+			BamProcessor(CellsDataContainer &container, bool print_bam);
+			virtual ~BamProcessor();
 
-			void parse_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams, CellsDataContainer &container) const;
+			void inc_reads();
+			void update_bam(const std::string& bam_file, const BamTools::BamReader &reader);
 
-			virtual void init_temporaries_before_parsing(bool save_read_name) const;
-
-			virtual void release_temporaries_after_parsing() const;
+			virtual void trace_state(const std::string& bam_file) const;
+			virtual void save_read(const std::string& cell_barcode, const std::string& chr_name, const std::string& umi, const std::string& gene);
+			virtual void write_alignment(BamTools::BamAlignment alignment, const std::string& gene,
+								 const Tools::ReadParameters &read_params);
 		};
 	}
 }

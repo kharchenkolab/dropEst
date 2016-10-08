@@ -20,7 +20,6 @@
 
     <Estimation>
         <barcode2_length>8</barcode2_length>
-        <read_prefix_length>6</read_prefix_length>
         <min_merge_fraction>0.4</min_merge_fraction>
         <max_merge_edit_distance>2</max_merge_edit_distance>
         <min_genes_after_merge>1000</min_genes_after_merge>

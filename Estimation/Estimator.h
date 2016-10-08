@@ -38,7 +38,6 @@ namespace Estimation
 	private:
 		static const size_t top_print_size = 10;
 
-		const size_t read_prefix_length;
 		const double min_merge_fraction;
 		const unsigned max_merge_edit_distance;
 
@@ -58,20 +57,21 @@ namespace Estimation
 		                                       const std::string &reads_params_names_str, const std::string &gtf_filename,
 		                                       const std::string &barcodes_filename);
 
+		static void write_filtered_bam(const names_t &files, const CellsDataContainer &container);
+
 	private:
-		names_t get_filtered_cell_names(const CellsDataContainer &genes_container, const ids_t &unmerged_cells) const;
+		names_t get_filtered_cell_names(const CellsDataContainer &genes_container) const;
 
-		i_list_t get_count_matrix(const ids_t &filtered_cells, const names_t &gene_names,
-							   const CellsDataContainer &genes_container, bool reads_output) const;
+		i_list_t get_count_matrix(const names_t &gene_names, const CellsDataContainer &genes_container, bool reads_output) const;
 
-		names_t get_gene_names_sorted(const CellsDataContainer &genes_container, const ids_t &filtered_cells) const;
+		names_t get_gene_names_sorted(const CellsDataContainer &genes_container) const;
 
-		doubles_t get_reads_per_umis(const CellsDataContainer &genes_container, const ids_t &filtered_cells) const;
+		doubles_t get_reads_per_umis(const CellsDataContainer &genes_container) const;
 
 		l_list_t get_umig_coverage(const CellsDataContainer &genes_container) const;
 
 		Results::IndropResult get_indrop_results(const Results::CountMatrix &cm, const CellsDataContainer &genes_conteiner,
-										const ids_t &unmerged_cells, bool not_filtered) const;
+												 bool not_filtered) const;
 
 		std::string get_genes_top_verbose(const s_counter_t &genes_count) const;
 	};

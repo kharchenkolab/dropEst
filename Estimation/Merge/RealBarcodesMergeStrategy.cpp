@@ -196,11 +196,6 @@ namespace Estimation
 			return min_real_cb_dist;
 		}
 
-		bool RealBarcodesMergeStrategy::need_parallel() const
-		{
-			return false;
-		}
-
 		std::string RealBarcodesMergeStrategy::merge_type() const
 		{
 			return "RealCBs";

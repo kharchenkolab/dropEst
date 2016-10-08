@@ -49,6 +49,7 @@ namespace Estimation
 		flags_t _is_cell_merged;
 		s_ul_hash_t _cell_ids_by_cb;
 		ids_t _filtered_cells;
+		ids_t _merge_targets;
 
 		counts_t _cell_sizes;
 		i_counter_t _filtered_cells_genes_counts_sorted;
@@ -70,7 +71,7 @@ namespace Estimation
 
 		void exclude_cell(size_t index);
 
-		void update_cell_sizes(int threshold, bool logs = true);
+		void update_cell_sizes(int genes_threshold, bool logs = true);
 
 		const s_ul_hash_t& cell_ids_by_cb() const;
 
