@@ -100,7 +100,7 @@ namespace TagsSearch
 	{
 		L_TRACE << "reading reads ";
 
-		FilesProcessor files_processor(r1_filename, r2_filename, base_name, this->max_reads);
+		FilesProcessor files_processor(r1_filename, r2_filename, base_name, this->max_reads, save_reads_names);
 
 		long total_reads_read = 1, parsed_reads = 0;
 		std::string file_uid = std::to_string(rand()) + char(rand() % 25 + 'A');

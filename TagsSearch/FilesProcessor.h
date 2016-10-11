@@ -24,8 +24,9 @@ namespace TagsSearch
 		boost::iostreams::filtering_ostream out_reads_zip;
 		boost::iostreams::filtering_ostream out_zip;
 
-		std::string base_name;
-		std::string reads_file_name;
+		const std::string base_name;
+		const std::string reads_file_name;
+
 		long max_reads;
 		int current_file_reads_written;
 		int out_file_index;
@@ -36,7 +37,7 @@ namespace TagsSearch
 
 	public:
 		FilesProcessor(const std::string &r1_filename, const std::string &r2_filename,
-					   const std::string &base_name, long max_reads);
+					   const std::string &base_name, long max_reads, bool save_reads_names = false);
 
 		~FilesProcessor();
 

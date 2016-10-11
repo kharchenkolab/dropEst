@@ -8,7 +8,7 @@
 namespace TagsSearch
 {
 	FilesProcessor::FilesProcessor(const std::string &r1_filename, const std::string &r2_filename,
-								   const std::string &base_name, long max_reads)
+								   const std::string &base_name, long max_reads, bool save_reads_names)
 			: base_name(base_name)
 			, reads_file_name(base_name + ".reads.gz")
 			, max_reads(max_reads)
@@ -43,9 +43,12 @@ namespace TagsSearch
 		this->out_zip.push(boost::iostreams::gzip_compressor());
 		this->out_zip.push(this->out_file);
 
-		this->out_reads_file.open(this->reads_file_name.c_str(), std::ios_base::out);
-		if (this->out_reads_file.fail())
-			throw std::runtime_error("Can't open out reads file: '" + this->reads_file_name + "'");
+		if (save_reads_names)
+		{
+			this->out_reads_file.open(this->reads_file_name.c_str(), std::ios_base::out);
+			if (this->out_reads_file.fail())
+				throw std::runtime_error("Can't open out reads file: '" + this->reads_file_name + "'");
+		}
 
 		this->out_reads_zip.push(boost::iostreams::gzip_compressor());
 		this->out_reads_zip.push(this->out_reads_file);
