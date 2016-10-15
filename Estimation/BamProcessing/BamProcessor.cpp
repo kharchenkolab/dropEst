@@ -13,13 +13,7 @@ namespace Estimation
 				: container(container)
 				, print_bam(print_bam)
 				, total_exonic_reads(0)
-				, total_reads(0)
 		{}
-
-		BamProcessor::~BamProcessor()
-		{
-			this->writer.Close();
-		}
 
 		void BamProcessor::save_read(const std::string& cell_barcode, const std::string& chr_name, const std::string& umi, const std::string& gene)
 		{
@@ -39,15 +33,10 @@ namespace Estimation
 			this->total_exonic_reads++;
 		}
 
-		void BamProcessor::inc_reads()
-		{
-			this->total_reads++;
-		}
-
 		void BamProcessor::trace_state(const std::string &bam_file) const
 		{
-			L_TRACE << bam_file << ": " << this->total_reads << " total reads; " << this->total_exonic_reads << std::setprecision(3)
-					<< " ("<< (100.0*this->total_exonic_reads / this->total_reads) <<"%) exonic; " << this->cells_ids.size() << " CBs";
+			L_TRACE << bam_file << ": " << this->total_reads() << " total reads; " << this->total_exonic_reads << std::setprecision(3)
+					<< " ("<< (100.0*this->total_exonic_reads / this->total_reads()) <<"%) exonic; " << this->cells_ids.size() << " CBs";
 		}
 
 		void BamProcessor::update_bam(const std::string &bam_file, const BamTools::BamReader &reader)
@@ -55,10 +44,7 @@ namespace Estimation
 			if (!this->print_bam)
 				return;
 
-			this->writer.Close();
-			std::string result_bam_name = this->get_result_bam_name(bam_file);
-			if (!this->writer.Open(result_bam_name, reader.GetHeader(), reader.GetReferenceData()))
-				throw std::runtime_error("Could not open BAM file to write: " + result_bam_name);
+			BamProcessorAbstract::update_bam(bam_file, reader);
 		}
 
 		std::string BamProcessor::get_result_bam_name(const std::string &bam_name) const
@@ -80,7 +66,7 @@ namespace Estimation
 
 			alignment.AddTag(BamController::CB_TAG, "Z", read_params.cell_barcode());
 			alignment.AddTag(BamController::UMI_TAG, "Z", read_params.umi_barcode());
-			this->writer.SaveAlignment(alignment);
+			this->save_alignment(alignment);
 		}
 	}
 }

@@ -88,6 +88,9 @@ namespace Estimation
 		names_t excluded_cells() const;
 
 		bool is_cell_merged(size_t cell_id) const;
+		bool is_cell_excluded(size_t cell_id) const;
+
+		const ids_t& merge_targets() const;
 
 		void set_initialized();
 

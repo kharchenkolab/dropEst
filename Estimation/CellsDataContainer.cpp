@@ -229,4 +229,14 @@ namespace Estimation
 	{
 		return this->_cell_sizes.at(cell_index);
 	}
+
+	const CellsDataContainer::ids_t &CellsDataContainer::merge_targets() const
+	{
+		return this->_merge_targets;
+	}
+
+	bool CellsDataContainer::is_cell_excluded(size_t cell_id) const
+	{
+		return this->_is_cell_excluded.at(cell_id);
+	}
 }
