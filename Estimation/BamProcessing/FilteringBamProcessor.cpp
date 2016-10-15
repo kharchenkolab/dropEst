@@ -48,6 +48,9 @@ namespace Estimation
 		void FilteringBamProcessor::write_alignment(BamTools::BamAlignment alignment, const std::string &gene,
 													const Tools::ReadParameters &read_params)
 		{
+			if (gene == "")
+				return;
+			
 			auto iter = this->merge_cbs.find(read_params.cell_barcode());
 			if (iter == this->merge_cbs.end())
 				return;
