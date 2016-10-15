@@ -58,15 +58,8 @@ namespace Estimation
 			if (!this->print_bam)
 				return;
 
-			alignment.Name = read_params.read_name_safe();
-			if (gene != "")
-			{
-				alignment.AddTag(BamController::GENE_TAG, "Z", gene);
-			}
-
-			alignment.AddTag(BamController::CB_TAG, "Z", read_params.cell_barcode());
-			alignment.AddTag(BamController::UMI_TAG, "Z", read_params.umi_barcode());
-			this->save_alignment(alignment);
+			this->save_alignment(alignment, read_params.read_name_safe(), gene,
+								 read_params.cell_barcode(), read_params.umi_barcode());
 		}
 	}
 }

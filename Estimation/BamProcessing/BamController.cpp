@@ -4,6 +4,7 @@
 #include "Tools/ReadParameters.h"
 #include "FilledBamParamsParser.h"
 #include "ReadMapParamsParser.h"
+#include "FilteringBamProcessor.h"
 
 #include <api/BamReader.h>
 
@@ -21,13 +22,40 @@ namespace BamProcessing
 	{
 		Tools::trace_time("Start parse bams");
 
-		std::shared_ptr<BamProcessor> processor = std::make_shared<BamProcessor>(container, print_result_bams);
-		BamController::parse_bam_files(bam_files, print_result_bams, filled_bam, reads_params_names_str, gtf_path, processor);
+		auto processor = std::shared_ptr<BamProcessorAbstract>(new BamProcessor(container, print_result_bams));
+		BamController::process_bam_files(bam_files, print_result_bams, filled_bam, reads_params_names_str, gtf_path,
+										 processor);
 
 		Tools::trace_time("Bams parsed");
 	}
 
-	void BamController::parse_bam_file(const std::string &bam_name, std::shared_ptr<BamProcessor> &processor,
+	void BamController::write_filtered_bam_files(const std::vector<std::string> &bam_files,
+												 bool filled_bam, const std::string &reads_params_names_str,
+												 const std::string &gtf_path, const CellsDataContainer &container)
+	{
+		Tools::trace_time("Start write filtered bam");
+
+		auto processor = std::shared_ptr<BamProcessorAbstract>(new FilteringBamProcessor(container));
+		BamController::process_bam_files(bam_files, true, filled_bam, reads_params_names_str, gtf_path, processor);
+
+		Tools::trace_time("Filtered bam written");
+	}
+
+	void BamController::process_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams,
+										  bool filled_bam, const std::string &reads_params_names_str,
+										  const std::string &gtf_path, std::shared_ptr<BamProcessorAbstract> processor)
+	{
+		std::shared_ptr<ReadsParamsParser> parser = BamController::get_parser(filled_bam, print_result_bams,
+																			  reads_params_names_str, gtf_path);
+
+		for (size_t i = 0; i < bam_files.size(); ++i)
+		{
+			BamController::parse_bam_file(bam_files[i], processor, parser);
+			processor->trace_state(bam_files[i]);
+		}
+	}
+
+	void BamController::parse_bam_file(const std::string &bam_name, std::shared_ptr<BamProcessorAbstract> &processor,
 									   std::shared_ptr<ReadsParamsParser> &parser)
 	{
 		using namespace BamTools;
@@ -84,20 +112,6 @@ namespace BamProcessing
 			return std::make_shared<ReadMapParamsParser>(gtf_path, save_read_names, reads_params_names_str);
 
 		return std::make_shared<ReadsParamsParser>(gtf_path);
-	}
-
-	void BamController::parse_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams, bool filled_bam,
-								   const std::string &reads_params_names_str, const std::string &gtf_path,
-								   std::shared_ptr<BamProcessor> processor)
-	{
-		std::shared_ptr<ReadsParamsParser> parser = BamController::get_parser(filled_bam, print_result_bams,
-																			  reads_params_names_str, gtf_path);
-
-		for (size_t i = 0; i < bam_files.size(); ++i)
-		{
-			BamController::parse_bam_file(bam_files[i], processor, parser);
-			processor->trace_state(bam_files[i]);
-		}
 	}
 }
 }

@@ -8,6 +8,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include <omp.h>
+#include <Estimation/BamProcessing/BamController.h>
 
 #include "Estimation/Estimator.h"
 #include "Estimation/Results/ResultPrinter.h"
@@ -25,7 +26,7 @@ struct Params
 	bool bam_output = false;
 	bool cant_parse = false;
 	bool filled_bam = false;
-	bool filtered_bam = false;
+	bool filtered_bam_output = false;
 	bool merge_tags = false;
 	bool not_filtered = false;
 	bool reads_output = false;
@@ -37,7 +38,7 @@ struct Params
 	string gtf_filename = "";
 	string log_prefix = "";
 	string output_name = "";
-	string reads_params_file = "";
+	string reads_params_names_str = "";
 	int num_of_threads = 1;
 };
 
@@ -55,8 +56,8 @@ static void check_files_existence(const Params &params, const vector<string> &ba
 	if (params.gtf_filename != "" && !std::ifstream(params.gtf_filename))
 		throw std::runtime_error("Can't open GTF file '" + params.gtf_filename + "'");
 
-	if (params.reads_params_file != "" && !std::ifstream(params.reads_params_file))
-		throw std::runtime_error("Can't open reads file '" + params.reads_params_file + "'");
+	if (params.reads_params_names_str != "" && !std::ifstream(params.reads_params_names_str))
+		throw std::runtime_error("Can't open reads file '" + params.reads_params_names_str + "'");
 
 	for (auto const &file : bam_files)
 	{
@@ -116,7 +117,7 @@ static Params parse_cmd_params(int argc, char **argv)
 			{"verbose",         no_argument,       0, 'v'},
 			{0, 0,                                 0, 0}
 	};
-	while ((c = getopt_long(argc, argv, "bB:c:fG:g:l:mno:p:r:Rtv", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "bB:c:fFG:g:l:mno:p:r:Rtv", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -133,7 +134,7 @@ static Params parse_cmd_params(int argc, char **argv)
 				params.filled_bam = true;
 				break;
 			case 'F' :
-				params.filtered_bam = true;
+				params.filtered_bam_output = true;
 				break;
 			case 'G' :
 				params.genesets_rds = string(optarg);
@@ -157,7 +158,7 @@ static Params parse_cmd_params(int argc, char **argv)
 				params.num_of_threads = atoi(optarg);
 				break;
 			case 'r' :
-				params.reads_params_file = string(optarg);
+				params.reads_params_names_str = string(optarg);
 				break;
 			case 'R' :
 				params.reads_output = true;
@@ -187,7 +188,7 @@ static Params parse_cmd_params(int argc, char **argv)
 		params.cant_parse = true;
 	}
 
-	if (params.filled_bam && params.reads_params_file != "")
+	if (params.filled_bam && params.reads_params_names_str != "")
 	{
 		cerr << "indropset: only one genes source must be provided (you can't use -r and -f at the same time)" << endl;
 		params.cant_parse = true;
@@ -252,9 +253,7 @@ int main(int argc, char **argv)
 
 	boost::property_tree::ptree pt;
 	read_xml(params.config_file_name, pt);
-#ifdef _OPENMP
-	omp_set_num_threads(params.num_of_threads);
-#endif
+
 	try
 	{
 		check_files_existence(params, files);
@@ -262,10 +261,15 @@ int main(int argc, char **argv)
 		Tools::trace_time("Run");
 		Estimator estimator(pt.get_child("config.Estimation"));
 		CellsDataContainer container = estimator.get_cells_container(files, params.merge_tags, params.bam_output,
-		                                                             params.filled_bam, params.reads_params_file,
+		                                                             params.filled_bam, params.reads_params_names_str,
 		                                                             params.gtf_filename, params.barcodes_filename);
-		
-//		if (false)
+
+		if (params.filtered_bam_output)
+		{
+			BamProcessing::BamController::write_filtered_bam_files(files, params.filled_bam, params.reads_params_names_str,
+																   params.gtf_filename, container);
+		}
+
 		{
 			Results::IndropResult results = estimator.get_results(container, params.not_filtered, params.reads_output);
 		
@@ -280,7 +284,6 @@ int main(int argc, char **argv)
 			results.save_results(container, params.output_name, params.genesets_rds, params.num_of_threads);
 		}
 
-//		if (false)
 		{
 			L_TRACE << "Get bad cells results";
 			Results::BadCellsStats bad_cells_results = estimator.get_bad_cells_results(container);

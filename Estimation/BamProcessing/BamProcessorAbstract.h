@@ -21,7 +21,8 @@ namespace Estimation
 			BamTools::BamWriter _writer;
 
 		protected:
-			void save_alignment(BamTools::BamAlignment alignment);
+			void save_alignment(BamTools::BamAlignment alignment, const std::string &name, const std::string &gene,
+								const std::string &barcode, const std::string &umi);
 			virtual std::string get_result_bam_name(const std::string &bam_name) const = 0;
 			size_t total_reads() const;
 

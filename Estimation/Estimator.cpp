@@ -231,14 +231,10 @@ namespace Estimation
 		CellsDataContainer container(merge_strategy, Estimator::top_print_size);
 		BamProcessing::BamController::parse_bam_files(files, bam_output, filled_bam, reads_params_names_str,
 													  gtf_filename, container);
+
 		container.set_initialized();
 
 		container.merge_and_filter();
 		return container;
-	}
-
-	void Estimator::write_filtered_bam(const Estimator::names_t &files, const CellsDataContainer &container)
-	{
-		//TODO
 	}
 }

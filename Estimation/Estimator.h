@@ -57,8 +57,6 @@ namespace Estimation
 		                                       const std::string &reads_params_names_str, const std::string &gtf_filename,
 		                                       const std::string &barcodes_filename);
 
-		static void write_filtered_bam(const names_t &files, const CellsDataContainer &container);
-
 	private:
 		names_t get_filtered_cell_names(const CellsDataContainer &genes_container) const;
 
