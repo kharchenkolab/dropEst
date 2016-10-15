@@ -63,7 +63,6 @@ namespace Merge
 			size_t cell_ind = cell.first;
 			double cb_fraction =  0.5 * cell.second *( 1. / container.cell_size(base_cell_ind) + 1. / container.cell_size(cell_ind));
 
-			#pragma omp critical(MERGE_PROB_BY_CELL)
 			container.stats().set(Stats::MERGE_PROB_BY_CELL, container.cell_barcode(base_cell_ind),
 								  container.cell_barcode(cell_ind), cb_fraction);
 

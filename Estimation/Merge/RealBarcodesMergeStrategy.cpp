@@ -81,7 +81,6 @@ namespace Estimation
 					best_neighbour_cell_ind = neighbour_cell_ind;
 				}
 
-				#pragma omp critical(MERGE_PROB_BY_CELL)
 				container.stats().set(Stats::MERGE_PROB_BY_CELL, container.cell_barcode(base_cell_ind),
 									  container.cell_barcode(neighbour_cell_ind), current_frac);
 			}

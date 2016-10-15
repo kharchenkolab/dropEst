@@ -22,7 +22,7 @@ struct Fixture
 		, container(base_strat, 10)
 		, container_full(real_cb_strat, 1)
 	{
-		Tools::init_test_logs(boost::log::trivial::info); //TODO Fix tests!!!
+		Tools::init_test_logs(boost::log::trivial::info);
 		CellsDataContainer::s_i_map_t cells_ids;
 		this->container_full.add_record("AAATTAGGTCCA", "AAACCT", "Gene1", cells_ids); //0, real
 		this->container_full.add_record("AAATTAGGTCCA", "CCCCCT", "Gene2", cells_ids);

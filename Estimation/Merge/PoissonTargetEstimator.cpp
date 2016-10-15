@@ -29,7 +29,6 @@ long PoissonTargetEstimator::get_best_merge_target(const CellsDataContainer &con
 
 		double prob = this->get_bootstrap_intersect_prob(container, base_cell_ind, cell_ind);
 
-		#pragma omp critical(MERGE_PROB_BY_CELL)
 		container.stats().set(Stats::MERGE_PROB_BY_CELL, container.cell_barcode(base_cell_ind),
 							  container.cell_barcode(cell_ind), prob);
 		if (prob < min_prob)
@@ -95,7 +94,6 @@ double PoissonTargetEstimator::get_bootstrap_intersect_prob(const CellsDataConta
 		sizes.reserve(repeats_count);
 		this->get_bootstrap_intersect_sizes(cell1_dist, cell2_dist, intersect_size, repeats_count, sizes);
 
-		#pragma omp critical(R_CALL)
 		estimated = this->estimate_by_r(sizes, intersect_size);
 
 		if (estimated >= 0)
