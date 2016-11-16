@@ -70,7 +70,7 @@ Params parse_cmd_params(int argc, char **argv)
 	};
 
 	Params params;
-	while ((c = getopt_long(argc, argv, "l:n:sv", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "c:l:n:sv", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
