@@ -7,8 +7,10 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
-#include "TagsSearch/SpacerFinder.h"
+#include "TagsSearch/SpacerTagsFinder.h"
 #include "TagsSearch/TagsFinderBase.h"
+#include "TagsSearch/TwoBarcodesTagsFinder.h"
+
 #include "Tools/Logs.h"
 
 using namespace std;
@@ -38,6 +40,21 @@ static void usage()
 	cerr << "\t-s, --save-reads-names serialize reads parameters to save names\n";
 	cerr << "\t-v, --verbose verbose mode\n";
 }
+
+shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const boost::property_tree::ptree &pt)
+{
+	auto files_processor = make_shared<FilesProcessor>(params.read_files, params.base_name, params.save_reads_names);
+
+	if (params.read_files.size() == 2)
+		return shared_ptr<TagsFinderBase>(new SpacerTagsFinder(files_processor,
+															   pt.get_child("config.TagsSearch.SpacerSearch"),
+															   pt.get_child("config.TagsSearch.TailTrimming")));
+
+	return shared_ptr<TagsFinderBase>(new TwoBarcodesTagsFinder(files_processor,
+																pt.get_child("config.TagsSearch.BarcodesSearch"),
+																pt.get_child("config.TagsSearch.TailTrimming")));
+}
+
 
 Params parse_cmd_params(int argc, char **argv)
 {
@@ -132,14 +149,13 @@ int main(int argc, char **argv)
 	boost::property_tree::ptree pt;
 	read_xml(params.config_file_name, pt);
 
-	TagsFinderBase finder(std::make_shared<FilesProcessor>(params.read_files, params.base_name, params.save_reads_names),
-					  pt.get_child("config.TagsSearch.SpacerSearch"), pt.get_child("config.TagsSearch.TailTrimming"));
+	shared_ptr<TagsFinderBase> finder = get_tags_finder(params, pt);
 
 	time_t ctt = time(0);
 	try
 	{
 		L_TRACE << "Run: " << asctime(localtime(&ctt));
-		finder.run(params.save_reads_names);
+		finder->run(params.save_reads_names);
 		ctt = time(0);
 		L_TRACE << "All done: " << asctime(localtime(&ctt));
 	}
