@@ -21,23 +21,21 @@ namespace TagsSearch
 		static const len_t ERR_CODE = std::string::npos;
 
 	private:
-		size_t max_spacer_ed; // maximum number of spacer mismatches
-		std::string spacer;
 		std::string spacer_prefix;
 		std::string spacer_suffix;
 
+		std::string spacer;
+		size_t max_spacer_ed;
 		size_t spacer_min_pos;
 		size_t spacer_max_pos;
-		size_t spacer_max_suffix_start;
-		size_t spacer_min_suffix_start;
 		len_t barcode_length;
 		len_t umi_length;
 		len_t r1_rc_length;
 
-		size_t min_seq_len;
+		size_t spacer_max_suffix_start;
+		size_t spacer_min_suffix_start;
 
-		std::string reads_params_file;
-		bool need_save_reads_params;
+		size_t min_seq_len;
 
 		OutcomesCounter outcomes;
 

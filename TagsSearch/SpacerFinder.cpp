@@ -10,17 +10,15 @@ namespace TagsSearch
 	const SpacerFinder::len_t SpacerFinder::ERR_CODE;
 
 	SpacerFinder::SpacerFinder(const boost::property_tree::ptree &config, const std::string &reads_params_file)
-			: reads_params_file(reads_params_file), need_save_reads_params(reads_params_file.length() != 0)
+		: spacer(config.get<string>("spacer"))
+		, max_spacer_ed(config.get<unsigned>("max_spacer_edit_distance"))
+		, spacer_min_pos(config.get<size_t>("spacer_min_pos"))
+		, spacer_max_pos(config.get<size_t>("spacer_max_pos"))
+		, barcode_length(config.get<size_t>("barcode_length"))
+		, umi_length(config.get<size_t>("umi_length"))
+		, r1_rc_length(config.get<size_t>("r1_rc_length"))
 	{
-		this->spacer = config.get<string>("spacer");
-		this->max_spacer_ed = config.get<unsigned>("max_spacer_edit_distance");
 		size_t spacer_prefix_length = config.get<size_t>("spacer_prefix_length");
-
-		this->spacer_min_pos = config.get<size_t>("spacer_min_pos");
-		this->spacer_max_pos = config.get<size_t>("spacer_max_pos");
-		this->barcode_length = config.get<size_t>("barcode_length");
-		this->umi_length = config.get<size_t>("umi_length");
-		this->r1_rc_length = config.get<size_t>("r1_rc_length");
 
 		this->min_seq_len = this->spacer_min_pos + this->barcode_length + this->umi_length + this->spacer.length();
 
@@ -136,7 +134,6 @@ namespace TagsSearch
 	string SpacerFinder::parse_r1_rc(const string &seq, len_t spacer_end) const
 	{
 		return seq.substr(spacer_end + this->barcode_length + this->umi_length - this->r1_rc_length, this->r1_rc_length);
-
 	}
 
 	const OutcomesCounter &SpacerFinder::get_outcomes_counter() const

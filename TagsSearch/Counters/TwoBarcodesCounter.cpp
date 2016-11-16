@@ -1,21 +1,21 @@
-#include "OutcomesCounter.h"
+#include "TwoBarcodesCounter.h"
 
 #include <iomanip>
 #include <sstream>
 
 namespace TagsSearch
 {
-	void OutcomesCounter::inc(StatType type)
+	void TwoBarcodesCounter::inc(StatType type)
 	{
 		++this->stats[type];
 	}
 
-	int OutcomesCounter::get(StatType type) const
+	int TwoBarcodesCounter::get(StatType type) const
 	{
 		return this->stats[type];
 	}
 
-	OutcomesCounter::OutcomesCounter()
+	TwoBarcodesCounter::TwoBarcodesCounter()
 	{
 		for (int i = 0; i < STAT_SIZE; ++i)
 		{
@@ -23,13 +23,11 @@ namespace TagsSearch
 		}
 
 		this->names[OK] = "OK";
-		this->names[NO_SPACER] = "No spacer";
-		this->names[SHORT_SEQ] = "Short";
-		this->names[SPACER_MODIFIED] = "Spacer modified";
-		this->names[SPACER_MISPLACED] = "Spacer misplaced";
+		this->names[SHORT_READ1] = "Short read 1";
+		this->names[SHORT_READ2] = "Short read 2";
 	}
 
-	std::string OutcomesCounter::print(double normalizer) const
+	std::string TwoBarcodesCounter::print(double normalizer) const
 	{
 		std::ostringstream out_stream;
 		out_stream << "Outcomes:\n[";

@@ -4,7 +4,8 @@
 #include <boost/test/unit_test.hpp>
 
 #include "TagsSearch/SpacerFinder.h"
-#include "TagsSearch/TagsFinder.h"
+#include "TagsSearch/TagsFinderBase.h"
+#include "TagsSearch/SpacerTagsFinder.h"
 #include "Tools/Logs.h"
 #include "Tools/ReadParameters.h"
 
@@ -42,11 +43,11 @@ struct Fixture
 		read_xml(config, pt);
 
 		this->spacer_finder = SpacerFinder(pt.get_child("config.SpacerSearch"));
-		this->tags_finder = TagsFinder(this->spacer_finder, pt.get_child("config.TailTrimming"));
+		this->tags_finder = std::make_shared<SpacerTagsFinder>(nullptr, pt.get_child("config.SpacerSearch"), pt.get_child("config.TailTrimming"));
 	}
 
 	SpacerFinder spacer_finder;
-	TagsFinder tags_finder;
+	std::shared_ptr<SpacerTagsFinder> tags_finder;
 };
 
 BOOST_AUTO_TEST_SUITE(TestTagsSearch)
@@ -55,13 +56,16 @@ BOOST_AUTO_TEST_SUITE(TestTagsSearch)
 	{
 		std::string r1_line2 = "TTCGGTTCGGAGTGATTGCTTGTGACGCCTTCTTCGATTCGCCATTTTTTTTTTT";
 		std::string r2_line2 = "TTGTTTCGCCCGGTTTTCTGTTTTCAGTAAAGTCTCGTTACGCCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+		std::string r2_line3 = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
 
-		auto spacer_pos = spacer_finder.find_spacer(r1_line2);
-		TagsFinder::len_t r2_trim = tags_finder.get_trim_position(spacer_pos.second, r1_line2, r2_line2);
+		auto spacer_pos = tags_finder->spacer_finder.find_spacer(r1_line2);
+		std::string barcodes_tail = this->spacer_finder.parse_r1_rc(r1_line2, spacer_pos.second);
+		tags_finder->trim(barcodes_tail, r2_line2, r2_line3);
 
 		BOOST_CHECK_EQUAL(spacer_pos.first, 9);
 		BOOST_CHECK_EQUAL(spacer_pos.second, 31);
-		BOOST_CHECK_EQUAL(r2_trim, 44);
+		BOOST_CHECK_EQUAL(r2_line2.size(), 44);
+		BOOST_CHECK_EQUAL(r2_line2.size(), r2_line3.size());
 	}
 
 	BOOST_FIXTURE_TEST_CASE(test2, Fixture)
@@ -69,7 +73,7 @@ BOOST_AUTO_TEST_SUITE(TestTagsSearch)
 		std::string r1_seq = "TAGTTTCGGAGTGTTTGCTTGTGACGCCTTACCTTGCCCGCGACTTTTTTTTTTT";
 		std::string r2_seq = "TCTTCCACTAATAGTTATGTCATCCCTCTTATTAATCATCATCCTAGCCCTAAGTCTGGCCTATGAGTCACTACAAAAAGGATTAGACTGAACCG";
 		std::string r2_quality_str = "1>111@1@111@33AA3BAA33DE1AA0FF3DA33AB3AF3D2A12110AB000DFGD01F10A121A11A2BFB110/AA0ABG111A111BF>";
-		Tools::ReadParameters res = tags_finder.parse_and_trim(r1_seq, "r2_id", r2_seq, r2_quality_str);
+		Tools::ReadParameters res = tags_finder->parse_and_trim(r1_seq, "r2_id", r2_seq, r2_quality_str);
 		BOOST_CHECK_EQUAL(res.is_empty(), false);
 		BOOST_CHECK_EQUAL(res.cell_barcode(), "TAGTTTCGACCTTGCC");
 	}
@@ -79,7 +83,7 @@ BOOST_AUTO_TEST_SUITE(TestTagsSearch)
 		std::string r1_seq = "TGACCATTACTGAGTGATTGCTTGTGACGCCTTAAGCGTACAGATTATTTT";
 		std::string r2_seq = "GACTGGTTGAAATTGATGATTGACATTAATAATGA";
 		std::string r2_quality_str = "GACTGGTTGAAATTGATGATTGACATTAATAATGA";
-		Tools::ReadParameters res = tags_finder.parse_and_trim(r1_seq, "r2_id", r2_seq, r2_quality_str);
+		Tools::ReadParameters res = tags_finder->parse_and_trim(r1_seq, "r2_id", r2_seq, r2_quality_str);
 		BOOST_CHECK_EQUAL(res.is_empty(), false);
 	}
 

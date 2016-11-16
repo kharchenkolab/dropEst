@@ -19,13 +19,13 @@ namespace TagsSearch
 	{
 		for (int i = 0; i < STAT_SIZE; ++i)
 		{
-			stats[i] = 0;
+			this->stats[i] = 0;
 		}
 
-		names[NO_TRIM] = "no trim";
-		names[RC] = "RC";
-		names[POLY_A] = "PolyA";
-		names[A_TRIM] = "-A";
+		this->names[NO_TRIM] = "no trim";
+		this->names[RC] = "RC";
+		this->names[POLY_A] = "PolyA";
+		this->names[A_TRIM] = "-A";
 	}
 
 	std::string TrimsCounter::print() const
@@ -34,7 +34,7 @@ namespace TagsSearch
 		out_stream << " trimst:[";
 		for (int i = 0; i < STAT_SIZE; i++)
 		{
-			out_stream << " (" <<names[i] << ") ";
+			out_stream << " (" << this->names[i] << ") ";
 		}
 		out_stream << "]" << std::endl;
 
@@ -42,15 +42,15 @@ namespace TagsSearch
 		out_stream << " trimst:[";
 		for (int i = 0; i < STAT_SIZE; i++)
 		{
-			out_stream << stats[i] << " ";
-			normalizer += stats[i];
+			out_stream << this->stats[i] << " ";
+			normalizer += this->stats[i];
 		}
 		out_stream << "]" << std::endl;
 
 		out_stream << " trimst:[" << std::setprecision(3);
 		for (int i = 0; i < STAT_SIZE; i++)
 		{
-			out_stream << 100.0 * stats[i] / normalizer << " ";
+			out_stream << 100.0 * this->stats[i] / normalizer << " ";
 		}
 		out_stream << "] %" << std::endl;
 

@@ -8,7 +8,7 @@
 #include <boost/property_tree/xml_parser.hpp>
 
 #include "TagsSearch/SpacerFinder.h"
-#include "TagsSearch/TagsFinder.h"
+#include "TagsSearch/TagsFinderBase.h"
 #include "Tools/Logs.h"
 
 using namespace std;
@@ -16,17 +16,13 @@ using namespace TagsSearch;
 
 struct Params
 {
-	bool cant_parse;
-	bool verbose;
-	bool save_reads_names;
-	string base_name;
-	string log_prefix;
-	string r1_file_name;
-	string r2_file_name;
-	string config_file_name;
-
-	Params() : cant_parse(false), verbose(false), base_name(""), log_prefix(""), save_reads_names(false)
-	{}
+	bool cant_parse = false;
+	bool verbose = false;
+	bool save_reads_names = false;
+	string base_name = "";
+	string log_prefix = "";
+	string config_file_name = "";
+	vector<string> read_files = vector<string>();
 };
 
 static void usage()
@@ -34,12 +30,13 @@ static void usage()
 	cerr << "\tindroptag -- generate tagged indrop fastq files for alignment\n";
 	cerr << "SYNOPSIS\n";
 	cerr << "\tindroptag [-n|--name baseName] [-v|--verbose] [-s|--save-reads-names] [-l, --log-prefix logs_name] "
-					<< "read_1.fastq read_2.fastq config.xml\n";
+					<< "-c config.xml read_1.fastq read_2.fastq [read_3.fastq]\n";
 	cerr << "OPTIONS:\n";
-	cerr << "\t-v, --verbose verbose mode\n";
-	cerr << "\t-s, --save-reads-names serialize reads parameters to save names\n";
-	cerr << "\t-n, --name BASE_NAME specify alternative output base name\n";
+	cerr << "\t-c, --config filename: xml file with indroptag parameters" << endl;
 	cerr << "\t-l, --log-prefix : logs prefix" << endl;
+	cerr << "\t-n, --name BASE_NAME specify alternative output base name\n";
+	cerr << "\t-s, --save-reads-names serialize reads parameters to save names\n";
+	cerr << "\t-v, --verbose verbose mode\n";
 }
 
 Params parse_cmd_params(int argc, char **argv)
@@ -47,29 +44,33 @@ Params parse_cmd_params(int argc, char **argv)
 	int option_index = 0;
 	int c;
 	static struct option long_options[] = {
-			{"verbose",    no_argument,       0, 'v'},
-			{"save-reads-names",    no_argument,       0, 's'},
-			{"name",       required_argument, 0, 'n'},
+			{"config",     required_argument, 0, 'c'},
 			{"log-prefix", required_argument, 0, 'l'},
+			{"name",       required_argument, 0, 'n'},
+			{"save-reads-names",    no_argument,       0, 's'},
+			{"verbose",    no_argument,       0, 'v'},
 			{0, 0,                            0, 0}
 	};
 
 	Params params;
-	while ((c = getopt_long(argc, argv, "vsn:l:", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "l:n:sv", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
-			case 'v' :
-				params.verbose = true;
+			case 'c' :
+				params.config_file_name = string(optarg);
 				break;
-			case 's' :
-				params.save_reads_names = true;
+			case 'l' :
+				params.log_prefix = string(optarg);
 				break;
 			case 'n' :
 				params.base_name = string(optarg);
 				break;
-			case 'l' :
-				params.log_prefix = string(optarg);
+			case 's' :
+				params.save_reads_names = true;
+				break;
+			case 'v' :
+				params.verbose = true;
 				break;
 			default:
 				cerr << "indroptag: unknown arguments passed" << endl;
@@ -79,20 +80,28 @@ Params parse_cmd_params(int argc, char **argv)
 		}
 	}
 
-	if (optind != argc - 3)
+	if (params.config_file_name == "")
 	{
-		cerr << "indroptag: two read files and configs file must be provided" << endl;
+		cerr << "indroptag: config file must be supplied" << endl;
+		params.cant_parse = true;
+	}
+
+	if (optind != argc - 3 && optind != argc - 2)
+	{
+		cerr << "indroptag: two or three read files must be provided" << endl;
 		usage();
 		params.cant_parse = true;
 		return params;
 	}
-	params.r1_file_name = string(argv[optind++]);
-	params.r2_file_name = string(argv[optind++]);
-	params.config_file_name = string(argv[optind++]);
+
+	while (optind != argc)
+	{
+		params.read_files.push_back(string(argv[optind++]));
+	}
 
 	if (params.base_name == "")
 	{
-		params.base_name = params.r2_file_name + ".tagged";
+		params.base_name = params.read_files.back() + ".tagged";
 	}
 
 	return params;
@@ -123,14 +132,14 @@ int main(int argc, char **argv)
 	boost::property_tree::ptree pt;
 	read_xml(params.config_file_name, pt);
 
-	SpacerFinder spacer_finder(pt.get_child("config.TagsSearch.SpacerSearch"));
-	TagsFinder finder(spacer_finder, pt.get_child("config.TagsSearch.TailTrimming"));
+	TagsFinderBase finder(std::make_shared<FilesProcessor>(params.read_files, params.base_name, params.save_reads_names),
+					  pt.get_child("config.TagsSearch.SpacerSearch"), pt.get_child("config.TagsSearch.TailTrimming"));
 
 	time_t ctt = time(0);
 	try
 	{
 		L_TRACE << "Run: " << asctime(localtime(&ctt));
-		finder.run(params.r1_file_name, params.r2_file_name, params.base_name, params.save_reads_names);
+		finder.run(params.save_reads_names);
 		ctt = time(0);
 		L_TRACE << "All done: " << asctime(localtime(&ctt));
 	}
