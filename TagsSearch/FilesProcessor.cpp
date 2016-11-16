@@ -17,13 +17,13 @@ namespace TagsSearch
 	{
 		for (const auto &filename : filenames)
 		{
-			std::ifstream infile;
-			infile.open(filename, std::ios_base::in | std::ios_base::binary);
-			this->in_files.push_back(std::unique_ptr<std::ifstream>(&infile));
+			std::shared_ptr<std::ifstream> infile = std::make_shared<std::ifstream>();
+			infile->open(filename, std::ios_base::in | std::ios_base::binary);
+			this->in_files.push_back(infile);
 			if (!this->in_files.back())
 				throw std::runtime_error("Can't open fastq file '" + filename + "'");
 
-			this->in_fstreams.push_back(std::unique_ptr<boost::iostreams::filtering_istream>());
+			this->in_fstreams.push_back(std::make_shared<boost::iostreams::filtering_istream>());
 			if (boost::ends_with(filename, ".gz") || boost::ends_with(filename, ".gzip"))
 			{
 				this->in_fstreams.back()->push(boost::iostreams::gzip_decompressor());

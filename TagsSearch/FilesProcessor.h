@@ -24,8 +24,8 @@ namespace TagsSearch
 		};
 	private:
 		const std::vector<std::string> filenames;
-		std::vector<std::unique_ptr<std::ifstream>> in_files;
-		std::vector<std::unique_ptr<boost::iostreams::filtering_istream>> in_fstreams;
+		std::vector<std::shared_ptr<std::ifstream>> in_files;
+		std::vector<std::shared_ptr<boost::iostreams::filtering_istream>> in_fstreams;
 
 		std::ofstream out_file;
 		std::ofstream out_reads_file;

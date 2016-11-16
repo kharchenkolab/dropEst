@@ -6,6 +6,7 @@
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
+#include <boost/filesystem/path.hpp>
 
 #include "TagsSearch/SpacerTagsFinder.h"
 #include "TagsSearch/TagsFinderBase.h"
@@ -118,7 +119,7 @@ Params parse_cmd_params(int argc, char **argv)
 
 	if (params.base_name == "")
 	{
-		params.base_name = params.read_files.back() + ".tagged";
+		params.base_name = boost::filesystem::path(params.read_files.back()).filename().generic_string() + ".tagged";
 	}
 
 	return params;
