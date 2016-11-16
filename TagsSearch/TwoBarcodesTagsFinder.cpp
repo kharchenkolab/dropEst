@@ -29,15 +29,18 @@ namespace TagsSearch
 		if (cb1_rec.sequence.length() < this->barcode1_length)
 		{
 			this->counter.inc(TwoBarcodesCounter::SHORT_READ1);
-			return false;
+			read_params = Tools::ReadParameters();
+			return true;
 		}
 
 		if (cb2_rec.sequence.length() < this->barcode2_length + this->umi_length)
 		{
 			this->counter.inc(TwoBarcodesCounter::SHORT_READ2);
-			return false;
+			read_params = Tools::ReadParameters();
+			return true;
 		}
 
+		this->counter.inc(TwoBarcodesCounter::OK);
 		std::string cb1 = cb1_rec.sequence.substr(0, this->barcode1_length);
 		std::string cb2 = cb2_rec.sequence.substr(0, this->barcode2_length);
 		std::string umi = cb2_rec.sequence.substr(this->barcode2_length, this->umi_length);

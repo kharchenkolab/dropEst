@@ -40,7 +40,7 @@ namespace TagsSearch
 			}
 
 			++total_reads_read;
-			if (params.is_empty())
+			if (params.is_empty() || r2_record.sequence.length() < this->min_read_len)
 				continue;
 
 			++parsed_reads;

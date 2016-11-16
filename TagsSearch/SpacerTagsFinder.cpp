@@ -40,9 +40,6 @@ namespace TagsSearch
 
 		L_DEBUG << " trimmed:" << r2_seq;
 
-		if (r2_seq.length() < this->min_read_len)
-			return Tools::ReadParameters();
-
 		return Tools::ReadParameters(r2_id, cell_barcode, umi_barcode);
 	}
 
