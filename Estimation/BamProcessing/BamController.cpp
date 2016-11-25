@@ -83,7 +83,7 @@ namespace BamProcessing
 			{
 				chr_name = reader.GetReferenceData().at(alignment.RefID).RefName;
 			}
-			catch (std::runtime_error error)
+			catch (std::exception error)
 			{
 				if (unexpected_chromosome_ids.emplace(alignment.RefID).second)
 				{
