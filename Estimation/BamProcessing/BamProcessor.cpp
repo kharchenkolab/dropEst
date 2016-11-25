@@ -33,9 +33,9 @@ namespace Estimation
 			this->total_exonic_reads++;
 		}
 
-		void BamProcessor::trace_state(const std::string &bam_file) const
+		void BamProcessor::trace_state(const std::string &trace_prefix) const
 		{
-			L_TRACE << bam_file << ": " << this->total_reads() << " total reads; " << this->total_exonic_reads << std::setprecision(3)
+			L_TRACE << trace_prefix << ": " << this->total_reads() << " total reads; " << this->total_exonic_reads << std::setprecision(3)
 					<< " ("<< (100.0*this->total_exonic_reads / this->total_reads()) <<"%) exonic; " << this->cells_ids.size() << " CBs";
 		}
 

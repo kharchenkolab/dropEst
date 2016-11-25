@@ -50,13 +50,13 @@ namespace BamProcessing
 
 		for (size_t i = 0; i < bam_files.size(); ++i)
 		{
-			BamController::parse_bam_file(bam_files[i], processor, parser);
+			BamController::parse_bam_file(bam_files[i], processor, parser, bam_files.size() == 1);
 			processor->trace_state(bam_files[i]);
 		}
 	}
 
 	void BamController::parse_bam_file(const std::string &bam_name, std::shared_ptr<BamProcessorAbstract> &processor,
-									   std::shared_ptr<ReadsParamsParser> &parser)
+									   std::shared_ptr<ReadsParamsParser> &parser, bool trace)
 	{
 		using namespace BamTools;
 
@@ -72,11 +72,14 @@ namespace BamProcessing
 		while (reader.GetNextAlignment(alignment))
 		{
 			processor->inc_reads();
+			if (trace && processor->total_reads() % 100000 == 0)
+			{
+				processor->trace_state(bam_name);
+			}
 
-			std::string chr_name = reader.GetReferenceData()[alignment.RefID].RefName;
+			std::string chr_name = reader.GetReferenceData().at(alignment.RefID).RefName;
 
 			Tools::ReadParameters read_params;
-			const std::string &read_name = alignment.Name;
 			if (!parser->get_read_params(alignment, read_params))
 				continue;
 

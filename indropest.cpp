@@ -68,7 +68,7 @@ static void check_files_existence(const Params &params, const vector<string> &ba
 
 static void usage()
 {
-	cerr << "\tindropest: estimate molecular counts per cell" << endl;
+	cerr << "\tindropest: estimate molecular counts per cell" << endl; // Add genes count from config
 	cerr << "SYNOPSIS\n";
 	cerr <<
 	"\tindropest [-t, --text-output] [-m|--merge-cell-tags] [-v|--verbose] [-n | --not-filtered] [-g | --gtf filename]"
@@ -76,7 +76,7 @@ static void usage()
 	"[-b | --bam-output] [-B | --barcodes filename] [-f, --filled-bam] [-F, --filtered-bam]" << endl;
 	cerr << "OPTIONS:\n";
 	cerr << "\t-b, --bam-output: print tagged bam files" << endl;
-	cerr << "\t-B, --barcodes: path to barcodes file" << endl;
+	cerr << "\t-B, --barcodes: path to barcodes file" << endl; //To config
 	cerr << "\t-c, --config filename: xml file with estimation parameters" << endl;
 	cerr << "\t-f, --filled-bam: bam file already contains genes/barcodes tags" << endl;
 	cerr << "\t-F, --filtered-bam: print tagged bam file after the merge and filtration" << endl;
@@ -86,7 +86,7 @@ static void usage()
 	cerr << "\t-n, --not-filtered : print data for all cells" << endl;
 	cerr << "\t-o, --output-file filename : output file name" << endl;
 	cerr << "\t-p, --parallel number_of_threads : number of threads" << endl;
-	cerr << "\t-r, --reads-params filename: file or files with serialized params from tags search step. If there are several files then it should be in quotes and splitted by space" << endl;
+	cerr << "\t-r, --reads-params filename: file or files with serialized params from tags search step. If there are several files then it should be in quotes and splitted by space" << endl; //DEPRECATED
 	cerr << "\t-R, --reads-output: print count matrix for reads and don't use UMI statistics" << endl;
 	cerr << "\t-t, --text-output : write out text matrix" << endl;
 	cerr << "\t-v, --verbose : verbose mode" << endl;
