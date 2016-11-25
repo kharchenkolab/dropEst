@@ -72,7 +72,7 @@ namespace BamProcessing
 		while (reader.GetNextAlignment(alignment))
 		{
 			processor->inc_reads();
-			if (trace && processor->total_reads() % 500000 == 0)
+			if (trace && processor->total_reads() % 10000000 == 0)
 			{
 				processor->trace_state(bam_name);
 			}
