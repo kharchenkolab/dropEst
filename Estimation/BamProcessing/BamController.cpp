@@ -68,6 +68,7 @@ namespace BamProcessing
 
 		BamAlignment alignment;
 		std::unordered_set<std::string> unexpected_chromosomes;
+		std::unordered_set<int32_t> unexpected_chromosome_ids;
 
 		while (reader.GetNextAlignment(alignment))
 		{
@@ -77,7 +78,19 @@ namespace BamProcessing
 				processor->trace_state(bam_name);
 			}
 
-			std::string chr_name = reader.GetReferenceData().at(alignment.RefID).RefName;
+			std::string chr_name;
+			try
+			{
+				chr_name = reader.GetReferenceData().at(alignment.RefID).RefName;
+			}
+			catch (std::runtime_error error)
+			{
+				if (unexpected_chromosome_ids.emplace(alignment.RefID).second)
+				{
+					L_ERR << "ERROR: can't find chromosome, id: " << alignment.RefID;
+				}
+				continue;
+			}
 
 			Tools::ReadParameters read_params;
 			if (!parser->get_read_params(alignment, read_params))
