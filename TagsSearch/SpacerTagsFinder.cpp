@@ -46,11 +46,11 @@ namespace TagsSearch
 	bool SpacerTagsFinder::parse_fastq_record(FilesProcessor::FastQRecord &record, Tools::ReadParameters &read_params)
 	{
 		auto f1_rec = this->files_processor->get_fastq_record(0);
-		if (!f1_rec.id.empty())
+		if (f1_rec.id.empty())
 			return false;
 
 		record = this->files_processor->get_fastq_record(1);
-		if (!record.id.empty())
+		if (record.id.empty())
 			throw std::runtime_error("File '" + this->files_processor->filename(1) + "', read '" + record.id + "': fastq ended prematurely!");
 
 		read_params = this->parse_and_trim(f1_rec.sequence, record.id, record.sequence, record.quality);
