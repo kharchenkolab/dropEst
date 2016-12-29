@@ -259,10 +259,9 @@ int main(int argc, char **argv)
 		check_files_existence(params, files);
 
 		Tools::trace_time("Run");
-		Estimator estimator(pt.get_child("config.Estimation"));
-		CellsDataContainer container = estimator.get_cells_container(files, params.merge_tags, params.bam_output,
-		                                                             params.filled_bam, params.reads_params_names_str,
-		                                                             params.gtf_filename, params.barcodes_filename);
+		Estimator estimator(pt.get_child("config.Estimation"), params.merge_tags, params.barcodes_filename);
+		CellsDataContainer container = estimator.get_cells_container(files, params.bam_output, params.filled_bam,
+																	 params.reads_params_names_str, params.gtf_filename);
 
 		if (params.filtered_bam_output)
 		{

@@ -85,11 +85,10 @@ void MergeStrategyBase::merge_force(Estimation::CellsDataContainer &container, s
 	this->reassign(src_cell_id, target_cell_ind, cb_reassign_targets, cb_reassigned_to_it);
 }
 
-MergeStrategyBase::MergeStrategyBase(int min_genes_before_merge, int min_genes_after_merge, int max_merge_edit_distance,
-									 double min_merge_fraction)
-	: MergeStrategyAbstract(min_genes_before_merge, min_genes_after_merge)
-	, _max_merge_edit_distance(max_merge_edit_distance)
-	, _min_merge_fraction(min_merge_fraction)
+MergeStrategyBase::MergeStrategyBase(const boost::property_tree::ptree &config)
+	: MergeStrategyAbstract(config)
+	, _max_merge_edit_distance(config.get<unsigned>("max_merge_edit_distance"))
+	, _min_merge_fraction(config.get<double>("min_merge_fraction"))
 {}
 
 

@@ -12,13 +12,17 @@ namespace Estimation
 	{
 		using Tools::IndexedValue;
 
-		RealBarcodesMergeStrategy::RealBarcodesMergeStrategy(const std::string &barcodes_filename, size_t barcode2_length,
-															 int min_genes_before_merge, int min_genes_after_merge,
-															 int max_merge_edit_distance, double min_merge_fraction)
-				: MergeStrategyBase(min_genes_before_merge, min_genes_after_merge, max_merge_edit_distance, min_merge_fraction)
+		RealBarcodesMergeStrategy::RealBarcodesMergeStrategy(const std::string &barcodes_filename,
+															 const boost::property_tree::ptree &config)
+				: MergeStrategyBase(config)
 				, _barcodes_filename(barcodes_filename)
-				, _barcode2_length(barcode2_length)
-		{}
+				, _barcode2_length(config.get<size_t>("barcode2_length", 0))
+		{
+			if (this->_barcode2_length == 0)
+			{
+				L_WARN << "Barcode2 length is equal to 0";
+			}
+		}
 
 		void RealBarcodesMergeStrategy::get_barcodes_list(const std::string &barcodes_filename, names_t &barcodes1,
 														  names_t &barcodes2)

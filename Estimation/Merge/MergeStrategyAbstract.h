@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Estimation/CellsDataContainer.h>
+#include <boost/property_tree/ptree.hpp>
 #include "Tools/IndexedValue.h"
 
 namespace Estimation
@@ -26,7 +27,7 @@ namespace Merge
 		virtual ul_list_t merge_inited(Estimation::CellsDataContainer &container) const = 0;
 
 	public:
-		MergeStrategyAbstract(int min_genes_before_merge, int min_genes_after_merge);
+		MergeStrategyAbstract(const boost::property_tree::ptree &config);
 
 		ul_list_t merge(Estimation::CellsDataContainer &container);
 

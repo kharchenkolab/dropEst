@@ -21,24 +21,9 @@ namespace Estimation
 		return p1.second > p2.second;
 	}
 
-	Estimator::Estimator(const boost::property_tree::ptree &config)
-		: min_merge_fraction(config.get<double>("min_merge_fraction"))
-		, max_merge_edit_distance(config.get<unsigned>("max_merge_edit_distance"))
-		, min_genes_after_merge(config.get<unsigned>("min_genes_after_merge"))
-		, barcode2_length(config.get<size_t>("barcode2_length", 0))
-		, min_genes_before_merge(config.get<unsigned>("min_genes_before_merge"))
-		, merge_type(config.get<std::string>("merge", ""))
-	{
-		if (this->min_genes_after_merge > 0 && this->min_genes_after_merge < this->min_genes_before_merge)
-		{
-			this->min_genes_before_merge = this->min_genes_after_merge;
-		}
-
-		if (barcode2_length == 0)
-		{
-			L_WARN << "Barcode2 length is equal to 0";
-		}
-	}
+	Estimator::Estimator(const boost::property_tree::ptree &config, bool merge_tags, const std::string &barcodes_filename)
+		: merge_strategy(Merge::MergeStrategyFactory::get(config, merge_tags, barcodes_filename))
+	{}
 
 	Results::IndropResult Estimator::get_results(const CellsDataContainer &container, bool not_filtered, bool reads_output)
 	{
@@ -219,16 +204,11 @@ namespace Estimation
 		return ss.str();
 	}
 
-	CellsDataContainer Estimator::get_cells_container(const names_t &files, bool merge_tags, bool bam_output,
-	                                                  bool filled_bam, const std::string &reads_params_names_str,
-	                                                  const std::string &gtf_filename, const std::string &barcodes_filename)
+	CellsDataContainer Estimator::get_cells_container(const names_t &files, bool bam_output, bool filled_bam,
+													  const std::string &reads_params_names_str,
+	                                                  const std::string &gtf_filename)
 	{
-		std::shared_ptr<Merge::MergeStrategyAbstract> merge_strategy =
-				Merge::MergeStrategyFactory::get(this->min_merge_fraction, this->min_genes_before_merge,
-												 this->min_genes_after_merge, this->max_merge_edit_distance,
-												 merge_tags, barcodes_filename, this->barcode2_length, this->merge_type);
-
-		CellsDataContainer container(merge_strategy, Estimator::top_print_size);
+		CellsDataContainer container(this->merge_strategy, Estimator::top_print_size);
 		BamProcessing::BamController::parse_bam_files(files, bam_output, filled_bam, reads_params_names_str,
 													  gtf_filename, container);
 

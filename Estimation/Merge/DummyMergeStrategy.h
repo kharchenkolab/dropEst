@@ -19,8 +19,8 @@ namespace Merge
 		}
 
 	public:
-		DummyMergeStrategy(unsigned min_genes_before_merge, unsigned min_genes_after_merge)
-				: MergeStrategyAbstract(min_genes_before_merge, min_genes_after_merge)
+		DummyMergeStrategy(const boost::property_tree::ptree &config)
+				: MergeStrategyAbstract(config)
 		{}
 
 		virtual std::string merge_type() const override {

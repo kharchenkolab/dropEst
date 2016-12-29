@@ -30,7 +30,6 @@ namespace Estimation
 		typedef CellsDataContainer::names_t names_t;
 		typedef std::vector<int> i_list_t;
 		typedef std::vector<long> l_list_t;
-		typedef CellsDataContainer::ids_t ids_t;
 
 	public:
 		typedef boost::unordered_map<std::string, boost::unordered_map<std::string, unsigned>> ss_u_hash_t; //Can't use long because of RInside (see BadCellsStats)
@@ -38,24 +37,16 @@ namespace Estimation
 	private:
 		static const size_t top_print_size = 10;
 
-		const double min_merge_fraction;
-		const unsigned max_merge_edit_distance;
-
-		const unsigned min_genes_after_merge;
-		const size_t barcode2_length;
-		unsigned min_genes_before_merge;
-
-		const std::string merge_type;
+		std::shared_ptr<Merge::MergeStrategyAbstract> merge_strategy;
 
 	public:
-		Estimator(const boost::property_tree::ptree &config);
+		Estimator(const boost::property_tree::ptree &config, bool merge_tags, const std::string &barcodes_filename);
 
 		Results::IndropResult get_results(const CellsDataContainer &container, bool not_filtered, bool reads_output);
 		Results::BadCellsStats get_bad_cells_results(const CellsDataContainer &container);
 
-		CellsDataContainer get_cells_container(const names_t &files, bool merge_tags, bool bam_output, bool filled_bam,
-		                                       const std::string &reads_params_names_str, const std::string &gtf_filename,
-		                                       const std::string &barcodes_filename);
+		CellsDataContainer get_cells_container(const names_t &files, bool bam_output, bool filled_bam,
+		                                       const std::string &reads_params_names_str, const std::string &gtf_filename);
 
 	private:
 		names_t get_filtered_cell_names(const CellsDataContainer &genes_container) const;

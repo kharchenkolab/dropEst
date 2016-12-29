@@ -30,8 +30,7 @@ namespace Merge
 		const int _max_merge_edit_distance;
 
 	public:
-		MergeStrategyBase(int min_genes_before_merge, int min_genes_after_merge, int max_merge_edit_distance,
-							  double min_merge_fraction);
+		MergeStrategyBase(const boost::property_tree::ptree &config);
 
 		static size_t get_umigs_intersect_size(const genes_t &cell1_dist, const genes_t &cell2_dist);
 

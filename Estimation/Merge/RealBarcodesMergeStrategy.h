@@ -58,9 +58,7 @@ namespace Merge
 		virtual long get_max_merge_dist(long min_real_cb_dist) const;
 
 	public:
-		RealBarcodesMergeStrategy(const std::string &barcodes_filename, size_t barcode2_length,
-								  int min_genes_before_merge, int min_genes_after_merge,
-								  int max_merge_edit_distance, double min_merge_fraction);
+		RealBarcodesMergeStrategy(const std::string &barcodes_filename, const boost::property_tree::ptree &config);
 
 		virtual std::string merge_type() const override;
 	};

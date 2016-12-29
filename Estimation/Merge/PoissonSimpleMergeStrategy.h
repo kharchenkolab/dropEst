@@ -18,8 +18,7 @@ namespace Estimation
 			virtual void release() override;
 
 		public:
-			PoissonSimpleMergeStrategy(int min_genes_before_merge, int min_genes_after_merge,
-									   int max_merge_edit_distance, double min_merge_fraction);
+			PoissonSimpleMergeStrategy(const boost::property_tree::ptree &config);
 
 			virtual long get_merge_target(const CellsDataContainer &container, size_t base_cell_ind) const override;
 
