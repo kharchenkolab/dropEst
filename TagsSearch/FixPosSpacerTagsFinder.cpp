@@ -106,7 +106,7 @@ namespace TagsSearch
 			throw std::runtime_error("File '" + this->files_processor->filename(1) + "', read '" + record.id + "': fastq ended prematurely!");
 
 		size_t seq_end = this->parse(f1_rec.sequence, record.id, read_params);
-		if (read_params.is_empty())
+		if (seq_end == std::string::npos)
 			return false;
 
 		this->trim(f1_rec.sequence.substr(seq_end - this->_trim_tail_length, this->_trim_tail_length), record.sequence, record.quality);
