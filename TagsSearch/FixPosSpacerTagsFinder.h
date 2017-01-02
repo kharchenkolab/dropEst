@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Counters/OutcomesCounter.h"
+#include "Counters/MultiSpacerOutcomesCounter.h"
 #include "SpacerFinder.h"
 #include "TagsFinderBase.h"
 
@@ -39,7 +39,7 @@ namespace TagsSearch
 		const std::vector<MaskPart> _mask_parts;
 		const size_t _trim_tail_length;
 
-		OutcomesCounter outcomes;
+		MultiSpacerOutcomesCounter outcomes;
 
 	private:
 		size_t parse(const std::string &r1_seq, const std::string &r2_id, Tools::ReadParameters &read_params);

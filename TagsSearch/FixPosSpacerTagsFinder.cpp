@@ -16,6 +16,7 @@ namespace TagsSearch
 		, _trim_tail_length(std::min(barcodes_config.get<size_t>("r1_rc_length"),
 									 std::accumulate(this->_mask_parts.begin(), this->_mask_parts.end(), (size_t)0,
 													 [](size_t sum, const MaskPart & m) { return sum + m.length;})))
+		, outcomes(std::count_if(this->_mask_parts.begin(), this->_mask_parts.end(), [](const MaskPart & m){ return (m.type == MaskPart::SPACER);}))
 	{}
 
 	FixPosSpacerTagsFinder::MaskPart::MaskPart(const std::string &spacer, size_t length, Type type, size_t min_edit_distance)
@@ -118,13 +119,13 @@ namespace TagsSearch
 
 	size_t FixPosSpacerTagsFinder::parse(const std::string &r1_seq, const std::string &r2_id, Tools::ReadParameters &read_params)
 	{
-		size_t cur_pos = 0;
+		size_t cur_pos = 0, spacer_ind = 0;
 		std::string cb, umi;
 		for (auto const &mask_part : this->_mask_parts)
 		{
 			if (cur_pos + mask_part.length > r1_seq.length())
 			{
-				this->outcomes.inc(OutcomesCounter::SHORT_SEQ);
+				this->outcomes.inc(MultiSpacerOutcomesCounter::SHORT_SEQ);
 				return std::string::npos;
 			}
 
@@ -136,9 +137,10 @@ namespace TagsSearch
 				case MaskPart::SPACER:
 					if (Tools::edit_distance(mask_part.spacer.c_str(), r1_seq.substr(cur_pos, mask_part.length).c_str()) > mask_part.min_edit_distance)
 					{
-						this->outcomes.inc(OutcomesCounter::NO_SPACER);
+						this->outcomes.inc_no_spacer(spacer_ind);
 						return std::string::npos;
 					}
+					++spacer_ind;
 					break;
 				case MaskPart::UMI:
 					umi += r1_seq.substr(cur_pos, mask_part.length);
@@ -149,7 +151,7 @@ namespace TagsSearch
 			cur_pos += mask_part.length;
 		}
 
-		this->outcomes.inc(OutcomesCounter::OK);
+		this->outcomes.inc(MultiSpacerOutcomesCounter::OK);
 		read_params = Tools::ReadParameters(r2_id, cb, umi);
 		return cur_pos;
 	}
