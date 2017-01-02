@@ -107,7 +107,10 @@ namespace TagsSearch
 
 		size_t seq_end = this->parse(f1_rec.sequence, record.id, read_params);
 		if (seq_end == std::string::npos)
-			return false;
+		{
+			read_params = Tools::ReadParameters();
+			return true;
+		}
 
 		this->trim(f1_rec.sequence.substr(seq_end - this->_trim_tail_length, this->_trim_tail_length), record.sequence, record.quality);
 		return true;
