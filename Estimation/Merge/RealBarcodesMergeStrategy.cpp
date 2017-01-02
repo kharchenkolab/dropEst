@@ -1,6 +1,7 @@
 #include "RealBarcodesMergeStrategy.h"
 
 #include "BarcodesParsing/BarcodesParser.h"
+#include "BarcodesParsing/ConstLengthBarcodesParser.h"
 #include "BarcodesParsing/InDropBarcodesParser.h"
 
 #include <fstream>
@@ -14,7 +15,7 @@ namespace Estimation
 		RealBarcodesMergeStrategy::RealBarcodesMergeStrategy(const std::string &barcodes_filename,
 															 const boost::property_tree::ptree &config)
 				: MergeStrategyBase(config)
-				, _barcodes_parser(std::shared_ptr<BarcodesParser>(new BarcodesParsing::InDropBarcodesParser(barcodes_filename)))
+				, _barcodes_parser(RealBarcodesMergeStrategy::get_barcodes_parser(barcodes_filename, config.get<std::string>("barcodes_type", "")))
 		{
 			this->_barcodes_parser->init();
 		}
@@ -106,6 +107,21 @@ namespace Estimation
 		std::string RealBarcodesMergeStrategy::merge_type() const
 		{
 			return "RealCBs";
+		}
+
+		std::shared_ptr<BarcodesParsing::BarcodesParser>
+		RealBarcodesMergeStrategy::get_barcodes_parser(const std::string &barcodes_filename, std::string barcodes_type)
+		{
+			if (barcodes_type == "")
+				throw std::runtime_error("Empty barcodes type!");
+
+			if (barcodes_type == "indrop")
+				return std::shared_ptr<BarcodesParser>(new BarcodesParsing::InDropBarcodesParser(barcodes_filename));
+
+			if (barcodes_type == "const")
+				return std::shared_ptr<BarcodesParser>(new BarcodesParsing::ConstLengthBarcodesParser(barcodes_filename));
+
+			throw std::runtime_error("Unexpected barcodes type: " + barcodes_type);
 		}
 	}
 }

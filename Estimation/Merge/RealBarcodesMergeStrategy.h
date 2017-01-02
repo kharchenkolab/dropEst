@@ -40,6 +40,7 @@ namespace Merge
 
 	private:
 		ul_list_t get_real_neighbour_cbs(const CellsDataContainer &container, size_t base_cell_ind) const;
+		static std::shared_ptr<BarcodesParsing::BarcodesParser> get_barcodes_parser(const std::string &barcodes_filename, std::string barcodes_type);
 
 	protected:
 		long get_merge_target(const CellsDataContainer &container, size_t base_cell_ind) const;

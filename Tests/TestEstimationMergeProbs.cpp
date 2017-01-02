@@ -21,7 +21,7 @@ struct Fixture
 	Fixture()
 	{
 		std::stringstream config("<Estimation>\n"
-								 "        <barcode2_length>9</barcode2_length>\n"
+								 "        <barcodes_type>indrop</barcodes_type>\n"
 								 "        <min_merge_fraction>0</min_merge_fraction>\n"
 								 "        <max_merge_edit_distance>100</max_merge_edit_distance>\n"
 								 "        <min_genes_after_merge>0</min_genes_after_merge>\n"
