@@ -13,10 +13,6 @@ namespace TagsSearch
 	Tools::ReadParameters SpacerTagsFinder::parse_and_trim(const std::string &r1_seq, const std::string &r2_id,
 														   std::string &r2_seq, std::string &r2_quality_str)
 	{
-		if (r2_seq.length() != r2_quality_str.length())
-			throw std::runtime_error("Read " + r2_id + " have different length of sequence and quality string: '" +
-									 r2_seq + "', '" + r2_quality_str + "'");
-
 		L_DEBUG << r1_seq << ":";
 
 		auto spacer_pos = this->spacer_finder.find_spacer(r1_seq);

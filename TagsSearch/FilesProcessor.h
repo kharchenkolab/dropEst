@@ -17,10 +17,13 @@ namespace TagsSearch
 	public:
 		struct FastQRecord
 		{
-			std::string id = "";
-			std::string sequence = "";
-			std::string description = "";
-			std::string quality = "";
+			FastQRecord(const std::string &id="", const std::string &sequence="", const std::string &description="",
+						const std::string &quality="");
+
+			std::string id;
+			std::string sequence;
+			std::string description;
+			std::string quality;
 		};
 	private:
 		const std::vector<std::string> filenames;

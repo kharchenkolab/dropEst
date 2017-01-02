@@ -65,13 +65,6 @@ namespace TagsSearch
 			return std::make_pair(SpacerFinder::ERR_CODE, SpacerFinder::ERR_CODE);
 		}
 
-		if (spacer_pos.first < this->spacer_min_pos || spacer_pos.first > this->spacer_max_pos) //TODO Deprecated
-		{
-			this->outcomes.inc(OutcomesCounter::SPACER_MISPLACED);
-			L_DEBUG << "-- invalid spacer position";
-			return std::make_pair(SpacerFinder::ERR_CODE, SpacerFinder::ERR_CODE);
-		}
-
 		if (seq.length() < spacer_pos.second + this->barcode_length + this->umi_length)
 		{
 			this->outcomes.inc(OutcomesCounter::SHORT_SEQ);

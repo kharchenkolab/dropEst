@@ -3,9 +3,10 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include "TagsSearch/FixPosSpacerTagsFinder.h"
 #include "TagsSearch/SpacerFinder.h"
-#include "TagsSearch/TagsFinderBase.h"
 #include "TagsSearch/SpacerTagsFinder.h"
+#include "TagsSearch/TagsFinderBase.h"
 #include "Tools/Logs.h"
 #include "Tools/ReadParameters.h"
 
@@ -42,12 +43,24 @@ struct Fixture
 		boost::property_tree::ptree pt;
 		read_xml(config, pt);
 
+		config.clear();
+		config << "    <SpacerSearch>\n"
+				"        <barcode_mask>[20]TGAC[20]TCCC[20]CAACGAGGTCGGCTAGGCG(8)</barcode_mask>\n"
+				"        <spacer_edit_dists>2,2,7</spacer_edit_dists>\n"
+				"        <r1_rc_length>8</r1_rc_length>\n"
+				"    </SpacerSearch>\n";
+
+		boost::property_tree::ptree pt2;
+		read_xml(config, pt2);
+
 		this->spacer_finder = SpacerFinder(pt.get_child("config.SpacerSearch"));
 		this->tags_finder = std::make_shared<SpacerTagsFinder>(nullptr, pt.get_child("config.SpacerSearch"), pt.get_child("config.TailTrimming"));
+		this->mask_tags_finder = std::make_shared<FixPosSpacerTagsFinder>(nullptr, pt2.get_child("SpacerSearch"), pt.get_child("config.TailTrimming"));
 	}
 
 	SpacerFinder spacer_finder;
 	std::shared_ptr<SpacerTagsFinder> tags_finder;
+	std::shared_ptr<FixPosSpacerTagsFinder> mask_tags_finder;
 };
 
 BOOST_AUTO_TEST_SUITE(TestTagsSearch)
@@ -85,6 +98,35 @@ BOOST_AUTO_TEST_SUITE(TestTagsSearch)
 		std::string r2_quality_str = "GACTGGTTGAAATTGATGATTGACATTAATAATGA";
 		Tools::ReadParameters res = tags_finder->parse_and_trim(r1_seq, "r2_id", r2_seq, r2_quality_str);
 		BOOST_CHECK_EQUAL(res.is_empty(), false);
+	}
+
+	BOOST_FIXTURE_TEST_CASE(testMask, Fixture)
+	{
+		typedef FixPosSpacerTagsFinder::MaskPart::Type mask_part_t;
+		auto const & mask_parts = this->mask_tags_finder->_mask_parts;
+		BOOST_REQUIRE_EQUAL(mask_parts.size(), 7);
+
+		mask_part_t types[] = {mask_part_t::CB, mask_part_t::SPACER, mask_part_t::CB, mask_part_t::SPACER,
+							   mask_part_t::CB, mask_part_t::SPACER, mask_part_t::UMI};
+		std::string spacers[] = {"", "TGAC", "", "TCCC", "", "CAACGAGGTCGGCTAGGCG", ""};
+		size_t lengths[] = {20, 4, 20, 4, 20, 19, 8};
+
+		for (int i = 0; i < 7; ++i)
+		{
+			BOOST_CHECK_EQUAL(mask_parts[i].type, types[i]);
+			BOOST_CHECK_EQUAL(mask_parts[i].spacer, spacers[i]);
+			BOOST_CHECK_EQUAL(mask_parts[i].length, lengths[i]);
+		}
+	}
+
+	BOOST_FIXTURE_TEST_CASE(testMaskParse, Fixture)
+	{
+		std::string seq("TCTCACTGCGTCTCACTGCGTGACATTGTCGGCCATTGTCGGCCTCCCGGAGATAGGAGGAGATAGGACAACGAGGTCGGCTAGGCGTAAGGGATTTTTTTTTTTTTTTTT");
+		Tools::ReadParameters params;
+		this->mask_tags_finder->parse(seq, "TestId", params);
+		BOOST_CHECK_EQUAL(params.read_name(), "TestId");
+		BOOST_CHECK_EQUAL(params.cell_barcode(), "TCTCACTGCGTCTCACTGCGATTGTCGGCCATTGTCGGCCGGAGATAGGAGGAGATAGGA");
+		BOOST_CHECK_EQUAL(params.umi_barcode(), "TAAGGGAT");
 	}
 
 BOOST_AUTO_TEST_SUITE_END()

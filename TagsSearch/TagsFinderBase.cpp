@@ -74,15 +74,19 @@ namespace TagsSearch
 	string TagsFinderBase::results_to_string(long total_reads_read) const
 	{
 		stringstream ss;
-		ss << " (" << total_reads_read << " reads)";
-		ss << this->get_additional_stat(total_reads_read);
-		ss << this->trims_counter.print();
+		ss << " (" << total_reads_read << " reads)\n"
+		   << this->get_additional_stat(total_reads_read) << "\n"
+		   << this->trims_counter.print();
 
 		return ss.str();
 	}
 
 	void TagsFinderBase::trim(const string &barcodes_tail, string &sequence, string &quality)
 	{
+		if (sequence.length() != quality.length())
+			throw std::runtime_error("Read has different lengths of sequence and quality string: '" +
+											 sequence + "', '" + quality + "'");
+
 		len_t trim_pos = sequence.length();
 		// attempt 1: check for reverse complement of the UMI+second barcode, remove trailing As
 		// RC of UMI+second barcode (up to a length r1_rc_length - spacer_finder parameter)

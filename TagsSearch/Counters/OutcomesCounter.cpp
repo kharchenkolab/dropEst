@@ -26,7 +26,6 @@ namespace TagsSearch
 		this->names[NO_SPACER] = "No spacer";
 		this->names[SHORT_SEQ] = "Short";
 		this->names[SPACER_MODIFIED] = "Spacer modified";
-		this->names[SPACER_MISPLACED] = "Spacer misplaced";
 	}
 
 	std::string OutcomesCounter::print(double normalizer) const

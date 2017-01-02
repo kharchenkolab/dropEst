@@ -12,7 +12,6 @@ namespace TagsSearch
 			OK = 0,
 			NO_SPACER,
 			SHORT_SEQ,
-			SPACER_MISPLACED,
 			SPACER_MODIFIED,
 			STAT_SIZE
 		};

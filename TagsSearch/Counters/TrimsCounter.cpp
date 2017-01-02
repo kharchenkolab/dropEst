@@ -31,7 +31,7 @@ namespace TagsSearch
 	std::string TrimsCounter::print() const
 	{
 		std::ostringstream out_stream;
-		out_stream << " trimst:[";
+		out_stream << "\tTrim stat:\n[";
 		for (int i = 0; i < STAT_SIZE; i++)
 		{
 			out_stream << " (" << this->names[i] << ") ";
@@ -39,7 +39,7 @@ namespace TagsSearch
 		out_stream << "]" << std::endl;
 
 		double normalizer = 0;
-		out_stream << " trimst:[";
+		out_stream << "[";
 		for (int i = 0; i < STAT_SIZE; i++)
 		{
 			out_stream << this->stats[i] << " ";
@@ -47,7 +47,7 @@ namespace TagsSearch
 		}
 		out_stream << "]" << std::endl;
 
-		out_stream << " trimst:[" << std::setprecision(3);
+		out_stream << "[" << std::setprecision(3);
 		for (int i = 0; i < STAT_SIZE; i++)
 		{
 			out_stream << 100.0 * this->stats[i] / normalizer << " ";

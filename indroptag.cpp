@@ -8,6 +8,7 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/filesystem/path.hpp>
 
+#include "TagsSearch/FixPosSpacerTagsFinder.h"
 #include "TagsSearch/SpacerTagsFinder.h"
 #include "TagsSearch/TagsFinderBase.h"
 #include "TagsSearch/TwoBarcodesTagsFinder.h"
@@ -46,14 +47,19 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const boost::pr
 {
 	auto files_processor = make_shared<FilesProcessor>(params.read_files, params.base_name, params.save_reads_names);
 
-	if (params.read_files.size() == 2)
-		return shared_ptr<TagsFinderBase>(new SpacerTagsFinder(files_processor,
-															   pt.get_child("config.TagsSearch.SpacerSearch"),
-															   pt.get_child("config.TagsSearch.TailTrimming")));
+	if (params.read_files.size() == 3)
+		return shared_ptr<TagsFinderBase>(new TwoBarcodesTagsFinder(files_processor,
+																	pt.get_child("config.TagsSearch.BarcodesSearch"),
+																	pt.get_child("config.TagsSearch.TailTrimming")));
 
-	return shared_ptr<TagsFinderBase>(new TwoBarcodesTagsFinder(files_processor,
-																pt.get_child("config.TagsSearch.BarcodesSearch"),
-																pt.get_child("config.TagsSearch.TailTrimming")));
+	if (pt.get<std::string>("config.TagsSearch.SpacerSearch.barcode_mask", "") != "")
+		return shared_ptr<TagsFinderBase>(new FixPosSpacerTagsFinder(files_processor,
+																	 pt.get_child("config.TagsSearch.SpacerSearch"),
+																	 pt.get_child("config.TagsSearch.TailTrimming")));
+
+	return shared_ptr<TagsFinderBase>(new SpacerTagsFinder(files_processor,
+														   pt.get_child("config.TagsSearch.SpacerSearch"),
+														   pt.get_child("config.TagsSearch.TailTrimming")));
 }
 
 

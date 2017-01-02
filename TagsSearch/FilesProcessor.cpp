@@ -124,4 +124,12 @@ namespace TagsSearch
 	{
 		return this->filenames.at(index);
 	}
+
+	FilesProcessor::FastQRecord::FastQRecord(const std::string &id, const std::string &sequence,
+											 const std::string &description, const std::string &quality)
+		: id(id)
+		, sequence(sequence)
+		, description(description)
+		, quality(quality)
+	{}
 }
