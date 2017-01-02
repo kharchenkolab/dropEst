@@ -149,6 +149,7 @@ namespace TagsSearch
 			cur_pos += mask_part.length;
 		}
 
+		this->outcomes.inc(OutcomesCounter::OK);
 		read_params = Tools::ReadParameters(r2_id, cb, umi);
 		return cur_pos;
 	}
