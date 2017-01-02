@@ -36,7 +36,7 @@ namespace Merge
 		srand(48);
 	}
 
-	long BrokenRealBarcodesMergeStrategy::get_max_merge_dist(long min_real_cb_dist) const
+	unsigned BrokenRealBarcodesMergeStrategy::get_max_merge_dist(unsigned min_real_cb_dist) const
 	{
 		return min_real_cb_dist == 0 ? 0 : min_real_cb_dist + 10;
 	}

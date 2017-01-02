@@ -30,7 +30,7 @@ struct Fixture
 
 		boost::property_tree::ptree pt;
 		read_xml(config, pt);
-		this->real_cb_strat = std::make_shared<Merge::PoissonRealBarcodesMergeStrategy>(PROJ_DATA_PATH + std::string("/barcodes.txt"), pt.get_child("Estimation"));
+		this->real_cb_strat = std::make_shared<Merge::PoissonRealBarcodesMergeStrategy>(PROJ_DATA_PATH + std::string("/barcodes/test_est"), pt.get_child("Estimation"));
 		this->container_full = std::make_shared<CellsDataContainer>(this->real_cb_strat, 1);
 
 		Tools::init_test_logs(boost::log::trivial::info);

@@ -12,7 +12,7 @@ namespace Merge
 		: RealBarcodesMergeStrategy(barcodes_filename, config)
 	{ }
 
-	long PoissonRealBarcodesMergeStrategy::get_max_merge_dist(long min_real_cb_dist) const
+	unsigned PoissonRealBarcodesMergeStrategy::get_max_merge_dist(unsigned min_real_cb_dist) const
 	{
 		return min_real_cb_dist == 0 ? 2 : min_real_cb_dist + 1;
 	}

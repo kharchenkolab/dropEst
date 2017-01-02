@@ -12,6 +12,8 @@
 #include <Estimation/Merge/MergeStrategyFactory.h>
 #include <Estimation/Merge/SimpleMergeStrategy.h>
 #include <Estimation/Merge/RealBarcodesMergeStrategy.h>
+#include <Estimation/Merge/BarcodesParsing/InDropBarcodesParser.h>
+#include <Estimation/Merge/BarcodesParsing/ConstLengthBarcodesParser.h>
 
 using namespace Estimation;
 
@@ -29,7 +31,7 @@ struct Fixture
 
 		boost::property_tree::ptree pt;
 		read_xml(config, pt);
-		this->real_cb_strat = std::make_shared<Merge::RealBarcodesMergeStrategy>(PROJ_DATA_PATH + std::string("/barcodes.txt"), pt.get_child("Estimation"));
+		this->real_cb_strat = std::make_shared<Merge::RealBarcodesMergeStrategy>(PROJ_DATA_PATH + std::string("/barcodes/test_est"), pt.get_child("Estimation"));
 		this->container_full = std::make_shared<CellsDataContainer>(this->real_cb_strat, 1);
 
 		Tools::init_test_logs(boost::log::trivial::info);
@@ -61,7 +63,6 @@ struct Fixture
 	}
 
 	std::shared_ptr<Merge::RealBarcodesMergeStrategy> real_cb_strat;
-
 	std::shared_ptr<CellsDataContainer> container_full;
 };
 
@@ -84,29 +85,48 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 	BOOST_FIXTURE_TEST_CASE(testBarcodesFile, Fixture)
 	{
-		std::vector<std::string> cb1;
-		std::vector<std::string> cb2;
+		auto cbs = this->real_cb_strat->_barcodes_parser->_barcodes;
 
-		Merge::RealBarcodesMergeStrategy::get_barcodes_list(PROJ_DATA_PATH + std::string("/barcodes.txt"), cb1, cb2);
+		BOOST_CHECK_EQUAL(cbs[0].size(), 3);
+		BOOST_CHECK_EQUAL(cbs[1].size(), 3);
 
-		BOOST_CHECK_EQUAL(cb1.size(), 3);
-		BOOST_CHECK_EQUAL(cb2.size(), 3);
-
-		if (cb1.size() >= 3)
+		if (cbs[0].size() >= 3)
 		{
-			BOOST_CHECK_EQUAL(cb1[0], "AAT");
-			BOOST_CHECK_EQUAL(cb1[1], "GAA");
-			BOOST_CHECK_EQUAL(cb1[2], "AAA");
+			BOOST_CHECK_EQUAL(cbs[0][0], "AAT");
+			BOOST_CHECK_EQUAL(cbs[0][1], "GAA");
+			BOOST_CHECK_EQUAL(cbs[0][2], "AAA");
 		}
 
-		if (cb2.size() >= 3)
+		if (cbs[1].size() >= 3)
 		{
-			BOOST_CHECK_EQUAL(cb2[0], "TTAGGTCCA");
-			BOOST_CHECK_EQUAL(cb2[1], "TTAGGGGCC");
-			BOOST_CHECK_EQUAL(cb2[2], "TTAGGTCCC");
+			BOOST_CHECK_EQUAL(cbs[1][0], "TTAGGTCCA");
+			BOOST_CHECK_EQUAL(cbs[1][1], "TTAGGGGCC");
+			BOOST_CHECK_EQUAL(cbs[1][2], "TTAGGTCCC");
 		}
 
-		BOOST_CHECK_THROW(Merge::RealBarcodesMergeStrategy::get_barcodes_list("/barcodes.txt", cb1, cb2), std::runtime_error);
+		Merge::BarcodesParsing::InDropBarcodesParser parser("");
+		BOOST_CHECK_THROW(parser.get_barcodes_list("/barcodes.wrong"), std::runtime_error);
+	}
+
+	BOOST_FIXTURE_TEST_CASE(testConstLengthBarcodesFile, Fixture)
+	{
+		Merge::BarcodesParsing::ConstLengthBarcodesParser parser(PROJ_DATA_PATH + std::string("/barcodes/hifibio"));
+		parser.init();
+		auto cbs = parser._barcodes;
+
+		BOOST_REQUIRE_EQUAL(cbs.size(), 3);
+
+		BOOST_REQUIRE_EQUAL(cbs[0].size(), 96);
+		BOOST_REQUIRE_EQUAL(cbs[1].size(), cbs[0].size());
+		BOOST_REQUIRE_EQUAL(cbs[2].size(), cbs[0].size());
+
+		BOOST_CHECK_EQUAL(cbs[0][0], "GCTTGGTTGCGCTTGGTTGC");
+		BOOST_CHECK_EQUAL(cbs[1][0], "ACTTGGCGCTACTTGGCGCT");
+		BOOST_CHECK_EQUAL(cbs[2][0], "GCCATTGGACGCCATTGGAC");
+
+		BOOST_CHECK_EQUAL(cbs[0][1], "GGAGTGGTTCGGAGTGGTTC");
+		BOOST_CHECK_EQUAL(cbs[1][1], "AGAACGCTCCAGAACGCTCC");
+		BOOST_CHECK_EQUAL(cbs[2][1], "GCCGAATCCTGCCGAATCCT");
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testIncrement, Fixture)
@@ -141,48 +161,39 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		static const std::string ar_cbs1[] = {"AAT", "AAA", "CCT"};
 		std::vector<std::string> cbs1(ar_cbs1, ar_cbs1 + sizeof(ar_cbs1) / sizeof(ar_cbs1[0]));
 
-		CellsDataContainer::i_counter_t d1, d2;
+		Merge::BarcodesParsing::InDropBarcodesParser parser("");
+		Merge::BarcodesParsing::InDropBarcodesParser::barcode_parts_list_t barcodes;
+		barcodes.push_back(cbs1);
+		barcodes.push_back(cbs1);
 
-		this->real_cb_strat->_barcodes1 = cbs1;
-		this->real_cb_strat->_barcodes2 = cbs1;
-		this->real_cb_strat->fill_distances_to_cb("ACT", "ACT", d1, d2);
+		parser._barcode2_length = 3;
+		parser._barcodes = barcodes;
+		auto dists = parser.get_distances_to_barcode("ACTACT");
 
-		BOOST_CHECK_EQUAL(d1.size(), 3);
-		BOOST_CHECK_EQUAL(d2.size(), 3);
+		BOOST_CHECK_EQUAL(dists[0].size(), 3);
+		BOOST_CHECK_EQUAL(dists[1].size(), 3);
 
-		BOOST_CHECK_EQUAL(d1[0].value, 1);
-		BOOST_CHECK_EQUAL(d1[1].value, 1);
-		BOOST_CHECK_EQUAL(d1[2].value, 2);
-		BOOST_CHECK_EQUAL(d1[2].index, 1);
+		BOOST_CHECK_EQUAL(dists[0][0].value, 1);
+		BOOST_CHECK_EQUAL(dists[0][1].value, 1);
+		BOOST_CHECK_EQUAL(dists[0][2].value, 2);
+		BOOST_CHECK_EQUAL(dists[0][2].index, 1);
 
-		BOOST_CHECK_EQUAL(d2[0].value, 1);
-		BOOST_CHECK_EQUAL(d2[1].value, 1);
-		BOOST_CHECK_EQUAL(d2[2].value, 2);
-		BOOST_CHECK_EQUAL(d2[2].index, 1);
+		BOOST_CHECK_EQUAL(dists[1][0].value, 1);
+		BOOST_CHECK_EQUAL(dists[1][1].value, 1);
+		BOOST_CHECK_EQUAL(dists[1][2].value, 2);
+		BOOST_CHECK_EQUAL(dists[1][2].index, 1);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testRealNeighboursCbs, Fixture)
 	{
-		static const std::string ar_cbs1[] = {"AAT", "GAA", "AAA"};
-		static const std::string ar_cbs2[] = {"TTAGGTCCA", "TTAGGGGCC", "TTAGGTCCC"};
-		CellsDataContainer::names_t cbs1(ar_cbs1, ar_cbs1 + sizeof(ar_cbs1) / sizeof(ar_cbs1[0]));
-		CellsDataContainer::names_t cbs2(ar_cbs2, ar_cbs2 + sizeof(ar_cbs2) / sizeof(ar_cbs2[0]));
-
-		CellsDataContainer::i_counter_t d1, d2;
-		this->real_cb_strat->_barcodes1 = cbs1;
-		this->real_cb_strat->_barcodes2 = cbs2;
-		this->real_cb_strat->fill_distances_to_cb("CAA", "TTAGGTCCG", d1, d2);
-
-		CellsDataContainer::ids_t ids = this->real_cb_strat->get_real_neighbour_cbs(*this->container_full, this->container_full->cell_ids_by_cb().at("CAATTAGGTCCG"), d1, d2);
+		CellsDataContainer::ids_t ids = this->real_cb_strat->get_real_neighbour_cbs(*this->container_full, this->container_full->cell_ids_by_cb().at("CAATTAGGTCCG"));
 
 		BOOST_REQUIRE_EQUAL(ids.size(), 2);
 
 		BOOST_CHECK_EQUAL(this->container_full->cell_barcode(ids[0]), "AAATTAGGTCCA");
 		BOOST_CHECK_EQUAL(this->container_full->cell_barcode(ids[1]), "AAATTAGGTCCC");
 
-		d1.clear(); d2.clear();
-		this->real_cb_strat->fill_distances_to_cb("AAA", "TTAGGTCCC", d1, d2);
-		ids = this->real_cb_strat->get_real_neighbour_cbs(*this->container_full, this->container_full->cell_ids_by_cb().at("CAATTAGGTCCG"), d1, d2);
+		ids = this->real_cb_strat->get_real_neighbour_cbs(*this->container_full, this->container_full->cell_ids_by_cb().at("AAATTAGGTCCC"));
 
 		BOOST_CHECK_EQUAL(ids.size(), 1);
 
@@ -194,13 +205,6 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 	BOOST_FIXTURE_TEST_CASE(testRealNeighbours, Fixture)
 	{
-		static const std::string ar_cbs1[] = {"AAT", "GAA", "AAA"};
-		static const std::string ar_cbs2[] = {"TTAGGTCCA", "TTAGGGGCC", "TTAGGTCCC"};
-		CellsDataContainer::names_t cbs1(ar_cbs1, ar_cbs1 + sizeof(ar_cbs1) / sizeof(ar_cbs1[0]));
-		CellsDataContainer::names_t cbs2(ar_cbs2, ar_cbs2 + sizeof(ar_cbs2) / sizeof(ar_cbs2[0]));
-		this->real_cb_strat->_barcodes1 = cbs1;
-		this->real_cb_strat->_barcodes2 = cbs2;
-
 		BOOST_CHECK_EQUAL(this->real_cb_strat->get_merge_target(*this->container_full, 0), 0);
 		BOOST_CHECK_EQUAL(this->real_cb_strat->get_merge_target(*this->container_full, 1), 1);
 		BOOST_CHECK_EQUAL(this->real_cb_strat->get_merge_target(*this->container_full, 2), 1);
