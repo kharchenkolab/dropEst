@@ -247,4 +247,16 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		BOOST_CHECK_EQUAL(this->container_full->excluded_cells().size(), 1);
 	}
 
+	BOOST_FIXTURE_TEST_CASE(testSplitBarcode, Fixture)
+	{
+		Merge::BarcodesParsing::ConstLengthBarcodesParser parser(PROJ_DATA_PATH + std::string("/barcodes/hifibio"));
+		parser.init();
+		auto splitted = parser.split_barcode("TAATGAGCACTAATGAGCACATACTGATGCATACTGATGCGTAACACGCTGTAACACGCT");
+
+		BOOST_REQUIRE_EQUAL(splitted.size(), 3);
+		BOOST_CHECK_EQUAL(splitted[0], "TAATGAGCACTAATGAGCAC");
+		BOOST_CHECK_EQUAL(splitted[1], "ATACTGATGCATACTGATGC");
+		BOOST_CHECK_EQUAL(splitted[2], "GTAACACGCTGTAACACGCT");
+	}
+
 BOOST_AUTO_TEST_SUITE_END()

@@ -33,7 +33,7 @@ namespace BarcodesParsing
 
 	std::vector<std::string> ConstLengthBarcodesParser::split_barcode(const std::string &barcode) const
 	{
-		if (barcode.length() )
+		if (barcode.length() != this->_barcode_length)
 			throw std::runtime_error("Barcode '" + barcode + "' has wrong length (" + std::to_string(this->_barcode_length) + " expected)");
 
 		std::vector<std::string> res;

@@ -2,6 +2,11 @@
 
 #include "BarcodesParser.h"
 
+namespace TestEstimator
+{
+	struct testSplitBarcode;
+}
+
 namespace Estimation
 {
 	namespace Merge
@@ -10,6 +15,8 @@ namespace Estimation
 		{
 			class ConstLengthBarcodesParser : public BarcodesParser
 			{
+				friend struct TestEstimator::testSplitBarcode;
+
 			private:
 				std::vector<size_t> _barcode_lengths;
 				size_t _barcode_length;
