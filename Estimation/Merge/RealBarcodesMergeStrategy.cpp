@@ -27,7 +27,6 @@ namespace Estimation
 				return -1;
 
 			return this->get_best_merge_target(container, base_cell_ind, neighbour_cells);
-
 		}
 
 		long RealBarcodesMergeStrategy::get_best_merge_target(const CellsDataContainer &container, size_t base_cell_ind,
@@ -74,18 +73,17 @@ namespace Estimation
 
 			auto const &nearest_cb_parts = barcodes_dists.front();
 			unsigned min_real_cb_dist = nearest_cb_parts.edit_distance;
-			std::string current_cb = this->_barcodes_parser->get_barcode(nearest_cb_parts.barcode_part_inds);
-
-			container.stats().add(Stats::MERGE_EDIT_DISTANCE_BY_CELL, container.cell_barcode(base_cell_ind), current_cb, min_real_cb_dist);
 
 			unsigned max_dist = this->get_max_merge_dist(min_real_cb_dist);
 			for (auto const & cb_parts: barcodes_dists)
 			{
-				if (cb_parts.edit_distance> max_dist && !neighbour_cbs.empty())
+				if (cb_parts.edit_distance > max_dist && !neighbour_cbs.empty())
 					break;
 
-				current_cb = this->_barcodes_parser->get_barcode(cb_parts.barcode_part_inds);
-				auto const current_cell_it = container.cell_ids_by_cb().find(current_cb);
+				std::string cur_real_cb = this->_barcodes_parser->get_barcode(cb_parts.barcode_part_inds);
+				container.stats().add(Stats::MERGE_EDIT_DISTANCE_BY_CELL, base_cb, cur_real_cb, min_real_cb_dist);
+
+				auto const current_cell_it = container.cell_ids_by_cb().find(cur_real_cb);
 				if (current_cell_it != container.cell_ids_by_cb().end() &&
 						container.cell_genes(current_cell_it->second).size() >= this->min_genes_before_merge() &&
 						container.cell_size(current_cell_it->second) >= container.cell_size(base_cell_ind)) // Should pass equal sizes because it should pass current cell
