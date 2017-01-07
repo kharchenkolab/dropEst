@@ -81,7 +81,7 @@ namespace Estimation
 					break;
 
 				std::string cur_real_cb = this->_barcodes_parser->get_barcode(cb_parts.barcode_part_inds);
-				container.stats().set(Stats::MERGE_EDIT_DISTANCE_BY_CELL, base_cb, cur_real_cb, min_real_cb_dist);
+				container.stats().set(Stats::MERGE_EDIT_DISTANCE_BY_CELL, base_cb, cur_real_cb, cb_parts.edit_distance);
 
 				auto const current_cell_it = container.cell_ids_by_cb().find(cur_real_cb);
 				if (current_cell_it != container.cell_ids_by_cb().end() &&

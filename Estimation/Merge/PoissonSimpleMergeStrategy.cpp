@@ -11,16 +11,20 @@ PoissonSimpleMergeStrategy::PoissonSimpleMergeStrategy(const boost::property_tre
 
 long PoissonSimpleMergeStrategy::get_merge_target(const Estimation::CellsDataContainer &container, size_t base_cell_ind) const
 {
+	const std::string &base_cb = container.cell_barcode(base_cell_ind);
 	u_u_hash_t cells_with_common_umigs = this->get_cells_with_common_umigs(container, base_cell_ind);
 
 	ul_list_t neighbour_cells;
 	neighbour_cells.reserve(cells_with_common_umigs.size());
 	for (auto const &cell : cells_with_common_umigs)
 	{
-		if (Tools::edit_distance(container.cell_barcode(base_cell_ind).c_str(),
-								 container.cell_barcode(cell.first).c_str()) > this->_max_merge_edit_distance)
+		const std::string &current_cb = container.cell_barcode(cell.first);
+		unsigned edit_distance = Tools::edit_distance(base_cb.c_str(), current_cb.c_str());
+
+		if (edit_distance > this->_max_merge_edit_distance)
 			continue;
 
+		container.stats().set(Stats::MERGE_EDIT_DISTANCE_BY_CELL, base_cb, current_cb, edit_distance);
 		neighbour_cells.push_back(cell.first);
 	}
 

@@ -73,6 +73,9 @@ namespace Merge
 				if (ed >= this->_max_merge_edit_distance)
 					continue;
 
+				container.stats().set(Stats::MERGE_EDIT_DISTANCE_BY_CELL, container.cell_barcode(base_cell_ind),
+									  container.cell_barcode(cell_ind), ed);
+
 				top_cell_ind = cell_ind;
 				top_cb_fraction = cb_fraction;
 				top_cb_genes_count = container.cell_genes(cell_ind).size();
