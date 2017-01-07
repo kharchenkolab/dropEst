@@ -67,7 +67,7 @@ namespace Estimation
 		int_list_t get(CellStatType counter) const;
 		const s_cnt_t& get_raw_stat(CellStatType stat) const;
 
-		void add(StrStrStatType stat, const std::string &base_type, const std::string &subtype, long value);
+		void set(StrStrStatType stat, const std::string &base_type, const std::string &subtype, int value);
 		void set(StrStrFloatType stat, const std::string &base_type, const std::string &subtype, double value);
 
 		void inc(CellStrStatType stat, const std::string &cell_barcode, const std::string &subtype);

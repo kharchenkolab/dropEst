@@ -44,9 +44,9 @@ namespace Estimation
 		this->_str_cell_subtypes[stat].emplace(subtype);
 	}
 
-	void Stats::add(StrStrStatType stat, const std::string &base_type, const std::string &subtype, long value)
+	void Stats::set(StrStrStatType stat, const std::string &base_type, const std::string &subtype, int value)
 	{
-		this->_str_str_counters[stat][base_type][subtype] += value;
+		this->_str_str_counters[stat][base_type][subtype] = value;
 	}
 
 	void Stats::get(CellStrStatType stat, str_list_t &types, str_list_t &subtypes, int_list_t &counts) const

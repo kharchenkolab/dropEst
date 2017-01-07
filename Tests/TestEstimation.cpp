@@ -259,4 +259,16 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		BOOST_CHECK_EQUAL(splitted[2], "GTAACACGCTGTAACACGCT");
 	}
 
+	BOOST_FIXTURE_TEST_CASE(testStat, Fixture)
+	{
+		Stats stats;
+		stats.set(Stats::StrStrStatType::MERGE_EDIT_DISTANCE_BY_CELL, "AAA", "BBB", 10);
+		stats.set(Stats::StrStrStatType::MERGE_EDIT_DISTANCE_BY_CELL, "CCC", "BBB", 20);
+
+		auto map = stats.get_raw(Stats::StrStrStatType::MERGE_EDIT_DISTANCE_BY_CELL);
+		BOOST_REQUIRE_EQUAL(map.size(), 2);
+
+		BOOST_CHECK_EQUAL(map["AAA"]["BBB"], 10);
+		BOOST_CHECK_EQUAL(map["CCC"]["BBB"], 20);
+	}
 BOOST_AUTO_TEST_SUITE_END()
