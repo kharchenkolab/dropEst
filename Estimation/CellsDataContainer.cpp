@@ -17,14 +17,15 @@ namespace Estimation
 		: _merge_strategy(merge_strategy)
 		, _top_print_size(top_print_size)
 		, _is_initialized(false)
-	{}
+	{
+		L_TRACE << this->_merge_strategy->merge_type() << " merge selected";
+	}
 
 	void CellsDataContainer::merge_and_filter()
 	{
 		if (!this->_is_initialized)
 			throw runtime_error("You must initialize container");
 
-		L_TRACE << this->_merge_strategy->merge_type() << " merge selected";
 		this->_merge_targets = this->_merge_strategy->merge(*this);
 		this->stats().merge(this->_merge_targets, this->cell_barcodes_raw());
 		
