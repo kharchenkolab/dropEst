@@ -50,6 +50,7 @@ namespace Estimation
 
 		            Named("merge_edit_distance") = wrap(container.stats().get_raw(Stats::MERGE_EDIT_DISTANCE_BY_CELL)),
 		            Named("merge_probs") = wrap(container.stats().get_raw(Stats::MERGE_PROB_BY_CELL)),
+		            Named("merge_targets") = wrap(container.stats().get_raw(Stats::MERGE_TARGET_BY_BASE)),
 		            Named("excluded_cells") = wrap(container.excluded_cells()),
 		            Named("umi_per_cell") = wrap(reads_per_umi)
 			);
