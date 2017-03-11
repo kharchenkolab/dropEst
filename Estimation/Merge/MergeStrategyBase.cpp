@@ -52,7 +52,7 @@ MergeStrategyAbstract::ul_list_t MergeStrategyBase::merge_inited(CellsDataContai
 	size_t excluded_cells_num = container.excluded_cells().size();
 	L_INFO << "Total " << merges_count << " merges";
 	L_INFO << "Total " << excluded_cells_num << " cells excluded";
-	L_INFO << container.cells_gene_counts_sorted().size() - merges_count - excluded_cells_num << " cells with " << this->min_genes_before_merge() << " left";
+	L_INFO << container.cells_gene_counts_sorted().size() - merges_count - excluded_cells_num << " cells with " << this->min_genes_before_merge() << " genes left";
 
 	container.update_cell_sizes(this->min_genes_after_merge(), false);
 
