@@ -125,7 +125,7 @@ namespace Estimation
 		{
 			ss << "top CBs:\n";
 			size_t low_border = cells_genes_counts.size() - min(cells_genes_counts.size(), this->_top_print_size - 1);
-			for (size_t i = cells_genes_counts.size() - 1; i >= low_border; --i)
+			for (long i = cells_genes_counts.size() - 1; i >= low_border; --i)
 			{
 				ss << cells_genes_counts[i].value << "\t" << this->_cell_barcodes[cells_genes_counts[i].index] << "\n";
 			}
