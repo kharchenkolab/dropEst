@@ -32,7 +32,7 @@ namespace Estimation
 		this->update_cell_sizes(this->_merge_strategy->min_genes_after_merge());
 
 		this->_filtered_cells.clear();
-		for (auto const &val : this->cells_genes_counts_sorted())
+		for (auto const &val : this->cells_gene_counts_sorted())
 		{
 			this->_filtered_cells.push_back(val.index);
 		}
@@ -80,7 +80,7 @@ namespace Estimation
 
 	void CellsDataContainer::update_cell_sizes(int genes_threshold, bool logs)
 	{
-		this->_filtered_cells_genes_counts_sorted.clear(); // <genes_count,cell_id> pairs
+		this->_filtered_cells_gene_counts_sorted.clear(); // <genes_count,cell_id> pairs
 		for (size_t i = 0; i < this->_cells_genes.size(); i++)
 		{
 			if (this->_is_cell_excluded[i] || this->_is_cell_merged[i])
@@ -89,7 +89,7 @@ namespace Estimation
 			size_t genes_count = this->_cells_genes[i].size();
 			if (genes_count >= genes_threshold)
 			{
-				this->_filtered_cells_genes_counts_sorted.push_back(IndexedValue(i, genes_count));
+				this->_filtered_cells_gene_counts_sorted.push_back(IndexedValue(i, genes_count));
 			}
 		}
 
@@ -107,14 +107,14 @@ namespace Estimation
 
 		if (logs)
 		{
-			L_TRACE << this->_filtered_cells_genes_counts_sorted.size() << " CBs with more than " << genes_threshold << " genes";
+			L_TRACE << this->_filtered_cells_gene_counts_sorted.size() << " CBs with more than " << genes_threshold << " genes";
 		}
 
-		sort(this->_filtered_cells_genes_counts_sorted.begin(), this->_filtered_cells_genes_counts_sorted.end(), IndexedValue::value_less);
+		sort(this->_filtered_cells_gene_counts_sorted.begin(), this->_filtered_cells_gene_counts_sorted.end(), IndexedValue::value_less);
 
 		if (logs)
 		{
-			L_TRACE << this->get_cb_count_top_verbose(this->_filtered_cells_genes_counts_sorted);
+			L_TRACE << this->get_cb_count_top_verbose(this->_filtered_cells_gene_counts_sorted);
 		}
 	}
 
@@ -124,8 +124,8 @@ namespace Estimation
 		if (cells_genes_counts.size() > 0)
 		{
 			ss << "top CBs:\n";
-			size_t low_border = cells_genes_counts.size() - min(cells_genes_counts.size(), this->_top_print_size);
-			for (size_t i = cells_genes_counts.size() - 1; i > low_border; --i)
+			size_t low_border = cells_genes_counts.size() - min(cells_genes_counts.size(), this->_top_print_size - 1);
+			for (size_t i = cells_genes_counts.size() - 1; i >= low_border; --i)
 			{
 				ss << cells_genes_counts[i].value << "\t" << this->_cell_barcodes[cells_genes_counts[i].index] << "\n";
 			}
@@ -148,9 +148,9 @@ namespace Estimation
 		return this->_cells_genes.at(index);
 	}
 
-	const CellsDataContainer::i_counter_t &CellsDataContainer::cells_genes_counts_sorted() const
+	const CellsDataContainer::i_counter_t &CellsDataContainer::cells_gene_counts_sorted() const
 	{
-		return this->_filtered_cells_genes_counts_sorted;
+		return this->_filtered_cells_gene_counts_sorted;
 	}
 
 	const string &CellsDataContainer::cell_barcode(size_t index) const
@@ -202,7 +202,7 @@ namespace Estimation
 	CellsDataContainer::s_ul_hash_t CellsDataContainer::umis_distribution() const
 	{
 		s_ul_hash_t umis_dist;
-		for (auto const &cell : this->_filtered_cells_genes_counts_sorted)
+		for (auto const &cell : this->_filtered_cells_gene_counts_sorted)
 		{
 			for (auto const &gene : this->_cells_genes[cell.index])
 			{

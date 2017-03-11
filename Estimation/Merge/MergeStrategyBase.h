@@ -29,11 +29,6 @@ namespace Merge
 		const double _min_merge_fraction;
 		const int _max_merge_edit_distance;
 
-	public:
-		MergeStrategyBase(const boost::property_tree::ptree &config);
-
-		static size_t get_umigs_intersect_size(const genes_t &cell1_dist, const genes_t &cell2_dist);
-
 	private:
 		void reassign(size_t cell_id, size_t target_cell_id, ul_list_t &cb_reassign_targets,
 					  ISIHM &cb_reassigned_to_it) const;
@@ -44,6 +39,13 @@ namespace Merge
 
 		virtual ul_list_t merge_inited(Estimation::CellsDataContainer &container) const override;
 		virtual long get_merge_target(const Estimation::CellsDataContainer &container, size_t base_cell_ind) const = 0;
+
+		virtual size_t get_log_period() const;
+
+	public:
+		MergeStrategyBase(const boost::property_tree::ptree &config);
+
+		static size_t get_umigs_intersect_size(const genes_t &cell1_dist, const genes_t &cell2_dist);
 	};
 }
 }

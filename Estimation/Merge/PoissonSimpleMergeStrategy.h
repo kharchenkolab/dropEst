@@ -16,11 +16,11 @@ namespace Estimation
 		protected:
 			virtual void init(const CellsDataContainer &container) override;
 			virtual void release() override;
+			virtual long get_merge_target(const CellsDataContainer &container, size_t base_cell_ind) const override;
+			virtual size_t get_log_period() const override;
 
 		public:
 			PoissonSimpleMergeStrategy(const boost::property_tree::ptree &config);
-
-			virtual long get_merge_target(const CellsDataContainer &container, size_t base_cell_ind) const override;
 
 			virtual std::string merge_type() const override;
 		};

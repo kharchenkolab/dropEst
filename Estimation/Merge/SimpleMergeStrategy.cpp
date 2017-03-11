@@ -91,7 +91,7 @@ namespace Merge
 	void SimpleMergeStrategy::init(const CellsDataContainer &container)
 	{
 		MergeStrategyAbstract::init(container);
-		for (auto const &genes_count : container.cells_genes_counts_sorted())
+		for (auto const &genes_count : container.cells_gene_counts_sorted())
 		{
 			for (auto const &gene : container.cell_genes(genes_count.index))
 			{

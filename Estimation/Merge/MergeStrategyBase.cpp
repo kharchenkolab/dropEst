@@ -14,13 +14,13 @@ MergeStrategyAbstract::ul_list_t MergeStrategyBase::merge_inited(CellsDataContai
 	ul_list_t cb_reassign_targets(container.cell_barcodes_raw().size());
 	std::iota(cb_reassign_targets.begin(), cb_reassign_targets.end(), 0);
 
-	auto const& cell_genes_counts = container.cells_genes_counts_sorted();
+	auto const& cell_genes_counts = container.cells_gene_counts_sorted();
 	std::vector<long> target_cell_inds(cell_genes_counts.size());
 
 	for (size_t genes_count_id = 0; genes_count_id < cell_genes_counts.size(); ++genes_count_id)
 	{
 		target_cell_inds[genes_count_id] = this->get_merge_target(container, cell_genes_counts[genes_count_id].index);
-		if (genes_count_id % 1000 == 0)
+		if (genes_count_id % this->get_log_period() == 0 && genes_count_id > 0)
 		{
 			L_TRACE << "Total " << genes_count_id << " tags processed";
 		}
@@ -48,14 +48,23 @@ MergeStrategyAbstract::ul_list_t MergeStrategyBase::merge_inited(CellsDataContai
 		this->merge_force(container, base_cell_ind, (size_t)target_cell_ind, cb_reassign_targets, cb_reassigned_to_it);
 		merges_count++;
 	}
+
+	size_t excluded_cells_num = container.excluded_cells().size();
 	L_INFO << "Total " << merges_count << " merges";
+	L_INFO << "Total " << excluded_cells_num << " cells excluded";
+	L_INFO << container.cells_gene_counts_sorted().size() - merges_count - excluded_cells_num << " cells with " << this->min_genes_before_merge() << " left";
 
 	container.update_cell_sizes(this->min_genes_after_merge(), false);
 
 	return cb_reassign_targets;
 }
 
-void MergeStrategyBase::reassign(size_t cell_id, size_t target_cell_id, ul_list_t &cb_reassign_targets,
+	size_t MergeStrategyBase::get_log_period() const
+	{
+		return 100000;
+	}
+
+	void MergeStrategyBase::reassign(size_t cell_id, size_t target_cell_id, ul_list_t &cb_reassign_targets,
 											ISIHM &cb_reassigned_to_it) const
 {
 	cb_reassign_targets[cell_id] = target_cell_id; // set reassignment mapping

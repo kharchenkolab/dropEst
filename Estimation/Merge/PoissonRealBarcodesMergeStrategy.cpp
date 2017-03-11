@@ -39,5 +39,10 @@ namespace Merge
 	{
 		return this->_target_estimator.get_best_merge_target(container, base_cell_ind, neighbour_cells);
 	}
+
+	size_t PoissonRealBarcodesMergeStrategy::get_log_period() const
+	{
+		return 1000;
+	}
 }
 }

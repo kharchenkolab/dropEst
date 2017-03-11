@@ -52,7 +52,7 @@ namespace Estimation
 		ids_t _merge_targets;
 
 		counts_t _cell_sizes;
-		i_counter_t _filtered_cells_genes_counts_sorted;
+		i_counter_t _filtered_cells_gene_counts_sorted;
 		bool _is_initialized;
 
 		mutable Stats _stats;
@@ -79,7 +79,7 @@ namespace Estimation
 
 		const ids_t &filtered_cells() const;
 
-		const i_counter_t &cells_genes_counts_sorted() const;
+		const i_counter_t &cells_gene_counts_sorted() const;
 
 		const genes_t &cell_genes(size_t index) const;
 

@@ -173,7 +173,7 @@ namespace Estimation
 	{
 		l_list_t umig_coverage;
 		s_set umigs_seen;
-		for (const Tools::IndexedValue &gene_count : boost::adaptors::reverse(genes_container.cells_genes_counts_sorted()))
+		for (const Tools::IndexedValue &gene_count : boost::adaptors::reverse(genes_container.cells_gene_counts_sorted()))
 		{
 			int new_umigs = 0;
 			for (auto const &gene_rec : genes_container.cell_genes(gene_count.index))

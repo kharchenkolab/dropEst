@@ -54,5 +54,10 @@ std::string PoissonSimpleMergeStrategy::merge_type() const
 {
 	return "Poisson Simple";
 }
+
+size_t PoissonSimpleMergeStrategy::get_log_period() const
+{
+	return 1000;
+}
 }
 }
