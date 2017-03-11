@@ -90,9 +90,9 @@ namespace TagsSearch
 		return result;
 	}
 
-	void FilesProcessor::write_read_params(const std::string &id, const Tools::ReadParameters &read_params)
+	void FilesProcessor::write_read_params(const std::string &id_prefix, const Tools::ReadParameters &read_params)
 	{
-		this->out_reads_zip << id << " " << read_params.to_monolithic_string() << "\n";
+		this->out_reads_zip << read_params.encoded_params(id_prefix) << "\n";
 	}
 
 	FilesProcessor::FastQRecord FilesProcessor::get_fastq_record(size_t index)

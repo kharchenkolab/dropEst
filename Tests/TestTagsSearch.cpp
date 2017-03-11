@@ -84,19 +84,18 @@ BOOST_AUTO_TEST_SUITE(TestTagsSearch)
 	BOOST_FIXTURE_TEST_CASE(test2, Fixture)
 	{
 		std::string r1_seq = "TAGTTTCGGAGTGTTTGCTTGTGACGCCTTACCTTGCCCGCGACTTTTTTTTTTT";
-		std::string r2_seq = "TCTTCCACTAATAGTTATGTCATCCCTCTTATTAATCATCATCCTAGCCCTAAGTCTGGCCTATGAGTCACTACAAAAAGGATTAGACTGAACCG";
-		std::string r2_quality_str = "1>111@1@111@33AA3BAA33DE1AA0FF3DA33AB3AF3D2A12110AB000DFGD01F10A121A11A2BFB110/AA0ABG111A111BF>";
-		Tools::ReadParameters res = tags_finder->parse_and_trim(r1_seq, "r2_id", r2_seq, r2_quality_str);
+		auto spacer_pos = tags_finder->spacer_finder.find_spacer(r1_seq);
+		Tools::ReadParameters res = tags_finder->parse(r1_seq, r1_seq, spacer_pos);
 		BOOST_CHECK_EQUAL(res.is_empty(), false);
 		BOOST_CHECK_EQUAL(res.cell_barcode(), "TAGTTTCGACCTTGCC");
+		BOOST_CHECK_EQUAL(res.cell_barcode_quality(), "TAGTTTCGACCTTGCC");
 	}
 
 	BOOST_FIXTURE_TEST_CASE(test3, Fixture)
 	{
 		std::string r1_seq = "TGACCATTACTGAGTGATTGCTTGTGACGCCTTAAGCGTACAGATTATTTT";
-		std::string r2_seq = "GACTGGTTGAAATTGATGATTGACATTAATAATGA";
-		std::string r2_quality_str = "GACTGGTTGAAATTGATGATTGACATTAATAATGA";
-		Tools::ReadParameters res = tags_finder->parse_and_trim(r1_seq, "r2_id", r2_seq, r2_quality_str);
+		auto spacer_pos = tags_finder->spacer_finder.find_spacer(r1_seq);
+		Tools::ReadParameters res = tags_finder->parse(r1_seq, r1_seq, spacer_pos);
 		BOOST_CHECK_EQUAL(res.is_empty(), false);
 	}
 
@@ -123,10 +122,11 @@ BOOST_AUTO_TEST_SUITE(TestTagsSearch)
 	{
 		std::string seq("TCTCACTGCGTCTCACTGCGTGACATTGTCGGCCATTGTCGGCCTCCCGGAGATAGGAGGAGATAGGACAACGAGGTCGGCTAGGCGTAAGGGATTTTTTTTTTTTTTTTT");
 		Tools::ReadParameters params;
-		this->mask_tags_finder->parse(seq, "TestId", params);
-		BOOST_CHECK_EQUAL(params.read_name(), "TestId");
+		this->mask_tags_finder->parse(seq, seq, params);
 		BOOST_CHECK_EQUAL(params.cell_barcode(), "TCTCACTGCGTCTCACTGCGATTGTCGGCCATTGTCGGCCGGAGATAGGAGGAGATAGGA");
-		BOOST_CHECK_EQUAL(params.umi_barcode(), "TAAGGGAT");
+		BOOST_CHECK_EQUAL(params.cell_barcode_quality(), "TCTCACTGCGTCTCACTGCGATTGTCGGCCATTGTCGGCCGGAGATAGGAGGAGATAGGA");
+		BOOST_CHECK_EQUAL(params.umi(), "TAAGGGAT");
+		BOOST_CHECK_EQUAL(params.umi_quality(), "TAAGGGAT");
 	}
 
 BOOST_AUTO_TEST_SUITE_END()

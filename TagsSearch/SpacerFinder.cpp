@@ -41,7 +41,7 @@ namespace TagsSearch
 		this->spacer_min_suffix_start -= std::min(this->spacer_min_suffix_start, this->max_spacer_ed);
 	}
 
-	std::pair<string::size_type, string::size_type> SpacerFinder::find_spacer(const string &seq)
+	SpacerFinder::spacer_pos_t SpacerFinder::find_spacer(const string &seq)
 	{
 		if (seq.length() < this->min_seq_len)
 		{
@@ -51,7 +51,7 @@ namespace TagsSearch
 			return std::make_pair(SpacerFinder::ERR_CODE, SpacerFinder::ERR_CODE);
 		}
 
-		auto spacer_pos = std::make_pair(seq.find(this->spacer), (string::size_type)0);
+		spacer_pos_t spacer_pos = std::make_pair(seq.find(this->spacer), (string::size_type)0);
 		spacer_pos.second = spacer_pos.first + this->spacer.length();
 		if (spacer_pos.first == SpacerFinder::ERR_CODE)
 		{
@@ -77,7 +77,7 @@ namespace TagsSearch
 		return spacer_pos;
 	}
 
-	std::pair<SpacerFinder::len_t, SpacerFinder::len_t> SpacerFinder::find_spacer_partial(const string &seq)
+	SpacerFinder::spacer_pos_t SpacerFinder::find_spacer_partial(const string &seq)
 	{
 		len_t suffix_pos = seq.rfind(this->spacer_suffix, this->spacer_max_suffix_start);
 		len_t spacer_pos = suffix_pos - this->spacer.length() + this->spacer_suffix.length();

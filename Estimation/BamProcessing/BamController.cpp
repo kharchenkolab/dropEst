@@ -111,7 +111,7 @@ namespace BamProcessing
 			}
 
 			processor->write_alignment(alignment, gene, read_params);
-			processor->save_read(read_params.cell_barcode(), chr_name, read_params.umi_barcode(), gene);
+			processor->save_read(read_params.cell_barcode(), chr_name, read_params.umi(), gene);
 		}
 
 		reader.Close();

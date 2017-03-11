@@ -17,13 +17,19 @@ namespace TagsSearch
 
 		TwoBarcodesCounter counter;
 
-	public:
-		TwoBarcodesTagsFinder(const std::shared_ptr<FilesProcessor> &files_processor,
-							  const boost::property_tree::ptree &barcodes_config,
-							  const boost::property_tree::ptree &config);
+
+	private:
+		std::string parse_cb(const std::string &cb1_seq, const std::string &cb2_seq) const;
 
 	protected:
 		virtual bool parse_fastq_record(FilesProcessor::FastQRecord &record, Tools::ReadParameters &read_params) override;
 		virtual std::string get_additional_stat(long total_reads_read) const override;
+
+	public:
+		TwoBarcodesTagsFinder(const std::shared_ptr<FilesProcessor> &files_processor,
+		                      const boost::property_tree::ptree &barcodes_config,
+		                      const boost::property_tree::ptree &config);
+
+		std::string parse_umi(const std::string &cb2_seq) const;
 	};
 }

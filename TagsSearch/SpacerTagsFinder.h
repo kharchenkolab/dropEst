@@ -21,9 +21,10 @@ namespace TagsSearch
 		SpacerFinder spacer_finder;
 
 	protected:
-		virtual Tools::ReadParameters parse_and_trim(const std::string &r1_seq, const std::string &r2_id,
-													 std::string &r2_seq, std::string &r2_quality_str);
-		virtual bool parse_fastq_record(FilesProcessor::FastQRecord &record, Tools::ReadParameters &read_params) override;
+		virtual Tools::ReadParameters parse(const std::string &r1_seq, const std::string &r1_quality,
+				                                    const SpacerFinder::spacer_pos_t &spacer_pos);
+
+		virtual bool parse_fastq_record(FilesProcessor::FastQRecord &gene_record, Tools::ReadParameters &read_params) override;
 		virtual std::string get_additional_stat(long total_reads_read) const override;
 
 	public:

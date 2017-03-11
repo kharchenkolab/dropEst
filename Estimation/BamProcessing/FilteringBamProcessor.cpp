@@ -56,7 +56,7 @@ namespace Estimation
 				return;
 
 			this->written_reads++;
-			this->save_alignment(alignment, read_params.read_name_safe(), gene, iter->second, read_params.umi_barcode());
+			this->save_alignment(alignment, read_params.read_name_safe(), gene, iter->second, read_params.umi());
 		}
 
 		std::string FilteringBamProcessor::get_result_bam_name(const std::string &bam_name) const

@@ -59,7 +59,7 @@ namespace Estimation
 				return;
 
 			this->save_alignment(alignment, read_params.read_name_safe(), gene,
-								 read_params.cell_barcode(), read_params.umi_barcode());
+								 read_params.cell_barcode(), read_params.umi());
 		}
 	}
 }

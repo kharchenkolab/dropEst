@@ -18,6 +18,7 @@ namespace TagsSearch
 	{
 	public:
 		typedef std::string::size_type len_t;
+		typedef std::pair<len_t, len_t> spacer_pos_t;
 		static const len_t ERR_CODE = std::string::npos;
 
 	private:
@@ -45,7 +46,7 @@ namespace TagsSearch
 
 		SpacerFinder(const boost::property_tree::ptree &config, const std::string& reads_params_file = "");
 
-		std::pair<len_t, len_t> find_spacer(const std::string& seq);
+		spacer_pos_t find_spacer(const std::string& seq);
 
 		std::string parse_cell_barcode(const std::string& seq, len_t spacer_start, len_t spacer_end) const;
 		std::string parse_umi_barcode(const std::string& seq, len_t spacer_end) const;
@@ -54,6 +55,6 @@ namespace TagsSearch
 		const OutcomesCounter& get_outcomes_counter() const;
 
 	private:
-		std::pair<len_t, len_t> find_spacer_partial(const std::string& seq);
+		spacer_pos_t find_spacer_partial(const std::string& seq);
 	};
 }

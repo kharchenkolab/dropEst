@@ -42,7 +42,7 @@ namespace TagsSearch
 		MultiSpacerOutcomesCounter outcomes;
 
 	private:
-		size_t parse(const std::string &r1_seq, const std::string &r2_id, Tools::ReadParameters &read_params);
+		size_t parse(const std::string &r1_seq, const std::string &r1_quality, Tools::ReadParameters &read_params);
 
 		static std::vector<MaskPart> parse_mask(const std::string& barcode_mask, const std::string& edit_dist_str);
 		static size_t parse_barcode_mask(const std::string &mask, size_t cur_pos, MaskPart &mask_part);

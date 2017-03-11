@@ -1,13 +1,13 @@
 #include "TagsFinderBase.h"
 
+#include "Tools/Logs.h"
+#include "Tools/ReadParameters.h"
+#include "Tools/UtilFunctions.h"
+
 #include <fstream>
 #include <iomanip>
 #include <limits>
 #include <sstream>
-
-#include "Tools/Logs.h"
-#include "Tools/ReadParameters.h"
-#include "Tools/UtilFunctions.h"
 
 namespace TagsSearch
 {
@@ -43,19 +43,14 @@ namespace TagsSearch
 
 			++parsed_reads;
 
-			std::string text;
-			std::string new_id = "@" + file_uid + std::to_string(total_reads_read);
+			std::string read_prefix = "@" + file_uid + std::to_string(total_reads_read);
 			if (save_reads_names)
 			{
-				text = new_id;
-				this->files_processor->write_read_params(new_id, params);
-			}
-			else
-			{
-				text = params.to_monolithic_string(new_id);
+				this->files_processor->write_read_params(read_prefix, params);
 			}
 
-			text += "\n" + r2_record.sequence + "\n" + r2_record.description + "\n" + r2_record.quality + "\n";
+			std::string text = params.encoded_id(read_prefix) + "\n" + r2_record.sequence + "\n" +
+					r2_record.description + "\n" + r2_record.quality + "\n";
 
 			bool new_file = this->files_processor->write(text, this->max_reads);
 			if (new_file)

@@ -106,7 +106,7 @@ namespace TagsSearch
 		if (record.id.empty())
 			throw std::runtime_error("File '" + this->files_processor->filename(1) + "', read '" + record.id + "': fastq ended prematurely!");
 
-		size_t seq_end = this->parse(f1_rec.sequence, record.id, read_params);
+		size_t seq_end = this->parse(f1_rec.sequence, f1_rec.quality, read_params);
 		if (seq_end == std::string::npos)
 		{
 			read_params = Tools::ReadParameters();
@@ -117,10 +117,10 @@ namespace TagsSearch
 		return true;
 	}
 
-	size_t FixPosSpacerTagsFinder::parse(const std::string &r1_seq, const std::string &r2_id, Tools::ReadParameters &read_params)
+	size_t FixPosSpacerTagsFinder::parse(const std::string &r1_seq, const std::string &r1_quality, Tools::ReadParameters &read_params)
 	{
 		size_t cur_pos = 0, spacer_ind = 0;
-		std::string cb, umi;
+		std::string cb, umi, cb_quality, umi_quality;
 		for (auto const &mask_part : this->_mask_parts)
 		{
 			if (cur_pos + mask_part.length > r1_seq.length())
@@ -133,6 +133,7 @@ namespace TagsSearch
 			{
 				case MaskPart::CB:
 					cb += r1_seq.substr(cur_pos, mask_part.length);
+					cb_quality += r1_quality.substr(cur_pos, mask_part.length);
 					break;
 				case MaskPart::SPACER:
 					if (Tools::edit_distance(mask_part.spacer.c_str(), r1_seq.substr(cur_pos, mask_part.length).c_str()) > mask_part.min_edit_distance)
@@ -144,6 +145,7 @@ namespace TagsSearch
 					break;
 				case MaskPart::UMI:
 					umi += r1_seq.substr(cur_pos, mask_part.length);
+					umi_quality += r1_quality.substr(cur_pos, mask_part.length);
 					break;
 				default:
 					throw std::runtime_error("Unexpected MaskPart type: " + std::to_string(mask_part.type));
@@ -152,7 +154,7 @@ namespace TagsSearch
 		}
 
 		this->outcomes.inc(MultiSpacerOutcomesCounter::OK);
-		read_params = Tools::ReadParameters(r2_id, cb, umi);
+		read_params = Tools::ReadParameters(cb, umi, cb_quality, umi_quality);
 		return cur_pos;
 	}
 

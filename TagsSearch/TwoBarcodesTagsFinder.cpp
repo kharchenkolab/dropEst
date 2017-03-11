@@ -41,14 +41,27 @@ namespace TagsSearch
 		}
 
 		this->counter.inc(TwoBarcodesCounter::OK);
-		std::string cb1 = cb1_rec.sequence.substr(0, this->barcode1_length);
-		std::string cb2 = cb2_rec.sequence.substr(0, this->barcode2_length);
-		std::string umi = cb2_rec.sequence.substr(this->barcode2_length, this->umi_length);
+		std::string cb = this->parse_cb(cb1_rec.sequence, cb2_rec.sequence);
+		std::string umi = this->parse_umi(cb2_rec.sequence);
+		std::string cb_quality = this->parse_cb(cb1_rec.quality, cb2_rec.quality);
+		std::string umi_quality = this->parse_umi(cb2_rec.quality);
 
 		std::string tail = cb2_rec.sequence.substr(this->barcode2_length + this->umi_length - this->trim_tail_length, this->trim_tail_length);
 		this->trim(tail, record.sequence, record.quality);
-		read_params = Tools::ReadParameters(record.id, cb1 + cb2, umi);
+		read_params = Tools::ReadParameters(cb, umi, cb_quality, umi_quality);
 		return true;
+	}
+
+	std::string TwoBarcodesTagsFinder::parse_umi(const std::string &cb2_seq) const
+	{
+		return cb2_seq.substr(this->barcode2_length, this->umi_length);
+	}
+
+	std::string TwoBarcodesTagsFinder::parse_cb(const std::string &cb1_seq, const std::string &cb2_seq) const
+	{
+		std::string cb1 = cb1_seq.substr(0, this->barcode1_length);
+		std::string cb2 = cb2_seq.substr(0, this->barcode2_length);
+		return cb1 + cb2;
 	}
 
 	std::string TwoBarcodesTagsFinder::get_additional_stat(long total_reads_read) const

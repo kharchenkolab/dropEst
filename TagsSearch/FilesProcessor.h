@@ -53,6 +53,6 @@ namespace TagsSearch
 		FastQRecord get_fastq_record(size_t index);
 
 		bool write(const std::string &text, size_t max_reads);
-		void write_read_params(const std::string &id, const Tools::ReadParameters &read_params);
+		void write_read_params(const std::string &id_prefix, const Tools::ReadParameters &read_params);
 	};
 }
