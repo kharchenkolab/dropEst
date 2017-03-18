@@ -7,11 +7,12 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/filesystem/path.hpp>
+#include <TagsSearch/IndropV3LibsTagsFinder.h>
 
 #include "TagsSearch/FixPosSpacerTagsFinder.h"
 #include "TagsSearch/SpacerTagsFinder.h"
-#include "TagsSearch/TagsFinderBase.h"
-#include "TagsSearch/TwoBarcodesTagsFinder.h"
+#include "TagsSearch/TagsFinderAbstract.h"
+#include "TagsSearch/IndropV3TagsFinder.h"
 
 #include "Tools/Logs.h"
 
@@ -25,6 +26,7 @@ struct Params
 	bool save_reads_names = false;
 	string base_name = "";
 	string log_prefix = "";
+	string lib_tag = "";
 	string config_file_name = "";
 	vector<string> read_files = vector<string>();
 };
@@ -34,30 +36,44 @@ static void usage()
 	cerr << "\tindroptag -- generate tagged indrop fastq files for alignment\n";
 	cerr << "SYNOPSIS\n";
 	cerr << "\tindroptag [-n|--name baseName] [-v|--verbose] [-s|--save-reads-names] [-l, --log-prefix logs_name] "
-					<< "-c config.xml read_1.fastq read_2.fastq [read_3.fastq]\n";
+					<< "-c config.xml read_1.fastq read_2.fastq [read_3.fastq] [library_tags.fastq]\n";
 	cerr << "OPTIONS:\n";
 	cerr << "\t-c, --config filename: xml file with indroptag parameters" << endl;
 	cerr << "\t-l, --log-prefix : logs prefix" << endl;
 	cerr << "\t-n, --name BASE_NAME specify alternative output base name\n";
 	cerr << "\t-s, --save-reads-names serialize reads parameters to save names\n";
+	cerr << "\t-t, --lib-tag library tag (for IndropV3 with library tag only)\n";
 	cerr << "\t-v, --verbose verbose mode\n";
 }
 
-shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const boost::property_tree::ptree &pt)
+shared_ptr<TagsFinderAbstract> get_tags_finder(const Params &params, const boost::property_tree::ptree &pt)
 {
 	auto files_processor = make_shared<FilesProcessor>(params.read_files, params.base_name, params.save_reads_names);
 
+	if (params.read_files.size() == 4)
+	{
+		if (params.lib_tag == "")
+			throw std::runtime_error("For IndropV3 with library tag, tag (-t option) should be specified");
+
+		return shared_ptr<TagsFinderAbstract>(new IndropV3LibsTagsFinder(files_processor, params.lib_tag, 2, //TODO to parameters
+		                                                                 pt.get_child("config.TagsSearch.BarcodesSearch"),
+		                                                                 pt.get_child("config.TagsSearch.TailTrimming")));
+	}
+
 	if (params.read_files.size() == 3)
-		return shared_ptr<TagsFinderBase>(new TwoBarcodesTagsFinder(files_processor,
+		return shared_ptr<TagsFinderAbstract>(new IndropV3TagsFinder(files_processor,
 																	pt.get_child("config.TagsSearch.BarcodesSearch"),
 																	pt.get_child("config.TagsSearch.TailTrimming")));
 
+	if (params.read_files.size() != 2)
+		throw std::runtime_error("Unexpected number of read files: " + std::to_string(params.read_files.size()));
+
 	if (pt.get<std::string>("config.TagsSearch.SpacerSearch.barcode_mask", "") != "")
-		return shared_ptr<TagsFinderBase>(new FixPosSpacerTagsFinder(files_processor,
+		return shared_ptr<TagsFinderAbstract>(new FixPosSpacerTagsFinder(files_processor,
 																	 pt.get_child("config.TagsSearch.SpacerSearch"),
 																	 pt.get_child("config.TagsSearch.TailTrimming")));
 
-	return shared_ptr<TagsFinderBase>(new SpacerTagsFinder(files_processor,
+	return shared_ptr<TagsFinderAbstract>(new SpacerTagsFinder(files_processor,
 														   pt.get_child("config.TagsSearch.SpacerSearch"),
 														   pt.get_child("config.TagsSearch.TailTrimming")));
 }
@@ -72,6 +88,7 @@ Params parse_cmd_params(int argc, char **argv)
 			{"log-prefix", required_argument, 0, 'l'},
 			{"name",       required_argument, 0, 'n'},
 			{"save-reads-names",    no_argument,       0, 's'},
+			{"lib-tag",    required_argument, 0, 't'},
 			{"verbose",    no_argument,       0, 'v'},
 			{0, 0,                            0, 0}
 	};
@@ -93,6 +110,9 @@ Params parse_cmd_params(int argc, char **argv)
 			case 's' :
 				params.save_reads_names = true;
 				break;
+			case 't' :
+				params.lib_tag= string(optarg);
+				break;
 			case 'v' :
 				params.verbose = true;
 				break;
@@ -110,9 +130,9 @@ Params parse_cmd_params(int argc, char **argv)
 		params.cant_parse = true;
 	}
 
-	if (optind != argc - 3 && optind != argc - 2)
+	if (optind == argc)
 	{
-		cerr << "indroptag: two or three read files must be provided" << endl;
+		cerr << "indroptag: read files must be supplied" << endl;
 		usage();
 		params.cant_parse = true;
 		return params;
@@ -156,11 +176,11 @@ int main(int argc, char **argv)
 	boost::property_tree::ptree pt;
 	read_xml(params.config_file_name, pt);
 
-	shared_ptr<TagsFinderBase> finder = get_tags_finder(params, pt);
-
 	time_t ctt = time(0);
 	try
 	{
+		shared_ptr<TagsFinderAbstract> finder = get_tags_finder(params, pt);
+
 		L_TRACE << "Run: " << asctime(localtime(&ctt));
 		finder->run(params.save_reads_names);
 		ctt = time(0);

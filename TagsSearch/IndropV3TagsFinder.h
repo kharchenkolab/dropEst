@@ -5,7 +5,7 @@
 
 namespace TagsSearch
 {
-	class TwoBarcodesTagsFinder : public TagsFinderBase
+	class IndropV3TagsFinder : public TagsFinderBase
 	{
 	private:
 		typedef std::string::size_type len_t;
@@ -26,7 +26,7 @@ namespace TagsSearch
 		virtual std::string get_additional_stat(long total_reads_read) const override;
 
 	public:
-		TwoBarcodesTagsFinder(const std::shared_ptr<FilesProcessor> &files_processor,
+		IndropV3TagsFinder(const std::shared_ptr<FilesProcessor> &files_processor,
 		                      const boost::property_tree::ptree &barcodes_config,
 		                      const boost::property_tree::ptree &config);
 

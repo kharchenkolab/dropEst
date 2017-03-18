@@ -1,8 +1,8 @@
-#include "TwoBarcodesTagsFinder.h"
+#include "IndropV3TagsFinder.h"
 
 namespace TagsSearch
 {
-	TwoBarcodesTagsFinder::TwoBarcodesTagsFinder(const std::shared_ptr<FilesProcessor> &files_processor,
+	IndropV3TagsFinder::IndropV3TagsFinder(const std::shared_ptr<FilesProcessor> &files_processor,
 												 const boost::property_tree::ptree &barcodes_config,
 												 const boost::property_tree::ptree &config)
 			: TagsFinderBase(files_processor, config)
@@ -12,7 +12,7 @@ namespace TagsSearch
 			, trim_tail_length(std::min(barcodes_config.get<size_t>("r1_rc_length"), barcode2_length + umi_length))
 	{}
 
-	bool TwoBarcodesTagsFinder::parse_fastq_record(FilesProcessor::FastQRecord &record, Tools::ReadParameters &read_params)
+	bool IndropV3TagsFinder::parse_fastq_record(FilesProcessor::FastQRecord &record, Tools::ReadParameters &read_params)
 	{
 		auto cb1_rec = this->files_processor->get_fastq_record(0);
 		if (cb1_rec.id.empty())
@@ -52,19 +52,19 @@ namespace TagsSearch
 		return true;
 	}
 
-	std::string TwoBarcodesTagsFinder::parse_umi(const std::string &cb2_seq) const
+	std::string IndropV3TagsFinder::parse_umi(const std::string &cb2_seq) const
 	{
 		return cb2_seq.substr(this->barcode2_length, this->umi_length);
 	}
 
-	std::string TwoBarcodesTagsFinder::parse_cb(const std::string &cb1_seq, const std::string &cb2_seq) const
+	std::string IndropV3TagsFinder::parse_cb(const std::string &cb1_seq, const std::string &cb2_seq) const
 	{
 		std::string cb1 = cb1_seq.substr(0, this->barcode1_length);
 		std::string cb2 = cb2_seq.substr(0, this->barcode2_length);
 		return cb1 + cb2;
 	}
 
-	std::string TwoBarcodesTagsFinder::get_additional_stat(long total_reads_read) const
+	std::string IndropV3TagsFinder::get_additional_stat(long total_reads_read) const
 	{
 		return this->counter.print(total_reads_read);
 	}

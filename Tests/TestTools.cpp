@@ -41,6 +41,7 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 	{
 		BOOST_CHECK_EQUAL(Tools::edit_distance("ATTTTC", "ATTTGC"), 1);
 		BOOST_CHECK_EQUAL(Tools::edit_distance("ATTTTCC", "ATTTGNC"), 1);
+		BOOST_CHECK_EQUAL(Tools::edit_distance("ATTTTCC", "ATTTGNC", false), 2);
 		BOOST_CHECK_EQUAL(Tools::edit_distance("ATTTTCC", "ATTTGTC"), 2);
 		BOOST_CHECK_EQUAL(Tools::edit_distance("ATTTTCC", "ATTTTCC"), 0);
 	}

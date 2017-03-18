@@ -1,8 +1,9 @@
 #pragma once
 
-#include "SpacerFinder.h"
 #include "Counters/TrimsCounter.h"
 #include "FilesProcessor.h"
+#include "SpacerFinder.h"
+#include "TagsFinderAbstract.h"
 
 #include <string>
 
@@ -22,7 +23,7 @@ namespace TagsSearch
 {
 	class FilesProcessor;
 
-	class TagsFinderBase
+	class TagsFinderBase : public TagsFinderAbstract
 	{
 		friend struct TestTagsSearch::test1;
 
@@ -48,6 +49,6 @@ namespace TagsSearch
 	public:
 		TagsFinderBase(std::shared_ptr<FilesProcessor> files_processor, const boost::property_tree::ptree &config);
 
-		void run(bool save_reads_names);
+		virtual void run(bool save_reads_names) override;
 	};
 }

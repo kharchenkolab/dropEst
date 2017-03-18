@@ -2,7 +2,7 @@
 
 namespace Tools
 {
-	unsigned edit_distance(const char *s1, const char *s2)
+	unsigned edit_distance(const char *s1, const char *s2, bool skip_n)
 	{
 		size_t s1len, s2len;
 		unsigned x, y, lastdiag, olddiag;
@@ -19,12 +19,12 @@ namespace Tools
 			for (y = 1, lastdiag = x - 1; y <= s1len; y++)
 			{
 				olddiag = column[y];
-				column[y] = MIN3(column[y] + 1, column[y - 1] + 1, lastdiag +
-						(s1[y - 1] == s2[x - 1] || s1[y - 1] == 'N' || s2[x - 1] == 'N' ? 0 : 1));
+				int penalty = ((s1[y - 1] == s2[x - 1]) || (skip_n && (s1[y - 1] == 'N' || s2[x - 1] == 'N'))) ? 0 : 1;
+				column[y] = MIN3(column[y] + 1, column[y - 1] + 1, lastdiag + penalty);
 				lastdiag = olddiag;
 			}
 		}
-		return (column[s1len]);
+		return column[s1len];
 	}
 
 	std::string reverse_complement(const std::string &s)
