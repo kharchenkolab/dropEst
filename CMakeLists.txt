@@ -3,8 +3,14 @@ cmake_minimum_required(VERSION 2.8)
 project(cp)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMake")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -m64 -DBOOST_LOG_DYN_LINK -std=c++14")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -gdwarf-2 -g3 -m64 -DBOOST_LOG_DYN_LINK -std=c++14")
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -DBOOST_LOG_DYN_LINK -std=c++14")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -ggdb -gdwarf-2 -g3")
+
+if (NOT "${CMAKE_BUILD_TYPE}" STREQUAL Debug)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+endif (NOT "${CMAKE_BUILD_TYPE}" STREQUAL Debug)
+
 add_definitions(-DPROJ_DATA_PATH=\"${PROJECT_SOURCE_DIR}/data\")
 add_definitions(-DPROJ_BIN_PATH=\"${CMAKE_CURRENT_BINARY_DIR}\")
 
@@ -49,7 +55,6 @@ target_link_libraries(indropest Estimation ${EST_LIBRARIES})
 add_custom_command(TARGET indropest POST_BUILD
         COMMAND cp
         ${CMAKE_SOURCE_DIR}/scripts/Report/*.R ${CMAKE_CURRENT_BINARY_DIR}/)
-
 
 set (TEST_TS TestTagsSearch)
 add_executable (${TEST_TS} ${PROJECT_SOURCE_DIR}/Tests/TestTagsSearch.cpp)

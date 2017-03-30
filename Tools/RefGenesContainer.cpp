@@ -22,23 +22,39 @@ namespace Tools
 		: _is_empty(true)
 	{}
 
-	RefGenesContainer::RefGenesContainer(const std::string &gtf_filename)
+	RefGenesContainer::RefGenesContainer(const std::string &genes_filename)
 		: _is_empty(false)
 	{
-		this->init_from_gtf(gtf_filename);
+		auto wrong_format_exception = std::runtime_error("Wrong genes file format: '" + genes_filename + "'");
+		if (genes_filename.length() < 3)
+			throw wrong_format_exception;
+
+		this->_file_format = genes_filename.substr(genes_filename.length() - 3);
+		if (this->_file_format == ".gz")
+		{
+			if (genes_filename.length() < 6)
+				throw wrong_format_exception;
+
+			this->_file_format = genes_filename.substr(genes_filename.length() - 6, 3);
+		}
+
+		if (this->_file_format != "bed" && this->_file_format != "gtf")
+			throw wrong_format_exception;
+
+		this->init(genes_filename);
 	}
 
-	void RefGenesContainer::init_from_gtf(const std::string &gtf_filename)
+	void RefGenesContainer::init(const std::string &genes_filename)
 	{
 		std::unordered_map<std::string, std::unordered_map<std::string, genes_list_t>> genes_by_chr_by_id;
 
 		std::string record;
-		std::ifstream gtf_in(gtf_filename);
+		std::ifstream gtf_in(genes_filename);
 		if (gtf_in.fail())
-			throw std::runtime_error("Can't open GTF file: '" + gtf_filename + "'");
+			throw std::runtime_error("Can't open GTF file: '" + genes_filename + "'");
 
 		boost::iostreams::filtering_istream gz_fs;
-		if (gtf_filename.substr(gtf_filename.length() - 3) == ".gz")
+		if (genes_filename.substr(genes_filename.length() - 3) == ".gz")
 		{
 			gz_fs.push(boost::iostreams::gzip_decompressor());
 		}
@@ -49,7 +65,14 @@ namespace Tools
 			GeneInfo info;
 			try
 			{
-				info = RefGenesContainer::parse_gtf_record(record);
+				if (this->_file_format == "gtf")
+				{
+					info = RefGenesContainer::parse_gtf_record(record);
+				}
+				else
+				{
+					info = RefGenesContainer::parse_bed_record(record);
+				}
 			}
 			catch (std::runtime_error err)
 			{
@@ -63,7 +86,7 @@ namespace Tools
 			RefGenesContainer::add_gene(info, genes_by_chr_by_id[info.chr_name()][info.id()]);
 		}
 
-		for (auto chr_genes : genes_by_chr_by_id)
+		for (auto const &chr_genes : genes_by_chr_by_id)
 		{
 			if (chr_genes.second.empty())
 				continue;
@@ -223,14 +246,7 @@ namespace Tools
 		if (record.at(0) == '#')
 			return result;
 
-		std::istringstream istr(record);
-
-		std::string column;
-		std::vector<std::string> columns;
-		while (istr >> column)
-		{
-			columns.push_back(column);
-		}
+		std::vector<std::string> columns(RefGenesContainer::split(record));
 
 		if (columns.size() < 9)
 			throw std::runtime_error("Can't parse record: \n" + record);
@@ -255,10 +271,33 @@ namespace Tools
 			}
 		}
 
-		return GeneInfo(columns[0], id, name, strtoul(columns[3].c_str(), NULL, 10), strtoul(columns[4].c_str(), NULL, 10));
+		return GeneInfo(columns[0], id, name, strtoul(columns[3].c_str(), NULL, 10) - 1, strtoul(columns[4].c_str(), NULL, 10));
 	}
 
-	RefGenesContainer::gene_event_t RefGenesContainer::genes_to_events(const genes_vec_t &genes)
+	GeneInfo RefGenesContainer::parse_bed_record(const std::string &record)
+	{
+		GeneInfo result;
+		if (record.at(0) == '#')
+			return result;
+
+		std::vector<std::string> columns(RefGenesContainer::split(record));
+		return GeneInfo(columns[0], columns[3], "", strtoul(columns[1].c_str(), NULL, 10), strtoul(columns[2].c_str(), NULL, 10));
+	}
+
+	std::vector<std::string> RefGenesContainer::split(const std::string &record)
+	{
+		std::istringstream istr(record);
+
+		std::string column;
+		std::vector<std::string> columns;
+		while (istr >> column)
+		{
+			columns.push_back(column);
+		}
+		return columns;
+	}
+
+	RefGenesContainer::gene_events_t RefGenesContainer::genes_to_events(const genes_vec_t &genes)
 	{
 		std::string chr_name;
 		if (!genes.empty())
@@ -266,7 +305,7 @@ namespace Tools
 			chr_name = genes.front().chr_name();
 		}
 
-		gene_event_t events;
+		gene_events_t events;
 		for (auto const &gene : genes)
 		{
 			if (chr_name != gene.chr_name())

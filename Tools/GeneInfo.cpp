@@ -22,7 +22,7 @@ namespace Tools
 
 	bool GeneInfo::is_intercept(const GeneInfo &other) const
 	{
-		return this->start_pos() <= other.end_pos() && this->end_pos() >= other.start_pos();
+		return this->start_pos() <= other.end_pos() && this->end_pos() > other.start_pos();
 	}
 
 	void GeneInfo::merge(const GeneInfo &other)

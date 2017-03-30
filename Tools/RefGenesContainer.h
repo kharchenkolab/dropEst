@@ -15,6 +15,7 @@ namespace TestTools
 	struct testGtf;
 	struct testInitGtf;
 	struct testGeneMerge;
+	struct testParseBed;
 }
 
 namespace Tools
@@ -24,6 +25,7 @@ namespace Tools
 		friend struct TestTools::testGtf;
 		friend struct TestTools::testInitGtf;
 		friend struct TestTools::testGeneMerge;
+		friend struct TestTools::testParseBed;
 
 	public:
 		typedef unsigned long pos_t;
@@ -40,6 +42,8 @@ namespace Tools
 
 	private:
 		typedef std::set<GeneInfo> genes_set;
+
+		/// Intervals are stored in 0-based coordinate system
 		struct Interval
 		{
 			pos_t start_pos;
@@ -48,7 +52,7 @@ namespace Tools
 		};
 
 		typedef std::list<GeneInfo> genes_list_t;
-		typedef std::multimap<pos_t, const GeneInfo*> gene_event_t;
+		typedef std::multimap<pos_t, const GeneInfo*> gene_events_t;
 		typedef std::vector<GeneInfo> genes_vec_t;
 		typedef std::vector<Interval> intervals_vec_t;
 		typedef std::unordered_map<std::string, intervals_vec_t> intervals_map_t;
@@ -60,21 +64,31 @@ namespace Tools
 		intervals_map_t _genes_intervals;
 		std::unordered_set<std::string> _single_gene_names;
 		bool _is_empty;
+		std::string _file_format;
 
 
 	private:
-		void init_from_gtf(const std::string &gtf_filename);
+		void init(const std::string &genes_filename);
 		static void add_gene(GeneInfo &gene, genes_list_t &genes);
 		static GeneInfo parse_gtf_record(const std::string &record);
+		static GeneInfo parse_bed_record(const std::string &record);
+		static std::vector<std::string> split(const std::string &record);
+
 		GeneInfo accumulate_genes(const genes_set &genes) const;
 
-		static gene_event_t genes_to_events(const genes_vec_t &genes);
+		static gene_events_t genes_to_events(const genes_vec_t &genes);
 
 		intervals_vec_t filter_genes(const genes_vec_t &genes);
 
 	public:
 		RefGenesContainer();
-		RefGenesContainer(const std::string &gtf_filename);
+		RefGenesContainer(const std::string &genes_filename);
+
+		/// Get genes, intersected requested interval
+		/// \param chr_name chromosome name
+		/// \param start_pos start position in 0-based coordinate system (inclusive)
+		/// \param end_pos end position in 0-based coordinate system (exclusive)
+		/// \return
 		GeneInfo get_gene_info(const std::string &chr_name, pos_t start_pos, pos_t end_pos) const;
 		bool is_empty() const;
 
