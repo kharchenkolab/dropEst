@@ -16,7 +16,7 @@
 namespace Tools
 {
 	const int RefGenesContainer::min_interval_len = 5;
-	const double RefGenesContainer::read_intersection_significant_part = 0.5;
+	const double RefGenesContainer::read_intersection_significant_part = 0.0; // TODO: it doesn't work because of single-nucleotide queries in ReadsParamsParser
 
 	RefGenesContainer::RefGenesContainer()
 		: _is_empty(true)
@@ -230,8 +230,7 @@ namespace Tools
 		for (auto const &gene : intercepted_genes)
 		{
 			double intercept_len = std::min(gene.end_pos(), end_pos) - std::max(gene.start_pos(), start_pos);
-			if (intercept_len / gene.size() >= RefGenesContainer::read_intersection_significant_part ||
-					intercept_len / read_len >= RefGenesContainer::read_intersection_significant_part)
+			if (intercept_len / std::min(gene.size(), read_len) > RefGenesContainer::read_intersection_significant_part)
 			{
 				res_genes.insert(gene);
 			}

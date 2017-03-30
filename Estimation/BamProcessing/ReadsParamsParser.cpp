@@ -25,8 +25,23 @@ namespace BamProcessing
 	std::string ReadsParamsParser::get_gene(const std::string &chr_name, BamTools::BamAlignment alignment) const
 	{
 		if (!this->_genes_container.is_empty())
-			return this->_genes_container.get_gene_info(chr_name, alignment.Position,
-														alignment.Position + alignment.Length).name();
+		{
+			// TODO: parse CIGAR
+			std::string gene1 = this->_genes_container.get_gene_info(chr_name, alignment.Position, alignment.Position + 1).name();
+			int end_position = alignment.GetEndPosition();
+			std::string gene2 = this->_genes_container.get_gene_info(chr_name, end_position - 1, end_position).name();
+
+			if (gene1 == "")
+				return gene2;
+
+			if (gene2 == "")
+				return gene1;
+
+			if (gene1 != gene2)
+				return "";
+
+			return gene1;
+		}
 
 		std::string gene;
 		if (!alignment.GetTag(BamController::GENE_TAG, gene))
@@ -35,11 +50,11 @@ namespace BamProcessing
 		return gene;
 	}
 
-	ReadsParamsParser::ReadsParamsParser(const std::string &gtf_path)
+	ReadsParamsParser::ReadsParamsParser(const std::string &genes_filename)
 	{
-		if (gtf_path.length() != 0)
+		if (genes_filename.length() != 0)
 		{
-			this->_genes_container = Tools::RefGenesContainer(gtf_path);
+			this->_genes_container = Tools::RefGenesContainer(genes_filename);
 		}
 	}
 }

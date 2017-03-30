@@ -59,7 +59,7 @@ namespace Tools
 
 	private:
 		static const int min_interval_len;
-		static const double read_intersection_significant_part;
+		static const double read_intersection_significant_part; // TODO: move to parameter
 
 		intervals_map_t _genes_intervals;
 		std::unordered_set<std::string> _single_gene_names;

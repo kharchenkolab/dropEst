@@ -35,7 +35,7 @@ struct Params
 	string barcodes_filename = "";
 	string config_file_name = "";
 	string genesets_rds = "";
-	string gtf_filename = "";
+	string genes_filename = "";
 	string log_prefix = "";
 	string output_name = "";
 	string reads_params_names_str = "";
@@ -53,8 +53,8 @@ static void check_files_existence(const Params &params, const vector<string> &ba
 	if (params.genesets_rds != "" && !std::ifstream(params.genesets_rds))
 		throw std::runtime_error("Can't open genesets file '" + params.genesets_rds + "'");
 
-	if (params.gtf_filename != "" && !std::ifstream(params.gtf_filename))
-		throw std::runtime_error("Can't open GTF file '" + params.gtf_filename + "'");
+	if (params.genes_filename != "" && !std::ifstream(params.genes_filename))
+		throw std::runtime_error("Can't open genes file '" + params.genes_filename + "'");
 
 	if (params.reads_params_names_str != "" && !std::ifstream(params.reads_params_names_str))
 		throw std::runtime_error("Can't open reads file '" + params.reads_params_names_str + "'");
@@ -71,7 +71,7 @@ static void usage()
 	cerr << "\tindropest: estimate molecular counts per cell" << endl; // Add genes count from config
 	cerr << "SYNOPSIS\n";
 	cerr <<
-	"\tindropest [-t, --text-output] [-m|--merge-cell-tags] [-v|--verbose] [-n | --not-filtered] [-g | --gtf filename]"
+	"\tindropest [-t, --text-output] [-m|--merge-cell-tags] [-v|--verbose] [-n | --not-filtered] [-g | --genes filename]"
 	"[-l, --log-prefix logs_name] [-r, --reads-params filename] -c config.xml file1.bam [file2.bam ...] "
 	"[-b | --bam-output] [-B | --barcodes filename] [-f, --filled-bam] [-F, --filtered-bam]" << endl;
 	cerr << "OPTIONS:\n";
@@ -80,7 +80,7 @@ static void usage()
 	cerr << "\t-c, --config filename: xml file with estimation parameters" << endl;
 	cerr << "\t-f, --filled-bam: bam file already contains genes/barcodes tags" << endl;
 	cerr << "\t-F, --filtered-bam: print tagged bam file after the merge and filtration" << endl;
-	cerr << "\t-g, --gtf filename: gtf file with genes annotations" << endl;
+	cerr << "\t-g, --genes filename: file with genes annotations (.bed or .gtf)" << endl;
 	cerr << "\t-l, --log-prefix : logs prefix" << endl;
 	cerr << "\t-m, --merge-cell-tags : merge linked cell tags" << endl;
 	cerr << "\t-n, --not-filtered : print data for all cells" << endl;
@@ -105,7 +105,7 @@ static Params parse_cmd_params(int argc, char **argv)
 			{"filled-bam",     	no_argument,       0, 'f'},
 			{"filtered-bam",    no_argument,		0, 'F'},
 			{"genesets_rds",	required_argument, 0, 'G'},
-			{"gtf",     		required_argument, 0, 'g'},
+			{"genes",     		required_argument, 0, 'g'},
 			{"log-prefix",		required_argument, 0, 'l'},
 			{"merge-cell-tags", no_argument,       0, 'm'},
 			{"not-filtered",	no_argument, 	   0, 'n'},
@@ -140,7 +140,7 @@ static Params parse_cmd_params(int argc, char **argv)
 				params.genesets_rds = string(optarg);
 				break;
 			case 'g' :
-				params.gtf_filename = string(optarg);
+				params.genes_filename = string(optarg);
 				break;
 			case 'l' :
 				params.log_prefix = string(optarg);
@@ -261,12 +261,12 @@ int main(int argc, char **argv)
 		Tools::trace_time("Run");
 		Estimator estimator(pt.get_child("config.Estimation"), params.merge_tags, params.barcodes_filename);
 		CellsDataContainer container = estimator.get_cells_container(files, params.bam_output, params.filled_bam,
-																	 params.reads_params_names_str, params.gtf_filename);
+																	 params.reads_params_names_str, params.genes_filename);
 
 		if (params.filtered_bam_output)
 		{
 			BamProcessing::BamController::write_filtered_bam_files(files, params.filled_bam, params.reads_params_names_str,
-																   params.gtf_filename, container);
+																   params.genes_filename, container);
 		}
 
 		{
