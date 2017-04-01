@@ -33,8 +33,8 @@ namespace BamProcessing
 		return true;
 	}
 
-	FilledBamParamsParser::FilledBamParamsParser(const std::string &gtf_path)
-			: ReadsParamsParser(gtf_path)
+	FilledBamParamsParser::FilledBamParamsParser(const std::string &gtf_path, bool exons_only)
+			: ReadsParamsParser(gtf_path, exons_only)
 	{}
 }
 }

@@ -30,20 +30,21 @@ namespace Estimation
 
 			static std::shared_ptr<ReadsParamsParser> get_parser(bool filled_bam, bool save_read_names,
 																 const std::string &reads_params_names_str,
-																 const std::string &gtf_path);
+																 const std::string &gtf_path, bool exons_only);
 
 			static void process_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams,
 										  bool filled_bam, const std::string &reads_params_names_str,
-										  const std::string &gtf_path, std::shared_ptr<BamProcessorAbstract> processor);
+										  const std::string &gtf_path, std::shared_ptr<BamProcessorAbstract> processor,
+										  bool exons_only);
 
 		public:
 			static void parse_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams,
 										bool filled_bam, const std::string &reads_params_names_str,
-										const std::string &gtf_path, CellsDataContainer &container);
+										const std::string &gtf_path, CellsDataContainer &container, bool exons_only);
 
 			static void write_filtered_bam_files(const std::vector<std::string> &bam_files,
 										bool filled_bam, const std::string &reads_params_names_str,
-										const std::string &gtf_path, const CellsDataContainer &container);
+										const std::string &gtf_path, const CellsDataContainer &container, bool exons_only);
 		};
 	}
 }
