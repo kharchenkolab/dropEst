@@ -14,6 +14,7 @@
 #include <Estimation/Merge/RealBarcodesMergeStrategy.h>
 #include <Estimation/Merge/BarcodesParsing/InDropBarcodesParser.h>
 #include <Estimation/Merge/BarcodesParsing/ConstLengthBarcodesParser.h>
+#include <Estimation/BamProcessing/ReadsParamsParser.h>
 
 using namespace Estimation;
 
@@ -270,5 +271,25 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 		BOOST_CHECK_EQUAL(map["AAA"]["BBB"], 10);
 		BOOST_CHECK_EQUAL(map["CCC"]["BBB"], 20);
+	}
+
+	BOOST_FIXTURE_TEST_CASE(testGeneMatchLevel, Fixture)
+	{
+		BamTools::BamAlignment align1;
+		align1.Position = 34610;
+		align1.Length = 10;
+		align1.CigarData.push_back(BamTools::CigarOp('M', 10));
+		BamProcessing::ReadsParamsParser parser0(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", 0);
+		BamProcessing::ReadsParamsParser parser1(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", 1);
+		BamProcessing::ReadsParamsParser parser2(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", 2);
+
+		BOOST_CHECK_EQUAL(parser0.get_gene("chrX", align1), "FAM138A");
+		BOOST_CHECK_EQUAL(parser1.get_gene("chrX", align1), "");
+		BOOST_CHECK_EQUAL(parser2.get_gene("chrX", align1), "FAM138A");
+
+		align1.Position = 34600;
+		BOOST_CHECK_EQUAL(parser0.get_gene("chrX", align1), "FAM138A");
+		BOOST_CHECK_EQUAL(parser1.get_gene("chrX", align1), "FAM138A");
+		BOOST_CHECK_EQUAL(parser2.get_gene("chrX", align1), "");
 	}
 BOOST_AUTO_TEST_SUITE_END()
