@@ -14,12 +14,20 @@ namespace Estimation
 	{
 		class ReadsParamsParser
 		{
+		public:
+			enum GeneMatchLevel
+			{
+				ANY,
+				ONE,
+				BOTH,
+				SIZE
+			};
 		private:
 			Tools::RefGenesContainer _genes_container;
-			bool _exons_only;
+			int _gene_match_level;
 
 		public:
-			ReadsParamsParser(const std::string &genes_filename, bool exons_only = false);
+			ReadsParamsParser(const std::string &genes_filename, int gene_match_level);
 
 			virtual bool get_read_params(const BamTools::BamAlignment &alignment, Tools::ReadParameters &read_params);
 			std::string get_gene(const std::string &chr_name, BamTools::BamAlignment alignment) const;

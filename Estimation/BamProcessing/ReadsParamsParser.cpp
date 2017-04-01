@@ -31,8 +31,11 @@ namespace BamProcessing
 			int end_position = alignment.GetEndPosition();
 			std::string gene2 = this->_genes_container.get_gene_info(chr_name, end_position - 1, end_position).name();
 
-			if (this->_exons_only)
+			if (this->_gene_match_level == GeneMatchLevel::BOTH)
 				return (gene1 == gene2) ? gene1 : "";
+
+			if (this->_gene_match_level == GeneMatchLevel::ONE)
+				return (gene1 == gene2) ? "" : (gene1 == "" ? gene2 : "");
 
 			if (gene1 == "")
 				return gene2;
@@ -53,8 +56,8 @@ namespace BamProcessing
 		return gene;
 	}
 
-	ReadsParamsParser::ReadsParamsParser(const std::string &genes_filename, bool exons_only)
-		: _exons_only(exons_only)
+	ReadsParamsParser::ReadsParamsParser(const std::string &genes_filename, int gene_match_level)
+		: _gene_match_level(gene_match_level)
 	{
 		if (genes_filename.length() != 0)
 		{

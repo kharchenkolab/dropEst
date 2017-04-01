@@ -22,9 +22,9 @@ namespace Estimation
 	}
 
 	Estimator::Estimator(const boost::property_tree::ptree &config, bool merge_tags, const std::string &barcodes_filename,
-	                     bool exons_only)
+	                     int gene_match_level)
 		: merge_strategy(Merge::MergeStrategyFactory::get(config, merge_tags, barcodes_filename))
-		, _exons_only(exons_only)
+		, _gene_match_level(gene_match_level)
 	{}
 
 	Results::IndropResult Estimator::get_results(const CellsDataContainer &container, bool not_filtered, bool reads_output)
@@ -212,7 +212,7 @@ namespace Estimation
 	{
 		CellsDataContainer container(this->merge_strategy, Estimator::top_print_size);
 		BamProcessing::BamController::parse_bam_files(files, bam_output, filled_bam, reads_params_names_str,
-													  gtf_filename, container, this->_exons_only);
+													  gtf_filename, container, this->_gene_match_level);
 
 		container.set_initialized();
 

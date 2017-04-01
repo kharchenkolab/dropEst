@@ -25,7 +25,6 @@ struct Params
 {
 	bool bam_output = false;
 	bool cant_parse = false;
-	bool exons_only = false;
 	bool filled_bam = false;
 	bool filtered_bam_output = false;
 	bool merge_tags = false;
@@ -40,6 +39,7 @@ struct Params
 	string log_prefix = "";
 	string output_name = "";
 	string reads_params_names_str = "";
+	int gene_match_level = 0;
 	int num_of_threads = 1;
 };
 
@@ -79,12 +79,12 @@ static void usage()
 	cerr << "\t-b, --bam-output: print tagged bam files" << endl;
 	cerr << "\t-B, --barcodes: path to barcodes file" << endl; //To config
 	cerr << "\t-c, --config filename: xml file with estimation parameters" << endl;
-	cerr << "\t-e, --exons-only : check that gene is aligned to exons only" << endl;
 	cerr << "\t-f, --filled-bam: bam file already contains genes/barcodes tags" << endl;
 	cerr << "\t-F, --filtered-bam: print tagged bam file after the merge and filtration" << endl;
 	cerr << "\t-g, --genes filename: file with genes annotations (.bed or .gtf)" << endl;
 	cerr << "\t-l, --log-prefix : logs prefix" << endl;
 	cerr << "\t-m, --merge-cell-tags : merge linked cell tags" << endl;
+	cerr << "\t-M, --gene-match-level : 0: any read end could be exonic; 1: only one end could be exonic; 2: both ends should be exonic" << endl;
 	cerr << "\t-n, --not-filtered : print data for all cells" << endl;
 	cerr << "\t-o, --output-file filename : output file name" << endl;
 	cerr << "\t-p, --parallel number_of_threads : number of threads" << endl;
@@ -104,13 +104,13 @@ static Params parse_cmd_params(int argc, char **argv)
 			{"bam-output",     	no_argument, 	   0, 'b'},
 			{"barcodes",     	required_argument, 	   0, 'B'},
 			{"config",     		required_argument, 0, 'c'},
-			{"exons-only",     		no_argument, 0, 'e'},
 			{"filled-bam",     	no_argument,       0, 'f'},
 			{"filtered-bam",    no_argument,		0, 'F'},
 			{"genesets_rds",	required_argument, 0, 'G'},
 			{"genes",     		required_argument, 0, 'g'},
 			{"log-prefix",		required_argument, 0, 'l'},
 			{"merge-cell-tags", no_argument,       0, 'm'},
+			{"gene-match-level",	required_argument, 0, 'M'},
 			{"not-filtered",	no_argument, 	   0, 'n'},
 			{"output-file",     required_argument, 0, 'o'},
 			{"parallel",     required_argument, 0, 'p'},
@@ -120,7 +120,7 @@ static Params parse_cmd_params(int argc, char **argv)
 			{"verbose",         no_argument,       0, 'v'},
 			{0, 0,                                 0, 0}
 	};
-	while ((c = getopt_long(argc, argv, "bB:c:efFG:g:l:mno:p:r:Rtv", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "bB:c:fFG:g:l:mM:no:p:r:Rtv", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -134,7 +134,7 @@ static Params parse_cmd_params(int argc, char **argv)
 				params.config_file_name = string(optarg);
 				break;
 			case 'e' :
-				params.exons_only = true;
+				params.gene_match_level = atoi(optarg);
 				break;
 			case 'f' :
 				params.filled_bam = true;
@@ -212,9 +212,15 @@ static Params parse_cmd_params(int argc, char **argv)
 		params.cant_parse = true;
 	}
 
-	if (params.genes_filename == "" && params.exons_only)
+	if (params.genes_filename == "" && params.gene_match_level > 0)
 	{
 		cerr << "indropset: you should provide genes file (-g option) to use exons annotations" << endl;
+		params.cant_parse = true;
+	}
+
+	if (params.gene_match_level > 3)
+	{
+		cerr << "indropset: gene match level should be < 3" << endl;
 		params.cant_parse = true;
 	}
 
@@ -271,14 +277,14 @@ int main(int argc, char **argv)
 		check_files_existence(params, files);
 
 		Tools::trace_time("Run");
-		Estimator estimator(pt.get_child("config.Estimation"), params.merge_tags, params.barcodes_filename, params.exons_only);
+		Estimator estimator(pt.get_child("config.Estimation"), params.merge_tags, params.barcodes_filename, params.gene_match_level);
 		CellsDataContainer container = estimator.get_cells_container(files, params.bam_output, params.filled_bam,
 																	 params.reads_params_names_str, params.genes_filename);
 
 		if (params.filtered_bam_output)
 		{
 			BamProcessing::BamController::write_filtered_bam_files(files, params.filled_bam, params.reads_params_names_str,
-																   params.genes_filename, container, params.exons_only);
+																   params.genes_filename, container, params.gene_match_level);
 		}
 
 		{
