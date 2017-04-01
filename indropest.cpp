@@ -133,9 +133,6 @@ static Params parse_cmd_params(int argc, char **argv)
 			case 'c' :
 				params.config_file_name = string(optarg);
 				break;
-			case 'e' :
-				params.gene_match_level = atoi(optarg);
-				break;
 			case 'f' :
 				params.filled_bam = true;
 				break;
@@ -153,6 +150,9 @@ static Params parse_cmd_params(int argc, char **argv)
 				break;
 			case 'm' :
 				params.merge_tags = true;
+				break;
+			case 'M' :
+				params.gene_match_level = atoi(optarg);
 				break;
 			case 'n' :
 				params.not_filtered = true;
@@ -176,7 +176,7 @@ static Params parse_cmd_params(int argc, char **argv)
 				params.verbose = true;
 				break;
 			default:
-				cerr << "indropest: unknown arguments passed: '" << c <<"'"  << endl;
+				cerr << "indropest: unknown arguments passed: '" << (char)c <<"'"  << endl;
 				params.cant_parse = true;
 				return params;
 		}
