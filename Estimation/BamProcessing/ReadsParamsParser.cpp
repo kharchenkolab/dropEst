@@ -27,9 +27,15 @@ namespace BamProcessing
 		if (!this->_genes_container.is_empty())
 		{
 			// TODO: parse CIGAR
-			std::string gene1 = this->_genes_container.get_gene_info(chr_name, alignment.Position, alignment.Position + 1).name();
+			auto gene_set1 = this->_genes_container.get_gene_info(chr_name, alignment.Position, alignment.Position + 1);
 			int end_position = alignment.GetEndPosition();
-			std::string gene2 = this->_genes_container.get_gene_info(chr_name, end_position - 1, end_position).name();
+			auto gene_set2 = this->_genes_container.get_gene_info(chr_name, end_position - 1, end_position);
+
+			if (gene_set1.size() > 1 || gene_set2.size() > 1)
+				return "";
+
+			std::string gene1 = gene_set1.empty() ? "" : *gene_set1.begin();
+			std::string gene2 = gene_set2.empty() ? "" : *gene_set2.begin();
 
 			if (this->_gene_match_level == GeneMatchLevel::BOTH)
 			{

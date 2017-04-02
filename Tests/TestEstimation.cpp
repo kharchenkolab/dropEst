@@ -362,4 +362,25 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 		BOOST_CHECK_THROW(container.cell_genes(0).at("FAM138A"), std::out_of_range);
 	}
+
+	BOOST_FIXTURE_TEST_CASE(debugSRR2GenesMatch, Fixture)
+	{
+		using namespace BamProcessing;
+		ReadsParamsParser parser(PROJ_DATA_PATH + (std::string)"/gtf/mm10_genes.gtf.gz", ReadsParamsParser::BOTH);
+		BamTools::BamAlignment align;
+
+		align.Position = 39001582;
+		align.Length = 16;
+		align.CigarData.push_back(BamTools::CigarOp('M', 16));
+		BOOST_CHECK_EQUAL(parser.get_gene("chr2", align), "");
+
+		align.Position = 39001625;
+		align.Length = 36;
+		align.CigarData.front().Length = 36;
+		BOOST_CHECK_EQUAL(parser.get_gene("chr2", align), "Rpl35");
+
+		align.Length = 37;
+		align.CigarData.front().Length = 37;
+		BOOST_CHECK_EQUAL(parser.get_gene("chr2", align), "Rpl35");
+	}
 BOOST_AUTO_TEST_SUITE_END()

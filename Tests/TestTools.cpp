@@ -162,7 +162,7 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][8].genes.size(), 2);
 		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][9].genes.size(), 1);
 		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"].size(), 10);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr2"].size(), 3);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr2"].size(), 5);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testParseBed, Fixture)
@@ -214,18 +214,29 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 		const std::string gtf_filename = PROJ_DATA_PATH + (std::string)("/gtf/gtf_test.gtf.gz");
 		RefGenesContainer genes_container(gtf_filename);
 
-		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 11874, 12627).id(), "DDX11L1");
-		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 17106, 17742).id(), "WASH7P");
-		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 30000, 31000).id(), "");
-		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 34621, 35074).id(), "");
+		RefGenesContainer::gene_names_set_t res;
+		res = genes_container.get_gene_info("chr1", 11874, 12627);
+		BOOST_REQUIRE_EQUAL(res.size(), 1);
+		BOOST_CHECK_EQUAL(*res.begin(), "DDX11L1");
+
+		res = genes_container.get_gene_info("chr1", 17106, 17742);
+		BOOST_REQUIRE_EQUAL(res.size(), 1);
+		BOOST_CHECK_EQUAL(*res.begin(), "WASH7P");
+
+		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 30000, 31000).size(), 0);
+
+		res = genes_container.get_gene_info("chr1", 34621, 35074);
+		BOOST_REQUIRE_EQUAL(res.size(), 2);
+		BOOST_CHECK_EQUAL(*res.begin(), "FAM138A");
+		BOOST_CHECK_EQUAL(*(++res.begin()), "FAM138F");
 //		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 69791, 69793).id(), "AR4F5,BR4F5,OR4F5");
 //		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 50000, 69793).id(), "AR4F5,BR4F5,OR4F5");
 //		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chr1", 35277, 69793).id(), "AR4F5,BR4F5,FAM138A,FAM138F,OR4F5");
-		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chrX", 0, 34608).id(), "");
-		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chrX", 34609, 34612).id(), "FAM138A");
-		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chrX", 34609, 35174).id(), "FAM138A");
-		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chrX", 100000, 110000).name(), "CHRX_GENE,CHRX_GENE2");
-		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chrX", 100000, 130000).name(), "CHRX_GENE,CHRX_GENE2");
+		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chrX", 0, 34608).size(), 0);
+		BOOST_CHECK_EQUAL(*genes_container.get_gene_info("chrX", 34609, 34612).begin(), "FAM138A");
+		BOOST_CHECK_EQUAL(*genes_container.get_gene_info("chrX", 34609, 35174).begin(), "FAM138A");
+//		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chrX", 100000, 110000).name(), "CHRX_GENE,CHRX_GENE2");
+//		BOOST_CHECK_EQUAL(genes_container.get_gene_info("chrX", 100000, 130000).name(), "CHRX_GENE,CHRX_GENE2");
 
 		BOOST_CHECK_THROW(genes_container.get_gene_info("chr3", 0, 100), RefGenesContainer::ChrNotFoundException);
 		BOOST_CHECK_THROW(genes_container.get_gene_info("chrM", 100000, 130000), RefGenesContainer::ChrNotFoundException);

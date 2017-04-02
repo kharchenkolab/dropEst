@@ -29,6 +29,7 @@ namespace Tools
 
 	public:
 		typedef unsigned long pos_t;
+		typedef std::set<std::string> gene_names_set_t;
 
 		class ChrNotFoundException : public std::runtime_error
 		{
@@ -41,14 +42,14 @@ namespace Tools
 		};
 
 	private:
-		typedef std::set<GeneInfo> genes_set;
+		typedef std::set<GeneInfo> genes_set_t;
 
 		/// Intervals are stored in 0-based coordinate system
 		struct Interval
 		{
 			pos_t start_pos;
 			pos_t end_pos;
-			genes_set genes;
+			genes_set_t genes;
 		};
 
 		typedef std::list<GeneInfo> genes_list_t;
@@ -62,6 +63,7 @@ namespace Tools
 		static const double read_intersection_significant_part; // TODO: move to parameter
 
 		intervals_map_t _genes_intervals;
+		[[deprecated("Unused")]]
 		std::unordered_set<std::string> _single_gene_names;
 		bool _is_empty;
 		std::string _file_format;
@@ -74,7 +76,7 @@ namespace Tools
 		static GeneInfo parse_bed_record(const std::string &record);
 		static std::vector<std::string> split(const std::string &record);
 
-		GeneInfo accumulate_genes(const genes_set &genes) const;
+		gene_names_set_t accumulate_genes(const genes_set_t &genes) const;
 
 		static gene_events_t genes_to_events(const genes_vec_t &genes);
 
@@ -89,9 +91,10 @@ namespace Tools
 		/// \param start_pos start position in 0-based coordinate system (inclusive)
 		/// \param end_pos end position in 0-based coordinate system (exclusive)
 		/// \return
-		GeneInfo get_gene_info(const std::string &chr_name, pos_t start_pos, pos_t end_pos) const;
+		gene_names_set_t get_gene_info(const std::string &chr_name, pos_t start_pos, pos_t end_pos) const;
 		bool is_empty() const;
 
-		void save_gene_names(const genes_set &genes_in_interval);
+		[[deprecated("Unused")]]
+		void save_gene_names(const genes_set_t &genes_in_interval);
 	};
 }

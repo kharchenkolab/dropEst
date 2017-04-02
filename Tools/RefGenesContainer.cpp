@@ -15,7 +15,7 @@
 
 namespace Tools
 {
-	const int RefGenesContainer::min_interval_len = 5;
+	const int RefGenesContainer::min_interval_len = 1;
 	const double RefGenesContainer::read_intersection_significant_part = 0.0; // TODO: it doesn't work because of single-nucleotide queries in ReadsParamsParser
 
 	RefGenesContainer::RefGenesContainer()
@@ -146,7 +146,7 @@ namespace Tools
 		intervals_vec_t result; // Interval is a continuous part of a reference with the same genes composition
 
 		pos_t start_pos = 0, end_pos;
-		genes_set cur_genes;
+		genes_set_t cur_genes;
 		for (auto const &event : events)
 		{
 			end_pos = event.first;
@@ -171,41 +171,29 @@ namespace Tools
 		return result;
 	}
 
-	GeneInfo RefGenesContainer::accumulate_genes(const genes_set &genes) const //Some genes are annotated only in pairs.
+	RefGenesContainer::gene_names_set_t RefGenesContainer::accumulate_genes(const genes_set_t &genes) const //Some genes are annotated only in pairs.
 	{
+		gene_names_set_t res;
 		if (genes.empty())
-			return GeneInfo();
+			return res;
 
-		auto gene_it = genes.begin();
-		std::string id = gene_it->id(), name = gene_it->name();
-
-		if (genes.size() > 1 && this->_single_gene_names.find(id) != this->_single_gene_names.end())
-			return GeneInfo();
-
-		const std::string &chr_name = gene_it->chr_name();
-		pos_t end_pos = gene_it->end_pos();
-		while (++gene_it != genes.end())
+		const std::string &chr_name = genes.begin()->chr_name();
+		for (auto const &gene : genes)
 		{
-			if (this->_single_gene_names.find(gene_it->id()) != this->_single_gene_names.end())
-				return GeneInfo();
+			res.insert(gene.name());
 
-			id += "," + gene_it->id();
-			name += "," + gene_it->name();
-
-			if (chr_name != gene_it->chr_name())
+			if (chr_name != gene.chr_name())
 				throw std::runtime_error("Can't use genes from different chromosomes: " + genes.begin()->chr_name() +
-						                         ", " + gene_it->chr_name());
-
-			end_pos = gene_it->end_pos();
+				                         ", " + gene.chr_name());
 		}
 
-		return GeneInfo(genes.begin()->chr_name(), id, name, genes.begin()->start_pos(), end_pos);
+		return res;
 	}
 
-	GeneInfo RefGenesContainer::get_gene_info(const std::string &chr_name, pos_t start_pos, pos_t end_pos) const
+	RefGenesContainer::gene_names_set_t RefGenesContainer::get_gene_info(const std::string &chr_name, pos_t start_pos, pos_t end_pos) const
 	{
 		if (end_pos < start_pos)
-			return GeneInfo();
+			return gene_names_set_t();
 
 		auto current_intervals_it = this->_genes_intervals.find(chr_name);
 		if (current_intervals_it == this->_genes_intervals.end())
@@ -216,16 +204,16 @@ namespace Tools
 											 [](const Interval &interval, pos_t pos){ return interval.end_pos <= pos;});
 
 		if (intercept_it == current_intervals.end() || intercept_it->start_pos > end_pos)
-			return GeneInfo();
+			return gene_names_set_t();
 
-		genes_set intercepted_genes;
+		genes_set_t intercepted_genes;
 		while (intercept_it != current_intervals.end() && intercept_it->start_pos <= end_pos)
 		{
 			intercepted_genes.insert(intercept_it->genes.begin(), intercept_it->genes.end());
 			++intercept_it;
 		}
 
-		genes_set res_genes;
+		genes_set_t res_genes;
 		pos_t read_len = end_pos - start_pos;
 		for (auto const &gene : intercepted_genes)
 		{
@@ -318,7 +306,7 @@ namespace Tools
 		return events;
 	}
 
-	void RefGenesContainer::save_gene_names(const RefGenesContainer::genes_set &genes_in_interval)
+	void RefGenesContainer::save_gene_names(const RefGenesContainer::genes_set_t &genes_in_interval)
 	{
 		if (genes_in_interval.size() != 1)
 			return;
