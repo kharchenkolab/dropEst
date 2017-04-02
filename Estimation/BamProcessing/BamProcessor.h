@@ -14,7 +14,6 @@ namespace Estimation
 		{
 		private:
 			CellsDataContainer &container;
-			CellsDataContainer::s_i_map_t cells_ids;
 			const bool print_bam;
 			size_t total_exonic_reads;
 

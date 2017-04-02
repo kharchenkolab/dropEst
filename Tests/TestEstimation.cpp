@@ -36,30 +36,29 @@ struct Fixture
 		this->container_full = std::make_shared<CellsDataContainer>(this->real_cb_strat, 1);
 
 		Tools::init_test_logs(boost::log::trivial::info);
-		CellsDataContainer::s_i_map_t cells_ids;
-		this->container_full->add_record("AAATTAGGTCCA", "AAACCT", "Gene1", cells_ids); //0, real
-		this->container_full->add_record("AAATTAGGTCCA", "CCCCCT", "Gene2", cells_ids);
-		this->container_full->add_record("AAATTAGGTCCA", "ACCCCT", "Gene3", cells_ids);
-		this->container_full->add_record("AAATTAGGTCCA", "ACCCCT", "Gene4", cells_ids);
+		this->container_full->add_record("AAATTAGGTCCA", "AAACCT", "Gene1"); //0, real
+		this->container_full->add_record("AAATTAGGTCCA", "CCCCCT", "Gene2");
+		this->container_full->add_record("AAATTAGGTCCA", "ACCCCT", "Gene3");
+		this->container_full->add_record("AAATTAGGTCCA", "ACCCCT", "Gene4");
 
-		this->container_full->add_record("AAATTAGGTCCC", "CAACCT", "Gene1", cells_ids); //1, real
-		this->container_full->add_record("AAATTAGGTCCC", "CAACCT", "Gene10", cells_ids);
-		this->container_full->add_record("AAATTAGGTCCC", "CAACCT", "Gene20", cells_ids);
+		this->container_full->add_record("AAATTAGGTCCC", "CAACCT", "Gene1"); //1, real
+		this->container_full->add_record("AAATTAGGTCCC", "CAACCT", "Gene10");
+		this->container_full->add_record("AAATTAGGTCCC", "CAACCT", "Gene20");
 
-		this->container_full->add_record("AAATTAGGTCCG", "CAACCT", "Gene1", cells_ids); //2, false
+		this->container_full->add_record("AAATTAGGTCCG", "CAACCT", "Gene1"); //2, false
 
-		this->container_full->add_record("AAATTAGGTCGG", "AAACCT", "Gene1", cells_ids); //3, false
-		this->container_full->add_record("AAATTAGGTCGG", "CCCCCT", "Gene2", cells_ids);
+		this->container_full->add_record("AAATTAGGTCGG", "AAACCT", "Gene1"); //3, false
+		this->container_full->add_record("AAATTAGGTCGG", "CCCCCT", "Gene2");
 
-		this->container_full->add_record("CCCTTAGGTCCA", "CCATTC", "Gene3", cells_ids); //4, false
-		this->container_full->add_record("CCCTTAGGTCCA", "CCCCCT", "Gene2", cells_ids);
-		this->container_full->add_record("CCCTTAGGTCCA", "ACCCCT", "Gene3", cells_ids);
+		this->container_full->add_record("CCCTTAGGTCCA", "CCATTC", "Gene3"); //4, false
+		this->container_full->add_record("CCCTTAGGTCCA", "CCCCCT", "Gene2");
+		this->container_full->add_record("CCCTTAGGTCCA", "ACCCCT", "Gene3");
 
-		this->container_full->add_record("CAATTAGGTCCG", "CAACCT", "Gene1", cells_ids); //5, false
-		this->container_full->add_record("CAATTAGGTCCG", "AAACCT", "Gene1", cells_ids);
-		this->container_full->add_record("CAATTAGGTCCG", "CCCCCT", "Gene2", cells_ids);
+		this->container_full->add_record("CAATTAGGTCCG", "CAACCT", "Gene1"); //5, false
+		this->container_full->add_record("CAATTAGGTCCG", "AAACCT", "Gene1");
+		this->container_full->add_record("CAATTAGGTCCG", "CCCCCT", "Gene2");
 
-		this->container_full->add_record("AAAAAAAAAAAA", "CCCCCT", "Gene2", cells_ids); //6, false, excluded
+		this->container_full->add_record("AAAAAAAAAAAA", "CCCCCT", "Gene2"); //6, false, excluded
 		this->container_full->set_initialized();
 	}
 
@@ -275,13 +274,14 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 	BOOST_FIXTURE_TEST_CASE(testGeneMatchLevel, Fixture)
 	{
+		using namespace BamProcessing;
 		BamTools::BamAlignment align1;
 		align1.Position = 34610;
 		align1.Length = 10;
 		align1.CigarData.push_back(BamTools::CigarOp('M', 10));
-		BamProcessing::ReadsParamsParser parser0(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", 0);
-		BamProcessing::ReadsParamsParser parser1(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", 1);
-		BamProcessing::ReadsParamsParser parser2(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", 2);
+		ReadsParamsParser parser0(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", ReadsParamsParser::ANY);
+		ReadsParamsParser parser1(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", ReadsParamsParser::ONE);
+		ReadsParamsParser parser2(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", ReadsParamsParser::BOTH);
 
 		BOOST_CHECK_EQUAL(parser0.get_gene("chrX", align1), "FAM138A");
 		BOOST_CHECK_EQUAL(parser1.get_gene("chrX", align1), "");

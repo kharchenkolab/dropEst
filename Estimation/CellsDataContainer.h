@@ -65,7 +65,7 @@ namespace Estimation
 
 		void merge_and_filter();
 
-		size_t add_record(const std::string &cell_barcode, const std::string &umi, const std::string &gene, s_i_map_t &cells_ids);
+		size_t add_record(const std::string &cell_barcode, const std::string &umi, const std::string &gene);
 
 		void merge(size_t source_cell_ind, size_t target_cell_ind);
 

@@ -23,7 +23,7 @@ namespace Estimation
 				return;
 			}
 
-			size_t cell_id = this->container.add_record(cell_barcode, umi, gene, this->cells_ids);
+			size_t cell_id = this->container.add_record(cell_barcode, umi, gene);
 			if (this->container.cell_genes(cell_id).at(gene).at(umi) == 1)
 			{
 				this->container.stats().inc(Stats::EXONE_UMIS_PER_CHR_PER_CELL, cell_barcode, chr_name);
@@ -36,7 +36,7 @@ namespace Estimation
 		void BamProcessor::trace_state(const std::string &trace_prefix) const
 		{
 			L_TRACE << trace_prefix << ": " << this->total_reads() << " total reads; " << this->total_exonic_reads << std::setprecision(3)
-					<< " ("<< (100.0*this->total_exonic_reads / this->total_reads()) <<"%) exonic; " << this->cells_ids.size() << " CBs";
+					<< " ("<< (100.0*this->total_exonic_reads / this->total_reads()) <<"%) exonic; " << this->container.cell_barcodes_raw().size() << " CBs";
 		}
 
 		void BamProcessor::update_bam(const std::string &bam_file, const BamTools::BamReader &reader)

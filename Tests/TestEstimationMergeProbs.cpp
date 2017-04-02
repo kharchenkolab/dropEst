@@ -34,35 +34,34 @@ struct Fixture
 		this->container_full = std::make_shared<CellsDataContainer>(this->real_cb_strat, 1);
 
 		Tools::init_test_logs(boost::log::trivial::info);
-		CellsDataContainer::s_i_map_t cells_ids;
-		this->container_full->add_record("AAATTAGGTCCA", "AAACCT", "Gene1", cells_ids);
-		this->container_full->add_record("AAATTAGGTCCA", "CCCCCT", "Gene2", cells_ids);
-		this->container_full->add_record("AAATTAGGTCCA", "ACCCCT", "Gene3", cells_ids);
+		this->container_full->add_record("AAATTAGGTCCA", "AAACCT", "Gene1");
+		this->container_full->add_record("AAATTAGGTCCA", "CCCCCT", "Gene2");
+		this->container_full->add_record("AAATTAGGTCCA", "ACCCCT", "Gene3");
 
-		this->container_full->add_record("AAATTAGGTCCC", "CAACCT", "Gene1", cells_ids);
+		this->container_full->add_record("AAATTAGGTCCC", "CAACCT", "Gene1");
 
-		this->container_full->add_record("AAATTAGGTCCG", "CAACCT", "Gene1", cells_ids);
+		this->container_full->add_record("AAATTAGGTCCG", "CAACCT", "Gene1");
 
-		this->container_full->add_record("AAATTAGGTCGG", "AAACCT", "Gene1", cells_ids);
-		this->container_full->add_record("AAATTAGGTCGG", "CCCCCT", "Gene2", cells_ids);
+		this->container_full->add_record("AAATTAGGTCGG", "AAACCT", "Gene1");
+		this->container_full->add_record("AAATTAGGTCGG", "CCCCCT", "Gene2");
 
-		this->container_full->add_record("CCCTTAGGTCCA", "CCATTC", "Gene3", cells_ids);
-		this->container_full->add_record("CCCTTAGGTCCA", "CCCCCT", "Gene2", cells_ids);
-		this->container_full->add_record("CCCTTAGGTCCA", "ACCCCT", "Gene3", cells_ids);
+		this->container_full->add_record("CCCTTAGGTCCA", "CCATTC", "Gene3");
+		this->container_full->add_record("CCCTTAGGTCCA", "CCCCCT", "Gene2");
+		this->container_full->add_record("CCCTTAGGTCCA", "ACCCCT", "Gene3");
 
-		this->container_full->add_record("CAATTAGGTCCG", "CAACCT", "Gene1", cells_ids);
-		this->container_full->add_record("CAATTAGGTCCG", "AAACCT", "Gene1", cells_ids);
-		this->container_full->add_record("CAATTAGGTCCG", "CCCCCT", "Gene2", cells_ids);
-		this->container_full->add_record("CAATTAGGTCCG", "TTTTTT", "Gene2", cells_ids);
-		this->container_full->add_record("CAATTAGGTCCG", "TTCTTT", "Gene2", cells_ids);
+		this->container_full->add_record("CAATTAGGTCCG", "CAACCT", "Gene1");
+		this->container_full->add_record("CAATTAGGTCCG", "AAACCT", "Gene1");
+		this->container_full->add_record("CAATTAGGTCCG", "CCCCCT", "Gene2");
+		this->container_full->add_record("CAATTAGGTCCG", "TTTTTT", "Gene2");
+		this->container_full->add_record("CAATTAGGTCCG", "TTCTTT", "Gene2");
 
-		this->container_full->add_record("CCCCCCCCCCCC", "CAACCT", "Gene1", cells_ids);
-		this->container_full->add_record("CCCCCCCCCCCC", "AAACCT", "Gene1", cells_ids);
-		this->container_full->add_record("CCCCCCCCCCCC", "CCCCCT", "Gene2", cells_ids);
-		this->container_full->add_record("CCCCCCCCCCCC", "TTTTTT", "Gene2", cells_ids);
-		this->container_full->add_record("CCCCCCCCCCCC", "TTCTTT", "Gene2", cells_ids);
+		this->container_full->add_record("CCCCCCCCCCCC", "CAACCT", "Gene1");
+		this->container_full->add_record("CCCCCCCCCCCC", "AAACCT", "Gene1");
+		this->container_full->add_record("CCCCCCCCCCCC", "CCCCCT", "Gene2");
+		this->container_full->add_record("CCCCCCCCCCCC", "TTTTTT", "Gene2");
+		this->container_full->add_record("CCCCCCCCCCCC", "TTCTTT", "Gene2");
 
-		this->container_full->add_record("TAATTAGGTCCA", "AAAAAA", "Gene4", cells_ids);
+		this->container_full->add_record("TAATTAGGTCCA", "AAAAAA", "Gene4");
 		this->container_full->set_initialized();
 	}
 

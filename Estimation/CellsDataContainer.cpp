@@ -38,16 +38,15 @@ namespace Estimation
 		}
 	}
 
-	size_t CellsDataContainer::add_record(const string &cell_barcode, const string &umi, const string &gene, s_i_map_t &cells_ids)
+	size_t CellsDataContainer::add_record(const string &cell_barcode, const string &umi, const string &gene)
 	{
 		if (this->_is_initialized)
 			throw runtime_error("Container is already initialized");
 
-		pair<s_i_map_t::iterator, bool> res = cells_ids.emplace(cell_barcode, this->_cells_genes.size());
+		auto res = this->_cell_ids_by_cb.emplace(cell_barcode, this->_cell_barcodes.size());
 		if (res.second)
 		{ // new cb
 			this->_cells_genes.push_back(genes_t());
-			this->_cell_ids_by_cb[cell_barcode] = this->_cell_barcodes.size();
 			this->_cell_barcodes.push_back(cell_barcode);
 		}
 		size_t cell_id = res.first->second;
