@@ -30,6 +30,7 @@ namespace Estimation
 								   const std::string& gene) override;
 			virtual void write_alignment(BamTools::BamAlignment alignment, const std::string& gene,
 								 const Tools::ReadParameters &read_params) override;
+			virtual void exclude_umi(const std::string& cell_barcode, const std::string& umi, const std::string& gene) override;
 		};
 	}
 }

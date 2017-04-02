@@ -15,6 +15,8 @@
 #include <Estimation/Merge/BarcodesParsing/InDropBarcodesParser.h>
 #include <Estimation/Merge/BarcodesParsing/ConstLengthBarcodesParser.h>
 #include <Estimation/BamProcessing/ReadsParamsParser.h>
+#include <Estimation/BamProcessing/BamController.h>
+#include <Estimation/BamProcessing/BamProcessor.h>
 
 using namespace Estimation;
 
@@ -131,11 +133,18 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 	BOOST_FIXTURE_TEST_CASE(testIncrement, Fixture)
 	{
-		boost::unordered_map<std::string, int> map;
-		map["chr1"]++;
+		std::unordered_map<std::string, int> map;
+		auto &t = ++map["chr1"];
 		BOOST_CHECK_EQUAL(map["chr1"], 1);
 		map.emplace(std::make_pair("chr1", 0));
 		BOOST_CHECK_EQUAL(map["chr1"], 1);
+		t = 10;
+		BOOST_CHECK_EQUAL(map["chr1"], 10);
+
+		auto &t2 = map["chr2"];
+		BOOST_CHECK_EQUAL(map["chr2"], 0);
+		++t2;
+		BOOST_CHECK_EQUAL(map["chr2"], 1);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testUmigsIntersection, Fixture)
@@ -275,21 +284,82 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	BOOST_FIXTURE_TEST_CASE(testGeneMatchLevel, Fixture)
 	{
 		using namespace BamProcessing;
-		BamTools::BamAlignment align1;
-		align1.Position = 34610;
-		align1.Length = 10;
-		align1.CigarData.push_back(BamTools::CigarOp('M', 10));
+		BamTools::BamAlignment align;
+		align.Position = 34610;
+		align.Length = 10;
+		align.CigarData.push_back(BamTools::CigarOp('M', 10));
 		ReadsParamsParser parser0(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", ReadsParamsParser::ANY);
 		ReadsParamsParser parser1(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", ReadsParamsParser::ONE);
 		ReadsParamsParser parser2(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", ReadsParamsParser::BOTH);
 
-		BOOST_CHECK_EQUAL(parser0.get_gene("chrX", align1), "FAM138A");
-		BOOST_CHECK_EQUAL(parser1.get_gene("chrX", align1), "");
-		BOOST_CHECK_EQUAL(parser2.get_gene("chrX", align1), "FAM138A");
+		BOOST_CHECK_EQUAL(parser0.get_gene("chrX", align), "FAM138A");
+		BOOST_CHECK_EQUAL(parser1.get_gene("chrX", align), "");
+		BOOST_CHECK_EQUAL(parser2.get_gene("chrX", align), "FAM138A");
 
-		align1.Position = 34600;
-		BOOST_CHECK_EQUAL(parser0.get_gene("chrX", align1), "FAM138A");
-		BOOST_CHECK_EQUAL(parser1.get_gene("chrX", align1), "FAM138A");
-		BOOST_CHECK_EQUAL(parser2.get_gene("chrX", align1), "");
+		align.Position = 34600;
+		BOOST_CHECK_EQUAL(parser0.get_gene("chrX", align), "FAM138A");
+		BOOST_CHECK_EQUAL(parser1.get_gene("chrX", align), "FAM138A");
+		BOOST_CHECK_THROW(parser2.get_gene("chrX", align), ReadsParamsParser::MoleculeHasIntons);
+	}
+
+	BOOST_FIXTURE_TEST_CASE(testUmiExclusion, Fixture)
+	{
+		CellsDataContainer container(this->real_cb_strat, 10);
+		container.add_record("AAATTAGGTCCA", "AAACCT", "Gene1");
+		container.add_record("AAATTAGGTCCA", "CCCCCT", "Gene2");
+		container.add_record("AAATTAGGTCCA", "ACCCCT", "Gene3");
+		container.add_record("AAATTAGGTCCA", "ACCCCT", "Gene4");
+
+		BOOST_CHECK_EQUAL(container.cell_genes(0).at("Gene4").at("ACCCCT"), 1);
+
+		container.add_record("AAATTAGGTCCA", "TTTTTT", "Gene3", true);
+		container.add_record("AAATTAGGTCCA", "ACCCCT", "Gene4", true);
+		BOOST_CHECK(container.cell_genes(0).at("Gene3").at("TTTTTT") < 0);
+		BOOST_CHECK(container.cell_genes(0).at("Gene4").at("ACCCCT") < 0);
+
+		container.set_initialized();
+		container.merge_and_filter();
+
+		BOOST_CHECK_EQUAL(container.cell_genes(0).at("Gene3").at("ACCCCT"), 1);
+		BOOST_CHECK_EQUAL(container.cell_genes(0).at("Gene3").size(), 1);
+
+		BOOST_CHECK_THROW(container.cell_genes(0).at("Gene4").at("ACCCCT"), std::out_of_range);
+		BOOST_CHECK_THROW(container.cell_genes(0).at("Gene4"), std::out_of_range);
+	}
+
+	BOOST_FIXTURE_TEST_CASE(testGeneMatchLevelUmiExclusion, Fixture)
+	{
+		using namespace BamProcessing;
+		CellsDataContainer container(this->real_cb_strat, 10);
+		auto parser = std::make_shared<ReadsParamsParser>(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", ReadsParamsParser::BOTH);
+		std::shared_ptr<BamProcessorAbstract> processor(new BamProcessor(container, false));
+		std::unordered_set<std::string> unexpected_chromosomes;
+
+		BamTools::BamAlignment align;
+		align.Name = "152228477!TGAGTTCTGTTACTGCATC#ATGGGC";
+		align.Position = 34610;
+		align.Length = 10;
+		align.CigarData.push_back(BamTools::CigarOp('M', 10));
+
+		BamController::process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
+		BOOST_CHECK_EQUAL(container.cell_genes(0).at("FAM138A").at("ATGGGC"), 1);
+
+		align.Position = 34600;
+		BamController::process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
+		BOOST_CHECK_EQUAL(container.cell_genes(0).at("FAM138A").at("ATGGGC"), CellsDataContainer::UMI_EXCLUDED);
+
+		align.Position = 34610;
+		BamController::process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
+		BOOST_CHECK_EQUAL(container.cell_genes(0).at("FAM138A").at("ATGGGC"), CellsDataContainer::UMI_EXCLUDED);
+
+		align.Name = "152228477!TGAGTTCTGTTACTGCATC#ATTTTC";
+		align.Position = 34600;
+		BamController::process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
+		BOOST_CHECK_EQUAL(container.cell_genes(0).at("FAM138A").at("ATTTTC"), CellsDataContainer::UMI_EXCLUDED);
+
+		container.set_initialized();
+		container.merge_and_filter();
+
+		BOOST_CHECK_THROW(container.cell_genes(0).at("FAM138A"), std::out_of_range);
 	}
 BOOST_AUTO_TEST_SUITE_END()

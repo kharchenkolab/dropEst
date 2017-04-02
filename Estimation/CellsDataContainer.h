@@ -13,6 +13,7 @@
 namespace TestEstimator
 {
 	struct testMerge;
+	struct testGeneMatchLevelUmiExclusion;
 }
 
 namespace Estimation
@@ -25,11 +26,13 @@ namespace Estimation
 	class CellsDataContainer
 	{
 		friend struct TestEstimator::testMerge;
+		friend struct TestEstimator::testGeneMatchLevelUmiExclusion;
 
 	public:
 		typedef boost::unordered_map<std::string, size_t> s_ul_hash_t;
 
-		typedef std::map<std::string, size_t> s_i_map_t;
+		typedef long umi_cnt_t;
+		typedef std::map<std::string, umi_cnt_t> s_i_map_t;
 		typedef std::map<std::string, s_i_map_t> genes_t;
 
 		typedef std::vector<Tools::IndexedValue> i_counter_t;
@@ -42,6 +45,7 @@ namespace Estimation
 		std::shared_ptr<Merge::MergeStrategyAbstract> _merge_strategy;
 
 		const size_t _top_print_size;
+		static const umi_cnt_t UMI_EXCLUDED = -100000;
 
 		std::vector<genes_t> _cells_genes; //cell_id -> gen_name -> umi -> count
 		names_t _cell_barcodes;
@@ -65,7 +69,7 @@ namespace Estimation
 
 		void merge_and_filter();
 
-		size_t add_record(const std::string &cell_barcode, const std::string &umi, const std::string &gene);
+		size_t add_record(const std::string &cell_barcode, const std::string &umi, const std::string &gene, bool set_excluded=false);
 
 		void merge(size_t source_cell_ind, size_t target_cell_ind);
 
@@ -101,5 +105,7 @@ namespace Estimation
 		s_ul_hash_t umis_distribution() const;
 
 		std::string merge_type() const;
+
+		void remove_excluded_umis();
 	};
 }

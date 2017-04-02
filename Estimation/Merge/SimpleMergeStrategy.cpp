@@ -17,7 +17,7 @@ namespace Merge
 		for (auto const &gene: container.cell_genes(base_cell_ind))
 		{
 			const std::string &gene_name = gene.first;
-			const s_i_map_t &umis = gene.second;
+			auto const &umis = gene.second;
 
 			for (auto const &umi_count: umis)
 			{

@@ -22,6 +22,17 @@ namespace Estimation
 				BOTH,
 				SIZE
 			};
+
+			class MoleculeHasIntons : public std::runtime_error
+			{
+			public:
+				const std::string gene;
+				MoleculeHasIntons(const std::string &gene)
+					: std::runtime_error("Molecule has introne, gene: " + gene)
+					, gene(gene)
+				{}
+			};
+
 		private:
 			Tools::RefGenesContainer _genes_container;
 			int _gene_match_level;

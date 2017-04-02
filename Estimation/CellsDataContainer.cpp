@@ -11,9 +11,10 @@ using namespace std;
 namespace Estimation
 {
 	using Tools::IndexedValue;
+	const CellsDataContainer::umi_cnt_t CellsDataContainer::UMI_EXCLUDED;
 
 	CellsDataContainer::CellsDataContainer(std::shared_ptr<Merge::MergeStrategyAbstract> merge_strategy,
-										   size_t top_print_size)
+	                                       size_t top_print_size)
 		: _merge_strategy(merge_strategy)
 		, _top_print_size(top_print_size)
 		, _is_initialized(false)
@@ -28,7 +29,8 @@ namespace Estimation
 
 		this->_merge_targets = this->_merge_strategy->merge(*this);
 		this->stats().merge(this->_merge_targets, this->cell_barcodes_raw());
-		
+
+		this->remove_excluded_umis();
 		this->update_cell_sizes(this->_merge_strategy->min_genes_after_merge());
 
 		this->_filtered_cells.clear();
@@ -38,7 +40,7 @@ namespace Estimation
 		}
 	}
 
-	size_t CellsDataContainer::add_record(const string &cell_barcode, const string &umi, const string &gene)
+	size_t CellsDataContainer::add_record(const string &cell_barcode, const string &umi, const string &gene, bool set_excluded)
 	{
 		if (this->_is_initialized)
 			throw runtime_error("Container is already initialized");
@@ -50,10 +52,15 @@ namespace Estimation
 			this->_cell_barcodes.push_back(cell_barcode);
 		}
 		size_t cell_id = res.first->second;
-		this->_cells_genes[cell_id][gene][umi]++;
+
+		auto &cur_umi_cnt = ++this->_cells_genes[cell_id][gene][umi];
+		if (cur_umi_cnt < 0 || set_excluded)
+		{
+			cur_umi_cnt = CellsDataContainer::UMI_EXCLUDED;
+		}
 
 		L_DEBUG << "CB/UMI=" << this->_cells_genes[cell_id][gene][umi] << " gene=" <<
-				this->_cells_genes[cell_id][gene].size() << " CB=" << this->_cells_genes[cell_id].size();
+		        this->_cells_genes[cell_id][gene].size() << " CB=" << this->_cells_genes[cell_id].size();
 
 		return cell_id;
 	}
@@ -61,11 +68,20 @@ namespace Estimation
 	void CellsDataContainer::merge(size_t source_cell_ind, size_t target_cell_ind)
 	{
 		auto &target_cell = this->_cells_genes.at(target_cell_ind);
-		for (auto const &gene: this->_cells_genes[source_cell_ind])
+		for (auto const &gene: this->_cells_genes.at(source_cell_ind))
 		{
+			auto &target_gene = target_cell[gene.first];
 			for (auto const &umi_count: gene.second)
 			{
-				target_cell[gene.first][umi_count.first] += umi_count.second;
+				auto &target_umi = target_gene[umi_count.first];
+				if (target_umi >= 0 && umi_count.second >= 0)
+				{
+					target_umi += umi_count.second;
+				}
+				else
+				{
+					target_umi = CellsDataContainer::UMI_EXCLUDED;
+				}
 			}
 		}
 
@@ -238,5 +254,37 @@ namespace Estimation
 	bool CellsDataContainer::is_cell_excluded(size_t cell_id) const
 	{
 		return this->_is_cell_excluded.at(cell_id);
+	}
+
+	void CellsDataContainer::remove_excluded_umis()
+	{
+		for (auto &cell  : this->_cells_genes)
+		{
+			auto gene_iter = cell.begin();
+			while (gene_iter != cell.end())
+			{
+				auto umi_iter = gene_iter->second.begin();
+				while (umi_iter != gene_iter->second.end())
+				{
+					if (umi_iter->second == CellsDataContainer::UMI_EXCLUDED)
+					{
+						umi_iter = gene_iter->second.erase(umi_iter);
+					}
+					else
+					{
+						++umi_iter;
+					}
+				}
+
+				if (gene_iter->second.empty())
+				{
+					gene_iter = cell.erase(gene_iter);
+				}
+				else
+				{
+					++gene_iter;
+				}
+			}
+		}
 	}
 }

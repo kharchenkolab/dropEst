@@ -72,5 +72,11 @@ namespace Estimation
 			BamProcessorAbstract::update_bam(bam_file, reader);
 			this->is_bam_open = true;
 		}
+
+		void FilteringBamProcessor::exclude_umi(const std::string &cell_barcode, const std::string &umi,
+		                                        const std::string &gene)
+		{
+			throw std::runtime_error("UMI exclusion isn/t implemented for FilteringBamProcessor");
+		}
 	}
 }

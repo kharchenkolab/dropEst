@@ -34,6 +34,9 @@ namespace BamProcessing
 												 const std::string &gtf_path, const CellsDataContainer &container,
 												 int gene_match_level)
 	{
+		if (gene_match_level == ReadsParamsParser::BOTH)
+			throw std::runtime_error("Bam filtering isn't implemented for gene match to exons only");
+
 		Tools::trace_time("Start write filtered bam");
 
 		auto processor = std::shared_ptr<BamProcessorAbstract>(new FilteringBamProcessor(container));
@@ -94,26 +97,7 @@ namespace BamProcessing
 				continue;
 			}
 
-			Tools::ReadParameters read_params;
-			if (!parser->get_read_params(alignment, read_params))
-				continue;
-
-			std::string gene;
-			try
-			{
-				gene = parser->get_gene(chr_name, alignment);
-			}
-			catch (Tools::RefGenesContainer::ChrNotFoundException ex)
-			{
-				if (unexpected_chromosomes.emplace(ex.chr_name).second)
-				{
-					L_WARN << "WARNING: Can't find chromosome '" << ex.chr_name << "'";
-				}
-				continue;
-			}
-
-			processor->write_alignment(alignment, gene, read_params);
-			processor->save_read(read_params.cell_barcode(), chr_name, read_params.umi(), gene);
+			BamController::process_alignment(parser, processor, unexpected_chromosomes, chr_name, alignment);
 		}
 
 		reader.Close();
@@ -130,6 +114,38 @@ namespace BamProcessing
 			return std::make_shared<ReadMapParamsParser>(gtf_path, save_read_names, reads_params_names_str, gene_match_level);
 
 		return std::make_shared<ReadsParamsParser>(gtf_path, gene_match_level);
+	}
+
+	void BamController::process_alignment(std::shared_ptr<ReadsParamsParser> parser,
+	                                      std::shared_ptr<BamProcessorAbstract> processor,
+	                                      std::unordered_set<std::string> &unexpected_chromosomes,
+	                                      const std::string &chr_name, const BamTools::BamAlignment &alignment)
+	{
+		Tools::ReadParameters read_params;
+		if (!parser->get_read_params(alignment, read_params))
+			return;
+
+		std::string gene;
+		try
+		{
+			gene = parser->get_gene(chr_name, alignment);
+		}
+		catch (Tools::RefGenesContainer::ChrNotFoundException ex)
+		{
+			if (unexpected_chromosomes.emplace(ex.chr_name).second)
+			{
+				L_WARN << "WARNING: Can't find chromosome '" << ex.chr_name << "'";
+			}
+			return;
+		}
+		catch (ReadsParamsParser::MoleculeHasIntons ex)
+		{
+			processor->exclude_umi(read_params.cell_barcode(), read_params.umi(), ex.gene);
+			return;
+		}
+
+		processor->write_alignment(alignment, gene, read_params);
+		processor->save_read(read_params.cell_barcode(), chr_name, read_params.umi(), gene);
 	}
 }
 }

@@ -13,11 +13,7 @@ namespace Merge
 	class MergeStrategyAbstract
 	{
 	public:
-		typedef std::map<std::string, size_t> s_i_map_t;
-
-		typedef std::vector<Tools::IndexedValue> i_counter_t;
 		typedef std::vector<size_t> ul_list_t;
-		typedef std::vector<std::string> names_t;
 
 	private:
 		const int _min_genes_before_merge;

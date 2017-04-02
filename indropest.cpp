@@ -9,6 +9,7 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include <omp.h>
 #include <Estimation/BamProcessing/BamController.h>
+#include <Estimation/BamProcessing/ReadsParamsParser.h>
 
 #include "Estimation/Estimator.h"
 #include "Estimation/Results/ResultPrinter.h"
@@ -20,6 +21,7 @@
 
 using namespace std;
 using namespace Estimation;
+using BamProcessing::ReadsParamsParser;
 
 struct Params
 {
@@ -84,7 +86,9 @@ static void usage()
 	cerr << "\t-g, --genes filename: file with genes annotations (.bed or .gtf)" << endl;
 	cerr << "\t-l, --log-prefix : logs prefix" << endl;
 	cerr << "\t-m, --merge-cell-tags : merge linked cell tags" << endl;
-	cerr << "\t-M, --gene-match-level : 0: any read end could be exonic; 1: only one end could be exonic; 2: both ends should be exonic" << endl;
+	cerr << "\t-M, --gene-match-level : " << ReadsParamsParser::ANY << ": any read end could be exonic; "
+	     << ReadsParamsParser::ONE << ": only one end could be exonic; "
+	     << ReadsParamsParser::BOTH << ": both ends should be exonic" << endl;
 	cerr << "\t-n, --not-filtered : print data for all cells" << endl;
 	cerr << "\t-o, --output-file filename : output file name" << endl;
 	cerr << "\t-p, --parallel number_of_threads : number of threads" << endl;
@@ -218,9 +222,15 @@ static Params parse_cmd_params(int argc, char **argv)
 		params.cant_parse = true;
 	}
 
-	if (params.gene_match_level > 3)
+	if (params.gene_match_level == ReadsParamsParser::BOTH && params.filtered_bam_output)
 	{
-		cerr << "indropset: gene match level should be < 3" << endl;
+		cerr << "indropest: filtered bam output isn't implemented for gene match level " << ReadsParamsParser::BOTH << endl;
+		params.cant_parse = true;
+	}
+
+	if (params.gene_match_level > ReadsParamsParser::SIZE)
+	{
+		cerr << "indropset: gene match level should be < " << ReadsParamsParser::SIZE << endl;
 		params.cant_parse = true;
 	}
 

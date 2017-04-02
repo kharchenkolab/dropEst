@@ -32,15 +32,20 @@ namespace BamProcessing
 			std::string gene2 = this->_genes_container.get_gene_info(chr_name, end_position - 1, end_position).name();
 
 			if (this->_gene_match_level == GeneMatchLevel::BOTH)
+			{
+				if (gene1.empty() && !gene2.empty() || !gene1.empty() && gene2.empty())
+					throw MoleculeHasIntons(gene1.empty() ? gene2 : gene1);
+
 				return (gene1 == gene2) ? gene1 : "";
+			}
 
 			if (this->_gene_match_level == GeneMatchLevel::ONE)
 				return (gene1 == gene2) ? "" : (gene1 == "" ? gene2 : "");
 
-			if (gene1 == "")
+			if (gene1.empty())
 				return gene2;
 
-			if (gene2 == "")
+			if (gene2.empty())
 				return gene1;
 
 			if (gene1 != gene2)

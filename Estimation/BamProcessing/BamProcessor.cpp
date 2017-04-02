@@ -61,5 +61,10 @@ namespace Estimation
 			this->save_alignment(alignment, read_params.read_name_safe(), gene,
 								 read_params.cell_barcode(), read_params.umi());
 		}
+
+		void BamProcessor::exclude_umi(const std::string &cell_barcode, const std::string &umi, const std::string &gene)
+		{
+			this->container.add_record(cell_barcode, umi, gene, true);
+		}
 	}
 }
