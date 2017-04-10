@@ -27,6 +27,23 @@ namespace Tools
 		return column[s1len];
 	}
 
+	unsigned hamming_distance(const std::string &s1, const std::string &s2, bool skip_n)
+	{
+		if (s1.size() != s2.size())
+			throw std::runtime_error("Strings should have equal length");
+
+		unsigned ed = 0;
+		for (std::string::size_type i = 0; i < s1.size(); ++i)
+		{
+			if (s1[i] != s2[i] && (!skip_n || s1[i] != 'N' && s2[i] != 'N'))
+			{
+				++ed;
+			}
+		}
+
+		return ed;
+	}
+
 	std::string reverse_complement(const std::string &s)
 	{
 		char rcs[s.length()];

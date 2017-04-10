@@ -5,6 +5,7 @@
 #include <Estimation/Results/BadCellsStats.h>
 #include <Estimation/Results/IndropResultsWithoutUmi.h>
 #include "Estimation/Merge/MergeStrategyFactory.h"
+#include "Estimation/MergeUMIs/MergeUMIsStrategySimple.h"
 #include "Tools/Logs.h"
 
 #include <boost/range/adaptor/reversed.hpp>
@@ -210,7 +211,8 @@ namespace Estimation
 													  const std::string &reads_params_names_str,
 	                                                  const std::string &gtf_filename)
 	{
-		CellsDataContainer container(this->merge_strategy, Estimator::top_print_size);
+		CellsDataContainer container(this->merge_strategy, std::make_shared<MergeUMIs::MergeUMIsStrategySimple>(1), // TODO: Move 1 to parameter
+		                             Estimator::top_print_size);
 		BamProcessing::BamController::parse_bam_files(files, bam_output, filled_bam, reads_params_names_str,
 													  gtf_filename, container, this->_gene_match_level);
 

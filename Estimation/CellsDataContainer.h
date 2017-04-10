@@ -4,11 +4,10 @@
 #include "Tools/IndexedValue.h"
 
 #include <string>
-#include <boost/unordered_map.hpp>
-#include <boost/unordered_set.hpp>
 
 #include <map>
 #include <vector>
+#include <unordered_map>
 
 namespace TestEstimator
 {
@@ -23,13 +22,19 @@ namespace Estimation
 		class MergeStrategyAbstract;
 	}
 
+	namespace MergeUMIs
+	{
+		class MergeUMIsStrategySimple;
+	}
+
 	class CellsDataContainer
 	{
 		friend struct TestEstimator::testMerge;
 		friend struct TestEstimator::testGeneMatchLevelUmiExclusion;
 
 	public:
-		typedef boost::unordered_map<std::string, size_t> s_ul_hash_t;
+		typedef std::unordered_map<std::string, size_t> s_ul_hash_t;
+		typedef std::unordered_map<std::string, std::string> s_s_hash_t;
 
 		typedef long umi_cnt_t;
 		typedef std::map<std::string, umi_cnt_t> s_i_map_t;
@@ -43,6 +48,7 @@ namespace Estimation
 
 	private:
 		std::shared_ptr<Merge::MergeStrategyAbstract> _merge_strategy;
+		std::shared_ptr<MergeUMIs::MergeUMIsStrategySimple> _umi_merge_strategy;
 
 		const size_t _top_print_size;
 		static const umi_cnt_t UMI_EXCLUDED = -100000;
@@ -62,50 +68,42 @@ namespace Estimation
 		mutable Stats _stats;
 
 	private:
+		void remove_excluded_umis();
+
 		std::string get_cb_count_top_verbose(const i_counter_t &cells_genes_counts) const;
 
 	public:
-		CellsDataContainer(std::shared_ptr<Merge::MergeStrategyAbstract> merge_strategy, size_t top_print_size);
-
-		void merge_and_filter();
+		CellsDataContainer(std::shared_ptr<Merge::MergeStrategyAbstract> merge_strategy,
+		                   std::shared_ptr<MergeUMIs::MergeUMIsStrategySimple> umi_merge_strategy, size_t top_print_size);
 
 		size_t add_record(const std::string &cell_barcode, const std::string &umi, const std::string &gene, bool set_excluded=false);
-
-		void merge(size_t source_cell_ind, size_t target_cell_ind);
-
 		void exclude_cell(size_t index);
 
+		void merge_and_filter();
+		void merge_cells(size_t source_cell_ind, size_t target_cell_ind);
+
+		void merge_umis(size_t cell_id, const std::string &gene, const s_s_hash_t &merge_targets);
+
 		void update_cell_sizes(int genes_threshold, bool logs = true);
-
-		const s_ul_hash_t& cell_ids_by_cb() const;
-
-		Stats &stats() const;
-
-		const ids_t &filtered_cells() const;
-
-		const i_counter_t &cells_gene_counts_sorted() const;
-
-		const genes_t &cell_genes(size_t index) const;
-
-		const std::string &cell_barcode(size_t index) const;
-
-		names_t excluded_cells() const;
-
-		bool is_cell_merged(size_t cell_id) const;
-		bool is_cell_excluded(size_t cell_id) const;
-
-		const ids_t& merge_targets() const;
 
 		void set_initialized();
 
 		const names_t &cell_barcodes_raw() const;
+		const i_counter_t &cells_gene_counts_sorted() const;
+		const s_ul_hash_t& cell_ids_by_cb() const;
+		names_t excluded_cells() const;
+		const ids_t &filtered_cells() const;
+		const ids_t& merge_targets() const;
 
-		size_t const cell_size(size_t cell_index) const;
+		const std::string &cell_barcode(size_t index) const;
+		const genes_t &cell_genes(size_t index) const;
+		size_t cell_size(size_t cell_index) const;
+		bool is_cell_excluded(size_t cell_id) const;
+		bool is_cell_merged(size_t cell_id) const;
 
-		s_ul_hash_t umis_distribution() const;
-
+		Stats &stats() const;
 		std::string merge_type() const;
 
-		void remove_excluded_umis();
+		s_ul_hash_t umis_distribution() const;
 	};
 }

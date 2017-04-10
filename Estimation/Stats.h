@@ -72,6 +72,7 @@ namespace Estimation
 		void set(StrStrFloatType stat, const std::string &base_type, const std::string &subtype, double value);
 
 		void inc(CellStrStatType stat, const std::string &cell_barcode, const std::string &subtype);
+		void dec(CellStrStatType stat, const std::string &cell_barcode, const std::string &subtype);
 		void get(CellStrStatType stat, str_list_t &types, str_list_t &subtypes, int_list_t &counts) const;
 		bool get(CellStrStatType stat, const std::string &cell_barcode, const str_list_t &subtypes,
 				 int_list_t &counts) const;

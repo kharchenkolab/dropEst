@@ -1,10 +1,12 @@
 #include "CellsDataContainer.h"
 
-#include "Estimation/Merge/MergeStrategyAbstract.h"
-#include "Tools/Logs.h"
-#include "Tools/RefGenesContainer.h"
+#include <Estimation/Merge/MergeStrategyAbstract.h>
+#include <Estimation/MergeUMIs/MergeUMIsStrategySimple.h>
 
-#include "api/BamMultiReader.h"
+#include <Tools/Logs.h>
+#include <Tools/RefGenesContainer.h>
+
+#include <api/BamMultiReader.h>
 
 using namespace std;
 
@@ -14,8 +16,10 @@ namespace Estimation
 	const CellsDataContainer::umi_cnt_t CellsDataContainer::UMI_EXCLUDED;
 
 	CellsDataContainer::CellsDataContainer(std::shared_ptr<Merge::MergeStrategyAbstract> merge_strategy,
+	                                       std::shared_ptr<MergeUMIs::MergeUMIsStrategySimple> umi_merge_strategy,
 	                                       size_t top_print_size)
 		: _merge_strategy(merge_strategy)
+		, _umi_merge_strategy(umi_merge_strategy)
 		, _top_print_size(top_print_size)
 		, _is_initialized(false)
 	{
@@ -30,6 +34,7 @@ namespace Estimation
 		this->_merge_targets = this->_merge_strategy->merge(*this);
 		this->stats().merge(this->_merge_targets, this->cell_barcodes_raw());
 
+		this->_umi_merge_strategy->merge(*this);
 		this->remove_excluded_umis();
 		this->update_cell_sizes(this->_merge_strategy->min_genes_after_merge());
 
@@ -65,7 +70,7 @@ namespace Estimation
 		return cell_id;
 	}
 
-	void CellsDataContainer::merge(size_t source_cell_ind, size_t target_cell_ind)
+	void CellsDataContainer::merge_cells(size_t source_cell_ind, size_t target_cell_ind)
 	{
 		auto &target_cell = this->_cells_genes.at(target_cell_ind);
 		for (auto const &gene: this->_cells_genes.at(source_cell_ind))
@@ -241,7 +246,7 @@ namespace Estimation
 		return this->_merge_strategy->merge_type();
 	}
 
-	const size_t CellsDataContainer::cell_size(size_t cell_index) const
+	size_t CellsDataContainer::cell_size(size_t cell_index) const
 	{
 		return this->_cell_sizes.at(cell_index);
 	}
@@ -284,6 +289,24 @@ namespace Estimation
 				{
 					++gene_iter;
 				}
+			}
+		}
+	}
+
+	void CellsDataContainer::merge_umis(size_t cell_id, const std::string &gene,
+	                                    const CellsDataContainer::s_s_hash_t &merge_targets)
+	{
+		auto &gene_umis = this->_cells_genes.at(cell_id).at(gene);
+		for (auto const &target: merge_targets)
+		{
+			if (target.second == target.first)
+				continue;
+
+			gene_umis[target.second] += gene_umis.at(target.first);
+			gene_umis.erase(target.first);
+			if (gene_umis[target.second] < 0)
+			{
+				gene_umis[target.second] = CellsDataContainer::UMI_EXCLUDED;
 			}
 		}
 	}

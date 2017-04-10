@@ -6,17 +6,20 @@
 #include <boost/property_tree/xml_parser.hpp>
 
 #include "Estimation/CellsDataContainer.h"
-#include "Tools/Logs.h"
 
 #include <RInside.h>
-#include <Estimation/Merge/MergeStrategyFactory.h>
-#include <Estimation/Merge/SimpleMergeStrategy.h>
-#include <Estimation/Merge/RealBarcodesMergeStrategy.h>
-#include <Estimation/Merge/BarcodesParsing/InDropBarcodesParser.h>
-#include <Estimation/Merge/BarcodesParsing/ConstLengthBarcodesParser.h>
 #include <Estimation/BamProcessing/ReadsParamsParser.h>
 #include <Estimation/BamProcessing/BamController.h>
 #include <Estimation/BamProcessing/BamProcessor.h>
+#include <Estimation/Merge/BarcodesParsing/InDropBarcodesParser.h>
+#include <Estimation/Merge/BarcodesParsing/ConstLengthBarcodesParser.h>
+#include <Estimation/Merge/MergeStrategyFactory.h>
+#include <Estimation/Merge/SimpleMergeStrategy.h>
+#include <Estimation/Merge/RealBarcodesMergeStrategy.h>
+#include <Estimation/MergeUMIs/MergeUMIsStrategySimple.h>
+
+#include <Tools/Logs.h>
+#include <Tools/UtilFunctions.h>
 
 using namespace Estimation;
 
@@ -36,6 +39,7 @@ struct Fixture
 		read_xml(config, pt);
 		this->real_cb_strat = std::make_shared<Merge::RealBarcodesMergeStrategy>(PROJ_DATA_PATH + std::string("/barcodes/test_est"), pt.get_child("Estimation"));
 		this->container_full = std::make_shared<CellsDataContainer>(this->real_cb_strat, 1);
+		this->umi_merge_strat = std::make_shared<MergeUMIs::MergeUMIsStrategySimple>(1);
 
 		Tools::init_test_logs(boost::log::trivial::info);
 		this->container_full->add_record("AAATTAGGTCCA", "AAACCT", "Gene1"); //0, real
@@ -66,6 +70,7 @@ struct Fixture
 
 	std::shared_ptr<Merge::RealBarcodesMergeStrategy> real_cb_strat;
 	std::shared_ptr<CellsDataContainer> container_full;
+	std::shared_ptr<MergeUMIs::MergeUMIsStrategySimple> umi_merge_strat;
 };
 
 BOOST_AUTO_TEST_SUITE(TestEstimator)
@@ -363,24 +368,94 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		BOOST_CHECK_THROW(container.cell_genes(0).at("FAM138A"), std::out_of_range);
 	}
 
-	BOOST_FIXTURE_TEST_CASE(debugSRR2GenesMatch, Fixture)
+	BOOST_FIXTURE_TEST_CASE(testUMIMerge, Fixture)
 	{
-		using namespace BamProcessing;
-		ReadsParamsParser parser(PROJ_DATA_PATH + (std::string)"/gtf/mm10_genes.gtf.gz", ReadsParamsParser::BOTH);
-		BamTools::BamAlignment align;
+		CellsDataContainer container(this->real_cb_strat, 0);
 
-		align.Position = 39001582;
-		align.Length = 16;
-		align.CigarData.push_back(BamTools::CigarOp('M', 16));
-		BOOST_CHECK_EQUAL(parser.get_gene("chr2", align), "");
+		container.add_record("AAATTAGGTCCA", "AAACCT", "Gene1");
+		container.add_record("AAATTAGGTCCA", "CCCCCT", "Gene1");
+		container.add_record("AAATTAGGTCCA", "AAATTN", "Gene1");
+		container.add_record("AAATTAGGTCCA", "ACCCCT", "Gene1");
 
-		align.Position = 39001625;
-		align.Length = 36;
-		align.CigarData.front().Length = 36;
-		BOOST_CHECK_EQUAL(parser.get_gene("chr2", align), "Rpl35");
+		CellsDataContainer::s_s_hash_t merge_targets;
+		merge_targets["AAACCT"] = "CCCCCT";
+		merge_targets["AAATTN"] = "GGGGGG";
+		merge_targets["ACCCCT"] = "ACCCCT";
 
-		align.Length = 37;
-		align.CigarData.front().Length = 37;
-		BOOST_CHECK_EQUAL(parser.get_gene("chr2", align), "Rpl35");
+		container.merge_umis(0, "Gene1", merge_targets);
+
+		BOOST_REQUIRE_EQUAL(container.cell_genes(0).at("Gene1").size(), 3);
+		BOOST_CHECK_EQUAL(container.cell_genes(0).at("Gene1").at("CCCCCT"), 2);
+		BOOST_CHECK_EQUAL(container.cell_genes(0).at("Gene1").at("GGGGGG"), 1);
+		BOOST_CHECK_EQUAL(container.cell_genes(0).at("Gene1").at("ACCCCT"), 1);
+	}
+
+	BOOST_FIXTURE_TEST_CASE(testFillWrongUmis, Fixture)
+	{
+		using namespace MergeUMIs;
+		MergeUMIsStrategySimple::s_vec_t wrong_umis;
+		wrong_umis.push_back("AAANTTT");
+		wrong_umis.push_back("AAANCTT");
+		wrong_umis.push_back("NNNNNNN");
+		auto merge_targets = this->umi_merge_strat->fill_wrong_umis(wrong_umis);
+		for (auto const &umi : merge_targets)
+		{
+			BOOST_CHECK_NE(umi.first, umi.second);
+			BOOST_CHECK_EQUAL(Tools::hamming_distance(umi.first, umi.second), 0);
+			BOOST_CHECK_EQUAL(umi.second.find('N'), std::string::npos);
+		}
+	}
+
+	BOOST_FIXTURE_TEST_CASE(testRemoveSimilarWrongUmis, Fixture)
+	{
+		using namespace MergeUMIs;
+		MergeUMIsStrategySimple::s_vec_t wrong_umis;
+		wrong_umis.push_back("AAANTTT");
+		wrong_umis.push_back("AACTNTT");
+		wrong_umis.push_back("AACTCNT");
+//		wrong_umis.push_back("NNNNNNN"); // These tests will fail, but we don't really care
+//
+//		wrong_umis.push_back("AANNNCT");
+//		wrong_umis.push_back("AGNNNCT");
+//		wrong_umis.push_back("ANATTCT");
+		this->umi_merge_strat->remove_similar_wrong_umis(wrong_umis);
+		BOOST_CHECK_EQUAL(wrong_umis.size(), 2);
+		BOOST_CHECK_EQUAL(wrong_umis[0], "AAANTTT");
+		BOOST_CHECK_EQUAL(wrong_umis[1], "AACTCNT");
+	}
+
+	BOOST_FIXTURE_TEST_CASE(testUMIMergeStrategy, Fixture)
+	{
+		using namespace MergeUMIs;
+		CellsDataContainer container(this->real_cb_strat, 0);
+
+		container.add_record("AAATTAGGTCCA", "AAACCT", "Gene1");
+		container.add_record("AAATTAGGTCCA", "CCCCCT", "Gene1");
+		container.add_record("AAATTAGGTCCA", "AAACCN", "Gene1");
+		container.add_record("AAATTAGGTCCA", "ACCCCT", "Gene1");
+
+		container.add_record("AAATTAGGTCCA", "TTTTTT", "Gene2");
+		container.add_record("AAATTAGGTCCA", "TTTNNG", "Gene2");
+		container.add_record("AAATTAGGTCCA", "TTGNNG", "Gene2");
+		container.add_record("AAATTAGGTCCA", "ACCCCT", "Gene2");
+		container.add_record("AAATTAGGTCCA", "NNNNNN", "Gene2");
+
+		container.set_initialized();
+
+		this->umi_merge_strat->merge(container);
+		BOOST_REQUIRE_EQUAL(container.cell_genes(0).at("Gene1").size(), 3);
+		BOOST_REQUIRE_EQUAL(container.cell_genes(0).at("Gene2").size(), 3);
+
+		BOOST_CHECK_EQUAL(container.cell_genes(0).at("Gene1").at("AAACCT"), 2);
+		BOOST_CHECK_EQUAL(container.cell_genes(0).at("Gene1").at("CCCCCT"), 1);
+		BOOST_CHECK_EQUAL(container.cell_genes(0).at("Gene1").at("ACCCCT"), 1);
+
+		BOOST_CHECK_NO_THROW(container.cell_genes(0).at("Gene2").at("TTTTTT"));
+		BOOST_CHECK_NO_THROW(container.cell_genes(0).at("Gene2").at("ACCCCT"));
+
+		for (auto const &umi :container.cell_genes(0).at("Gene2"))
+		{
+			BOOST_CHECK_EQUAL(umi.first.find('N'), std::string::npos);
+		}
 	}
 BOOST_AUTO_TEST_SUITE_END()

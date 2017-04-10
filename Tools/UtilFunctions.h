@@ -8,6 +8,7 @@
 namespace Tools
 {
 	unsigned edit_distance(const char *s1, const char *s2, bool skip_n = true);
+	unsigned hamming_distance(const std::string &s1, const std::string &s2, bool skip_n = true);
 	std::string reverse_complement(const std::string &s);
 	RInside* init_r();
 };

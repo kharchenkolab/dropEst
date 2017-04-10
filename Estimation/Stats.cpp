@@ -157,4 +157,9 @@ namespace Estimation
 		return this->_str_str_stats[stat];
 
 	}
+
+	void Stats::dec(Stats::CellStrStatType stat, const std::string &cell_barcode, const std::string &subtype)
+	{
+		this->_str_cell_counters[stat].at(cell_barcode).at(subtype)--;
+	}
 }
