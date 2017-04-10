@@ -38,8 +38,8 @@ struct Fixture
 		boost::property_tree::ptree pt;
 		read_xml(config, pt);
 		this->real_cb_strat = std::make_shared<Merge::RealBarcodesMergeStrategy>(PROJ_DATA_PATH + std::string("/barcodes/test_est"), pt.get_child("Estimation"));
-		this->container_full = std::make_shared<CellsDataContainer>(this->real_cb_strat, 1);
 		this->umi_merge_strat = std::make_shared<MergeUMIs::MergeUMIsStrategySimple>(1);
+		this->container_full = std::make_shared<CellsDataContainer>(this->real_cb_strat, this->umi_merge_strat, 1);
 
 		Tools::init_test_logs(boost::log::trivial::info);
 		this->container_full->add_record("AAATTAGGTCCA", "AAACCT", "Gene1"); //0, real
@@ -69,8 +69,8 @@ struct Fixture
 	}
 
 	std::shared_ptr<Merge::RealBarcodesMergeStrategy> real_cb_strat;
-	std::shared_ptr<CellsDataContainer> container_full;
 	std::shared_ptr<MergeUMIs::MergeUMIsStrategySimple> umi_merge_strat;
+	std::shared_ptr<CellsDataContainer> container_full;
 };
 
 BOOST_AUTO_TEST_SUITE(TestEstimator)
@@ -309,7 +309,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 	BOOST_FIXTURE_TEST_CASE(testUmiExclusion, Fixture)
 	{
-		CellsDataContainer container(this->real_cb_strat, 10);
+		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, 10);
 		container.add_record("AAATTAGGTCCA", "AAACCT", "Gene1");
 		container.add_record("AAATTAGGTCCA", "CCCCCT", "Gene2");
 		container.add_record("AAATTAGGTCCA", "ACCCCT", "Gene3");
@@ -335,7 +335,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	BOOST_FIXTURE_TEST_CASE(testGeneMatchLevelUmiExclusion, Fixture)
 	{
 		using namespace BamProcessing;
-		CellsDataContainer container(this->real_cb_strat, 10);
+		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, 10);
 		auto parser = std::make_shared<ReadsParamsParser>(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", ReadsParamsParser::BOTH);
 		std::shared_ptr<BamProcessorAbstract> processor(new BamProcessor(container, false));
 		std::unordered_set<std::string> unexpected_chromosomes;
@@ -370,7 +370,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 	BOOST_FIXTURE_TEST_CASE(testUMIMerge, Fixture)
 	{
-		CellsDataContainer container(this->real_cb_strat, 0);
+		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, 0);
 
 		container.add_record("AAATTAGGTCCA", "AAACCT", "Gene1");
 		container.add_record("AAATTAGGTCCA", "CCCCCT", "Gene1");
@@ -427,7 +427,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	BOOST_FIXTURE_TEST_CASE(testUMIMergeStrategy, Fixture)
 	{
 		using namespace MergeUMIs;
-		CellsDataContainer container(this->real_cb_strat, 0);
+		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, 0);
 
 		container.add_record("AAATTAGGTCCA", "AAACCT", "Gene1");
 		container.add_record("AAATTAGGTCCA", "CCCCCT", "Gene1");
