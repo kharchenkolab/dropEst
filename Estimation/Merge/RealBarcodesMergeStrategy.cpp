@@ -15,7 +15,7 @@ namespace Estimation
 		RealBarcodesMergeStrategy::RealBarcodesMergeStrategy(const std::string &barcodes_filename,
 															 const boost::property_tree::ptree &config)
 				: MergeStrategyBase(config)
-				, _barcodes_parser(RealBarcodesMergeStrategy::get_barcodes_parser(barcodes_filename, config.get<std::string>("barcodes_type", "")))
+				, _barcodes_parser(RealBarcodesMergeStrategy::get_barcodes_parser(barcodes_filename, config.get<std::string>("barcodes_type", "indrop")))
 		{
 			this->_barcodes_parser->init();
 		}
