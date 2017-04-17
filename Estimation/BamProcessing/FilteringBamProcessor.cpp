@@ -53,16 +53,20 @@ namespace Estimation
 			if (gene == "")
 				return;
 			
-			auto iter = this->merge_cbs.find(read_params.cell_barcode());
-			if (iter == this->merge_cbs.end())
+			auto cb_iter = this->merge_cbs.find(read_params.cell_barcode());
+			if (cb_iter == this->merge_cbs.end())
 				return;
 
-			auto const &gene_map = container.cell_genes(container.cell_ids_by_cb().at(iter->second)).at(gene);
-			if (gene_map.find(read_params.umi()) == gene_map.end())
+			auto const &cell_map = container.cell_genes(container.cell_ids_by_cb().at(cb_iter->second));
+			auto gene_map_iter = cell_map.find(gene);
+			if (gene_map_iter == cell_map.end())
+				return;
+
+			if (gene_map_iter->second.find(read_params.umi()) == gene_map_iter->second.end())
 				return;
 
 			this->written_reads++;
-			this->save_alignment(alignment, read_params.read_name_safe(), gene, iter->second, read_params.umi());
+			this->save_alignment(alignment, read_params.read_name_safe(), gene, cb_iter->second, read_params.umi());
 		}
 
 		std::string FilteringBamProcessor::get_result_bam_name(const std::string &bam_name) const
