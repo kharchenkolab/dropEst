@@ -15,7 +15,8 @@ namespace Estimation
 				, total_exonic_reads(0)
 		{}
 
-		void BamProcessor::save_read(const std::string& cell_barcode, const std::string& chr_name, const std::string& umi, const std::string& gene)
+		void BamProcessor::save_read(const std::string& cell_barcode, const std::string& chr_name, const std::string& umi,
+		                             const std::string& gene, const CellsDataContainer::Mark &umi_mark)
 		{
 			if (gene == "")
 			{
@@ -23,8 +24,8 @@ namespace Estimation
 				return;
 			}
 
-			size_t cell_id = this->container.add_record(cell_barcode, umi, gene);
-			if (this->container.cell_genes(cell_id).at(gene).at(umi) == 1)
+			size_t cell_id = this->container.add_record(cell_barcode, umi, gene, umi_mark);
+			if (this->container.cell_genes(cell_id).at(gene).at(umi).read_count == 1)
 			{
 				this->container.stats().inc(Stats::EXONE_UMIS_PER_CHR_PER_CELL, cell_barcode, chr_name);
 			}
@@ -60,11 +61,6 @@ namespace Estimation
 
 			this->save_alignment(alignment, read_params.read_name_safe(), gene,
 								 read_params.cell_barcode(), read_params.umi());
-		}
-
-		void BamProcessor::exclude_umi(const std::string &cell_barcode, const std::string &umi, const std::string &gene)
-		{
-			this->container.add_record(cell_barcode, umi, gene, true);
 		}
 	}
 }

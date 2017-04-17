@@ -22,10 +22,8 @@ namespace Estimation
 		return p1.second > p2.second;
 	}
 
-	Estimator::Estimator(const boost::property_tree::ptree &config, bool merge_tags, const std::string &barcodes_filename,
-	                     int gene_match_level)
+	Estimator::Estimator(const boost::property_tree::ptree &config, bool merge_tags, const std::string &barcodes_filename)
 		: merge_strategy(Merge::MergeStrategyFactory::get(config, merge_tags, barcodes_filename))
-		, _gene_match_level(gene_match_level)
 	{}
 
 	Results::IndropResult Estimator::get_results(const CellsDataContainer &container, bool not_filtered, bool reads_output)
@@ -118,7 +116,7 @@ namespace Estimation
 				{
 					for (auto const &umi : gene_it.second)
 					{
-						cell_value += umi.second;
+						cell_value += umi.second.read_count;
 					}
 				}
 				else
@@ -160,7 +158,7 @@ namespace Estimation
 			{
 				for (auto const &umi_rec : gene_rec.second)
 				{
-					reads_per_umi += umi_rec.second;
+					reads_per_umi += umi_rec.second.read_count;
 				}
 
 				umis_count += gene_rec.second.size();
@@ -209,12 +207,13 @@ namespace Estimation
 
 	CellsDataContainer Estimator::get_cells_container(const names_t &files, bool bam_output, bool filled_bam,
 													  const std::string &reads_params_names_str,
-	                                                  const std::string &gtf_filename)
+	                                                  const std::string &gtf_filename,
+	                                                  CellsDataContainer::GeneMatchLevel gene_match_level)
 	{
 		CellsDataContainer container(this->merge_strategy, std::make_shared<MergeUMIs::MergeUMIsStrategySimple>(1), // TODO: Move 1 to parameter
-		                             Estimator::top_print_size);
+		                             Estimator::top_print_size, gene_match_level);
 		BamProcessing::BamController::parse_bam_files(files, bam_output, filled_bam, reads_params_names_str,
-													  gtf_filename, container, this->_gene_match_level);
+													  gtf_filename, container);
 
 		container.set_initialized();
 

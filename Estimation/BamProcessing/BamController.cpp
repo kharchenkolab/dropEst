@@ -18,40 +18,35 @@ namespace BamProcessing
 
 	void BamController::parse_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams,
 										bool filled_bam, const std::string &reads_params_names_str,
-										const std::string &gtf_path, CellsDataContainer &container, int gene_match_level)
+										const std::string &gtf_path, CellsDataContainer &container)
 	{
 		Tools::trace_time("Start parse bams");
 
 		auto processor = std::shared_ptr<BamProcessorAbstract>(new BamProcessor(container, print_result_bams));
 		BamController::process_bam_files(bam_files, print_result_bams, filled_bam, reads_params_names_str, gtf_path,
-										 processor, gene_match_level);
+										 processor);
 
 		Tools::trace_time("Bams parsed");
 	}
 
 	void BamController::write_filtered_bam_files(const std::vector<std::string> &bam_files,
 												 bool filled_bam, const std::string &reads_params_names_str,
-												 const std::string &gtf_path, const CellsDataContainer &container,
-												 int gene_match_level)
+												 const std::string &gtf_path, const CellsDataContainer &container)
 	{
-		if (gene_match_level == ReadsParamsParser::BOTH)
-			throw std::runtime_error("Bam filtering isn't implemented for gene match to exons only");
-
 		Tools::trace_time("Start write filtered bam");
 
 		auto processor = std::shared_ptr<BamProcessorAbstract>(new FilteringBamProcessor(container));
-		BamController::process_bam_files(bam_files, true, filled_bam, reads_params_names_str, gtf_path, processor, gene_match_level);
+		BamController::process_bam_files(bam_files, true, filled_bam, reads_params_names_str, gtf_path, processor);
 
 		Tools::trace_time("Filtered bam written");
 	}
 
 	void BamController::process_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams,
 										  bool filled_bam, const std::string &reads_params_names_str,
-										  const std::string &gtf_path, std::shared_ptr<BamProcessorAbstract> processor,
-										  int gene_match_level)
+										  const std::string &gtf_path, std::shared_ptr<BamProcessorAbstract> processor)
 	{
 		std::shared_ptr<ReadsParamsParser> parser = BamController::get_parser(filled_bam, print_result_bams,
-																			  reads_params_names_str, gtf_path, gene_match_level);
+																			  reads_params_names_str, gtf_path);
 
 		for (size_t i = 0; i < bam_files.size(); ++i)
 		{
@@ -105,15 +100,15 @@ namespace BamProcessing
 
 	std::shared_ptr<ReadsParamsParser> BamController::get_parser(bool filled_bam, bool save_read_names,
 																 const std::string &reads_params_names_str,
-																 const std::string &gtf_path, int gene_match_level)
+																 const std::string &gtf_path)
 	{
 		if (filled_bam)
-			return std::make_shared<FilledBamParamsParser>(gtf_path, gene_match_level);
+			return std::make_shared<FilledBamParamsParser>(gtf_path);
 
 		if (reads_params_names_str != "")
-			return std::make_shared<ReadMapParamsParser>(gtf_path, save_read_names, reads_params_names_str, gene_match_level);
+			return std::make_shared<ReadMapParamsParser>(gtf_path, save_read_names, reads_params_names_str);
 
-		return std::make_shared<ReadsParamsParser>(gtf_path, gene_match_level);
+		return std::make_shared<ReadsParamsParser>(gtf_path);
 	}
 
 	void BamController::process_alignment(std::shared_ptr<ReadsParamsParser> parser,
@@ -126,9 +121,10 @@ namespace BamProcessing
 			return;
 
 		std::string gene;
+		CellsDataContainer::Mark mark;
 		try
 		{
-			gene = parser->get_gene(chr_name, alignment);
+			mark = parser->get_gene(chr_name, alignment, gene);
 		}
 		catch (Tools::RefGenesContainer::ChrNotFoundException ex)
 		{
@@ -138,14 +134,9 @@ namespace BamProcessing
 			}
 			return;
 		}
-		catch (ReadsParamsParser::MoleculeHasIntons ex)
-		{
-			processor->exclude_umi(read_params.cell_barcode(), read_params.umi(), ex.gene);
-			return;
-		}
 
 		processor->write_alignment(alignment, gene, read_params);
-		processor->save_read(read_params.cell_barcode(), chr_name, read_params.umi(), gene);
+		processor->save_read(read_params.cell_barcode(), chr_name, read_params.umi(), gene, mark);
 	}
 }
 }

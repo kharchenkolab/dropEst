@@ -33,12 +33,50 @@ namespace Estimation
 		friend struct TestEstimator::testGeneMatchLevelUmiExclusion;
 
 	public:
+
+		enum GeneMatchLevel
+		{
+			ANY,
+			ONE_INSIDE,
+			BOTH_INSIDE,
+			SIZE
+		};
+
+		class Mark
+		{
+		public:
+			enum MarkType
+			{
+				NONE = 0,
+				HAS_NOT_ANNOTATED = 1,
+				HAS_ANNOTATED = 2
+			};
+		private:
+			char _mark;
+		public:
+			void add(const Mark &mark);
+			void add(MarkType type);
+			bool check(MarkType type) const;
+			bool match(GeneMatchLevel match_level) const;
+			Mark(MarkType type = MarkType::NONE);
+		};
+
+		class UMI
+		{
+		public:
+			size_t read_count;
+			Mark mark;
+
+		public:
+			UMI(size_t read_count = 0);
+			void merge(const UMI& umi);
+		};
+
 		typedef std::unordered_map<std::string, size_t> s_ul_hash_t;
 		typedef std::unordered_map<std::string, std::string> s_s_hash_t;
 
-		typedef long umi_cnt_t;
-		typedef std::map<std::string, umi_cnt_t> s_i_map_t;
-		typedef std::map<std::string, s_i_map_t> genes_t;
+		typedef std::map<std::string, UMI> umi_map_t;
+		typedef std::map<std::string, umi_map_t> genes_t;
 
 		typedef std::vector<Tools::IndexedValue> i_counter_t;
 		typedef std::vector<size_t> ids_t;
@@ -51,7 +89,6 @@ namespace Estimation
 		std::shared_ptr<MergeUMIs::MergeUMIsStrategySimple> _umi_merge_strategy;
 
 		const size_t _top_print_size;
-		static const umi_cnt_t UMI_EXCLUDED = -100000;
 
 		std::vector<genes_t> _cells_genes; //cell_id -> gen_name -> umi -> count
 		names_t _cell_barcodes;
@@ -64,6 +101,7 @@ namespace Estimation
 		counts_t _cell_sizes;
 		i_counter_t _filtered_cells_gene_counts_sorted;
 		bool _is_initialized;
+		const GeneMatchLevel _gene_match_level;
 
 		mutable Stats _stats;
 
@@ -74,9 +112,11 @@ namespace Estimation
 
 	public:
 		CellsDataContainer(std::shared_ptr<Merge::MergeStrategyAbstract> merge_strategy,
-		                   std::shared_ptr<MergeUMIs::MergeUMIsStrategySimple> umi_merge_strategy, size_t top_print_size);
+		                   std::shared_ptr<MergeUMIs::MergeUMIsStrategySimple> umi_merge_strategy, size_t top_print_size,
+		                   GeneMatchLevel gene_match_level);
 
-		size_t add_record(const std::string &cell_barcode, const std::string &umi, const std::string &gene, bool set_excluded=false);
+		size_t add_record(const std::string &cell_barcode, const std::string &umi, const std::string &gene,
+		                  const Mark &umi_mark = Mark::HAS_ANNOTATED);
 		void exclude_cell(size_t index);
 
 		void merge_and_filter();

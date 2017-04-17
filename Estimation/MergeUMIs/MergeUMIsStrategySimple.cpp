@@ -61,7 +61,7 @@ namespace Estimation
 			return umi.find('N') == std::string::npos;
 		}
 
-		CellsDataContainer::s_s_hash_t MergeUMIsStrategySimple::find_targets(const CellsDataContainer::s_i_map_t &all_umis,
+		CellsDataContainer::s_s_hash_t MergeUMIsStrategySimple::find_targets(const CellsDataContainer::umi_map_t &all_umis,
 		                                                                     const s_hash_t &bad_umis) const
 		{
 			s_vec_t umis_without_pairs;
@@ -77,11 +77,11 @@ namespace Estimation
 						continue;
 
 					unsigned ed = Tools::hamming_distance(umi.first, bad_umi);
-					if (ed < min_ed || ed == min_ed && umi.second < best_target_size)
+					if (ed < min_ed || ed == min_ed && umi.second.read_count < best_target_size)
 					{
 						min_ed = ed;
 						best_target = umi.first;
-						best_target_size = umi.second;
+						best_target_size = umi.second.read_count;
 					}
 				}
 

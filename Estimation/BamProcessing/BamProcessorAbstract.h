@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Estimation/CellsDataContainer.h>
+
 #include <cstdlib>
 #include <string>
 #include <api/BamWriter.h>
@@ -34,8 +36,8 @@ namespace Estimation
 			virtual void update_bam(const std::string& bam_file, const BamTools::BamReader &reader);
 
 			virtual void trace_state(const std::string& trace_prefix) const = 0;
-			virtual void save_read(const std::string& cell_barcode, const std::string& chr_name, const std::string& umi, const std::string& gene) = 0;
-			virtual void exclude_umi(const std::string& cell_barcode, const std::string& umi, const std::string& gene) = 0;
+			virtual void save_read(const std::string& cell_barcode, const std::string& chr_name, const std::string& umi,
+			                       const std::string& gene, const CellsDataContainer::Mark &umi_mark) = 0;
 			virtual void write_alignment(BamTools::BamAlignment alignment, const std::string& gene,
 								 const Tools::ReadParameters &read_params) = 0;
 		};

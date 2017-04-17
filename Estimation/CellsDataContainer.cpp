@@ -13,15 +13,15 @@ using namespace std;
 namespace Estimation
 {
 	using Tools::IndexedValue;
-	const CellsDataContainer::umi_cnt_t CellsDataContainer::UMI_EXCLUDED;
 
 	CellsDataContainer::CellsDataContainer(std::shared_ptr<Merge::MergeStrategyAbstract> merge_strategy,
 	                                       std::shared_ptr<MergeUMIs::MergeUMIsStrategySimple> umi_merge_strategy,
-	                                       size_t top_print_size)
+	                                       size_t top_print_size, GeneMatchLevel gene_match_level)
 		: _merge_strategy(merge_strategy)
 		, _umi_merge_strategy(umi_merge_strategy)
 		, _top_print_size(top_print_size)
 		, _is_initialized(false)
+		, _gene_match_level(gene_match_level)
 	{
 		L_TRACE << this->_merge_strategy->merge_type() << " merge selected";
 	}
@@ -34,7 +34,7 @@ namespace Estimation
 		this->_merge_targets = this->_merge_strategy->merge(*this);
 		this->stats().merge(this->_merge_targets, this->cell_barcodes_raw());
 
-		this->_umi_merge_strategy->merge(*this);
+//		this->_umi_merge_strategy->merge(*this); TODO: uncomment and debug
 		this->remove_excluded_umis();
 		this->update_cell_sizes(this->_merge_strategy->min_genes_after_merge());
 
@@ -45,7 +45,8 @@ namespace Estimation
 		}
 	}
 
-	size_t CellsDataContainer::add_record(const string &cell_barcode, const string &umi, const string &gene, bool set_excluded)
+	size_t CellsDataContainer::add_record(const string &cell_barcode, const string &umi, const string &gene,
+	                                      const Mark &umi_mark)
 	{
 		if (this->_is_initialized)
 			throw runtime_error("Container is already initialized");
@@ -57,14 +58,11 @@ namespace Estimation
 			this->_cell_barcodes.push_back(cell_barcode);
 		}
 		size_t cell_id = res.first->second;
+		auto & new_umi = this->_cells_genes[cell_id][gene].emplace(umi, 0).first->second;
+		new_umi.read_count++;
+		new_umi.mark.add(umi_mark);
 
-		auto &cur_umi_cnt = ++this->_cells_genes[cell_id][gene][umi];
-		if (cur_umi_cnt < 0 || set_excluded)
-		{
-			cur_umi_cnt = CellsDataContainer::UMI_EXCLUDED;
-		}
-
-		L_DEBUG << "CB/UMI=" << this->_cells_genes[cell_id][gene][umi] << " gene=" <<
+		L_DEBUG << "CB/UMI=" << this->_cells_genes[cell_id][gene][umi].read_count << " gene=" <<
 		        this->_cells_genes[cell_id][gene].size() << " CB=" << this->_cells_genes[cell_id].size();
 
 		return cell_id;
@@ -76,17 +74,9 @@ namespace Estimation
 		for (auto const &gene: this->_cells_genes.at(source_cell_ind))
 		{
 			auto &target_gene = target_cell[gene.first];
-			for (auto const &umi_count: gene.second)
+			for (auto const &merged_umi: gene.second)
 			{
-				auto &target_umi = target_gene[umi_count.first];
-				if (target_umi >= 0 && umi_count.second >= 0)
-				{
-					target_umi += umi_count.second;
-				}
-				else
-				{
-					target_umi = CellsDataContainer::UMI_EXCLUDED;
-				}
+				target_gene[merged_umi.first].merge(merged_umi.second);
 			}
 		}
 
@@ -271,7 +261,7 @@ namespace Estimation
 				auto umi_iter = gene_iter->second.begin();
 				while (umi_iter != gene_iter->second.end())
 				{
-					if (umi_iter->second == CellsDataContainer::UMI_EXCLUDED)
+					if (!umi_iter->second.mark.match(this->_gene_match_level))
 					{
 						umi_iter = gene_iter->second.erase(umi_iter);
 					}
@@ -302,12 +292,53 @@ namespace Estimation
 			if (target.second == target.first)
 				continue;
 
-			gene_umis[target.second] += gene_umis.at(target.first);
+			gene_umis[target.second].merge(gene_umis.at(target.first));
 			gene_umis.erase(target.first);
-			if (gene_umis[target.second] < 0)
-			{
-				gene_umis[target.second] = CellsDataContainer::UMI_EXCLUDED;
-			}
 		}
+	}
+
+	CellsDataContainer::Mark::Mark(Mark::MarkType type)
+			: _mark(type)
+	{}
+
+	void CellsDataContainer::Mark::add(Mark::MarkType type)
+	{
+		this->_mark |= type;
+	}
+
+	bool CellsDataContainer::Mark::check(Mark::MarkType type) const
+	{
+		return this->_mark & type;
+	}
+
+	void CellsDataContainer::Mark::add(const CellsDataContainer::Mark &mark)
+	{
+		this->_mark |= mark._mark;
+	}
+
+	bool CellsDataContainer::Mark::match(GeneMatchLevel match_level) const
+	{
+		switch (match_level)
+		{
+			case ANY:
+				return this->check(HAS_ANNOTATED);
+			case BOTH_INSIDE:
+				return !this->check(HAS_NOT_ANNOTATED) & this->check(HAS_ANNOTATED);
+			case ONE_INSIDE:
+				return this->check(HAS_NOT_ANNOTATED) & this->check(HAS_ANNOTATED);
+			default:
+				throw std::runtime_error("Unexpected gene match level: " + std::to_string(match_level));
+		}
+	}
+
+	CellsDataContainer::UMI::UMI(size_t read_count)
+		: read_count(read_count)
+		, mark()
+	{}
+
+	void CellsDataContainer::UMI::merge(const CellsDataContainer::UMI &umi)
+	{
+		this->read_count += umi.read_count;
+		this->mark.add(umi.mark);
 	}
 }

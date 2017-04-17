@@ -104,8 +104,8 @@ MergeStrategyBase::MergeStrategyBase(const boost::property_tree::ptree &config)
 
 size_t MergeStrategyBase::get_umigs_intersect_size(const genes_t &cell1_dist, const genes_t &cell2_dist)
 {
-	std::map<std::string, CellsDataContainer::s_i_map_t>::const_iterator gene1_it = cell1_dist.begin(); //Not unordered!!!
-	std::map<std::string, CellsDataContainer::s_i_map_t>::const_iterator gene2_it = cell2_dist.begin();
+	std::map<std::string, CellsDataContainer::umi_map_t>::const_iterator gene1_it = cell1_dist.begin(); //Not unordered!!!
+	std::map<std::string, CellsDataContainer::umi_map_t>::const_iterator gene2_it = cell2_dist.begin();
 
 	size_t intersect_size = 0;
 	while (gene1_it != cell1_dist.end() && gene2_it != cell2_dist.end())

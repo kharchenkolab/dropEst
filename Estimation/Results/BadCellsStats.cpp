@@ -31,9 +31,11 @@ namespace Estimation
 					auto &current_gene = genes_reads[cell_barcode][gene_umis.first];
 					for (auto const &umi_reads : gene_umis.second)
 					{
-						current_gene += umi_reads.second;
-						cell_reads_p_umis[umi_reads.first] += umi_reads.second;
-						cell_reads_p_umigs[umi_reads.first + gene_umis.first] = (unsigned)umi_reads.second;
+
+						size_t read_count = umi_reads.second.read_count;
+						current_gene += read_count;
+						cell_reads_p_umis[umi_reads.first] += read_count;
+						cell_reads_p_umigs[umi_reads.first + gene_umis.first] = (unsigned) read_count;
 					}
 				}
 			}

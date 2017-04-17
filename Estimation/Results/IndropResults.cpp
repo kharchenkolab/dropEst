@@ -29,8 +29,8 @@ namespace Estimation
 					{
 						this->reads_by_umig_cbs.push_back(cb);
 						this->reads_by_umig_umis.push_back(umi.first);
-						this->reads_by_umig.push_back(umi.second);
-						sum_reads += umi.second;
+						this->reads_by_umig.push_back(umi.second.read_count);
+						sum_reads += umi.second.read_count;
 					}
 				}
 

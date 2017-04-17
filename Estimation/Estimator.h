@@ -38,17 +38,16 @@ namespace Estimation
 		static const size_t top_print_size = 10;
 
 		std::shared_ptr<Merge::MergeStrategyAbstract> merge_strategy;
-		int _gene_match_level;
 
 	public:
-		Estimator(const boost::property_tree::ptree &config, bool merge_tags, const std::string &barcodes_filename,
-		          int gene_match_level);
+		Estimator(const boost::property_tree::ptree &config, bool merge_tags, const std::string &barcodes_filename);
 
 		Results::IndropResult get_results(const CellsDataContainer &container, bool not_filtered, bool reads_output);
 		Results::BadCellsStats get_bad_cells_results(const CellsDataContainer &container);
 
 		CellsDataContainer get_cells_container(const names_t &files, bool bam_output, bool filled_bam,
-		                                       const std::string &reads_params_names_str, const std::string &gtf_filename);
+		                                       const std::string &reads_params_names_str, const std::string &gtf_filename,
+		                                       CellsDataContainer::GeneMatchLevel gene_match_level);
 
 	private:
 		names_t get_filtered_cell_names(const CellsDataContainer &genes_container) const;

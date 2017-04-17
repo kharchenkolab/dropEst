@@ -22,8 +22,13 @@ namespace BamProcessing
 		return true;
 	}
 
-	std::string ReadsParamsParser::get_gene(const std::string &chr_name, BamTools::BamAlignment alignment) const
+	CellsDataContainer::Mark ReadsParamsParser::get_gene(const std::string &chr_name, BamTools::BamAlignment alignment,
+	                                                     std::string &gene) const
 	{
+		using Mark=CellsDataContainer::Mark;
+		Mark mark;
+		gene = "";
+
 		if (!this->_genes_container.is_empty())
 		{
 			// TODO: parse CIGAR
@@ -32,43 +37,41 @@ namespace BamProcessing
 			auto gene_set2 = this->_genes_container.get_gene_info(chr_name, end_position - 1, end_position);
 
 			if (gene_set1.size() > 1 || gene_set2.size() > 1)
-				return "";
+				return mark;
 
 			std::string gene1 = gene_set1.empty() ? "" : *gene_set1.begin();
 			std::string gene2 = gene_set2.empty() ? "" : *gene_set2.begin();
 
-			if (this->_gene_match_level == GeneMatchLevel::BOTH)
-			{
-				if (gene1.empty() && !gene2.empty() || !gene1.empty() && gene2.empty())
-					throw MoleculeHasIntons(gene1.empty() ? gene2 : gene1);
+			if (gene1.empty() && gene2.empty())
+				return mark;
 
-				return (gene1 == gene2) ? gene1 : "";
+			mark.add(Mark::HAS_ANNOTATED);
+
+			if (gene1.empty() || gene2.empty())
+			{
+				gene = gene1.empty() ? gene2 : gene1;
+				mark.add(Mark::HAS_NOT_ANNOTATED);
+				return mark;
 			}
 
-			if (this->_gene_match_level == GeneMatchLevel::ONE)
-				return (gene1 == gene2) ? "" : (gene1 == "" ? gene2 : "");
-
-			if (gene1.empty())
-				return gene2;
-
-			if (gene2.empty())
-				return gene1;
-
 			if (gene1 != gene2)
-				return "";
+				return mark;
 
-			return gene1;
+			gene = gene1;
+			return mark;
 		}
 
-		std::string gene;
 		if (!alignment.GetTag(BamController::GENE_TAG, gene))
-			return "";
+		{
+			gene = "";
+			return mark;
+		}
 
-		return gene;
+		mark.add(Mark::HAS_ANNOTATED);
+		return mark;
 	}
 
-	ReadsParamsParser::ReadsParamsParser(const std::string &genes_filename, int gene_match_level)
-		: _gene_match_level(gene_match_level)
+	ReadsParamsParser::ReadsParamsParser(const std::string &genes_filename)
 	{
 		if (genes_filename.length() != 0)
 		{

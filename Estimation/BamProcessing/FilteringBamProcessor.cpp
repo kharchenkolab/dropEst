@@ -14,6 +14,7 @@ namespace Estimation
 		FilteringBamProcessor::FilteringBamProcessor(const CellsDataContainer &container)
 			: is_bam_open(false)
 			, written_reads(0)
+			, container(container)
 		{
 			auto const &merge_targets = container.merge_targets();
 			std::vector<bool> good_cells_mask(merge_targets.size(), false);
@@ -42,7 +43,8 @@ namespace Estimation
 		}
 
 		void FilteringBamProcessor::save_read(const std::string &cell_barcode, const std::string &chr_name,
-											  const std::string &umi, const std::string &gene)
+											  const std::string &umi, const std::string &gene,
+											  const CellsDataContainer::Mark &umi_mark)
 		{}
 
 		void FilteringBamProcessor::write_alignment(BamTools::BamAlignment alignment, const std::string &gene,
@@ -53,6 +55,10 @@ namespace Estimation
 			
 			auto iter = this->merge_cbs.find(read_params.cell_barcode());
 			if (iter == this->merge_cbs.end())
+				return;
+
+			auto const &gene_map = container.cell_genes(container.cell_ids_by_cb().at(iter->second)).at(gene);
+			if (gene_map.find(read_params.umi()) == gene_map.end())
 				return;
 
 			this->written_reads++;
@@ -71,12 +77,6 @@ namespace Estimation
 
 			BamProcessorAbstract::update_bam(bam_file, reader);
 			this->is_bam_open = true;
-		}
-
-		void FilteringBamProcessor::exclude_umi(const std::string &cell_barcode, const std::string &umi,
-		                                        const std::string &gene)
-		{
-			throw std::runtime_error("UMI exclusion isn/t implemented for FilteringBamProcessor");
 		}
 	}
 }
