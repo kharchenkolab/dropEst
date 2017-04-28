@@ -89,80 +89,82 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 
 	BOOST_FIXTURE_TEST_CASE(testGeneMerge, Fixture)
 	{
-		std::list<GeneInfo> genes;
-		GeneInfo inf;
-		inf._start_pos = 0; inf._end_pos = 100;
-		genes.push_back(inf);
-		inf._start_pos = 200; inf._end_pos = 300;
-		genes.push_back(inf);
-		inf._start_pos = 400; inf._end_pos = 500;
-		genes.push_back(inf);
+		IntervalsContainer<std::string> intervals;
+		intervals.add_interval(0, 100, "");
+		intervals.add_interval(200, 300, "");
+		intervals.add_interval(400, 500, "");
 
-		RefGenesContainer::add_gene(inf, genes);
-		BOOST_REQUIRE_EQUAL(genes.size(), 3);
-		BOOST_CHECK_EQUAL(genes.back()._start_pos, 400);
-		BOOST_CHECK_EQUAL(genes.back()._end_pos, 500);
+		intervals.set_initialized(false);
 
-		inf._start_pos = 90; inf._end_pos = 110;
-		BOOST_CHECK_EQUAL(genes.front().is_intercept(inf), true);
-		genes.front().merge(inf);
-		BOOST_CHECK_EQUAL(genes.front()._end_pos, 110);
-		inf._start_pos = 110; inf._end_pos = 130;
-		BOOST_CHECK_EQUAL(genes.front().is_intercept(inf), false);
+		auto &homogenous_intervals = intervals._homogenous_intervals;
+		BOOST_REQUIRE_EQUAL(homogenous_intervals.size(), 3);
+		BOOST_CHECK_EQUAL(homogenous_intervals.back().start_pos(), 400);
+		BOOST_CHECK_EQUAL(homogenous_intervals.back().end_pos(), 500);
 
-		inf._start_pos = 150; inf._end_pos = 190;
-		RefGenesContainer::add_gene(inf, genes);
-		BOOST_CHECK_EQUAL(genes.size(), 4);
+		auto cur_int = Interval(90, 110);
+		BOOST_CHECK_EQUAL(homogenous_intervals.front().is_intercept(cur_int), true);
+		intervals.add_interval(90, 110, "", true);
+		intervals.set_initialized(false);
+		BOOST_CHECK_EQUAL(homogenous_intervals.front().end_pos(), 110);
+		cur_int = Interval(110, 130);
+		BOOST_CHECK_EQUAL(homogenous_intervals.front().is_intercept(cur_int), false);
 
-		inf._start_pos = 110; inf._end_pos = 151;
-		RefGenesContainer::add_gene(inf, genes);
-		BOOST_CHECK_EQUAL(genes.size(), 3);
-		BOOST_CHECK_EQUAL(genes.front()._end_pos, 190);
+		intervals.add_interval(150, 190, "", true);
+		intervals.set_initialized(false);
+		BOOST_CHECK_EQUAL(homogenous_intervals.size(), 4);
 
-		inf._start_pos = 190; inf._end_pos = 401;
-		RefGenesContainer::add_gene(inf, genes);
-		BOOST_CHECK_EQUAL(genes.size(), 1);
-		BOOST_CHECK_EQUAL(genes.front()._start_pos, 0);
-		BOOST_CHECK_EQUAL(genes.front()._end_pos, 500);
+		intervals.add_interval(110, 151, "", true);
+		intervals.set_initialized(false);
+		BOOST_CHECK_EQUAL(homogenous_intervals.size(), 3);
+		BOOST_CHECK_EQUAL(homogenous_intervals.front().end_pos(), 190);
+
+		intervals.add_interval(190, 401, "", true);
+		intervals.set_initialized(false);
+		BOOST_CHECK_EQUAL(homogenous_intervals.size(), 1);
+		BOOST_CHECK_EQUAL(homogenous_intervals.front().start_pos(), 0);
+		BOOST_CHECK_EQUAL(homogenous_intervals.front().end_pos(), 500);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testInitGtf, Fixture)
 	{
 		const std::string gtf_filename = PROJ_DATA_PATH + (std::string)("/gtf/gtf_test.gtf.gz");
 		RefGenesContainer genes_container(gtf_filename);
-
+		
 		BOOST_CHECK_EQUAL(genes_container._genes_intervals.size(), 3);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][0].start_pos, 11873);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][0].end_pos, 14209);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][1].start_pos, 14361);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][1].end_pos, 18366);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][2].start_pos, 24320);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][2].end_pos, 29370);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][3].start_pos, 34610);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][3].end_pos, 35174);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][4].start_pos, 35276);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][4].end_pos, 35481);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][5].start_pos, 69090);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][5].end_pos, 69499);
+		auto &chr1_intervals = genes_container._genes_intervals["chr1"]._homogenous_intervals;
+		BOOST_REQUIRE_EQUAL(chr1_intervals.size(), 10);
 
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][6].start_pos, 69499);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][6].end_pos, 69790);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][7].start_pos, 69790);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][7].end_pos, 70008);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][8].start_pos, 70008);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][8].end_pos, 71005);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][9].start_pos, 71005);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][9].end_pos, 72008);
+		BOOST_CHECK_EQUAL(chr1_intervals[0].start_pos(), 11873);
+		BOOST_CHECK_EQUAL(chr1_intervals[0].end_pos(), 14209);
+		BOOST_CHECK_EQUAL(chr1_intervals[1].start_pos(), 14361);
+		BOOST_CHECK_EQUAL(chr1_intervals[1].end_pos(), 18366);
+		BOOST_CHECK_EQUAL(chr1_intervals[2].start_pos(), 24320);
+		BOOST_CHECK_EQUAL(chr1_intervals[2].end_pos(), 29370);
+		BOOST_CHECK_EQUAL(chr1_intervals[3].start_pos(), 34610);
+		BOOST_CHECK_EQUAL(chr1_intervals[3].end_pos(), 35174);
+		BOOST_CHECK_EQUAL(chr1_intervals[4].start_pos(), 35276);
+		BOOST_CHECK_EQUAL(chr1_intervals[4].end_pos(), 35481);
+		BOOST_CHECK_EQUAL(chr1_intervals[5].start_pos(), 69090);
+		BOOST_CHECK_EQUAL(chr1_intervals[5].end_pos(), 69499);
 
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][0].genes.size(), 1);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][3].genes.size(), 2);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][4].genes.size(), 2);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][6].genes.size(), 2);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][7].genes.size(), 3);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][8].genes.size(), 2);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"][9].genes.size(), 1);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr1"].size(), 10);
-		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr2"].size(), 5);
+		BOOST_CHECK_EQUAL(chr1_intervals[6].start_pos(), 69499);
+		BOOST_CHECK_EQUAL(chr1_intervals[6].end_pos(), 69790);
+		BOOST_CHECK_EQUAL(chr1_intervals[7].start_pos(), 69790);
+		BOOST_CHECK_EQUAL(chr1_intervals[7].end_pos(), 70008);
+		BOOST_CHECK_EQUAL(chr1_intervals[8].start_pos(), 70008);
+		BOOST_CHECK_EQUAL(chr1_intervals[8].end_pos(), 71005);
+		BOOST_CHECK_EQUAL(chr1_intervals[9].start_pos(), 71005);
+		BOOST_CHECK_EQUAL(chr1_intervals[9].end_pos(), 72008);
+
+		BOOST_CHECK_EQUAL(chr1_intervals[0].base_interval_labels.size(), 1);
+		BOOST_CHECK_EQUAL(chr1_intervals[3].base_interval_labels.size(), 2);
+		BOOST_CHECK_EQUAL(chr1_intervals[4].base_interval_labels.size(), 2);
+		BOOST_CHECK_EQUAL(chr1_intervals[6].base_interval_labels.size(), 2);
+		BOOST_CHECK_EQUAL(chr1_intervals[7].base_interval_labels.size(), 3);
+		BOOST_CHECK_EQUAL(chr1_intervals[8].base_interval_labels.size(), 2);
+		BOOST_CHECK_EQUAL(chr1_intervals[9].base_interval_labels.size(), 1);
+		BOOST_CHECK_EQUAL(chr1_intervals.size(), 10);
+		BOOST_CHECK_EQUAL(genes_container._genes_intervals["chr2"]._homogenous_intervals.size(), 5);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testParseBed, Fixture)
@@ -182,27 +184,28 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 				continue;
 			}
 
-			if (gtf_chr.second.size() != bed_chr_it->second.size())
+			if (gtf_chr.second._homogenous_intervals.size() != bed_chr_it->second._homogenous_intervals.size())
 			{
 				std::cout << gtf_chr.first << " has different number of intervals in bed and gtf" << std::endl;
 				continue;
 			}
 
 			int failed_num = 0;
-			for (size_t i = 0; i < gtf_chr.second.size(); ++i)
+			for (size_t i = 0; i < gtf_chr.second._homogenous_intervals.size(); ++i)
 			{
-				auto const &gtf_interval = gtf_chr.second[i];
-				auto const &bed_interval = bed_chr_it->second[i];
+				auto const &gtf_interval = gtf_chr.second._homogenous_intervals[i];
+				auto const &bed_interval = bed_chr_it->second._homogenous_intervals[i];
 
-				bool eq = (gtf_interval.genes.size() == bed_interval.genes.size()) &&
-						  (gtf_interval.start_pos == bed_interval.start_pos) &&
-						  (gtf_interval.end_pos == bed_interval.end_pos);
+				bool eq = (gtf_interval.base_interval_labels.size() == bed_interval.base_interval_labels.size()) &&
+						  (gtf_interval.start_pos() == bed_interval.start_pos()) &&
+						  (gtf_interval.end_pos() == bed_interval.end_pos());
 				failed_num += !eq;
 			}
 			BOOST_CHECK_EQUAL(failed_num, 0);
 			if (failed_num != 0)
 			{
-				std::cout << gtf_chr.first << ": " << 100.0 * failed_num / gtf_chr.second.size() << "% failed" << std::endl;
+				std::cout << gtf_chr.first << ": " << 100.0 * failed_num / gtf_chr.second._homogenous_intervals.size()
+				          << "% failed" << std::endl;
 				continue;
 			}
 		}
@@ -253,6 +256,29 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 					 "library(fitdistrplus)");
 
 		R->parseEval((std::string)"source('" + PROJ_BIN_PATH + "/Functions.R')");
+	}
+
+	BOOST_FIXTURE_TEST_CASE(testInterval, Fixture)
+	{
+		IntervalsContainer<std::string> intervals;
+		intervals.add_interval(10, 20, "i1");
+		intervals.add_interval(10, 20, "i1");
+		intervals.add_interval(15, 30, "i1");
+		intervals.add_interval(15, 20, "i2");
+
+		intervals.set_initialized();
+
+		BOOST_REQUIRE_EQUAL(intervals.get_intervals(0, 11).size(), 1);
+		BOOST_CHECK_EQUAL(*intervals.get_intervals(0, 11).begin(), "i1");
+
+		BOOST_CHECK(intervals.get_intervals(0, 5).empty());
+
+		BOOST_REQUIRE_EQUAL(intervals.get_intervals(25, 30).size(), 1);
+		BOOST_CHECK_EQUAL(*intervals.get_intervals(25, 30).begin(), "i1");
+
+		BOOST_REQUIRE_EQUAL(intervals.get_intervals(17, 20).size(), 2);
+		BOOST_CHECK_EQUAL(*intervals.get_intervals(17, 20).begin(), "i1");
+		BOOST_CHECK_EQUAL(*(++intervals.get_intervals(17, 20).begin()), "i2");
 	}
 
 //	BOOST_FIXTURE_TEST_CASE(testGtfPerformance, Fixture) //Uncomment to print performance

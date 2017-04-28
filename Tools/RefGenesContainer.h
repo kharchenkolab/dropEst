@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GeneInfo.h"
+#include <Tools/IntervalsContainer.h>
 
 #include <list>
 #include <map>
@@ -43,44 +44,23 @@ namespace Tools
 
 	private:
 		typedef std::set<GeneInfo> genes_set_t;
-
-		/// Intervals are stored in 0-based coordinate system
-		struct Interval
-		{
-			pos_t start_pos;
-			pos_t end_pos;
-			genes_set_t genes;
-		};
-
-		typedef std::list<GeneInfo> genes_list_t;
-		typedef std::multimap<pos_t, const GeneInfo*> gene_events_t;
-		typedef std::vector<GeneInfo> genes_vec_t;
-		typedef std::vector<Interval> intervals_vec_t;
-		typedef std::unordered_map<std::string, intervals_vec_t> intervals_map_t;
+		typedef std::unordered_map<std::string, IntervalsContainer<GeneInfo>> intervals_map_t;
 
 	private:
-		static const int min_interval_len;
 		static const double read_intersection_significant_part; // TODO: move to parameter
 
 		intervals_map_t _genes_intervals;
-		[[deprecated("Unused")]]
-		std::unordered_set<std::string> _single_gene_names;
 		bool _is_empty;
 		std::string _file_format;
 
 
 	private:
 		void init(const std::string &genes_filename);
-		static void add_gene(GeneInfo &gene, genes_list_t &genes);
 		static GeneInfo parse_gtf_record(const std::string &record);
 		static GeneInfo parse_bed_record(const std::string &record);
 		static std::vector<std::string> split(const std::string &record);
 
 		gene_names_set_t accumulate_genes(const genes_set_t &genes) const;
-
-		static gene_events_t genes_to_events(const genes_vec_t &genes);
-
-		intervals_vec_t filter_genes(const genes_vec_t &genes);
 
 	public:
 		RefGenesContainer();
@@ -93,8 +73,5 @@ namespace Tools
 		/// \return
 		gene_names_set_t get_gene_info(const std::string &chr_name, pos_t start_pos, pos_t end_pos) const;
 		bool is_empty() const;
-
-		[[deprecated("Unused")]]
-		void save_gene_names(const genes_set_t &genes_in_interval);
 	};
 }
