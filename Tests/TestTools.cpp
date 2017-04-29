@@ -5,8 +5,9 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/unordered_map.hpp>
 #include <Tools/ReadParameters.h>
+#include <Tools/RefGenesContainerWithIntons.h>
 
-#include "Tools/GeneInfo.h"
+#include "Tools/GtfRecord.h"
 #include "Tools/Logs.h"
 #include "Tools/RefGenesContainer.h"
 #include "Tools/UtilFunctions.h"
@@ -25,13 +26,13 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 
 	BOOST_FIXTURE_TEST_CASE(testGtf, Fixture)
 	{
-		std::string test_str = "chr1\tunknown\tCDS\t878633  878757  .       +       2       gene_id \"SAMD11\"; "
+		std::string test_str = "chr1\tunknown\texon\t878633  878757  .       +       2       gene_id \"SAMD11\"; "
 				"gene_name \"SAMD11\"; p_id \"P11277\"; transcript_id \"NM_152486\"; tss_id \"TSS28354\";";
 
 		auto info = RefGenesContainer::parse_gtf_record(test_str);
 
 		BOOST_CHECK_EQUAL(info.chr_name(), "chr1");
-		BOOST_CHECK_EQUAL(info.id(), "SAMD11");
+		BOOST_CHECK_EQUAL(info.gene_id(), "SAMD11");
 		BOOST_CHECK_EQUAL(info.start_pos(), 878632);
 		BOOST_CHECK_EQUAL(info.end_pos(), 878757);
 	}
@@ -279,6 +280,75 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 		BOOST_REQUIRE_EQUAL(intervals.get_intervals(17, 20).size(), 2);
 		BOOST_CHECK_EQUAL(*intervals.get_intervals(17, 20).begin(), "i1");
 		BOOST_CHECK_EQUAL(*(++intervals.get_intervals(17, 20).begin()), "i2");
+	}
+
+	BOOST_FIXTURE_TEST_CASE(testGenesWithIntrons, Fixture)
+	{
+		RefGenesContainerWithIntrons container(PROJ_DATA_PATH + (std::string)("/gtf/gtf_test.gtf.gz"));
+		auto record = container.get_gene_info("chr1", 20000, 20010);
+		BOOST_REQUIRE_EQUAL(record.size(), 1);
+		BOOST_CHECK_EQUAL(record.begin()->gene_name, "WASH7P");
+		BOOST_CHECK_EQUAL(record.begin()->type, GtfRecord::INTRON);
+
+		record = container.get_gene_info("chr1", 24750, 24760);
+		BOOST_REQUIRE_EQUAL(record.size(), 1);
+		BOOST_CHECK_EQUAL(record.begin()->gene_name, "WASH7P");
+		BOOST_CHECK_EQUAL(record.begin()->type, GtfRecord::EXON);
+
+		record = container.get_gene_info("chr1", 10, 20);
+		BOOST_CHECK_EQUAL(record.size(), 0);
+
+//		record = container.get_gene_info("chr1", 23000, 24750); // TODO: uncomment it after implementation of CIGAR parsing
+//		BOOST_REQUIRE_EQUAL(record.size(), 2);
+//		BOOST_CHECK_EQUAL(record[0].gene_name, "WASH7P");
+//		BOOST_CHECK_EQUAL(record[0].type, GtfRecord::EXON);
+//		BOOST_CHECK_EQUAL(record[1].gene_name, "WASH7P");
+//		BOOST_CHECK_EQUAL(record[1].type, GtfRecord::INTRON);
+	}
+
+	BOOST_FIXTURE_TEST_CASE(testCompareGeneContainers, Fixture)
+	{
+		srand(10);
+		auto gtf_path = PROJ_DATA_PATH + std::string("/gtf/gencode.v19.annotation.gtf.gz");
+//		auto gtf_path = PROJ_DATA_PATH + std::string("/gtf/hg19_genes.gtf.gz");
+		time_t t0 = clock();
+		RefGenesContainerWithIntrons container_with_introns(gtf_path);
+		std::cout << "container_with_introns inited: " << (clock() - t0) / (CLOCKS_PER_SEC / 1000.0) << "ms" << std::endl;
+		t0 = clock();
+		RefGenesContainer container_without_introns(gtf_path);
+		std::cout << "container_without_introns inited: " << (clock() - t0) / (CLOCKS_PER_SEC / 1000.0) << "ms" << std::endl;
+
+		t0 = clock();
+		int total_gene_num = 0;
+		for (int i = 0; i < 100000; ++i)
+		{
+			int start_pos = rand() % 1000000;
+
+			auto r_with = container_with_introns.get_gene_info("chr1", start_pos, start_pos + 1);
+			auto r_without = container_without_introns.get_gene_info("chr1", start_pos, start_pos + 1);
+
+			int gene_num = 0;
+			for (auto const &gene_rec : r_with)
+			{
+				if (gene_rec.type == GtfRecord::INTRON)
+					continue;
+
+				gene_num++;
+				total_gene_num++;
+				BOOST_CHECK(r_without.find(gene_rec.gene_name) != r_without.end());
+			}
+
+			if (r_without.size() != gene_num)
+			{
+				int a = 0;
+				r_with = container_with_introns.get_gene_info("chr1", start_pos, start_pos + 1);
+				r_without = container_without_introns.get_gene_info("chr1", start_pos, start_pos + 1);
+			}
+
+			BOOST_CHECK_EQUAL(gene_num, r_without.size());
+		}
+		std::cout << "Tests finished inited: " << (clock() - t0) / (CLOCKS_PER_SEC / 1000.0) << "ms" << std::endl;
+		std::cout << "Total genes: " << total_gene_num << std::endl;
 	}
 
 //	BOOST_FIXTURE_TEST_CASE(testGtfPerformance, Fixture) //Uncomment to print performance

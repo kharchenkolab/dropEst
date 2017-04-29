@@ -8,6 +8,7 @@
 #include <map>
 #include <vector>
 #include <unordered_map>
+#include <Tools/GtfRecord.h>
 
 namespace TestEstimator
 {
@@ -49,15 +50,19 @@ namespace Estimation
 			{
 				NONE = 0,
 				HAS_NOT_ANNOTATED = 1,
-				HAS_ANNOTATED = 2
+				HAS_EXONS = 2,
+				HAS_INTRONS = 4
 			};
 		private:
 			char _mark;
 		public:
 			void add(const Mark &mark);
 			void add(MarkType type);
+			void add(Tools::GtfRecord::RecordType type);
 			bool check(MarkType type) const;
 			bool match(GeneMatchLevel match_level) const;
+			bool operator==(const MarkType &other) const;
+			bool operator==(const Mark &other) const;
 			Mark(MarkType type = MarkType::NONE);
 		};
 
@@ -116,7 +121,7 @@ namespace Estimation
 		                   GeneMatchLevel gene_match_level);
 
 		size_t add_record(const std::string &cell_barcode, const std::string &umi, const std::string &gene,
-		                  const Mark &umi_mark = Mark::HAS_ANNOTATED);
+		                  const Mark &umi_mark = Mark::HAS_EXONS);
 		void exclude_cell(size_t index);
 
 		void merge_and_filter();

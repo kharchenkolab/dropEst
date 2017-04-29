@@ -321,14 +321,39 @@ namespace Estimation
 		switch (match_level)
 		{
 			case ANY:
-				return this->check(HAS_ANNOTATED);
+				return this->check(HAS_EXONS);
 			case BOTH_INSIDE:
-				return !this->check(HAS_NOT_ANNOTATED) & this->check(HAS_ANNOTATED);
+				return !this->check(HAS_NOT_ANNOTATED) & this->check(HAS_EXONS);
 			case ONE_INSIDE:
-				return this->check(HAS_NOT_ANNOTATED) & this->check(HAS_ANNOTATED);
+				return this->check(HAS_NOT_ANNOTATED) & this->check(HAS_EXONS);
 			default:
 				throw std::runtime_error("Unexpected gene match level: " + std::to_string(match_level));
 		}
+	}
+
+	void CellsDataContainer::Mark::add(Tools::GtfRecord::RecordType type)
+	{
+		switch (type)
+		{
+			case Tools::GtfRecord::EXON:
+				this->add(HAS_EXONS);
+				break;
+			case Tools::GtfRecord::INTRON:
+				this->add(HAS_INTRONS);
+				break;
+			default:
+				throw std::runtime_error("Unexpected GtfRecord type: " + std::to_string(type));
+		}
+	}
+
+	bool CellsDataContainer::Mark::operator==(const CellsDataContainer::Mark::MarkType &other) const
+	{
+		return this->_mark == other;
+	}
+
+	bool CellsDataContainer::Mark::operator==(const CellsDataContainer::Mark &other) const
+	{
+		return this->_mark == other._mark;
 	}
 
 	CellsDataContainer::UMI::UMI(size_t read_count)

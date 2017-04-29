@@ -1,6 +1,6 @@
 #include "RefGenesContainer.h"
 
-#include <Tools/GeneInfo.h>
+#include <Tools/GtfRecord.h>
 #include <Tools/Logs.h>
 
 #include <fstream>
@@ -58,7 +58,7 @@ namespace Tools
 
 		while (std::getline(gz_fs, record))
 		{
-			GeneInfo info;
+			GtfRecord info;
 			try
 			{
 				if (this->_file_format == "gtf")
@@ -79,7 +79,7 @@ namespace Tools
 			if (!info.is_valid())
 				continue;
 
-			auto iter = this->_genes_intervals.insert(std::make_pair(info.chr_name(), IntervalsContainer<GeneInfo>(true, 1)));
+			auto iter = this->_genes_intervals.insert(std::make_pair(info.chr_name(), IntervalsContainer<GtfRecord>(true, 1)));
 			iter.first->second.add_interval(info.start_pos(), info.end_pos(), info);
 		}
 
@@ -98,7 +98,7 @@ namespace Tools
 		const std::string &chr_name = genes.begin()->chr_name();
 		for (auto const &gene : genes)
 		{
-			res.insert(gene.name());
+			res.insert(gene.gene_name());
 
 			if (chr_name != gene.chr_name())
 				throw std::runtime_error("Can't use genes from different chromosomes: " + genes.begin()->chr_name() +
@@ -120,23 +120,12 @@ namespace Tools
 		auto const &current_intervals = current_intervals_it->second;
 		auto intercepted_genes = current_intervals.get_intervals(start_pos, end_pos);
 
-		genes_set_t res_genes;
-		pos_t read_len = end_pos - start_pos;
-		for (auto const &gene : intercepted_genes)
-		{
-			double intercept_len = std::min(gene.end_pos(), end_pos) - std::max(gene.start_pos(), start_pos);
-			if (intercept_len / std::min(gene.length(), read_len) > RefGenesContainer::read_intersection_significant_part)
-			{
-				res_genes.insert(gene);
-			}
-		}
-
-		return RefGenesContainer::accumulate_genes(res_genes);
+		return RefGenesContainer::accumulate_genes(intercepted_genes);
 	}
 
-	GeneInfo RefGenesContainer::parse_gtf_record(const std::string &record)
+	GtfRecord RefGenesContainer::parse_gtf_record(const std::string &record)
 	{
-		GeneInfo result;
+		GtfRecord result;
 		if (record.at(0) == '#')
 			return result;
 
@@ -146,6 +135,9 @@ namespace Tools
 			throw std::runtime_error("Can't parse record: \n" + record);
 
 		if (columns[0] == "." || columns[3] == "." || columns[4] == "." || columns.size() == 9)
+			return result;
+
+		if (columns[2] != "exon")
 			return result;
 
 		std::string id, name;
@@ -176,12 +168,12 @@ namespace Tools
 		size_t start_pos = strtoul(columns[3].c_str(), NULL, 10) - 1;
 		size_t end_pos = strtoul(columns[4].c_str(), NULL, 10);
 
-		return GeneInfo(columns[0], id, name, start_pos, end_pos); // TODO: add transcript
+		return GtfRecord(columns[0], id, name, start_pos, end_pos, GtfRecord::EXON);
 	}
 
-	GeneInfo RefGenesContainer::parse_bed_record(const std::string &record)
+	GtfRecord RefGenesContainer::parse_bed_record(const std::string &record)
 	{
-		GeneInfo result;
+		GtfRecord result;
 		auto first_char_index = record.find_first_not_of("\t ");
 		if (first_char_index == std::string::npos || record[first_char_index] == '#')
 			return result;
@@ -193,7 +185,7 @@ namespace Tools
 		size_t start_pos = strtoul(columns[1].c_str(), NULL, 10);
 		size_t end_pos = strtoul(columns[2].c_str(), NULL, 10);
 
-		return GeneInfo(columns[0], columns[3], "", start_pos, end_pos);
+		return GtfRecord(columns[0], columns[3], "", start_pos, end_pos, GtfRecord::EXON);
 	}
 
 	std::vector<std::string> RefGenesContainer::split(const std::string &record)

@@ -304,7 +304,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		BOOST_CHECK(!umi_mark.match(CellsDataContainer::ONE_INSIDE));
 		BOOST_CHECK(umi_mark.match(CellsDataContainer::BOTH_INSIDE));
 
-		BOOST_CHECK(umi_mark.check(CellsDataContainer::Mark::HAS_ANNOTATED));
+		BOOST_CHECK(umi_mark.check(CellsDataContainer::Mark::HAS_EXONS));
 		BOOST_CHECK(!umi_mark.check(CellsDataContainer::Mark::HAS_NOT_ANNOTATED));
 
 		BOOST_CHECK_EQUAL(gene, "FAM138A");
@@ -315,7 +315,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		BOOST_CHECK(umi_mark.match(CellsDataContainer::ONE_INSIDE));
 		BOOST_CHECK(!umi_mark.match(CellsDataContainer::BOTH_INSIDE));
 
-		BOOST_CHECK(umi_mark.check(CellsDataContainer::Mark::HAS_ANNOTATED));
+		BOOST_CHECK(umi_mark.check(CellsDataContainer::Mark::HAS_EXONS));
 		BOOST_CHECK(umi_mark.check(CellsDataContainer::Mark::HAS_NOT_ANNOTATED));
 
 		BOOST_CHECK_EQUAL(gene, "FAM138A");
@@ -472,5 +472,39 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		{
 			BOOST_CHECK_EQUAL(umi.first.find('N'), std::string::npos);
 		}
+	}
+
+	BOOST_FIXTURE_TEST_CASE(testGetGeneWithIntrons, Fixture)
+	{
+		using namespace BamProcessing;
+		using Mark=CellsDataContainer::Mark;
+		auto parser = ReadsParamsParser(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz");
+
+		BamTools::BamAlignment align;
+		align.Name = "152228477!TGAGTTCTGTTACTGCATC#ATGGGC";
+		align.Position = 34610;
+		align.Length = 10;
+		align.CigarData.push_back(BamTools::CigarOp('M', 10));
+
+		std::string gene;
+		auto mark = parser.get_gene_new("chrX", align, gene);
+
+		BOOST_CHECK(mark == Mark::HAS_EXONS);
+		BOOST_CHECK_EQUAL(gene, "FAM138A");
+
+		align.Position = 34600;
+		mark = parser.get_gene_new("chrX", align, gene);
+		BOOST_CHECK(mark.check(Mark::HAS_NOT_ANNOTATED));
+		BOOST_CHECK(mark.check(Mark::HAS_EXONS));
+		BOOST_CHECK(!mark.check(Mark::HAS_INTRONS));
+		BOOST_CHECK_EQUAL(gene, "FAM138A");
+
+		align.Position = 23750;
+		align.CigarData[0].Length = 1000;
+		mark = parser.get_gene_new("chr1", align, gene);
+		BOOST_CHECK(mark.check(Mark::HAS_EXONS));
+		BOOST_CHECK(mark.check(Mark::HAS_INTRONS));
+		BOOST_CHECK(!mark.check(Mark::HAS_NOT_ANNOTATED));
+		BOOST_CHECK_EQUAL(gene, "WASH7P");
 	}
 BOOST_AUTO_TEST_SUITE_END()

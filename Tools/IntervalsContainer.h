@@ -30,7 +30,7 @@ public:
 
 private:
 	/// Intervals are stored in 0-based coordinate system
-	struct BaseIntervalInfo : public Interval
+	class BaseIntervalInfo : public Interval
 	{
 	private:
 		const IntervalLabelT _label;
@@ -58,8 +58,9 @@ private:
 		}
 	};
 
-	struct QueryInterval : public Interval
+	class QueryInterval : public Interval
 	{
+	public:
 		const interval_labels_t base_interval_labels;
 
 		QueryInterval(coord_t start_pos, coord_t end_pos, const interval_labels_t &base_interval_labels)
@@ -67,6 +68,7 @@ private:
 			, base_interval_labels(base_interval_labels)
 		{}
 	};
+
 	struct Event
 	{
 		enum EventType
@@ -203,6 +205,10 @@ public:
 		}
 	}
 
+	/// Return intervals, which intersect [start_pos; end_pos)
+	/// \param start_pos 0-based start position (inclusive)
+	/// \param end_pos 0-based end position (exclusive)
+	/// \return labels of intersected intervals
 	interval_labels_t get_intervals(coord_t start_pos, coord_t end_pos) const
 	{
 		if (!this->_initialized)
@@ -211,11 +217,11 @@ public:
 		auto intercept_it = std::lower_bound(this->_homogenous_intervals.begin(), this->_homogenous_intervals.end(), start_pos,
 		                                     [](const QueryInterval &interval, coord_t pos){ return interval.end_pos() <= pos;});
 
-		if (intercept_it == this->_homogenous_intervals.end() || intercept_it->start_pos() > end_pos)
+		if (intercept_it == this->_homogenous_intervals.end() || intercept_it->start_pos() >= end_pos)
 			return interval_labels_t();
 
 		interval_labels_t res_labels;
-		while (intercept_it != this->_homogenous_intervals.end() && intercept_it->start_pos() <= end_pos)
+		while (intercept_it != this->_homogenous_intervals.end() && intercept_it->start_pos() < end_pos)
 		{
 			res_labels.insert(intercept_it->base_interval_labels.begin(), intercept_it->base_interval_labels.end());
 			++intercept_it;
