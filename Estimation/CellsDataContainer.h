@@ -38,8 +38,8 @@ namespace Estimation
 		enum GeneMatchLevel
 		{
 			ANY,
-			ONE_INSIDE,
-			BOTH_INSIDE,
+			INTRON_EXON,
+			BOTH_EXON,
 			SIZE
 		};
 
@@ -139,6 +139,7 @@ namespace Estimation
 		names_t excluded_cells() const;
 		const ids_t &filtered_cells() const;
 		const ids_t& merge_targets() const;
+		GeneMatchLevel gene_match_level() const;
 
 		const std::string &cell_barcode(size_t index) const;
 		const genes_t &cell_genes(size_t index) const;

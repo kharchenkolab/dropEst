@@ -19,7 +19,7 @@ namespace Estimation
 			bool is_bam_open;
 			size_t written_reads;
 
-			const CellsDataContainer &container;
+			const CellsDataContainer &_container;
 
 		protected:
 			virtual std::string get_result_bam_name(const std::string &bam_name) const override;
@@ -33,6 +33,8 @@ namespace Estimation
 								   const std::string& gene, const CellsDataContainer::Mark &umi_mark) override;
 			virtual void write_alignment(BamTools::BamAlignment alignment, const std::string& gene,
 										 const Tools::ReadParameters &read_params) override;
+
+			virtual const CellsDataContainer& container() const override;
 		};
 	}
 }

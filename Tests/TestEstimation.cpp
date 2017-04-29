@@ -301,29 +301,43 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		std::string gene;
 		CellsDataContainer::Mark umi_mark = parser.get_gene("chrX", align, gene);
 		BOOST_CHECK(umi_mark.match(CellsDataContainer::ANY));
-		BOOST_CHECK(!umi_mark.match(CellsDataContainer::ONE_INSIDE));
-		BOOST_CHECK(umi_mark.match(CellsDataContainer::BOTH_INSIDE));
+		BOOST_CHECK(!umi_mark.match(CellsDataContainer::INTRON_EXON));
+		BOOST_CHECK(umi_mark.match(CellsDataContainer::BOTH_EXON));
 
 		BOOST_CHECK(umi_mark.check(CellsDataContainer::Mark::HAS_EXONS));
 		BOOST_CHECK(!umi_mark.check(CellsDataContainer::Mark::HAS_NOT_ANNOTATED));
+		BOOST_CHECK(!umi_mark.check(CellsDataContainer::Mark::HAS_INTRONS));
 
 		BOOST_CHECK_EQUAL(gene, "FAM138A");
 
 		align.Position = 34600;
 		umi_mark = parser.get_gene("chrX", align, gene);
 		BOOST_CHECK(umi_mark.match(CellsDataContainer::ANY));
-		BOOST_CHECK(umi_mark.match(CellsDataContainer::ONE_INSIDE));
-		BOOST_CHECK(!umi_mark.match(CellsDataContainer::BOTH_INSIDE));
+		BOOST_CHECK(!umi_mark.match(CellsDataContainer::INTRON_EXON));
+		BOOST_CHECK(!umi_mark.match(CellsDataContainer::BOTH_EXON));
 
 		BOOST_CHECK(umi_mark.check(CellsDataContainer::Mark::HAS_EXONS));
 		BOOST_CHECK(umi_mark.check(CellsDataContainer::Mark::HAS_NOT_ANNOTATED));
+		BOOST_CHECK(!umi_mark.check(CellsDataContainer::Mark::HAS_INTRONS));
 
 		BOOST_CHECK_EQUAL(gene, "FAM138A");
+
+		align.Position = 24315;
+		umi_mark = parser.get_gene("chr1", align, gene);
+		BOOST_CHECK(umi_mark.match(CellsDataContainer::ANY));
+		BOOST_CHECK(umi_mark.match(CellsDataContainer::INTRON_EXON));
+		BOOST_CHECK(!umi_mark.match(CellsDataContainer::BOTH_EXON));
+
+		BOOST_CHECK(umi_mark.check(CellsDataContainer::Mark::HAS_EXONS));
+		BOOST_CHECK(!umi_mark.check(CellsDataContainer::Mark::HAS_NOT_ANNOTATED));
+		BOOST_CHECK(umi_mark.check(CellsDataContainer::Mark::HAS_INTRONS));
+
+		BOOST_CHECK_EQUAL(gene, "WASH7P");
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testUmiExclusion, Fixture)
 	{
-		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, 10, CellsDataContainer::BOTH_INSIDE);
+		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, 10, CellsDataContainer::BOTH_EXON);
 		container.add_record("AAATTAGGTCCA", "AAACCT", "Gene1");
 		container.add_record("AAATTAGGTCCA", "CCCCCT", "Gene2");
 		container.add_record("AAATTAGGTCCA", "ACCCCT", "Gene3");
@@ -350,7 +364,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	{
 		using namespace BamProcessing;
 		using Mark=CellsDataContainer::Mark;
-		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, 10, CellsDataContainer::BOTH_INSIDE);
+		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, 10, CellsDataContainer::BOTH_EXON);
 		auto parser = std::make_shared<ReadsParamsParser>(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz");
 		std::shared_ptr<BamProcessorAbstract> processor(new BamProcessor(container, false));
 		std::unordered_set<std::string> unexpected_chromosomes;
@@ -487,13 +501,13 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		align.CigarData.push_back(BamTools::CigarOp('M', 10));
 
 		std::string gene;
-		auto mark = parser.get_gene_new("chrX", align, gene);
+		auto mark = parser.get_gene("chrX", align, gene);
 
 		BOOST_CHECK(mark == Mark::HAS_EXONS);
 		BOOST_CHECK_EQUAL(gene, "FAM138A");
 
 		align.Position = 34600;
-		mark = parser.get_gene_new("chrX", align, gene);
+		mark = parser.get_gene("chrX", align, gene);
 		BOOST_CHECK(mark.check(Mark::HAS_NOT_ANNOTATED));
 		BOOST_CHECK(mark.check(Mark::HAS_EXONS));
 		BOOST_CHECK(!mark.check(Mark::HAS_INTRONS));
@@ -501,7 +515,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 		align.Position = 23750;
 		align.CigarData[0].Length = 1000;
-		mark = parser.get_gene_new("chr1", align, gene);
+		mark = parser.get_gene("chr1", align, gene);
 		BOOST_CHECK(mark.check(Mark::HAS_EXONS));
 		BOOST_CHECK(mark.check(Mark::HAS_INTRONS));
 		BOOST_CHECK(!mark.check(Mark::HAS_NOT_ANNOTATED));

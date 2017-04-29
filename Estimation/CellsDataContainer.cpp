@@ -297,6 +297,11 @@ namespace Estimation
 		}
 	}
 
+	CellsDataContainer::GeneMatchLevel CellsDataContainer::gene_match_level() const
+	{
+		return this->_gene_match_level;
+	}
+
 	CellsDataContainer::Mark::Mark(Mark::MarkType type)
 			: _mark(type)
 	{}
@@ -322,10 +327,10 @@ namespace Estimation
 		{
 			case ANY:
 				return this->check(HAS_EXONS);
-			case BOTH_INSIDE:
-				return !this->check(HAS_NOT_ANNOTATED) & this->check(HAS_EXONS);
-			case ONE_INSIDE:
-				return this->check(HAS_NOT_ANNOTATED) & this->check(HAS_EXONS);
+			case BOTH_EXON:
+				return !this->check(HAS_NOT_ANNOTATED) & !this->check(HAS_INTRONS)  & this->check(HAS_EXONS);
+			case INTRON_EXON:
+				return this->check(HAS_INTRONS) & this->check(HAS_EXONS);
 			default:
 				throw std::runtime_error("Unexpected gene match level: " + std::to_string(match_level));
 		}

@@ -84,9 +84,9 @@ static void usage()
 	cerr << "\t-g, --genes filename: file with genes annotations (.bed or .gtf)" << endl;
 	cerr << "\t-l, --log-prefix : logs prefix" << endl;
 	cerr << "\t-m, --merge-cell-tags : merge linked cell tags" << endl;
-	cerr << "\t-M, --gene-match-level : " << CellsDataContainer::ANY << ": any read end could be exonic; "
-	     << CellsDataContainer::ONE_INSIDE << ": only one end could be exonic; "
-	     << CellsDataContainer::BOTH_INSIDE << ": both ends should be exonic" << endl;
+	cerr << "\t-M, --gene-match-level : " << CellsDataContainer::ANY << ": any read end can be exonic; "
+	     << CellsDataContainer::INTRON_EXON << ": only intronic and one exonic end; "
+	     << CellsDataContainer::BOTH_EXON << ": both ends must be exonic" << endl;
 	cerr << "\t-n, --not-filtered : print data for all cells" << endl;
 	cerr << "\t-o, --output-file filename : output file name" << endl;
 	cerr << "\t-p, --parallel number_of_threads : number of threads" << endl;

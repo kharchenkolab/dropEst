@@ -212,6 +212,7 @@ namespace Estimation
 	{
 		CellsDataContainer container(this->merge_strategy, std::make_shared<MergeUMIs::MergeUMIsStrategySimple>(1), // TODO: Move 1 to parameter
 		                             Estimator::top_print_size, gene_match_level);
+
 		BamProcessing::BamController::parse_bam_files(files, bam_output, filled_bam, reads_params_names_str,
 													  gtf_filename, container);
 

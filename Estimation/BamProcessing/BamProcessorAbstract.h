@@ -40,6 +40,8 @@ namespace Estimation
 			                       const std::string& gene, const CellsDataContainer::Mark &umi_mark) = 0;
 			virtual void write_alignment(BamTools::BamAlignment alignment, const std::string& gene,
 								 const Tools::ReadParameters &read_params) = 0;
+
+			virtual const CellsDataContainer& container() const = 0;
 		};
 	}
 }

@@ -48,6 +48,11 @@ namespace BamProcessing
 		std::shared_ptr<ReadsParamsParser> parser = BamController::get_parser(filled_bam, print_result_bams,
 																			  reads_params_names_str, gtf_path);
 
+		if (processor->container().gene_match_level() == CellsDataContainer::INTRON_EXON && !parser->has_introns())
+		{
+			throw std::runtime_error("Genes file should have transcript_id tag or intron records for intron/exon search option");
+		}
+
 		for (size_t i = 0; i < bam_files.size(); ++i)
 		{
 			BamController::parse_bam_file(bam_files[i], processor, parser, bam_files.size() == 1);

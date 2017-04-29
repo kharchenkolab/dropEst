@@ -1,6 +1,6 @@
 #include <Tools/Logs.h>
 #include <Tools/ReadParameters.h>
-#include <Tools/RefGenesContainerWithIntons.h>
+#include <Tools/RefGenesContainer.h>
 #include "ReadsParamsParser.h"
 #include "BamController.h"
 
@@ -24,55 +24,6 @@ namespace BamProcessing
 	}
 
 	CellsDataContainer::Mark ReadsParamsParser::get_gene(const std::string &chr_name, BamTools::BamAlignment alignment,
-	                                                     std::string &gene) const
-	{
-		using Mark=CellsDataContainer::Mark;
-		Mark mark;
-		gene = "";
-
-		if (!this->_genes_container.is_empty())
-		{
-			// TODO: parse CIGAR
-			auto gene_set1 = this->_genes_container.get_gene_info(chr_name, alignment.Position, alignment.Position + 1);
-			int end_position = alignment.GetEndPosition();
-			auto gene_set2 = this->_genes_container.get_gene_info(chr_name, end_position - 1, end_position);
-
-			if (gene_set1.size() > 1 || gene_set2.size() > 1)
-				return mark;
-
-			std::string gene1 = gene_set1.empty() ? "" : *gene_set1.begin();
-			std::string gene2 = gene_set2.empty() ? "" : *gene_set2.begin();
-
-			if (gene1.empty() && gene2.empty())
-				return mark;
-
-			mark.add(Mark::HAS_EXONS);
-
-			if (gene1.empty() || gene2.empty())
-			{
-				gene = gene1.empty() ? gene2 : gene1;
-				mark.add(Mark::HAS_NOT_ANNOTATED);
-				return mark;
-			}
-
-			if (gene1 != gene2)
-				return mark;
-
-			gene = gene1;
-			return mark;
-		}
-
-		if (!alignment.GetTag(BamController::GENE_TAG, gene))
-		{
-			gene = "";
-			return mark;
-		}
-
-		mark.add(Mark::HAS_EXONS);
-		return mark;
-	}
-
-	CellsDataContainer::Mark ReadsParamsParser::get_gene_new(const std::string &chr_name, BamTools::BamAlignment alignment,
 	                                                         std::string &gene) const
 	{
 		using Mark=CellsDataContainer::Mark;
@@ -86,9 +37,9 @@ namespace BamProcessing
 		}
 
 		// TODO: parse CIGAR
-		auto gene_set1 = this->_genes_container_new.get_gene_info(chr_name, alignment.Position, alignment.Position + 1);
+		auto gene_set1 = this->_genes_container.get_gene_info(chr_name, alignment.Position, alignment.Position + 1);
 		int end_position = alignment.GetEndPosition();
-		auto gene_set2 = this->_genes_container_new.get_gene_info(chr_name, end_position - 1, end_position);
+		auto gene_set2 = this->_genes_container.get_gene_info(chr_name, end_position - 1, end_position);
 
 		if (gene_set1.empty() && gene_set2.empty())
 			return mark;
@@ -119,7 +70,7 @@ namespace BamProcessing
 		if (gene_set1.empty() || gene_set2.empty())
 			return mark;
 
-		Tools::RefGenesContainerWithIntrons::QueryResult exon_result1, exon_result2;
+		Tools::RefGenesContainer::QueryResult exon_result1, exon_result2;
 		if (!this->find_exon(gene_set1, exon_result1))
 			return mark;
 
@@ -146,12 +97,11 @@ namespace BamProcessing
 		if (genes_filename.length() != 0)
 		{
 			this->_genes_container = Tools::RefGenesContainer(genes_filename);
-			this->_genes_container_new = Tools::RefGenesContainerWithIntrons(genes_filename);
 		}
 	}
 
-	bool ReadsParamsParser::find_exon(Tools::RefGenesContainerWithIntrons::query_results_t query_results,
-	                                  Tools::RefGenesContainerWithIntrons::QueryResult &exon_result) const
+	bool ReadsParamsParser::find_exon(Tools::RefGenesContainer::query_results_t query_results,
+	                                  Tools::RefGenesContainer::QueryResult &exon_result) const
 	{
 		for (auto const &query_res : query_results)
 		{
@@ -169,6 +119,11 @@ namespace BamProcessing
 		}
 
 		return true;
+	}
+
+	bool ReadsParamsParser::has_introns() const
+	{
+		return this->_genes_container.has_introns();
 	}
 }
 }

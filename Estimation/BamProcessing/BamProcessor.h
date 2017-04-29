@@ -13,7 +13,7 @@ namespace Estimation
 		class BamProcessor : public BamProcessorAbstract
 		{
 		private:
-			CellsDataContainer &container;
+			CellsDataContainer &_container;
 			const bool print_bam;
 			size_t total_exonic_reads;
 
@@ -30,6 +30,8 @@ namespace Estimation
 								   const std::string& gene, const CellsDataContainer::Mark &umi_mark) override;
 			virtual void write_alignment(BamTools::BamAlignment alignment, const std::string& gene,
 								 const Tools::ReadParameters &read_params) override;
+
+			virtual const CellsDataContainer& container() const override;
 		};
 	}
 }

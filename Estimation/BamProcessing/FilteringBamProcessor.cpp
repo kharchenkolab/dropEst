@@ -14,7 +14,7 @@ namespace Estimation
 		FilteringBamProcessor::FilteringBamProcessor(const CellsDataContainer &container)
 			: is_bam_open(false)
 			, written_reads(0)
-			, container(container)
+			, _container(container)
 		{
 			auto const &merge_targets = container.merge_targets();
 			std::vector<bool> good_cells_mask(merge_targets.size(), false);
@@ -57,7 +57,7 @@ namespace Estimation
 			if (cb_iter == this->merge_cbs.end())
 				return;
 
-			auto const &cell_map = container.cell_genes(container.cell_ids_by_cb().at(cb_iter->second));
+			auto const &cell_map = _container.cell_genes(_container.cell_ids_by_cb().at(cb_iter->second));
 			auto gene_map_iter = cell_map.find(gene);
 			if (gene_map_iter == cell_map.end())
 				return;
@@ -82,5 +82,11 @@ namespace Estimation
 			BamProcessorAbstract::update_bam(bam_file, reader);
 			this->is_bam_open = true;
 		}
+
+		const CellsDataContainer &FilteringBamProcessor::container() const
+		{
+			return this->_container;
+		}
+
 	}
 }
