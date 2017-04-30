@@ -430,7 +430,7 @@ namespace Estimation
 				mark.add(HAS_NOT_ANNOTATED);
 				return mark;
 			default:
-				throw std::runtime_error("Unexpected gene match levels: " + code);
+				throw std::runtime_error(string("Unexpected gene match levels: ") + code);
 		}
 	}
 
