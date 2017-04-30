@@ -206,12 +206,12 @@ namespace Estimation
 	}
 
 	CellsDataContainer Estimator::get_cells_container(const names_t &files, bool bam_output, bool filled_bam,
-													  const std::string &reads_params_names_str,
+	                                                  const std::string &reads_params_names_str,
 	                                                  const std::string &gtf_filename,
-	                                                  CellsDataContainer::GeneMatchLevel gene_match_level)
+	                                                  const std::vector<CellsDataContainer::Mark> &gene_match_levels)
 	{
-		CellsDataContainer container(this->merge_strategy, std::make_shared<MergeUMIs::MergeUMIsStrategySimple>(1), // TODO: Move 1 to parameter
-		                             Estimator::top_print_size, gene_match_level);
+		CellsDataContainer container(this->merge_strategy, std::make_shared<MergeUMIs::MergeUMIsStrategySimple>(1),
+		                             Estimator::top_print_size, gene_match_levels);
 
 		BamProcessing::BamController::parse_bam_files(files, bam_output, filled_bam, reads_params_names_str,
 													  gtf_filename, container);

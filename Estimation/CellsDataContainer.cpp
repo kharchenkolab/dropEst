@@ -14,14 +14,16 @@ namespace Estimation
 {
 	using Tools::IndexedValue;
 
+	const std::string CellsDataContainer::Mark::DEFAULT_CODE = "eEBA";
+
 	CellsDataContainer::CellsDataContainer(std::shared_ptr<Merge::MergeStrategyAbstract> merge_strategy,
-	                                       std::shared_ptr<MergeUMIs::MergeUMIsStrategySimple> umi_merge_strategy,
-	                                       size_t top_print_size, GeneMatchLevel gene_match_level)
+		                                       std::shared_ptr<MergeUMIs::MergeUMIsStrategySimple> umi_merge_strategy, size_t top_print_size,
+		                                       const std::vector<Mark> &gene_match_levels)
 		: _merge_strategy(merge_strategy)
 		, _umi_merge_strategy(umi_merge_strategy)
 		, _top_print_size(top_print_size)
 		, _is_initialized(false)
-		, _gene_match_level(gene_match_level)
+		, _gene_match_levels(gene_match_levels)
 	{
 		L_TRACE << this->_merge_strategy->merge_type() << " merge selected";
 	}
@@ -261,7 +263,7 @@ namespace Estimation
 				auto umi_iter = gene_iter->second.begin();
 				while (umi_iter != gene_iter->second.end())
 				{
-					if (!umi_iter->second.mark.match(this->_gene_match_level))
+					if (!umi_iter->second.mark.match(this->_gene_match_levels))
 					{
 						umi_iter = gene_iter->second.erase(umi_iter);
 					}
@@ -297,9 +299,9 @@ namespace Estimation
 		}
 	}
 
-	CellsDataContainer::GeneMatchLevel CellsDataContainer::gene_match_level() const
+	const std::vector<CellsDataContainer::Mark>& CellsDataContainer::gene_match_level() const
 	{
-		return this->_gene_match_level;
+		return this->_gene_match_levels;
 	}
 
 	CellsDataContainer::Mark::Mark(Mark::MarkType type)
@@ -321,19 +323,15 @@ namespace Estimation
 		this->_mark |= mark._mark;
 	}
 
-	bool CellsDataContainer::Mark::match(GeneMatchLevel match_level) const
+	bool CellsDataContainer::Mark::match(const std::vector<Mark>match_levels) const
 	{
-		switch (match_level)
+		for (auto const &match_level : match_levels)
 		{
-			case ANY:
-				return this->check(HAS_EXONS);
-			case BOTH_EXON:
-				return !this->check(HAS_NOT_ANNOTATED) & !this->check(HAS_INTRONS)  & this->check(HAS_EXONS);
-			case INTRON_EXON:
-				return this->check(HAS_INTRONS) & this->check(HAS_EXONS);
-			default:
-				throw std::runtime_error("Unexpected gene match level: " + std::to_string(match_level));
+			if (this->_mark == match_level._mark)
+				return true;
 		}
+
+		return false;
 	}
 
 	void CellsDataContainer::Mark::add(Tools::GtfRecord::RecordType type)
@@ -359,6 +357,50 @@ namespace Estimation
 	bool CellsDataContainer::Mark::operator==(const CellsDataContainer::Mark &other) const
 	{
 		return this->_mark == other._mark;
+	}
+
+	vector<CellsDataContainer::Mark> CellsDataContainer::Mark::get_by_code(const std::string &code)
+	{
+		std::vector<Mark> match_levels;
+		for (char c : code)
+		{
+			match_levels.push_back(Mark::get_by_code(c));
+		}
+
+		return match_levels;
+	}
+
+	CellsDataContainer::Mark CellsDataContainer::Mark::get_by_code(char code)
+	{
+		Mark mark;
+		switch (code)
+		{
+			case 'e':
+				mark.add(HAS_EXONS);
+				return mark;
+			case 'i':
+				mark.add(HAS_INTRONS);
+				return mark;
+			case 'E':
+				mark.add(HAS_EXONS);
+				mark.add(HAS_NOT_ANNOTATED);
+				return mark;
+			case 'I':
+				mark.add(HAS_INTRONS);
+				mark.add(HAS_NOT_ANNOTATED);
+				return mark;
+			case 'B':
+				mark.add(HAS_EXONS);
+				mark.add(HAS_INTRONS);
+				return mark;
+			case 'A':
+				mark.add(HAS_EXONS);
+				mark.add(HAS_INTRONS);
+				mark.add(HAS_NOT_ANNOTATED);
+				return mark;
+			default:
+				throw std::runtime_error("Unexpected gene match levels: " + code);
+		}
 	}
 
 	CellsDataContainer::UMI::UMI(size_t read_count)

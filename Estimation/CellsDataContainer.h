@@ -34,15 +34,6 @@ namespace Estimation
 		friend struct TestEstimator::testGeneMatchLevelUmiExclusion;
 
 	public:
-
-		enum GeneMatchLevel
-		{
-			ANY,
-			INTRON_EXON,
-			BOTH_EXON,
-			SIZE
-		};
-
 		class Mark
 		{
 		public:
@@ -56,14 +47,20 @@ namespace Estimation
 		private:
 			char _mark;
 		public:
+			static const std::string DEFAULT_CODE;
+
+			Mark(MarkType type = MarkType::NONE);
+
 			void add(const Mark &mark);
 			void add(MarkType type);
 			void add(Tools::GtfRecord::RecordType type);
 			bool check(MarkType type) const;
-			bool match(GeneMatchLevel match_level) const;
+			bool match(const std::vector<Mark>) const;
 			bool operator==(const MarkType &other) const;
 			bool operator==(const Mark &other) const;
-			Mark(MarkType type = MarkType::NONE);
+
+			static Mark get_by_code(char code);
+			static std::vector<Mark> get_by_code(const std::string &code);
 		};
 
 		class UMI
@@ -106,7 +103,7 @@ namespace Estimation
 		counts_t _cell_sizes;
 		i_counter_t _filtered_cells_gene_counts_sorted;
 		bool _is_initialized;
-		const GeneMatchLevel _gene_match_level;
+		const std::vector<Mark> _gene_match_levels;
 
 		mutable Stats _stats;
 
@@ -117,8 +114,8 @@ namespace Estimation
 
 	public:
 		CellsDataContainer(std::shared_ptr<Merge::MergeStrategyAbstract> merge_strategy,
-		                   std::shared_ptr<MergeUMIs::MergeUMIsStrategySimple> umi_merge_strategy, size_t top_print_size,
-		                   GeneMatchLevel gene_match_level);
+		                   std::shared_ptr<MergeUMIs::MergeUMIsStrategySimple> umi_merge_strategy,
+		                   size_t top_print_size, const std::vector<Mark> &gene_match_levels);
 
 		size_t add_record(const std::string &cell_barcode, const std::string &umi, const std::string &gene,
 		                  const Mark &umi_mark = Mark::HAS_EXONS);
@@ -133,13 +130,13 @@ namespace Estimation
 
 		void set_initialized();
 
-		const names_t &cell_barcodes_raw() const;
-		const i_counter_t &cells_gene_counts_sorted() const;
+		const names_t& cell_barcodes_raw() const;
+		const i_counter_t& cells_gene_counts_sorted() const;
 		const s_ul_hash_t& cell_ids_by_cb() const;
 		names_t excluded_cells() const;
-		const ids_t &filtered_cells() const;
+		const ids_t& filtered_cells() const;
 		const ids_t& merge_targets() const;
-		GeneMatchLevel gene_match_level() const;
+		const std::vector<CellsDataContainer::Mark>& gene_match_level() const;
 
 		const std::string &cell_barcode(size_t index) const;
 		const genes_t &cell_genes(size_t index) const;

@@ -29,12 +29,14 @@ struct Fixture
 								 "        <min_genes_before_merge>0</min_genes_before_merge>\n"
 								 "    </Estimation>");
 
+		using Mark = CellsDataContainer::Mark;
+
 		boost::property_tree::ptree pt;
 		read_xml(config, pt);
 		this->real_cb_strat = std::make_shared<Merge::PoissonRealBarcodesMergeStrategy>(PROJ_DATA_PATH + std::string("/barcodes/test_est"),
 		                                                                                pt.get_child("Estimation"));
 		this->container_full = std::make_shared<CellsDataContainer>(this->real_cb_strat, std::make_shared<MergeUMIs::MergeUMIsStrategySimple>(1),
-		                                                            1, CellsDataContainer::ANY);
+		                                                            1, Mark::get_by_code(Mark::DEFAULT_CODE));
 
 		Tools::init_test_logs(boost::log::trivial::info);
 		this->container_full->add_record("AAATTAGGTCCA", "AAACCT", "Gene1");

@@ -39,7 +39,7 @@ struct Params
 	string log_prefix = "";
 	string output_name = "";
 	string reads_params_names_str = "";
-	int gene_match_level = CellsDataContainer::ANY;
+	std::string gene_match_level = CellsDataContainer::Mark::DEFAULT_CODE;
 	int num_of_threads = 1;
 };
 
@@ -84,9 +84,14 @@ static void usage()
 	cerr << "\t-g, --genes filename: file with genes annotations (.bed or .gtf)" << endl;
 	cerr << "\t-l, --log-prefix : logs prefix" << endl;
 	cerr << "\t-m, --merge-cell-tags : merge linked cell tags" << endl;
-	cerr << "\t-M, --gene-match-level : " << CellsDataContainer::ANY << ": any read end can be exonic; "
-	     << CellsDataContainer::INTRON_EXON << ": only intronic and one exonic end; "
-	     << CellsDataContainer::BOTH_EXON << ": both ends must be exonic" << endl;
+	cerr << "\t-M, --gene-match-level : "
+			"\t\te: count UMIs with exonic reads only;\n"
+			"\t\ti: count UMIs with intronic reads only;\n"
+			"\t\tE: count UMIs, which have both exonic and not annotated reads;\n"
+			"\t\tI: count UMIs, which have both intronic and not annotated reads;\n"
+			"\t\tB: count UMIs, which have both exonic and intronic reads;\n"
+			"\t\tA: count UMIs, which have exonic, intronic and not annotated reads.\n"
+			"\t\tDefault: -M " << Params().gene_match_level << "." << endl;
 	cerr << "\t-n, --not-filtered : print data for all cells" << endl;
 	cerr << "\t-o, --output-file filename : output file name" << endl;
 	cerr << "\t-p, --parallel number_of_threads : number of threads" << endl;
@@ -154,7 +159,7 @@ static Params parse_cmd_params(int argc, char **argv)
 				params.merge_tags = true;
 				break;
 			case 'M' :
-				params.gene_match_level = atoi(optarg);
+				params.gene_match_level = string(optarg);
 				break;
 			case 'n' :
 				params.not_filtered = true;
@@ -214,21 +219,9 @@ static Params parse_cmd_params(int argc, char **argv)
 		params.cant_parse = true;
 	}
 
-	if (params.genes_filename == "" && params.gene_match_level > 0)
+	if (params.genes_filename == "" && params.gene_match_level.find('I') != std::string::npos)
 	{
-		cerr << "indropset: you should provide genes file (-g option) to use exons annotations" << endl;
-		params.cant_parse = true;
-	}
-
-	if (params.gene_match_level != CellsDataContainer::ANY && params.genes_filename.empty())
-	{
-		cerr << "indropest: genes file ('-g') is required for non trivial gene match level" << endl;
-		params.cant_parse = true;
-	}
-
-	if (params.gene_match_level >= CellsDataContainer::SIZE)
-	{
-		cerr << "indropset: gene match level should be < " << CellsDataContainer::SIZE << endl;
+		cerr << "indropset: you should provide genes file (-g option) to use intron annotations" << endl;
 		params.cant_parse = true;
 	}
 
@@ -284,11 +277,14 @@ int main(int argc, char **argv)
 	{
 		check_files_existence(params, files);
 
+		auto match_levels = CellsDataContainer::Mark::get_by_code(params.gene_match_level);
+
 		Tools::trace_time("Run");
 		Estimator estimator(pt.get_child("config.Estimation"), params.merge_tags, params.barcodes_filename);
+
 		CellsDataContainer container = estimator.get_cells_container(files, params.bam_output, params.filled_bam,
-																	 params.reads_params_names_str, params.genes_filename,
-																	 (CellsDataContainer::GeneMatchLevel) params.gene_match_level);
+		                                                             params.reads_params_names_str,
+		                                                             params.genes_filename, match_levels);
 
 		if (params.filtered_bam_output)
 		{
