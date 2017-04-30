@@ -24,6 +24,9 @@ namespace Estimation
 		, _top_print_size(top_print_size)
 		, _is_initialized(false)
 		, _gene_match_levels(gene_match_levels)
+		, _has_exon_reads(0)
+		, _has_intron_reads(0)
+		, _has_not_annotated_reads(0)
 	{
 		L_TRACE << this->_merge_strategy->merge_type() << " merge selected";
 	}
@@ -52,6 +55,19 @@ namespace Estimation
 	{
 		if (this->_is_initialized)
 			throw runtime_error("Container is already initialized");
+
+		if (umi_mark.check(Mark::HAS_EXONS))
+		{
+			++this->_has_exon_reads;
+		}
+		if (umi_mark.check(Mark::HAS_INTRONS))
+		{
+			++this->_has_intron_reads;
+		}
+		if (umi_mark.check(Mark::HAS_NOT_ANNOTATED))
+		{
+			++this->_has_not_annotated_reads;
+		}
 
 		auto res = this->_cell_ids_by_cb.emplace(cell_barcode, this->_cell_barcodes.size());
 		if (res.second)
@@ -302,6 +318,21 @@ namespace Estimation
 	const std::vector<CellsDataContainer::Mark>& CellsDataContainer::gene_match_level() const
 	{
 		return this->_gene_match_levels;
+	}
+
+	size_t CellsDataContainer::has_exon_reads_num() const
+	{
+		return this->_has_exon_reads;
+	}
+
+	size_t CellsDataContainer::has_intron_reads_num() const
+	{
+		return this->_has_intron_reads;
+	}
+
+	size_t CellsDataContainer::has_not_annotated_reads_num() const
+	{
+		return this->_has_not_annotated_reads;
 	}
 
 	CellsDataContainer::Mark::Mark(Mark::MarkType type)

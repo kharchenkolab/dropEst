@@ -12,7 +12,7 @@ namespace Estimation
 		BamProcessor::BamProcessor(CellsDataContainer &container, bool print_bam)
 				: _container(container)
 				, print_bam(print_bam)
-				, total_exonic_reads(0)
+				, total_intragenic_reads(0)
 		{}
 
 		void BamProcessor::save_read(const std::string& cell_barcode, const std::string& chr_name, const std::string& umi,
@@ -21,6 +21,7 @@ namespace Estimation
 			if (gene == "")
 			{
 				this->_container.stats().inc(Stats::NON_EXONE_READS_PER_CHR_PER_CELL, cell_barcode, chr_name);
+				this->total_intragenic_reads++;
 				return;
 			}
 
@@ -31,13 +32,16 @@ namespace Estimation
 			}
 
 			this->_container.stats().inc(Stats::EXONE_READS_PER_CHR_PER_CELL, cell_barcode, chr_name);
-			this->total_exonic_reads++;
 		}
 
 		void BamProcessor::trace_state(const std::string &trace_prefix) const
 		{
-			L_TRACE << trace_prefix << ": " << this->total_reads() << " total reads; " << this->total_exonic_reads << std::setprecision(3)
-					<< " ("<< (100.0*this->total_exonic_reads / this->total_reads()) <<"%) exonic; " << this->_container.cell_barcodes_raw().size() << " CBs";
+			L_TRACE << trace_prefix << ": " << this->total_reads() << " total reads; " << std::setprecision(3)
+					<< (100.0*this->total_intragenic_reads / this->total_reads()) <<"% intragenic; "
+					<< (100.0*this->container().has_exon_reads_num() / this->total_reads()) <<"% touch exon; "
+					<< (100.0*this->container().has_intron_reads_num() / this->total_reads()) <<"% touch intron; "
+					<< (100.0*this->container().has_not_annotated_reads_num() / this->total_reads()) <<"% touch not annotated regions; "
+					<< this->_container.cell_barcodes_raw().size() << " CBs read";
 		}
 
 		void BamProcessor::update_bam(const std::string &bam_file, const BamTools::BamReader &reader)

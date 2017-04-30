@@ -105,6 +105,10 @@ namespace Estimation
 		bool _is_initialized;
 		const std::vector<Mark> _gene_match_levels;
 
+		size_t _has_exon_reads;
+		size_t _has_intron_reads;
+		size_t _has_not_annotated_reads;
+
 		mutable Stats _stats;
 
 	private:
@@ -143,6 +147,10 @@ namespace Estimation
 		size_t cell_size(size_t cell_index) const;
 		bool is_cell_excluded(size_t cell_id) const;
 		bool is_cell_merged(size_t cell_id) const;
+
+		size_t has_exon_reads_num() const;
+		size_t has_intron_reads_num() const;
+		size_t has_not_annotated_reads_num() const;
 
 		Stats &stats() const;
 		std::string merge_type() const;
