@@ -80,12 +80,6 @@ namespace BamProcessing
 
 		while (reader.GetNextAlignment(alignment))
 		{
-			processor->inc_reads();
-			if (trace && processor->total_reads() % 10000000 == 0)
-			{
-				processor->trace_state(bam_name);
-			}
-
 			std::string chr_name;
 			try
 			{
@@ -98,6 +92,12 @@ namespace BamProcessing
 					L_ERR << "ERROR: can't find chromosome, id: " << alignment.RefID;
 				}
 				continue;
+			}
+
+			processor->inc_reads(); // reads with unknown chromosome are not counted
+			if (trace && processor->total_reads() % 10000000 == 0)
+			{
+				processor->trace_state(bam_name);
 			}
 
 			BamController::process_alignment(parser, processor, unexpected_chromosomes, chr_name, alignment);

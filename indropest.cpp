@@ -84,7 +84,7 @@ static void usage()
 	cerr << "\t-g, --genes filename: file with genes annotations (.bed or .gtf)" << endl;
 	cerr << "\t-l, --log-prefix : logs prefix" << endl;
 	cerr << "\t-m, --merge-cell-tags : merge linked cell tags" << endl;
-	cerr << "\t-M, --gene-match-level : "
+	cerr << "\t-M, --gene-match-level :\n"
 			"\t\te: count UMIs with exonic reads only;\n"
 			"\t\ti: count UMIs with intronic reads only;\n"
 			"\t\tE: count UMIs, which have both exonic and not annotated reads;\n"

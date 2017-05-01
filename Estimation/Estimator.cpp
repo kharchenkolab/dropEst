@@ -217,7 +217,6 @@ namespace Estimation
 													  gtf_filename, container);
 
 		container.set_initialized();
-
 		container.merge_and_filter();
 		return container;
 	}

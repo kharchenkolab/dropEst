@@ -36,9 +36,8 @@ struct Fixture
 				"        <min_genes_before_merge>0</min_genes_before_merge>\n"
 				"    </Estimation>");
 
-		boost::property_tree::ptree pt;
-		read_xml(config, pt);
-		this->real_cb_strat = std::make_shared<Merge::RealBarcodesMergeStrategy>(PROJ_DATA_PATH + std::string("/barcodes/test_est"), pt.get_child("Estimation"));
+		read_xml(config, this->pt);
+		this->real_cb_strat = std::make_shared<Merge::RealBarcodesMergeStrategy>(PROJ_DATA_PATH + std::string("/barcodes/test_est"), this->pt.get_child("Estimation"));
 		this->umi_merge_strat = std::make_shared<MergeUMIs::MergeUMIsStrategySimple>(1);
 
 		this->any_mark = Mark::get_by_code(Mark::DEFAULT_CODE);
@@ -75,6 +74,7 @@ struct Fixture
 	std::shared_ptr<MergeUMIs::MergeUMIsStrategySimple> umi_merge_strat;
 	std::shared_ptr<CellsDataContainer> container_full;
 	std::vector<Mark> any_mark;
+	boost::property_tree::ptree pt;
 };
 
 BOOST_AUTO_TEST_SUITE(TestEstimator)
