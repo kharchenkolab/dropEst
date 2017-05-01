@@ -43,12 +43,16 @@ namespace Estimation
 			(*R)["d"] = List::create(
 					Named("genes_reads") = wrap(genes_reads),
 		            Named("genes_umis") = wrap(genes_umis),
-		            Named("cell_exone_reads_per_chr") = wrap(container.stats().get_raw(Stats::EXONE_READS_PER_CHR_PER_CELL)),
-		            Named("cell_nonexone_reads_per_chr") = wrap(container.stats().get_raw(Stats::NON_EXONE_READS_PER_CHR_PER_CELL)),
+		            Named("cell_exone_reads_per_chr") = wrap(container.stats().get_raw(Stats::GENE_READS_PER_CHR_PER_CELL)),
+		            Named("cell_nonexone_reads_per_chr") = wrap(container.stats().get_raw(Stats::INTERGENIC_READS_PER_CHR_PER_CELL)),
 		            Named("reads_per_umig") = wrap(reads_per_umig),
-		            Named("umis_per_chr") = wrap(container.stats().get_raw(Stats::EXONE_UMIS_PER_CHR_PER_CELL)),
+		            Named("umis_per_chr") = wrap(container.stats().get_raw(Stats::GENE_UMIS_PER_CHR_PER_CELL)),
 
-		            Named("merges_count") = wrap(container.stats().get_raw_stat(Stats::MERGES_COUNT_PER_CB)),
+					Named("has_exon_per_cell") = wrap(container.stats().get_raw(Stats::HAS_EXON_READS_PER_CB)),
+					Named("has_intron_per_cell") = wrap(container.stats().get_raw(Stats::HAS_INTRON_READS_PER_CB)),
+					Named("has_not_annotated_per_cell") = wrap(container.stats().get_raw(Stats::HAS_NOT_ANNOTATED_READS_PER_CB)),
+
+		            Named("merges_count") = wrap(container.stats().get_raw(Stats::MERGES_COUNT_PER_CB)),
 
 		            Named("merge_edit_distance") = wrap(container.stats().get_raw(Stats::MERGE_EDIT_DISTANCE_BY_CELL)),
 		            Named("merge_probs") = wrap(container.stats().get_raw(Stats::MERGE_PROB_BY_CELL)),

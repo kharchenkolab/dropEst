@@ -18,14 +18,17 @@ namespace Estimation
 		enum CellStatType
 		{
 			MERGES_COUNT_PER_CB,
+			HAS_EXON_READS_PER_CB,
+			HAS_INTRON_READS_PER_CB,
+			HAS_NOT_ANNOTATED_READS_PER_CB,
 			CELL_STAT_SIZE
 		};
 
 		enum CellStrStatType
 		{
-			EXONE_READS_PER_CHR_PER_CELL = 0,
-			EXONE_UMIS_PER_CHR_PER_CELL,
-			NON_EXONE_READS_PER_CHR_PER_CELL,
+			GENE_READS_PER_CHR_PER_CELL = 0,
+			GENE_UMIS_PER_CHR_PER_CELL,
+			INTERGENIC_READS_PER_CHR_PER_CELL,
 			CELL_S_STAT_SIZE
 		};
 
@@ -66,7 +69,7 @@ namespace Estimation
 		void inc(CellStatType counter, const std::string &name);
 		void get(CellStatType counter, str_list_t &names, int_list_t &counts) const;
 		int_list_t get(CellStatType counter) const;
-		const s_cnt_t& get_raw_stat(CellStatType stat) const;
+		const s_cnt_t& get_raw(CellStatType stat) const;
 
 		void set(StrStrStatType stat, const std::string &base_type, const std::string &subtype, int value);
 		void set(StrStrFloatType stat, const std::string &base_type, const std::string &subtype, double value);

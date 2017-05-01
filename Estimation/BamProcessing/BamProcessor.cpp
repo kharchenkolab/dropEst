@@ -12,7 +12,7 @@ namespace Estimation
 		BamProcessor::BamProcessor(CellsDataContainer &container, bool print_bam)
 				: _container(container)
 				, print_bam(print_bam)
-				, total_intragenic_reads(0)
+				, total_intergenic_reads(0)
 		{}
 
 		void BamProcessor::save_read(const std::string& cell_barcode, const std::string& chr_name, const std::string& umi,
@@ -20,18 +20,18 @@ namespace Estimation
 		{
 			if (gene == "")
 			{
-				this->_container.stats().inc(Stats::NON_EXONE_READS_PER_CHR_PER_CELL, cell_barcode, chr_name);
-				this->total_intragenic_reads++;
+				this->_container.stats().inc(Stats::INTERGENIC_READS_PER_CHR_PER_CELL, cell_barcode, chr_name);
+				this->total_intergenic_reads++;
 				return;
 			}
 
 			size_t cell_id = this->_container.add_record(cell_barcode, umi, gene, umi_mark);
 			if (this->_container.cell_genes(cell_id).at(gene).at(umi).read_count == 1)
 			{
-				this->_container.stats().inc(Stats::EXONE_UMIS_PER_CHR_PER_CELL, cell_barcode, chr_name);
+				this->_container.stats().inc(Stats::GENE_UMIS_PER_CHR_PER_CELL, cell_barcode, chr_name);
 			}
 
-			this->_container.stats().inc(Stats::EXONE_READS_PER_CHR_PER_CELL, cell_barcode, chr_name);
+			this->_container.stats().inc(Stats::GENE_READS_PER_CHR_PER_CELL, cell_barcode, chr_name);
 		}
 
 		void BamProcessor::trace_state(const std::string &trace_prefix) const
@@ -43,7 +43,7 @@ namespace Estimation
 			}
 
 			L_TRACE << trace_prefix << ": " << this->total_reads_num() << " total reads; " << std::setprecision(3)
-					<< (100.0*this->total_intragenic_reads / this->total_reads_num()) <<"% intragenic; "
+					<< (100.0*this->total_intergenic_reads / this->total_reads_num()) <<"% intergenic; "
 					<< (100.0*this->container().has_exon_reads_num() / this->total_reads_num()) <<"% touch exon; "
 					<< (100.0*this->container().has_intron_reads_num() / this->total_reads_num()) <<"% touch intron; "
 					<< (100.0*this->container().has_not_annotated_reads_num() / this->total_reads_num()) <<"% touch not annotated regions; "

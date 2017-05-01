@@ -59,14 +59,17 @@ namespace Estimation
 		if (umi_mark.check(Mark::HAS_EXONS))
 		{
 			++this->_has_exon_reads;
+			this->stats().inc(Stats::HAS_EXON_READS_PER_CB, cell_barcode);
 		}
 		if (umi_mark.check(Mark::HAS_INTRONS))
 		{
 			++this->_has_intron_reads;
+			this->stats().inc(Stats::HAS_INTRON_READS_PER_CB, cell_barcode);
 		}
 		if (umi_mark.check(Mark::HAS_NOT_ANNOTATED))
 		{
 			++this->_has_not_annotated_reads;
+			this->stats().inc(Stats::HAS_NOT_ANNOTATED_READS_PER_CB, cell_barcode);
 		}
 		if (umi_mark == Mark::NONE)
 		{

@@ -33,7 +33,7 @@ namespace Estimation
 		return result;
 	}
 
-	const Stats::s_cnt_t& Stats::get_raw_stat(Stats::CellStatType stat) const
+	const Stats::s_cnt_t& Stats::get_raw(Stats::CellStatType stat) const
 	{
 		return this->_cell_counters[stat];
 	}

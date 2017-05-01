@@ -40,21 +40,21 @@ namespace Estimation
 			if (not_filtered)
 			{
 				L_TRACE << "Fill exone results";
-				container.stats().get(Stats::EXONE_READS_PER_CHR_PER_CELL, this->ex_cell_names, this->ex_chr_names,
+				container.stats().get(Stats::GENE_READS_PER_CHR_PER_CELL, this->ex_cell_names, this->ex_chr_names,
 						  this->ex_cells_chr_reads_counts);
 
-				L_TRACE << "Fill nonexone results";
-				container.stats().get(Stats::NON_EXONE_READS_PER_CHR_PER_CELL, this->nonex_cell_names, this->nonex_chr_names,
+				L_TRACE << "Fill nonexone results"; // TODO: rename to intergenic
+				container.stats().get(Stats::INTERGENIC_READS_PER_CHR_PER_CELL, this->nonex_cell_names, this->nonex_chr_names,
 						  this->nonex_cells_chr_reads_counts);
 			}
 			else
 			{
 				L_TRACE << "Fill exone results";
-				container.stats().get_filtered(Stats::EXONE_READS_PER_CHR_PER_CELL, this->cm.cell_names, this->ex_cell_names,
+				container.stats().get_filtered(Stats::GENE_READS_PER_CHR_PER_CELL, this->cm.cell_names, this->ex_cell_names,
 								   this->ex_chr_names, this->ex_cells_chr_reads_counts);
 
 				L_TRACE << "Fill nonexone results";
-				container.stats().get_filtered(Stats::NON_EXONE_READS_PER_CHR_PER_CELL, this->cm.cell_names,
+				container.stats().get_filtered(Stats::INTERGENIC_READS_PER_CHR_PER_CELL, this->cm.cell_names,
 								   this->nonex_cell_names, this->nonex_chr_names, this->nonex_cells_chr_reads_counts);
 			}
 		}
