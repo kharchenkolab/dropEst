@@ -34,13 +34,13 @@ namespace TagsSearch
 
 	bool SpacerTagsFinder::parse_fastq_record(FilesProcessor::FastQRecord &gene_record, Tools::ReadParameters &read_params)
 	{
-		auto barcodes_record = this->files_processor->get_fastq_record(0);
+		auto barcodes_record = this->_files_processor->get_fastq_record(0);
 		if (barcodes_record.id.empty())
 			return false;
 
-		gene_record = this->files_processor->get_fastq_record(1);
+		gene_record = this->_files_processor->get_fastq_record(1);
 		if (gene_record.id.empty())
-			throw std::runtime_error("File '" + this->files_processor->filename(1) + "', read '" + gene_record.id + "': fastq ended prematurely!");
+			throw std::runtime_error("File '" + this->_files_processor->filename(1) + "', read '" + gene_record.id + "': fastq ended prematurely!");
 
 		auto spacer_pos = this->spacer_finder.find_spacer(barcodes_record.sequence);
 		if (spacer_pos.first == SpacerFinder::ERR_CODE)

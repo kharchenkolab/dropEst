@@ -14,17 +14,17 @@ namespace TagsSearch
 
 	bool IndropV3TagsFinder::parse_fastq_record(FilesProcessor::FastQRecord &record, Tools::ReadParameters &read_params)
 	{
-		auto cb1_rec = this->files_processor->get_fastq_record(0);
+		auto cb1_rec = this->_files_processor->get_fastq_record(0);
 		if (cb1_rec.id.empty())
 			return false;
 
-		auto cb2_rec = this->files_processor->get_fastq_record(1);
+		auto cb2_rec = this->_files_processor->get_fastq_record(1);
 		if (cb2_rec.id.empty())
-			throw std::runtime_error("File '" + this->files_processor->filename(1) + "', read '" + cb2_rec.id + "': fastq ended prematurely!");
+			throw std::runtime_error("File '" + this->_files_processor->filename(1) + "', read '" + cb2_rec.id + "': fastq ended prematurely!");
 
-		record = this->files_processor->get_fastq_record(2);
+		record = this->_files_processor->get_fastq_record(2);
 		if (record.id.empty())
-			throw std::runtime_error("File '" + this->files_processor->filename(2) + "', read '" + record.id + "': fastq ended prematurely!");
+			throw std::runtime_error("File '" + this->_files_processor->filename(2) + "', read '" + record.id + "': fastq ended prematurely!");
 
 		if (cb1_rec.sequence.length() < this->barcode1_length)
 		{

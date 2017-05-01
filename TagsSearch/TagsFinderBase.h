@@ -3,11 +3,11 @@
 #include "Counters/TrimsCounter.h"
 #include "FilesProcessor.h"
 #include "SpacerFinder.h"
-#include "TagsFinderAbstract.h"
 
 #include <string>
 
 #include <boost/property_tree/ptree.hpp>
+#include <unordered_map>
 
 namespace TestTagsSearch
 {
@@ -23,20 +23,25 @@ namespace TagsSearch
 {
 	class FilesProcessor;
 
-	class TagsFinderBase : public TagsFinderAbstract
+	class TagsFinderBase
 	{
 		friend struct TestTagsSearch::test1;
+	public:
+		typedef std::unordered_map<std::string, int> s_counter_t;
 
 	protected:
 		typedef std::string::size_type len_t;
+
+	private:
+		s_counter_t _num_reads_per_cb;
 
 	protected:
 		const size_t max_reads;
 		const unsigned min_read_len;
 		const std::string poly_a;
 
-		const std::shared_ptr<FilesProcessor> files_processor;
-		TrimsCounter trims_counter;
+		const std::shared_ptr<FilesProcessor> _files_processor;
+		TrimsCounter _trims_counter;
 
 	private:
 		std::string results_to_string(long total_reads_read) const;
@@ -49,6 +54,7 @@ namespace TagsSearch
 	public:
 		TagsFinderBase(std::shared_ptr<FilesProcessor> files_processor, const boost::property_tree::ptree &config);
 
-		virtual void run(bool save_reads_names) override;
+		virtual void run(bool save_reads_names, bool save_stats);
+		const s_counter_t& num_reads_per_cb() const;
 	};
 }

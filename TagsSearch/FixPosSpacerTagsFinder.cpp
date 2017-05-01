@@ -98,13 +98,13 @@ namespace TagsSearch
 
 	bool FixPosSpacerTagsFinder::parse_fastq_record(FilesProcessor::FastQRecord &record, Tools::ReadParameters &read_params)
 	{
-		auto f1_rec = this->files_processor->get_fastq_record(0);
+		auto f1_rec = this->_files_processor->get_fastq_record(0);
 		if (f1_rec.id.empty())
 			return false;
 
-		record = this->files_processor->get_fastq_record(1);
+		record = this->_files_processor->get_fastq_record(1);
 		if (record.id.empty())
-			throw std::runtime_error("File '" + this->files_processor->filename(1) + "', read '" + record.id + "': fastq ended prematurely!");
+			throw std::runtime_error("File '" + this->_files_processor->filename(1) + "', read '" + record.id + "': fastq ended prematurely!");
 
 		size_t seq_end = this->parse(f1_rec.sequence, f1_rec.quality, read_params);
 		if (seq_end == std::string::npos)

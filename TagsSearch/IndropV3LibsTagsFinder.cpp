@@ -15,12 +15,12 @@ namespace TagsSearch
 	bool
 	IndropV3LibsTagsFinder::parse_fastq_record(FilesProcessor::FastQRecord &record, Tools::ReadParameters &read_params)
 	{
-		auto lib_record = this->files_processor->get_fastq_record(3);
+		auto lib_record = this->_files_processor->get_fastq_record(3);
 		if (Tools::edit_distance(lib_record.sequence.c_str(), this->library_tag.c_str(), false) > this->max_lib_tag_ed)
 		{
 			for (size_t i = 0; i < 3; ++i)
 			{
-				this->files_processor->get_fastq_record(i);
+				this->_files_processor->get_fastq_record(i);
 			}
 			read_params = Tools::ReadParameters();
 			return true;

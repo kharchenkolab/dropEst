@@ -15,13 +15,13 @@ namespace TagsSearch
 		: max_reads(config.get<size_t>("max_reads", std::numeric_limits<size_t>::max()))
 		, min_read_len(config.get<unsigned>("min_align_length"))
 		, poly_a(config.get<std::string>("poly_a_tail"))
-		, files_processor(files_processor)
-		, trims_counter()
+		, _files_processor(files_processor)
+		, _trims_counter()
 	{
 		srand(time(nullptr));
 	}
 
-	void TagsFinderBase::run(bool save_reads_names)
+	void TagsFinderBase::run(bool save_reads_names, bool save_stats)
 	{
 		L_TRACE << "reading reads ";
 
@@ -46,13 +46,18 @@ namespace TagsSearch
 			std::string read_prefix = "@" + file_uid + std::to_string(total_reads_read);
 			if (save_reads_names)
 			{
-				this->files_processor->write_read_params(read_prefix, params);
+				this->_files_processor->write_read_params(read_prefix, params);
+			}
+
+			if (save_stats)
+			{
+				this->_num_reads_per_cb[params.cell_barcode()]++;
 			}
 
 			std::string text = params.encoded_id(read_prefix) + "\n" + r2_record.sequence + "\n" +
 					r2_record.description + "\n" + r2_record.quality + "\n";
 
-			bool new_file = this->files_processor->write(text, this->max_reads);
+			bool new_file = this->_files_processor->write(text, this->max_reads);
 			if (new_file)
 			{
 				L_TRACE << "|";
@@ -69,7 +74,7 @@ namespace TagsSearch
 		std::stringstream ss;
 		ss << " (" << total_reads_read << " reads)\n"
 		   << this->get_additional_stat(total_reads_read) << "\n"
-		   << this->trims_counter.print();
+		   << this->_trims_counter.print();
 
 		return ss.str();
 	}
@@ -90,7 +95,7 @@ namespace TagsSearch
 		if (rc_pos != std::string::npos)
 		{
 			trim_pos = rc_pos;
-			this->trims_counter.inc(TrimsCounter::RC);
+			this->_trims_counter.inc(TrimsCounter::RC);
 			L_DEBUG << "-- found barcode RC at " << rc_pos;
 		}
 		else
@@ -100,7 +105,7 @@ namespace TagsSearch
 			if (rc_pos != std::string::npos)
 			{
 				trim_pos = rc_pos;
-				this->trims_counter.inc(TrimsCounter::POLY_A);
+				this->_trims_counter.inc(TrimsCounter::POLY_A);
 				L_DEBUG << "-- found polyA at " << rc_pos;
 			}
 		}
@@ -116,7 +121,7 @@ namespace TagsSearch
 		}
 		if (a_trim)
 		{
-			this->trims_counter.inc(TrimsCounter::A_TRIM);
+			this->_trims_counter.inc(TrimsCounter::A_TRIM);
 		}
 
 		L_DEBUG << std::string(skip_count, '-') << "   trimming " << (sequence.length() - trim_pos);
@@ -129,7 +134,12 @@ namespace TagsSearch
 		}
 		else
 		{
-			this->trims_counter.inc(TrimsCounter::NO_TRIM);
+			this->_trims_counter.inc(TrimsCounter::NO_TRIM);
 		}
+	}
+
+	const TagsFinderBase::s_counter_t& TagsFinderBase::num_reads_per_cb() const
+	{
+		return this->_num_reads_per_cb;
 	}
 }
