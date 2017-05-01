@@ -31,13 +31,20 @@ namespace Estimation
 					auto &current_gene = genes_reads[cell_barcode][gene_umis.first];
 					for (auto const &umi_reads : gene_umis.second)
 					{
-
 						size_t read_count = umi_reads.second.read_count;
 						current_gene += read_count;
 						cell_reads_p_umis[umi_reads.first] += read_count;
 						cell_reads_p_umigs[umi_reads.first + gene_umis.first] = (unsigned) read_count;
 					}
 				}
+			}
+
+			std::unordered_map<std::string, std::string> merge_targets;
+			for (size_t cell_from_id = 0; cell_from_id < container.cell_barcodes_raw().size(); ++cell_from_id)
+			{
+				auto const &barcode_from = container.cell_barcodes_raw()[cell_from_id];
+				auto const &barcode_to = container.cell_barcodes_raw()[container.merge_targets()[cell_from_id]];
+				merge_targets[barcode_from] = barcode_to;
 			}
 
 			(*R)["d"] = List::create(
@@ -56,7 +63,7 @@ namespace Estimation
 
 		            Named("merge_edit_distance") = wrap(container.stats().get_raw(Stats::MERGE_EDIT_DISTANCE_BY_CELL)),
 		            Named("merge_probs") = wrap(container.stats().get_raw(Stats::MERGE_PROB_BY_CELL)),
-		            Named("merge_targets") = wrap(container.stats().get_raw(Stats::MERGE_TARGET_BY_BASE)),
+		            Named("merge_targets") = merge_targets,
 		            Named("excluded_cells") = wrap(container.excluded_cells()),
 		            Named("umi_per_cell") = wrap(reads_per_umi)
 			);
