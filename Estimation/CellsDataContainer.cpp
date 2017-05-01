@@ -68,6 +68,10 @@ namespace Estimation
 		{
 			++this->_has_not_annotated_reads;
 		}
+		if (umi_mark == Mark::NONE)
+		{
+			L_WARN << "Empty mark for CB '" + cell_barcode + "', UMI '" + umi + "', gene '" + gene + "'";
+		}
 
 		auto res = this->_cell_ids_by_cb.emplace(cell_barcode, this->_cell_barcodes.size());
 		if (res.second)

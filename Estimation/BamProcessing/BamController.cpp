@@ -95,7 +95,7 @@ namespace BamProcessing
 			}
 
 			processor->inc_reads(); // reads with unknown chromosome are not counted
-			if (trace && processor->total_reads() % 10000000 == 0)
+			if (trace && processor->total_reads_num() % 10000000 == 0)
 			{
 				processor->trace_state(bam_name);
 			}
@@ -126,7 +126,10 @@ namespace BamProcessing
 	{
 		Tools::ReadParameters read_params;
 		if (!parser->get_read_params(alignment, read_params))
+		{
+			processor->inc_cant_parse_num();
 			return;
+		}
 
 		std::string gene;
 		CellsDataContainer::Mark mark;
@@ -140,6 +143,7 @@ namespace BamProcessing
 			{
 				L_WARN << "WARNING: Can't find chromosome '" << ex.chr_name << "'";
 			}
+			processor->inc_cant_parse_num();
 			return;
 		}
 

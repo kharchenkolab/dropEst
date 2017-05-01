@@ -38,8 +38,8 @@ namespace Estimation
 
 		void FilteringBamProcessor::trace_state(const std::string &bam_file) const
 		{
-			L_TRACE << bam_file << ": " << this->total_reads() << " total reads; " << this->written_reads << std::setprecision(3)
-					<< " ("<< (100.0 * this->written_reads / this->total_reads()) <<"%) written";
+			L_TRACE << bam_file << ": " << this->total_reads_num() << " total reads; " << this->written_reads << std::setprecision(3)
+					<< " ("<< (100.0 * this->written_reads / this->total_reads_num()) <<"%) written";
 		}
 
 		void FilteringBamProcessor::save_read(const std::string &cell_barcode, const std::string &chr_name,

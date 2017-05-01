@@ -36,11 +36,18 @@ namespace Estimation
 
 		void BamProcessor::trace_state(const std::string &trace_prefix) const
 		{
-			L_TRACE << trace_prefix << ": " << this->total_reads() << " total reads; " << std::setprecision(3)
-					<< (100.0*this->total_intragenic_reads / this->total_reads()) <<"% intragenic; "
-					<< (100.0*this->container().has_exon_reads_num() / this->total_reads()) <<"% touch exon; "
-					<< (100.0*this->container().has_intron_reads_num() / this->total_reads()) <<"% touch intron; "
-					<< (100.0*this->container().has_not_annotated_reads_num() / this->total_reads()) <<"% touch not annotated regions; "
+			std::stringstream cant_parse_msg;
+			if (this->cant_parse_reads_num() > 0)
+			{
+				cant_parse_msg << "can't parse " << (100.0*this->cant_parse_reads_num() / this->total_reads_num()) <<"% reads; ";
+			}
+
+			L_TRACE << trace_prefix << ": " << this->total_reads_num() << " total reads; " << std::setprecision(3)
+					<< (100.0*this->total_intragenic_reads / this->total_reads_num()) <<"% intragenic; "
+					<< (100.0*this->container().has_exon_reads_num() / this->total_reads_num()) <<"% touch exon; "
+					<< (100.0*this->container().has_intron_reads_num() / this->total_reads_num()) <<"% touch intron; "
+					<< (100.0*this->container().has_not_annotated_reads_num() / this->total_reads_num()) <<"% touch not annotated regions; "
+					<< cant_parse_msg.str()
 					<< this->_container.cell_barcodes_raw().size() << " CBs read";
 		}
 

@@ -7,7 +7,8 @@ namespace Estimation
 namespace BamProcessing
 {
 	BamProcessorAbstract::BamProcessorAbstract()
-			: _total_reads(0)
+		: _total_reads_num(0)
+		, _cant_parse_reads_num(0)
 	{}
 
 	BamProcessorAbstract::~BamProcessorAbstract()
@@ -17,7 +18,7 @@ namespace BamProcessing
 
 	void BamProcessorAbstract::inc_reads()
 	{
-		this->_total_reads++;
+		this->_total_reads_num++;
 	}
 
 	void BamProcessorAbstract::update_bam(const std::string &bam_file, const BamTools::BamReader &reader)
@@ -36,9 +37,14 @@ namespace BamProcessing
 			throw std::runtime_error("Could not open BAM file to write: " + result_bam_name);
 	}
 
-	size_t BamProcessorAbstract::total_reads() const
+	size_t BamProcessorAbstract::total_reads_num() const
 	{
-		return this->_total_reads;
+		return this->_total_reads_num;
+	}
+
+	size_t BamProcessorAbstract::cant_parse_reads_num() const
+	{
+		return this->_cant_parse_reads_num;
 	}
 
 	void BamProcessorAbstract::save_alignment(BamTools::BamAlignment alignment, const std::string &name,
@@ -53,6 +59,11 @@ namespace BamProcessing
 		alignment.AddTag(BamController::CB_TAG, "Z", barcode);
 		alignment.AddTag(BamController::UMI_TAG, "Z", umi);
 		this->_writer.SaveAlignment(alignment);
+	}
+
+	void BamProcessorAbstract::inc_cant_parse_num()
+	{
+		++this->_cant_parse_reads_num;
 	}
 }
 }
