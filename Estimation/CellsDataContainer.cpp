@@ -71,6 +71,8 @@ namespace Estimation
 			++this->_has_not_annotated_reads;
 			this->stats().inc(Stats::HAS_NOT_ANNOTATED_READS_PER_CB, cell_barcode);
 		}
+		this->stats().inc(Stats::TOTAL_READS_PER_CB, cell_barcode);
+
 		if (umi_mark == Mark::NONE)
 		{
 			L_WARN << "Empty mark for CB '" + cell_barcode + "', UMI '" + umi + "', gene '" + gene + "'";
