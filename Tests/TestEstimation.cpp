@@ -426,8 +426,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 	BOOST_FIXTURE_TEST_CASE(testUMIMerge, Fixture)
 	{
-		CellsDataContainer container(this->real_cb_strat,
-		                             this->umi_merge_strat, 0, this->any_mark);
+		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, 0, this->any_mark);
 
 		container.add_record("AAATTAGGTCCA", "AAACCT", "Gene1");
 		container.add_record("AAATTAGGTCCA", "CCCCCT", "Gene1");
@@ -487,8 +486,10 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, 0, this->any_mark);
 
 		container.add_record("AAATTAGGTCCA", "AAACCT", "Gene1");
-		container.add_record("AAATTAGGTCCA", "CCCCCT", "Gene1");
+		container.add_record("AAATTAGGTCCA", "AAACCT", "Gene1");
+		container.add_record("AAATTAGGTCCA", "AAACCG", "Gene1");
 		container.add_record("AAATTAGGTCCA", "AAACCN", "Gene1");
+		container.add_record("AAATTAGGTCCA", "CCCCCT", "Gene1");
 		container.add_record("AAATTAGGTCCA", "ACCCCT", "Gene1");
 
 		container.add_record("AAATTAGGTCCA", "TTTTTT", "Gene2");
@@ -500,10 +501,11 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		container.set_initialized();
 
 		this->umi_merge_strat->merge(container);
-		BOOST_REQUIRE_EQUAL(container.cell_genes(0).at("Gene1").size(), 3);
+		BOOST_REQUIRE_EQUAL(container.cell_genes(0).at("Gene1").size(), 4);
 		BOOST_REQUIRE_EQUAL(container.cell_genes(0).at("Gene2").size(), 3);
 
-		BOOST_CHECK_EQUAL(container.cell_genes(0).at("Gene1").at("AAACCT").read_count, 2);
+		BOOST_CHECK_EQUAL(container.cell_genes(0).at("Gene1").at("AAACCT").read_count, 3);
+		BOOST_CHECK_EQUAL(container.cell_genes(0).at("Gene1").at("AAACCG").read_count, 1);
 		BOOST_CHECK_EQUAL(container.cell_genes(0).at("Gene1").at("CCCCCT").read_count, 1);
 		BOOST_CHECK_EQUAL(container.cell_genes(0).at("Gene1").at("ACCCCT").read_count, 1);
 

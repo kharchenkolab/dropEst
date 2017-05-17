@@ -39,7 +39,7 @@ namespace Estimation
 		this->_merge_targets = this->_merge_strategy->merge(*this);
 		this->stats().merge(this->_merge_targets, this->cell_barcodes_raw());
 
-//		this->_umi_merge_strategy->merge(*this); TODO: uncomment and debug
+		this->_umi_merge_strategy->merge(*this);
 		this->remove_excluded_umis();
 		this->update_cell_sizes(this->_merge_strategy->min_genes_after_merge());
 

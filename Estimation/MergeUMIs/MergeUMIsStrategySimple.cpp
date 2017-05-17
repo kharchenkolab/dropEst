@@ -35,7 +35,7 @@ namespace Estimation
 					s_hash_t bad_umis;
 					for (auto const &umi : gene.second)
 					{
-						if (is_umi_real(umi.first))
+						if (this->is_umi_real(umi.first))
 							continue;
 
 						bad_umis.insert(umi.first);
@@ -71,17 +71,17 @@ namespace Estimation
 				int min_ed = std::numeric_limits<unsigned>::max();
 				std::string best_target = "";
 				long best_target_size = 0;
-				for (auto const &umi : all_umis)
+				for (auto const &target_umi : all_umis)
 				{
-					if (bad_umis.find(umi.first) != bad_umis.end())
+					if (bad_umis.find(target_umi.first) != bad_umis.end())
 						continue;
 
-					unsigned ed = Tools::hamming_distance(umi.first, bad_umi);
-					if (ed < min_ed || ed == min_ed && umi.second.read_count < best_target_size)
+					unsigned ed = Tools::hamming_distance(target_umi.first, bad_umi);
+					if (ed < min_ed || ed == min_ed && target_umi.second.read_count > best_target_size)
 					{
 						min_ed = ed;
-						best_target = umi.first;
-						best_target_size = umi.second.read_count;
+						best_target = target_umi.first;
+						best_target_size = target_umi.second.read_count;
 					}
 				}
 
