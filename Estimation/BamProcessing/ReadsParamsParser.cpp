@@ -26,20 +26,34 @@ namespace BamProcessing
 	CellsDataContainer::Mark ReadsParamsParser::get_gene(const std::string &chr_name, BamTools::BamAlignment alignment,
 	                                                         std::string &gene) const
 	{
-		using Mark=CellsDataContainer::Mark;
-		Mark mark;
+		CellsDataContainer::Mark mark;
 		gene = "";
 
-		if (this->_genes_container.is_empty() && !alignment.GetTag(BamController::GENE_TAG, gene))
+		if (!this->_genes_container.is_empty())
+			return this->get_gene_from_reference(chr_name, alignment, gene);
+
+		if (!alignment.GetTag(BamController::GENE_TAG, gene))
 		{
 			gene = "";
-			return mark;
+			mark.add(CellsDataContainer::Mark::HAS_NOT_ANNOTATED);
+		}
+		else
+		{
+			mark.add(CellsDataContainer::Mark::HAS_EXONS);
 		}
 
+		return mark;
+	}
+
+	CellsDataContainer::Mark ReadsParamsParser::get_gene_from_reference(const std::string &chr_name,
+	                                                                    const BamTools::BamAlignment &alignment,
+	                                                                    std::string &gene) const
+	{
+		CellsDataContainer::Mark mark;
 		// TODO: parse CIGAR
-		auto gene_set1 = this->_genes_container.get_gene_info(chr_name, alignment.Position, alignment.Position + 1);
+		auto gene_set1 = _genes_container.get_gene_info(chr_name, alignment.Position, alignment.Position + 1);
 		int end_position = alignment.GetEndPosition();
-		auto gene_set2 = this->_genes_container.get_gene_info(chr_name, end_position - 1, end_position);
+		auto gene_set2 = _genes_container.get_gene_info(chr_name, end_position - 1, end_position);
 
 		if (gene_set1.empty() && gene_set2.empty())
 			return mark;
@@ -62,7 +76,7 @@ namespace BamProcessing
 			auto const &non_empty = gene_set1.empty() ? *gene_set2.begin() : *gene_set1.begin();
 			gene = non_empty.gene_name;
 			mark.add(non_empty.type);
-			mark.add(Mark::HAS_NOT_ANNOTATED);
+			mark.add(CellsDataContainer::Mark::HAS_NOT_ANNOTATED);
 
 			return mark;
 		}
@@ -71,10 +85,10 @@ namespace BamProcessing
 			return mark;
 
 		Tools::RefGenesContainer::QueryResult exon_result1, exon_result2;
-		if (!this->find_exon(gene_set1, exon_result1))
+		if (!find_exon(gene_set1, exon_result1))
 			return mark;
 
-		if (!this->find_exon(gene_set2, exon_result2))
+		if (!find_exon(gene_set2, exon_result2))
 			return mark;
 
 		if (!exon_result1.gene_name.empty() && !exon_result2.gene_name.empty())

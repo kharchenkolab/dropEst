@@ -30,6 +30,9 @@ namespace Estimation
 			               Tools::RefGenesContainer::QueryResult &exon_result) const;
 
 			bool has_introns() const;
+
+			CellsDataContainer::Mark get_gene_from_reference(const std::string &chr_name, const BamTools::BamAlignment &alignment,
+			                                                 std::string &gene) const;
 		};
 	}
 }
