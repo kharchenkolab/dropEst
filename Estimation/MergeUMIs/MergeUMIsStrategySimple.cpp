@@ -24,11 +24,6 @@ namespace Estimation
 			auto const &cells_gene_counts = container.cells_gene_counts_sorted();
 			for (size_t genes_count_id = 0; genes_count_id < cells_gene_counts.size(); ++genes_count_id)
 			{
-				if (genes_count_id % 1000 == 0 && genes_count_id > 0)
-				{
-					L_TRACE << "Total " << genes_count_id << " cells processed (" << total_umi_merged << " UMIs merged from "
-					        << total_cell_merged << " cells)";
-				}
 				size_t cell_id = cells_gene_counts[genes_count_id].index;
 				for (auto const &gene : container.cell_genes(cell_id))
 				{
