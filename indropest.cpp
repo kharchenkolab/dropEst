@@ -219,7 +219,7 @@ static Params parse_cmd_params(int argc, char **argv)
 		params.cant_parse = true;
 	}
 
-	if (params.genes_filename == "" && params.gene_match_level.find('I') != std::string::npos)
+	if (params.genes_filename == "" && params.gene_match_level.find_first_of("iIBA") != std::string::npos)
 	{
 		cerr << "indropset: you should provide genes file (-g option) to use intron annotations" << endl;
 		params.cant_parse = true;
@@ -233,7 +233,7 @@ static Params parse_cmd_params(int argc, char **argv)
 		}
 		else
 		{
-			params.output_name = "cell.counts";
+			params.output_name = "cell.counts.rds";
 		}
 	}
 
