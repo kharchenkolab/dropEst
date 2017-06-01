@@ -12,7 +12,7 @@ namespace Estimation
 {
 namespace BamProcessing
 {
-	const std::string BamController::GENE_TAG = "GE";
+	const std::string BamController::GENE_TAG = "GN";
 	const std::string BamController::CB_TAG = "CB";
 	const std::string BamController::UMI_TAG = "UB";
 
