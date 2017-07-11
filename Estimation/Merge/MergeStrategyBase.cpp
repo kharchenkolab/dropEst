@@ -4,6 +4,8 @@
 #include <boost/range/adaptor/reversed.hpp>
 #include "MergeStrategyBase.h"
 
+#include <numeric>
+
 namespace Estimation
 {
 namespace Merge
