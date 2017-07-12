@@ -14,6 +14,7 @@ namespace Estimation
 {
 namespace Merge
 {
+	[[deprecated("Was used for test purposes only")]]
 	class BrokenRealBarcodesMergeStrategy : public RealBarcodesMergeStrategy
 	{
 	protected:
@@ -23,7 +24,9 @@ namespace Merge
 		virtual unsigned get_max_merge_dist(unsigned min_real_cb_dist) const override;
 
 	public:
-		BrokenRealBarcodesMergeStrategy(const std::string &barcodes_filename, const boost::property_tree::ptree &config);
+		BrokenRealBarcodesMergeStrategy(barcodes_parser_ptr barcodes_parser,
+		                                unsigned min_genes_before_merge, unsigned min_genes_after_merge,
+		                                unsigned max_merge_edit_distance, double min_merge_fraction);
 
 		virtual std::string merge_type() const override;
 	};

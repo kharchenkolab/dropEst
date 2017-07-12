@@ -4,10 +4,10 @@
 namespace TagsSearch
 {
 	SpacerTagsFinder::SpacerTagsFinder(std::shared_ptr<FilesProcessor> files_processor,
-									   const boost::property_tree::ptree &barcodes_config,
+									   const boost::property_tree::ptree &spacer_config,
 									   const boost::property_tree::ptree &config)
 			: TagsFinderBase(files_processor, config)
-			, spacer_finder(barcodes_config)
+			, spacer_finder(spacer_config)
 	{}
 
 	Tools::ReadParameters SpacerTagsFinder::parse(const std::string &r1_seq, const std::string &r1_quality,

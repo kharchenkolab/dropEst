@@ -1,7 +1,7 @@
 #include "CellsDataContainer.h"
 
 #include <Estimation/Merge/MergeStrategyAbstract.h>
-#include <Estimation/MergeUMIs/MergeUMIsStrategySimple.h>
+#include <Estimation/Merge/UMIs/MergeUMIsStrategySimple.h>
 
 #include <Tools/Logs.h>
 #include <Tools/RefGenesContainer.h>
@@ -17,11 +17,13 @@ namespace Estimation
 	const std::string CellsDataContainer::Mark::DEFAULT_CODE = "eEBA";
 
 	CellsDataContainer::CellsDataContainer(std::shared_ptr<Merge::MergeStrategyAbstract> merge_strategy,
-		                                       std::shared_ptr<MergeUMIs::MergeUMIsStrategySimple> umi_merge_strategy, size_t top_print_size,
-		                                       const std::vector<Mark> &gene_match_levels)
+	                                       std::shared_ptr<Merge::UMIs::MergeUMIsStrategySimple> umi_merge_strategy,
+		                                   size_t top_print_size, const std::vector<Mark> &gene_match_levels,
+		                                   int max_cells_num)
 		: _merge_strategy(merge_strategy)
 		, _umi_merge_strategy(umi_merge_strategy)
 		, _top_print_size(top_print_size)
+		, _max_cells_num(max_cells_num)
 		, _is_initialized(false)
 		, _gene_match_levels(gene_match_levels)
 		, _has_exon_reads(0)
@@ -41,7 +43,7 @@ namespace Estimation
 
 		this->_umi_merge_strategy->merge(*this);
 		this->remove_excluded_umis();
-		this->update_cell_sizes(this->_merge_strategy->min_genes_after_merge());
+		this->update_cell_sizes(this->_merge_strategy->min_genes_after_merge(), this->_max_cells_num, true);
 
 		this->_filtered_cells.clear();
 		for (auto const &val : this->cells_gene_counts_sorted())
@@ -115,7 +117,7 @@ namespace Estimation
 		this->_is_cell_excluded.at(index) = true;
 	}
 
-	void CellsDataContainer::update_cell_sizes(int genes_threshold, bool logs)
+	void CellsDataContainer::update_cell_sizes(int genes_threshold, int cell_threshold, bool logs)
 	{
 		this->_filtered_cells_gene_counts_sorted.clear(); // <genes_count,cell_id> pairs
 		for (size_t i = 0; i < this->_cells_genes.size(); i++)
@@ -148,6 +150,11 @@ namespace Estimation
 		}
 
 		sort(this->_filtered_cells_gene_counts_sorted.begin(), this->_filtered_cells_gene_counts_sorted.end(), IndexedValue::value_less);
+
+		if (cell_threshold > 0 && cell_threshold < this->_filtered_cells_gene_counts_sorted.size()) {
+			this->_filtered_cells_gene_counts_sorted.erase(this->_filtered_cells_gene_counts_sorted.begin() + unsigned(cell_threshold),
+			                                               this->_filtered_cells_gene_counts_sorted.end());
+		}
 
 		if (logs)
 		{
@@ -213,7 +220,7 @@ namespace Estimation
 		this->_is_cell_excluded = flags_t(this->_cell_barcodes.size(), false);
 		this->_is_cell_merged = flags_t(this->_cell_barcodes.size(), false);
 
-		this->update_cell_sizes(this->_merge_strategy->min_genes_before_merge());
+		this->update_cell_sizes(this->_merge_strategy->min_genes_before_merge(), this->_max_cells_num, true);
 		this->_is_initialized = true;
 	}
 

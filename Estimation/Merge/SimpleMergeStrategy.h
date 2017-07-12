@@ -26,7 +26,8 @@ namespace Merge
 		virtual void release() override;
 
 	public:
-		SimpleMergeStrategy(const boost::property_tree::ptree &config);
+		SimpleMergeStrategy(unsigned min_genes_before_merge, unsigned min_genes_after_merge,
+		                    unsigned max_merge_edit_distance, double min_merge_fraction);
 
 		virtual std::string merge_type() const override;
 	};

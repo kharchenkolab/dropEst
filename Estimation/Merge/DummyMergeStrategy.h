@@ -2,8 +2,6 @@
 
 #include "MergeStrategyAbstract.h"
 
-#include <boost/range/adaptor/reversed.hpp>
-
 namespace Estimation
 {
 namespace Merge
@@ -19,8 +17,8 @@ namespace Merge
 		}
 
 	public:
-		DummyMergeStrategy(const boost::property_tree::ptree &config)
-				: MergeStrategyAbstract(config)
+		DummyMergeStrategy()
+			: MergeStrategyAbstract(0, 0)
 		{}
 
 		virtual std::string merge_type() const override {

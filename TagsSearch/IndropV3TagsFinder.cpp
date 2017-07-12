@@ -4,8 +4,8 @@ namespace TagsSearch
 {
 	IndropV3TagsFinder::IndropV3TagsFinder(const std::shared_ptr<FilesProcessor> &files_processor,
 												 const boost::property_tree::ptree &barcodes_config,
-												 const boost::property_tree::ptree &config)
-			: TagsFinderBase(files_processor, config)
+												 const boost::property_tree::ptree &processing_config)
+			: TagsFinderBase(files_processor, processing_config)
 			, barcode1_length(barcodes_config.get<size_t>("barcode1_length"))
 			, barcode2_length(barcodes_config.get<size_t>("barcode2_length"))
 			, umi_length(barcodes_config.get<size_t>("umi_length"))

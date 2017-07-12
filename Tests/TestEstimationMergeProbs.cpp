@@ -13,13 +13,16 @@
 #include <Estimation/Merge/SimpleMergeStrategy.h>
 #include <Estimation/Merge/RealBarcodesMergeStrategy.h>
 #include <Estimation/Merge/PoissonRealBarcodesMergeStrategy.h>
-#include <Estimation/MergeUMIs/MergeUMIsStrategySimple.h>
+#include <Estimation/Merge/PoissonTargetEstimator.h>
+#include <Estimation/Merge/UMIs/MergeUMIsStrategySimple.h>
+#include <Estimation/Merge/BarcodesParsing/InDropBarcodesParser.h>
 
 using namespace Estimation;
 
 struct Fixture
 {
 	Fixture()
+		: estimator(1.0e-4, 1.0e-7)
 	{
 		std::stringstream config("<Estimation>\n"
 								 "        <barcodes_type>indrop</barcodes_type>\n"
@@ -31,12 +34,15 @@ struct Fixture
 
 		using Mark = CellsDataContainer::Mark;
 
-		boost::property_tree::ptree pt;
-		read_xml(config, pt);
-		this->real_cb_strat = std::make_shared<Merge::PoissonRealBarcodesMergeStrategy>(PROJ_DATA_PATH + std::string("/barcodes/test_est"),
-		                                                                                pt.get_child("Estimation"));
-		this->container_full = std::make_shared<CellsDataContainer>(this->real_cb_strat, std::make_shared<MergeUMIs::MergeUMIsStrategySimple>(1),
-		                                                            1, Mark::get_by_code(Mark::DEFAULT_CODE));
+		auto barcodes_parser = std::shared_ptr<Merge::BarcodesParsing::BarcodesParser>(
+				new Merge::BarcodesParsing::InDropBarcodesParser(PROJ_DATA_PATH + std::string("/barcodes/test_est")));
+
+		const Merge::PoissonTargetEstimator target_estimator(1e-4, 1e-7);
+
+		this->real_cb_strat = std::make_shared<Merge::PoissonRealBarcodesMergeStrategy>(target_estimator, barcodes_parser, 0, 0, 7);
+
+		this->container_full = std::make_shared<CellsDataContainer>(this->real_cb_strat, std::make_shared<Merge::UMIs::MergeUMIsStrategySimple>(1),
+		                                                            1, Mark::get_by_code(Mark::DEFAULT_CODE), -1);
 
 		Tools::init_test_logs(boost::log::trivial::info);
 		this->container_full->add_record("AAATTAGGTCCA", "AAACCT", "Gene1");

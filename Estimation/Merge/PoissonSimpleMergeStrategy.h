@@ -20,7 +20,8 @@ namespace Estimation
 			virtual size_t get_log_period() const override;
 
 		public:
-			PoissonSimpleMergeStrategy(const boost::property_tree::ptree &config);
+			PoissonSimpleMergeStrategy(const PoissonTargetEstimator &target_estimator, unsigned min_genes_before_merge,
+			                           unsigned min_genes_after_merge, unsigned max_merge_edit_distance);
 
 			virtual std::string merge_type() const override;
 		};

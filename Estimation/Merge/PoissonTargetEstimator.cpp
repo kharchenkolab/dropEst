@@ -6,12 +6,13 @@ namespace Estimation
 {
 namespace Merge
 {
-
-const double PoissonTargetEstimator::max_merge_prob = 1e-4;
-const double PoissonTargetEstimator::max_real_cb_merge_prob = 1e-7;
+PoissonTargetEstimator::PoissonTargetEstimator(double max_merge_prob, double max_real_cb_merge_prob)
+	: max_merge_prob(max_merge_prob)
+	, max_real_cb_merge_prob(max_real_cb_merge_prob)
+{}
 
 long PoissonTargetEstimator::get_best_merge_target(const CellsDataContainer &container, size_t base_cell_ind,
-															 const ul_list_t &neighbour_cells) const
+                                                   const ul_list_t &neighbour_cells) const
 {
 	bool is_base_cb_real = (base_cell_ind == neighbour_cells.at(0));
 	double max_merge_prob = is_base_cb_real
@@ -107,6 +108,7 @@ double PoissonTargetEstimator::get_bootstrap_intersect_prob(const CellsDataConta
 
 double PoissonTargetEstimator::estimate_by_r(ul_list_t sizes, size_t val) const
 {
+	//TODO: optimize it with lambda = mean, "Use The d/q/p/q Statistical Functions (see RCpp book)"
 	(*this->_r)["sizes"] = sizes;
 	(*this->_r)["val"] = val;
 	this->_r->parseEvalQ("p_fit <- fitdistr(sizes, \"poisson\")\n"

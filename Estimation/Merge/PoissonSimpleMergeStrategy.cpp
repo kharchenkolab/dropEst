@@ -5,8 +5,11 @@ namespace Estimation
 {
 namespace Merge
 {
-PoissonSimpleMergeStrategy::PoissonSimpleMergeStrategy(const boost::property_tree::ptree &config)
-		: SimpleMergeStrategy(config)
+PoissonSimpleMergeStrategy::PoissonSimpleMergeStrategy(const PoissonTargetEstimator &target_estimator,
+                                                       unsigned min_genes_before_merge, unsigned min_genes_after_merge,
+                                                       unsigned max_merge_edit_distance)
+	: SimpleMergeStrategy(min_genes_before_merge, min_genes_after_merge, max_merge_edit_distance, 0)
+	, _target_estimator(target_estimator)
 {}
 
 long PoissonSimpleMergeStrategy::get_merge_target(const Estimation::CellsDataContainer &container, size_t base_cell_ind) const

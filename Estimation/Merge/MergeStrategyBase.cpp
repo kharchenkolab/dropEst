@@ -1,7 +1,6 @@
 #include <Tools/Logs.h>
 #include <Estimation/CellsDataContainer.h>
 #include <Tools/IndexedValue.h>
-#include <boost/range/adaptor/reversed.hpp>
 #include "MergeStrategyBase.h"
 
 #include <numeric>
@@ -56,7 +55,7 @@ MergeStrategyAbstract::ul_list_t MergeStrategyBase::merge_inited(CellsDataContai
 	L_INFO << "Total " << excluded_cells_num << " cells excluded";
 	L_INFO << container.cells_gene_counts_sorted().size() - merges_count - excluded_cells_num << " cells with " << this->min_genes_before_merge() << " genes left";
 
-	container.update_cell_sizes(this->min_genes_after_merge(), false);
+	container.update_cell_sizes(this->min_genes_after_merge(), -1, false);
 
 	return cb_reassign_targets;
 }
@@ -96,10 +95,11 @@ void MergeStrategyBase::merge_force(Estimation::CellsDataContainer &container, s
 	this->reassign(src_cell_id, target_cell_ind, cb_reassign_targets, cb_reassigned_to_it);
 }
 
-MergeStrategyBase::MergeStrategyBase(const boost::property_tree::ptree &config)
-	: MergeStrategyAbstract(config)
-	, _max_merge_edit_distance(config.get<unsigned>("max_merge_edit_distance"))
-	, _min_merge_fraction(config.get<double>("min_merge_fraction"))
+MergeStrategyBase::MergeStrategyBase(unsigned min_genes_before_merge, unsigned min_genes_after_merge,
+                                     unsigned max_merge_edit_distance, double min_merge_fraction)
+	: MergeStrategyAbstract(min_genes_before_merge, min_genes_after_merge)
+	, _max_merge_edit_distance(max_merge_edit_distance)
+	, _min_merge_fraction(min_merge_fraction)
 {}
 
 

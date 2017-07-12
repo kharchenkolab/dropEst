@@ -7,13 +7,15 @@ namespace Estimation
 {
 namespace Merge
 {
-	BrokenRealBarcodesMergeStrategy::BrokenRealBarcodesMergeStrategy(const std::string &barcodes_filename,
-																	 const boost::property_tree::ptree &config)
-		: RealBarcodesMergeStrategy(barcodes_filename, config)
+	BrokenRealBarcodesMergeStrategy::BrokenRealBarcodesMergeStrategy(barcodes_parser_ptr barcodes_parser,
+	                                                                 unsigned min_genes_before_merge, unsigned min_genes_after_merge,
+	                                                                 unsigned max_merge_edit_distance, double min_merge_fraction)
+		: RealBarcodesMergeStrategy(barcodes_parser, min_genes_before_merge, min_genes_after_merge,
+		                            max_merge_edit_distance, min_merge_fraction)
 	{ }
 
 	long BrokenRealBarcodesMergeStrategy::get_best_merge_target(const CellsDataContainer &container, size_t base_cell_ind,
-																 const ul_list_t &neighbour_cells) const
+	                                                            const ul_list_t &neighbour_cells) const
 	{
 		if (base_cell_ind == neighbour_cells[0])
 			return base_cell_ind;

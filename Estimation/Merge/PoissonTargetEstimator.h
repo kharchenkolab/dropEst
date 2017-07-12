@@ -29,8 +29,8 @@ namespace Estimation
 			typedef unsigned bs_umi_t;
 
 		private:
-			static const double max_merge_prob;
-			static const double max_real_cb_merge_prob;
+			const double max_merge_prob;
+			const double max_real_cb_merge_prob;
 
 			bs_umi_t _umis_number;
 
@@ -48,6 +48,7 @@ namespace Estimation
 												 size_t real_intersect_size, size_t repeats_count, ul_list_t &sizes) const;
 
 		public:
+			PoissonTargetEstimator(double max_merge_prob, double max_real_cb_merge_prob);
 			virtual void init(const Estimation::CellsDataContainer &container);
 			virtual void release();
 

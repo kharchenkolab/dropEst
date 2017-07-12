@@ -36,7 +36,7 @@ target_link_libraries(DropTools ${BASE_LIBRARIES})
 FILE(GLOB TagsSearchSources TagsSearch/*.cpp TagsSearch/Counters/*.cpp)
 add_library(TagsSearch ${TagsSearchSources})
 
-FILE(GLOB EstimationSources Estimation/*.cpp Estimation/Results/*.cpp Estimation/Merge/*.cpp Estimation/MergeUMIs/*.cpp
+FILE(GLOB EstimationSources Estimation/*.cpp Estimation/Results/*.cpp Estimation/Merge/*.cpp Estimation/Merge/UMIs/*.cpp
         Estimation/Merge/BarcodesParsing/*.cpp Estimation/BamProcessing/*.cpp)
 add_library(Estimation ${EstimationSources})
 target_link_libraries(Estimation DropTools)

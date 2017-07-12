@@ -4,8 +4,7 @@
 #include <Estimation/Results/IndropResults.h>
 #include <Estimation/Results/BadCellsStats.h>
 #include <Estimation/Results/IndropResultsWithoutUmi.h>
-#include "Estimation/Merge/MergeStrategyFactory.h"
-#include "Estimation/MergeUMIs/MergeUMIsStrategySimple.h"
+#include "Estimation/Merge/UMIs/MergeUMIsStrategySimple.h"
 #include "Tools/Logs.h"
 
 #include <boost/range/adaptor/reversed.hpp>
@@ -22,8 +21,9 @@ namespace Estimation
 		return p1.second > p2.second;
 	}
 
-	Estimator::Estimator(const boost::property_tree::ptree &config, bool merge_tags, const std::string &barcodes_filename)
-		: merge_strategy(Merge::MergeStrategyFactory::get(config, merge_tags, barcodes_filename))
+	Estimator::Estimator(const merge_strat_ptr &merge_strategy, const umi_merge_strat_ptr &umi_merge_strategy)
+		: merge_strategy(merge_strategy)
+		, umi_merge_strategy(umi_merge_strategy)
 	{}
 
 	Results::IndropResult Estimator::get_results(const CellsDataContainer &container, bool not_filtered, bool reads_output)
@@ -206,12 +206,12 @@ namespace Estimation
 	}
 
 	CellsDataContainer Estimator::get_cells_container(const names_t &files, bool bam_output, bool filled_bam,
-	                                                  const std::string &reads_params_names_str,
+	                                                  int max_cells_num, const std::string &reads_params_names_str,
 	                                                  const std::string &gtf_filename,
 	                                                  const std::vector<CellsDataContainer::Mark> &gene_match_levels)
 	{
-		CellsDataContainer container(this->merge_strategy, std::make_shared<MergeUMIs::MergeUMIsStrategySimple>(1),
-		                             Estimator::top_print_size, gene_match_levels);
+		CellsDataContainer container(this->merge_strategy, this->umi_merge_strategy, Estimator::top_print_size,
+		                             gene_match_levels, max_cells_num);
 
 		BamProcessing::BamController::parse_bam_files(files, bam_output, filled_bam, reads_params_names_str,
 													  gtf_filename, container);

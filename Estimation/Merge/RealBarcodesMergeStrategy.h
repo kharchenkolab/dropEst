@@ -35,12 +35,14 @@ namespace Merge
 		friend struct TestEstimator::testRealNeighbours;
 		friend struct TestEstimatorMergeProbs::testPoissonMergeRejections;
 
+	public:
+		typedef std::shared_ptr<BarcodesParsing::BarcodesParser> barcodes_parser_ptr;
+
 	private:
-		std::shared_ptr<BarcodesParsing::BarcodesParser> _barcodes_parser;
+		barcodes_parser_ptr _barcodes_parser;
 
 	private:
 		ul_list_t get_real_neighbour_cbs(const CellsDataContainer &container, size_t base_cell_ind) const;
-		static std::shared_ptr<BarcodesParsing::BarcodesParser> get_barcodes_parser(const std::string &barcodes_filename, std::string barcodes_type);
 
 	protected:
 		long get_merge_target(const CellsDataContainer &container, size_t base_cell_ind) const;
@@ -48,7 +50,9 @@ namespace Merge
 		virtual unsigned get_max_merge_dist(unsigned min_real_cb_dist) const;
 
 	public:
-		RealBarcodesMergeStrategy(const std::string &barcodes_filename, const boost::property_tree::ptree &config);
+		RealBarcodesMergeStrategy(barcodes_parser_ptr barcodes_parser,
+		                          unsigned min_genes_before_merge, unsigned min_genes_after_merge,
+		                          unsigned max_merge_edit_distance, double min_merge_fraction);
 
 		virtual std::string merge_type() const override;
 	};

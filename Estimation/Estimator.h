@@ -6,7 +6,6 @@
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
 #include <boost/functional/hash.hpp>
-#include <boost/property_tree/ptree.hpp>
 
 #include "CellsDataContainer.h"
 
@@ -17,6 +16,14 @@ namespace Estimation
 		class CountMatrix;
 		class IndropResult;
 		class BadCellsStats;
+	}
+
+	namespace Merge
+	{
+		namespace UMIs
+		{
+			class MergeUMIsStrategySimple;
+		}
 	}
 
 	class Estimator
@@ -30,6 +37,8 @@ namespace Estimation
 		typedef CellsDataContainer::names_t names_t;
 		typedef std::vector<int> i_list_t;
 		typedef std::vector<long> l_list_t;
+		typedef std::shared_ptr<Merge::MergeStrategyAbstract> merge_strat_ptr;
+		typedef std::shared_ptr<Merge::UMIs::MergeUMIsStrategySimple> umi_merge_strat_ptr;
 
 	public:
 		typedef boost::unordered_map<std::string, boost::unordered_map<std::string, unsigned>> ss_u_hash_t; //Can't use long because of RInside (see BadCellsStats)
@@ -37,15 +46,16 @@ namespace Estimation
 	private:
 		static const size_t top_print_size = 10;
 
-		std::shared_ptr<Merge::MergeStrategyAbstract> merge_strategy;
+		const merge_strat_ptr merge_strategy;
+		const umi_merge_strat_ptr umi_merge_strategy;
 
 	public:
-		Estimator(const boost::property_tree::ptree &config, bool merge_tags, const std::string &barcodes_filename);
+		Estimator(const merge_strat_ptr &merge_strategy, const umi_merge_strat_ptr &umi_merge_strategy);
 
 		Results::IndropResult get_results(const CellsDataContainer &container, bool not_filtered, bool reads_output);
 		Results::BadCellsStats get_bad_cells_results(const CellsDataContainer &container);
 
-		CellsDataContainer get_cells_container(const names_t &files, bool bam_output, bool filled_bam,
+		CellsDataContainer get_cells_container(const names_t &files, bool bam_output, bool filled_bam, int max_cells_num,
 	                                           const std::string &reads_params_names_str, const std::string &gtf_filename,
 				                               const std::vector<CellsDataContainer::Mark> &gene_match_levels);
 

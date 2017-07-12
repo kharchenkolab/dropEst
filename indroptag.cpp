@@ -21,11 +21,15 @@
 using namespace std;
 using namespace TagsSearch;
 
+const std::string PROCESSING_CONFIG_PATH = "config.TagsSearch.Processing";
+const std::string BARCODES_CONFIG_PATH = "config.TagsSearch.BarcodesSearch";
+const std::string SPACER_CONFIG_PATH = "config.TagsSearch.SpacerSearch";
+
 struct Params
 {
 	bool cant_parse = false;
-	bool verbose = false;
 	bool save_reads_names = false;
+	bool quiet = false;
 	string base_name = "";
 	string config_file_name = "";
 	string log_prefix = "";
@@ -49,39 +53,50 @@ static void usage()
 	cerr << "\t-s, --save-reads-names : serialize reads parameters to save names\n";
 	cerr << "\t-S, --save-stats filename : save stats to rds file\n";
 	cerr << "\t-t, --lib-tag library tag : (for IndropV3 with library tag only)\n";
-	cerr << "\t-v, --verbose : verbose mode\n";
+	cerr << "\t-q, --quiet : disable logs\n";
+}
+
+static void check_files_existence(const Params &params)
+{
+	if (params.config_file_name != "" && !std::ifstream(params.config_file_name))
+		throw std::runtime_error("Can't open config file '" + params.config_file_name + "'");
+
+	for (auto const &file : params.read_files)
+	{
+		if (!std::ifstream(file))
+			throw std::runtime_error("Can't open reads file '" + file + "'");
+	}
 }
 
 shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const boost::property_tree::ptree &pt)
 {
 	auto files_processor = make_shared<FilesProcessor>(params.read_files, params.base_name, params.save_reads_names);
 
+	auto const &processing_config = pt.get_child(PROCESSING_CONFIG_PATH, boost::property_tree::ptree());
+
 	if (params.read_files.size() == 4)
 	{
 		if (params.lib_tag == "")
 			throw std::runtime_error("For IndropV3 with library tag, tag (-t option) should be specified");
 
-		return shared_ptr<TagsFinderBase>(new IndropV3LibsTagsFinder(files_processor, params.lib_tag, 2, //TODO to parameters
-		                                                                 pt.get_child("config.TagsSearch.BarcodesSearch"),
-		                                                                 pt.get_child("config.TagsSearch.TailTrimming")));
+		return shared_ptr<TagsFinderBase>(new IndropV3LibsTagsFinder(files_processor, params.lib_tag,
+	                                                                 pt.get_child(BARCODES_CONFIG_PATH),
+		                                                             processing_config));
 	}
 
 	if (params.read_files.size() == 3)
-		return shared_ptr<TagsFinderBase>(new IndropV3TagsFinder(files_processor,
-																	pt.get_child("config.TagsSearch.BarcodesSearch"),
-																	pt.get_child("config.TagsSearch.TailTrimming")));
+		return shared_ptr<TagsFinderBase>(new IndropV3TagsFinder(files_processor, pt.get_child(BARCODES_CONFIG_PATH),
+		                                                         processing_config));
 
 	if (params.read_files.size() != 2)
 		throw std::runtime_error("Unexpected number of read files: " + std::to_string(params.read_files.size()));
 
 	if (pt.get<std::string>("config.TagsSearch.SpacerSearch.barcode_mask", "") != "")
-		return shared_ptr<TagsFinderBase>(new FixPosSpacerTagsFinder(files_processor,
-																	 pt.get_child("config.TagsSearch.SpacerSearch"),
-																	 pt.get_child("config.TagsSearch.TailTrimming")));
+		return shared_ptr<TagsFinderBase>(new FixPosSpacerTagsFinder(files_processor, pt.get_child(SPACER_CONFIG_PATH),
+		                                                             processing_config));
 
-	return shared_ptr<TagsFinderBase>(new SpacerTagsFinder(files_processor,
-														   pt.get_child("config.TagsSearch.SpacerSearch"),
-														   pt.get_child("config.TagsSearch.TailTrimming")));
+	return shared_ptr<TagsFinderBase>(new SpacerTagsFinder(files_processor, pt.get_child(SPACER_CONFIG_PATH),
+	                                                       processing_config));
 }
 
 
@@ -96,12 +111,12 @@ Params parse_cmd_params(int argc, char **argv)
 			{"save-reads-names",    no_argument,       0, 's'},
 			{"save-stats",    required_argument,       0, 'S'},
 			{"lib-tag",    required_argument, 0, 't'},
-			{"verbose",    no_argument,       0, 'v'},
+			{"quiet",    no_argument,       0, 'q'},
 			{0, 0,                            0, 0}
 	};
 
 	Params params;
-	while ((c = getopt_long(argc, argv, "c:l:n:sS:t:v", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "c:l:n:sS:t:q", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -123,8 +138,8 @@ Params parse_cmd_params(int argc, char **argv)
 			case 't' :
 				params.lib_tag= string(optarg);
 				break;
-			case 'v' :
-				params.verbose = true;
+			case 'q' :
+				params.quiet = true;
 				break;
 			default:
 				cerr << "indroptag: unknown arguments passed" << endl;
@@ -189,11 +204,13 @@ int main(int argc, char **argv)
 	if (params.cant_parse)
 		return 1;
 
+	check_files_existence(params);
+
 	if (params.log_prefix.length() != 0)
 	{
 		params.log_prefix += "_";
 	}
-	Tools::init_log(params.verbose, false, params.log_prefix + "tag_main.log", params.log_prefix + "tag_debug.log");
+	Tools::init_log(!params.quiet, false, params.log_prefix + "tag_main.log", params.log_prefix + "tag_debug.log");
 
 	L_TRACE << command_line;
 

@@ -11,10 +11,10 @@
 
 namespace TagsSearch
 {
-	TagsFinderBase::TagsFinderBase(std::shared_ptr<FilesProcessor> files_processor, const boost::property_tree::ptree &config)
-		: max_reads(config.get<size_t>("max_reads", std::numeric_limits<size_t>::max()))
-		, min_read_len(config.get<unsigned>("min_align_length"))
-		, poly_a(config.get<std::string>("poly_a_tail"))
+	TagsFinderBase::TagsFinderBase(std::shared_ptr<FilesProcessor> files_processor, const boost::property_tree::ptree &processing_config)
+		: max_reads(processing_config.get<size_t>("reads_per_out_file", std::numeric_limits<size_t>::max()))
+		, min_read_len(processing_config.get<unsigned>("min_align_length", 10))
+		, poly_a(processing_config.get<std::string>("poly_a_tail", "AAAAAAAA"))
 		, _files_processor(files_processor)
 		, _trims_counter()
 	{

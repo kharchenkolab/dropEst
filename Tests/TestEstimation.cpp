@@ -2,8 +2,6 @@
 #define BOOST_TEST_MODULE tests
 
 #include <boost/test/unit_test.hpp>
-#include <boost/unordered_map.hpp>
-#include <boost/property_tree/xml_parser.hpp>
 
 #include "Estimation/CellsDataContainer.h"
 
@@ -16,7 +14,7 @@
 #include <Estimation/Merge/MergeStrategyFactory.h>
 #include <Estimation/Merge/SimpleMergeStrategy.h>
 #include <Estimation/Merge/RealBarcodesMergeStrategy.h>
-#include <Estimation/MergeUMIs/MergeUMIsStrategySimple.h>
+#include <Estimation/Merge/UMIs/MergeUMIsStrategySimple.h>
 
 #include <Tools/Logs.h>
 #include <Tools/UtilFunctions.h>
@@ -28,17 +26,11 @@ struct Fixture
 {
 	Fixture()
 	{
-		std::stringstream config("<Estimation>\n"
-				"        <barcodes_type>indrop</barcodes_type>\n"
-				"        <min_merge_fraction>0</min_merge_fraction>\n"
-				"        <max_merge_edit_distance>7</max_merge_edit_distance>\n"
-				"        <min_genes_after_merge>0</min_genes_after_merge>\n"
-				"        <min_genes_before_merge>0</min_genes_before_merge>\n"
-				"    </Estimation>");
+		auto barcodes_parser = std::shared_ptr<Merge::BarcodesParsing::BarcodesParser>(
+				new Merge::BarcodesParsing::InDropBarcodesParser(PROJ_DATA_PATH + std::string("/barcodes/test_est")));
 
-		read_xml(config, this->pt);
-		this->real_cb_strat = std::make_shared<Merge::RealBarcodesMergeStrategy>(PROJ_DATA_PATH + std::string("/barcodes/test_est"), this->pt.get_child("Estimation"));
-		this->umi_merge_strat = std::make_shared<MergeUMIs::MergeUMIsStrategySimple>(1);
+		this->real_cb_strat = std::make_shared<Merge::RealBarcodesMergeStrategy>(barcodes_parser,0, 0, 7, 0);
+		this->umi_merge_strat = std::make_shared<Merge::UMIs::MergeUMIsStrategySimple>(1);
 
 		this->any_mark = Mark::get_by_code(Mark::DEFAULT_CODE);
 		this->container_full = std::make_shared<CellsDataContainer>(this->real_cb_strat, this->umi_merge_strat, 1, this->any_mark);
@@ -71,10 +63,9 @@ struct Fixture
 	}
 
 	std::shared_ptr<Merge::RealBarcodesMergeStrategy> real_cb_strat;
-	std::shared_ptr<MergeUMIs::MergeUMIsStrategySimple> umi_merge_strat;
+	std::shared_ptr<Merge::UMIs::MergeUMIsStrategySimple> umi_merge_strat;
 	std::shared_ptr<CellsDataContainer> container_full;
 	std::vector<Mark> any_mark;
-	boost::property_tree::ptree pt;
 };
 
 BOOST_AUTO_TEST_SUITE(TestEstimator)
@@ -448,8 +439,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 	BOOST_FIXTURE_TEST_CASE(testFillWrongUmis, Fixture)
 	{
-		using namespace MergeUMIs;
-		MergeUMIsStrategySimple::s_vec_t wrong_umis;
+		Merge::UMIs::MergeUMIsStrategySimple::s_vec_t wrong_umis;
 		wrong_umis.push_back("AAANTTT");
 		wrong_umis.push_back("AAANCTT");
 		wrong_umis.push_back("NNNNNNN");
@@ -464,8 +454,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 	BOOST_FIXTURE_TEST_CASE(testRemoveSimilarWrongUmis, Fixture)
 	{
-		using namespace MergeUMIs;
-		MergeUMIsStrategySimple::s_vec_t wrong_umis;
+		Merge::UMIs::MergeUMIsStrategySimple::s_vec_t wrong_umis;
 		wrong_umis.push_back("AAANTTT");
 		wrong_umis.push_back("AACTNTT");
 		wrong_umis.push_back("AACTCNT");
@@ -482,7 +471,6 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 	BOOST_FIXTURE_TEST_CASE(testUMIMergeStrategy, Fixture)
 	{
-		using namespace MergeUMIs;
 		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, 0, this->any_mark);
 
 		container.add_record("AAATTAGGTCCA", "AAACCT", "Gene1");
@@ -513,6 +501,45 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		BOOST_CHECK_NO_THROW(container.cell_genes(0).at("Gene2").at("ACCCCT"));
 
 		for (auto const &umi :container.cell_genes(0).at("Gene2"))
+		{
+			BOOST_CHECK_EQUAL(umi.first.find('N'), std::string::npos);
+		}
+	}
+
+	BOOST_FIXTURE_TEST_CASE(debugUMIMergeStrategy, Fixture)
+	{
+		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, 0, this->any_mark);
+
+		container.add_record("GTCCCATGTCTCAT-3", "TAAATTACAT", "ENSG00000100941");
+		container.add_record("GTCCCATGTCTCAT-3", "ATCGACNNNN", "ENSG00000100941");
+		container.add_record("GTCCCATGTCTCAT-3", "ATTAAAGTCG", "ENSG00000100941");
+
+		for (int i = 0; i < 12; ++i)
+		{
+			container.add_record("GTCCCATGTCTCAT-3", "CCCAACAGCT", "ENSG00000100941");
+		}
+
+		container.add_record("GTCCCATGTCTCAT-3", "ATCGACATTC", "ENSG00000100941");
+		for (int i = 0; i < 4; ++i)
+		{
+			container.add_record("GTCCCATGTCTCAT-3", "ATTCAAGTCG", "ENSG00000100941");
+		}
+
+		for (int i = 0; i < 14; ++i)
+		{
+			container.add_record("GTCCCATGTCTCAT-3", "CACGAAACGA", "ENSG00000100941");
+		}
+
+		for (int i = 0; i < 10; ++i)
+		{
+			container.add_record("GTCCCATGTCTCAT-3", "TCCGTTACAG", "ENSG00000100941");
+		}
+
+
+		container.set_initialized();
+
+		this->umi_merge_strat->merge(container);
+		for (auto const &umi :container.cell_genes(0).at("ENSG00000100941"))
 		{
 			BOOST_CHECK_EQUAL(umi.first.find('N'), std::string::npos);
 		}

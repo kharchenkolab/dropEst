@@ -3,7 +3,6 @@
 #include "Estimation/Estimator.h"
 
 #include <RInside.h>
-#include <boost/unordered_map.hpp>
 #include <string>
 
 namespace Estimation

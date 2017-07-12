@@ -10,12 +10,11 @@ namespace Estimation
 {
 	namespace Merge
 	{
-		using BarcodesParsing::BarcodesParser;
-
-		RealBarcodesMergeStrategy::RealBarcodesMergeStrategy(const std::string &barcodes_filename,
-															 const boost::property_tree::ptree &config)
-				: MergeStrategyBase(config)
-				, _barcodes_parser(RealBarcodesMergeStrategy::get_barcodes_parser(barcodes_filename, config.get<std::string>("barcodes_type", "indrop")))
+		RealBarcodesMergeStrategy::RealBarcodesMergeStrategy(barcodes_parser_ptr barcodes_parser,
+		                                                     unsigned min_genes_before_merge, unsigned min_genes_after_merge,
+		                                                     unsigned max_merge_edit_distance, double min_merge_fraction)
+				: MergeStrategyBase(min_genes_before_merge, min_genes_after_merge, max_merge_edit_distance, min_merge_fraction)
+				, _barcodes_parser(barcodes_parser)
 		{
 			this->_barcodes_parser->init();
 		}
@@ -62,6 +61,7 @@ namespace Estimation
 		RealBarcodesMergeStrategy::ul_list_t RealBarcodesMergeStrategy::get_real_neighbour_cbs(const Estimation::CellsDataContainer &container,
 																							   size_t base_cell_ind) const
 		{
+			using BarcodesParsing::BarcodesParser;
 			const std::string &base_cb = container.cell_barcode(base_cell_ind);
 			std::vector<BarcodesParser::BarcodesDistance> barcodes_dists(this->_barcodes_parser->get_real_neighbour_cbs(base_cb));
 
@@ -69,7 +69,9 @@ namespace Estimation
 			if (barcodes_dists.empty())
 				return neighbour_cbs;
 
-			std::sort(barcodes_dists.begin(), barcodes_dists.end(), [](const BarcodesParser::BarcodesDistance &d1, const BarcodesParser::BarcodesDistance &d2){ return d1.edit_distance < d2.edit_distance;});
+			std::sort(barcodes_dists.begin(), barcodes_dists.end(),
+			          [](const BarcodesParser::BarcodesDistance &d1, const BarcodesParser::BarcodesDistance &d2){
+				          return d1.edit_distance < d2.edit_distance;});
 
 			auto const &nearest_cb_parts = barcodes_dists.front();
 			unsigned min_real_cb_dist = nearest_cb_parts.edit_distance;
@@ -105,21 +107,6 @@ namespace Estimation
 		std::string RealBarcodesMergeStrategy::merge_type() const
 		{
 			return "RealCBs";
-		}
-
-		std::shared_ptr<BarcodesParsing::BarcodesParser>
-		RealBarcodesMergeStrategy::get_barcodes_parser(const std::string &barcodes_filename, std::string barcodes_type)
-		{
-			if (barcodes_type == "")
-				throw std::runtime_error("Empty barcodes type!");
-
-			if (barcodes_type == "indrop")
-				return std::shared_ptr<BarcodesParser>(new BarcodesParsing::InDropBarcodesParser(barcodes_filename));
-
-			if (barcodes_type == "const")
-				return std::shared_ptr<BarcodesParser>(new BarcodesParsing::ConstLengthBarcodesParser(barcodes_filename));
-
-			throw std::runtime_error("Unexpected barcodes type: " + barcodes_type);
 		}
 	}
 }

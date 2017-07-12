@@ -21,11 +21,10 @@ namespace Estimation
 	namespace Merge
 	{
 		class MergeStrategyAbstract;
-	}
-
-	namespace MergeUMIs
-	{
-		class MergeUMIsStrategySimple;
+		namespace UMIs
+		{
+			class MergeUMIsStrategySimple;
+		}
 	}
 
 	class CellsDataContainer
@@ -88,9 +87,10 @@ namespace Estimation
 
 	private:
 		std::shared_ptr<Merge::MergeStrategyAbstract> _merge_strategy;
-		std::shared_ptr<MergeUMIs::MergeUMIsStrategySimple> _umi_merge_strategy;
+		std::shared_ptr<Merge::UMIs::MergeUMIsStrategySimple> _umi_merge_strategy;
 
 		const size_t _top_print_size;
+		const int _max_cells_num;
 
 		std::vector<genes_t> _cells_genes; //cell_id -> gen_name -> umi -> count
 		names_t _cell_barcodes;
@@ -118,8 +118,8 @@ namespace Estimation
 
 	public:
 		CellsDataContainer(std::shared_ptr<Merge::MergeStrategyAbstract> merge_strategy,
-		                   std::shared_ptr<MergeUMIs::MergeUMIsStrategySimple> umi_merge_strategy,
-		                   size_t top_print_size, const std::vector<Mark> &gene_match_levels);
+		                   std::shared_ptr<Merge::UMIs::MergeUMIsStrategySimple> umi_merge_strategy,
+		                   size_t top_print_size, const std::vector<Mark> &gene_match_levels, int max_cells_num = -1);
 
 		size_t add_record(const std::string &cell_barcode, const std::string &umi, const std::string &gene,
 		                  const Mark &umi_mark = Mark::HAS_EXONS);
@@ -130,7 +130,7 @@ namespace Estimation
 
 		void merge_umis(size_t cell_id, const std::string &gene, const s_s_hash_t &merge_targets);
 
-		void update_cell_sizes(int genes_threshold, bool logs = true);
+		void update_cell_sizes(int genes_threshold, int cell_threshold, bool logs);
 
 		void set_initialized();
 

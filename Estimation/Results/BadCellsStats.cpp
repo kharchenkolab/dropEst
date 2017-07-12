@@ -66,7 +66,7 @@ namespace Estimation
 		            Named("merge_probs") = wrap(container.stats().get_raw(Stats::MERGE_PROB_BY_CELL)),
 		            Named("merge_targets") = merge_targets,
 		            Named("excluded_cells") = wrap(container.excluded_cells()),
-		            Named("umi_per_cell") = wrap(reads_per_umi)
+		            Named("umi_per_cell") = wrap(reads_per_umi) // TODO: Remove?
 			);
 
 			R->parseEvalQ("saveRDS(d, '" + filename + "')");

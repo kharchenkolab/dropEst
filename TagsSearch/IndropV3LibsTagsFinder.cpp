@@ -5,11 +5,10 @@ namespace TagsSearch
 {
 
 	IndropV3LibsTagsFinder::IndropV3LibsTagsFinder(const std::shared_ptr<FilesProcessor> &files_processor, const std::string &library_tag,
-		                                               unsigned max_lib_tag_ed, const boost::property_tree::ptree &barcodes_config,
-		                                               const boost::property_tree::ptree &config)
+		                                               const boost::property_tree::ptree &barcodes_config, const boost::property_tree::ptree &config)
 		: IndropV3TagsFinder(files_processor, barcodes_config, config)
 		, library_tag(library_tag)
-		, max_lib_tag_ed(max_lib_tag_ed)
+		, max_lib_tag_ed(barcodes_config.get<unsigned>("max_libtag_ed", 2))
 	{}
 
 	bool

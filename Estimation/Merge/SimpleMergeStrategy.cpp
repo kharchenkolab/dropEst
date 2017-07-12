@@ -40,8 +40,9 @@ namespace Merge
 		return common_umigs_per_cell;
 	}
 
-	SimpleMergeStrategy::SimpleMergeStrategy(const boost::property_tree::ptree &config)
-			: MergeStrategyBase(config)
+	SimpleMergeStrategy::SimpleMergeStrategy(unsigned min_genes_before_merge, unsigned min_genes_after_merge,
+	                                         unsigned max_merge_edit_distance, double min_merge_fraction)
+		: MergeStrategyBase(min_genes_before_merge, min_genes_after_merge, max_merge_edit_distance, min_merge_fraction)
 	{}
 
 	std::string SimpleMergeStrategy::merge_type() const

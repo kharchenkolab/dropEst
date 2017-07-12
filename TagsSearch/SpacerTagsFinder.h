@@ -29,7 +29,7 @@ namespace TagsSearch
 
 	public:
 		SpacerTagsFinder(std::shared_ptr<FilesProcessor> files_processor,
-						 const boost::property_tree::ptree &barcodes_config, const boost::property_tree::ptree &config);
+						 const boost::property_tree::ptree &spacer_config, const boost::property_tree::ptree &config);
 	};
 }
 

@@ -9,6 +9,7 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include <omp.h>
 #include <Estimation/BamProcessing/BamController.h>
+#include <Estimation/Merge/MergeStrategyFactory.h>
 
 #include "Estimation/Estimator.h"
 #include "Estimation/Results/ResultPrinter.h"
@@ -28,26 +29,25 @@ struct Params
 	bool filled_bam = false;
 	bool filtered_bam_output = false;
 	bool merge_tags = false;
-	bool not_filtered = false;
+	bool merge_tags_precise = false;
+	bool not_filtered = false; // TODO: deprecated?
 	bool reads_output = false;
 	bool text_output = false;
-	bool verbose = false;
-	string barcodes_filename = "";
+	bool quiet = false;
 	string config_file_name = "";
-	string genesets_rds = "";
+	string genesets_rds = ""; // TODO: deprecated. Move updated version to xml.
 	string genes_filename = "";
 	string log_prefix = "";
 	string output_name = "";
-	string reads_params_names_str = "";
+	string reads_params_names_str = ""; //TODO: deprecated. Should be updated after the implementation of quality parsing.
 	std::string gene_match_level = CellsDataContainer::Mark::DEFAULT_CODE;
+	int max_cells_number = -1;
+	int min_genes_after_merge = -1;
 	int num_of_threads = 1;
 };
 
 static void check_files_existence(const Params &params, const vector<string> &bam_files)
 {
-	if (params.barcodes_filename != "" && !std::ifstream(params.barcodes_filename))
-		throw std::runtime_error("Can't open barcodes file '" + params.barcodes_filename + "'");
-
 	if (params.config_file_name != "" && !std::ifstream(params.config_file_name))
 		throw std::runtime_error("Can't open config file '" + params.config_file_name + "'");
 
@@ -69,36 +69,36 @@ static void check_files_existence(const Params &params, const vector<string> &ba
 
 static void usage()
 {
-	cerr << "\tindropest: estimate molecular counts per cell" << endl; // Add genes count from config
+	cerr << "\tindropest: estimate molecular counts per cell" << endl;
 	cerr << "SYNOPSIS\n";
 	cerr <<
-	"\tindropest [-t, --text-output] [-m|--merge-cell-tags] [-v|--verbose] [-n | --not-filtered] [-g | --genes filename]"
-	"[-l, --log-prefix logs_name] [-r, --reads-params filename] -c config.xml file1.bam [file2.bam ...] "
-	"[-b | --bam-output] [-B | --barcodes filename] [-f, --filled-bam] [-F, --filtered-bam]" << endl;
+	"\tindropest [options] -c config.xml file_1.bam [..., file_n.bam]" << endl;
 	cerr << "OPTIONS:\n";
 	cerr << "\t-b, --bam-output: print tagged bam files" << endl;
-	cerr << "\t-B, --barcodes: path to barcodes file" << endl; //To config
 	cerr << "\t-c, --config filename: xml file with estimation parameters" << endl;
+	cerr << "\t-C, --cells num: maximal number of output cells" << endl;
 	cerr << "\t-f, --filled-bam: bam file already contains genes/barcodes tags" << endl;
 	cerr << "\t-F, --filtered-bam: print tagged bam file after the merge and filtration" << endl;
 	cerr << "\t-g, --genes filename: file with genes annotations (.bed or .gtf)" << endl;
+	cerr << "\t-G, --genes-min num: minimal number of genes in output cells" << endl;
 	cerr << "\t-l, --log-prefix : logs prefix" << endl;
-	cerr << "\t-m, --merge-cell-tags : merge linked cell tags" << endl;
-	cerr << "\t-M, --gene-match-level :\n"
+	cerr << "\t-L, --gene-match-level :\n"
 			"\t\te: count UMIs with exonic reads only;\n"
 			"\t\ti: count UMIs with intronic reads only;\n"
 			"\t\tE: count UMIs, which have both exonic and not annotated reads;\n"
 			"\t\tI: count UMIs, which have both intronic and not annotated reads;\n"
 			"\t\tB: count UMIs, which have both exonic and intronic reads;\n"
 			"\t\tA: count UMIs, which have exonic, intronic and not annotated reads.\n"
-			"\t\tDefault: -M " << Params().gene_match_level << "." << endl;
+			"\t\tDefault: -L " << Params().gene_match_level << "." << endl;
+	cerr << "\t-m, --merge-barcodes : merge linked cell tags" << endl;
+	cerr << "\t-M, --merge-barcodes-precise : use precise merge strategy (can be slow), recommended to use when the list of real barcodes is not available" << endl;
 	cerr << "\t-n, --not-filtered : print data for all cells" << endl;
 	cerr << "\t-o, --output-file filename : output file name" << endl;
 	cerr << "\t-p, --parallel number_of_threads : number of threads" << endl;
-	cerr << "\t-r, --reads-params filename: file or files with serialized params from tags search step. If there are several files then it should be in quotes and splitted by space" << endl; //DEPRECATED
+//	cerr << "\t-r, --reads-params filename: file or files with serialized params from tags search step. If there are several files then it should be in quotes and splitted by space" << endl;
 	cerr << "\t-R, --reads-output: print count matrix for reads and don't use UMI statistics" << endl;
 	cerr << "\t-t, --text-output : write out text matrix" << endl;
-	cerr << "\t-v, --verbose : verbose mode" << endl;
+	cerr << "\t-q, --quiet : disable logs" << endl;
 }
 
 static Params parse_cmd_params(int argc, char **argv)
@@ -109,36 +109,37 @@ static Params parse_cmd_params(int argc, char **argv)
 	int c;
 	static struct option long_options[] = {
 			{"bam-output",     	no_argument, 	   0, 'b'},
-			{"barcodes",     	required_argument, 	   0, 'B'},
 			{"config",     		required_argument, 0, 'c'},
+			{"cells",     		required_argument, 0, 'C'},
 			{"filled-bam",     	no_argument,       0, 'f'},
 			{"filtered-bam",    no_argument,		0, 'F'},
-			{"genesets_rds",	required_argument, 0, 'G'},
 			{"genes",     		required_argument, 0, 'g'},
+			{"genes-min",     		required_argument, 0, 'G'},
 			{"log-prefix",		required_argument, 0, 'l'},
-			{"merge-cell-tags", no_argument,       0, 'm'},
-			{"gene-match-level",	required_argument, 0, 'M'},
+			{"gene-match-level",	required_argument, 0, 'L'},
+			{"merge-barcodes",  no_argument,       0, 'm'},
+			{"merge-barcodes-precise",  no_argument,       0, 'M'},
 			{"not-filtered",	no_argument, 	   0, 'n'},
 			{"output-file",     required_argument, 0, 'o'},
 			{"parallel",     required_argument, 0, 'p'},
 			{"reads-params",     required_argument, 0, 'r'},
 			{"reads-output",     no_argument, 		0, 'R'},
 			{"text-output",     no_argument,       0, 't'},
-			{"verbose",         no_argument,       0, 'v'},
+			{"quiet",         no_argument,       0, 'q'},
 			{0, 0,                                 0, 0}
 	};
-	while ((c = getopt_long(argc, argv, "bB:c:fFG:g:l:mM:no:p:r:Rtv", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "bc:C:fFg:G:l:L:mM:no:p:r:Rtq", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
 			case 'b':
 				params.bam_output = true;
 				break;
-			case 'B':
-				params.barcodes_filename = string(optarg);
-				break;
 			case 'c' :
 				params.config_file_name = string(optarg);
+				break;
+			case 'C' :
+				params.max_cells_number = atoi(optarg);
 				break;
 			case 'f' :
 				params.filled_bam = true;
@@ -146,20 +147,24 @@ static Params parse_cmd_params(int argc, char **argv)
 			case 'F' :
 				params.filtered_bam_output = true;
 				break;
-			case 'G' :
-				params.genesets_rds = string(optarg);
-				break;
 			case 'g' :
 				params.genes_filename = string(optarg);
 				break;
+			case 'G' :
+				params.min_genes_after_merge = atoi(optarg);
+				break;
 			case 'l' :
 				params.log_prefix = string(optarg);
+				break;
+			case 'L' :
+				params.gene_match_level = string(optarg);
 				break;
 			case 'm' :
 				params.merge_tags = true;
 				break;
 			case 'M' :
-				params.gene_match_level = string(optarg);
+				params.merge_tags = true;
+				params.merge_tags_precise = true;
 				break;
 			case 'n' :
 				params.not_filtered = true;
@@ -179,8 +184,8 @@ static Params parse_cmd_params(int argc, char **argv)
 			case 't' :
 				params.text_output = true;
 				break;
-			case 'v' :
-				params.verbose = true;
+			case 'q' :
+				params.quiet = true;
 				break;
 			default:
 				cerr << "indropest: unknown arguments passed: '" << (char)c <<"'"  << endl;
@@ -204,12 +209,6 @@ static Params parse_cmd_params(int argc, char **argv)
 	if (params.filled_bam && params.reads_params_names_str != "")
 	{
 		cerr << "indropset: only one genes source must be provided (you can't use -r and -f at the same time)" << endl;
-		params.cant_parse = true;
-	}
-
-	if (!params.merge_tags && params.barcodes_filename != "")
-	{
-		cerr << "indropset: you should provide barcodes list only for merge procedure (you can't use -B without -m)" << endl;
 		params.cant_parse = true;
 	}
 
@@ -261,7 +260,7 @@ int main(int argc, char **argv)
 	{
 		params.log_prefix += "_";
 	}
-	Tools::init_log(params.verbose, false, params.log_prefix + "est_main.log", params.log_prefix + "est_debug.log");
+	Tools::init_log(!params.quiet, false, params.log_prefix + "est_main.log", params.log_prefix + "est_debug.log");
 
 	L_TRACE << command_line;
 	vector<string> files;
@@ -270,9 +269,6 @@ int main(int argc, char **argv)
 		files.push_back(string(argv[optind++]));
 	}
 
-	boost::property_tree::ptree pt;
-	read_xml(params.config_file_name, pt);
-
 	try
 	{
 		check_files_existence(params, files);
@@ -280,10 +276,18 @@ int main(int argc, char **argv)
 		auto match_levels = CellsDataContainer::Mark::get_by_code(params.gene_match_level);
 
 		Tools::trace_time("Run");
-		Estimator estimator(pt.get_child("config.Estimation"), params.merge_tags, params.barcodes_filename);
+
+		boost::property_tree::ptree pt;
+		if (!params.config_file_name.empty())
+		{
+			read_xml(params.config_file_name, pt);
+		}
+
+		Merge::MergeStrategyFactory merge_factory(pt, params.min_genes_after_merge);
+		Estimator estimator(merge_factory.get_cb_strat(params.merge_tags, params.merge_tags_precise), merge_factory.get_umi());
 
 		CellsDataContainer container = estimator.get_cells_container(files, params.bam_output, params.filled_bam,
-		                                                             params.reads_params_names_str,
+		                                                             params.max_cells_number, params.reads_params_names_str,
 		                                                             params.genes_filename, match_levels);
 
 		if (params.filtered_bam_output)
@@ -303,7 +307,7 @@ int main(int argc, char **argv)
 				params.output_name += ".bin";
 			}
 
-			results.save_results(container, params.output_name, params.genesets_rds, params.num_of_threads);
+			results.save_results(container, params.output_name, "", params.num_of_threads); // TODO: fix genesets_file after the report completion
 		}
 
 		{

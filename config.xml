@@ -11,24 +11,25 @@
             <max_spacer_edit_distance>3</max_spacer_edit_distance>
             <spacer_prefix_length>4</spacer_prefix_length>
 
-            <spacer_min_pos>8</spacer_min_pos>
-            <spacer_max_pos>11</spacer_max_pos>
-            <barcode_length>8</barcode_length>
+            <barcode1_min_len>8</barcode1_min_len>
+            <barcode1_max_len>11</barcode1_max_len>
+            <barcode2_length>8</barcode2_length>
             <umi_length>6</umi_length>
             <r1_rc_length>8</r1_rc_length>
         </SpacerSearch>
-        <TailTrimming>
+        <Processing>
             <min_align_length>10</min_align_length>
-            <max_reads>10000000</max_reads>
+            <reads_per_out_file>10000000</reads_per_out_file>
             <poly_a_tail>AAAAAAAA</poly_a_tail>
-        </TailTrimming>
+        </Processing>
     </TagsSearch>
 
-    <Estimation>
+    <Merge>
         <barcodes_type>indrop</barcodes_type>
-        <min_merge_fraction>0.4</min_merge_fraction>
-        <max_merge_edit_distance>2</max_merge_edit_distance>
+        <min_merge_fraction>0.2</min_merge_fraction>
+        <max_cb_merge_edit_distance>2</max_cb_merge_edit_distance>
+        <max_umi_merge_edit_distance>1</max_umi_merge_edit_distance>
         <min_genes_after_merge>1000</min_genes_after_merge>
         <min_genes_before_merge>100</min_genes_before_merge>
-    </Estimation>
+    </Merge>
 </config>

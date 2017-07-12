@@ -7,10 +7,15 @@ namespace Estimation
 {
 namespace Merge
 {
-	PoissonRealBarcodesMergeStrategy::PoissonRealBarcodesMergeStrategy(const std::string &barcodes_filename,
-																	   const boost::property_tree::ptree &config)
-		: RealBarcodesMergeStrategy(barcodes_filename, config)
-	{ }
+	PoissonRealBarcodesMergeStrategy::PoissonRealBarcodesMergeStrategy(const PoissonTargetEstimator &target_estimator,
+	                                                                   const barcodes_parser_ptr barcodes_parser,
+																	   unsigned min_genes_before_merge,
+																	   unsigned min_genes_after_merge,
+																	   unsigned max_merge_edit_distance)
+		: RealBarcodesMergeStrategy(barcodes_parser, min_genes_before_merge, min_genes_after_merge,
+		                            max_merge_edit_distance, 0)
+		, _target_estimator(target_estimator)
+	{}
 
 	unsigned PoissonRealBarcodesMergeStrategy::get_max_merge_dist(unsigned min_real_cb_dist) const
 	{

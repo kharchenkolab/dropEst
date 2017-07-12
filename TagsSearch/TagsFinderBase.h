@@ -52,7 +52,7 @@ namespace TagsSearch
 		virtual std::string get_additional_stat(long total_reads_read) const = 0;
 
 	public:
-		TagsFinderBase(std::shared_ptr<FilesProcessor> files_processor, const boost::property_tree::ptree &config);
+		TagsFinderBase(std::shared_ptr<FilesProcessor> files_processor, const boost::property_tree::ptree &processing_config);
 
 		virtual void run(bool save_reads_names, bool save_stats);
 		const s_counter_t& num_reads_per_cb() const;
