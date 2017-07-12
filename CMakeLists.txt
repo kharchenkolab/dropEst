@@ -15,7 +15,8 @@ add_definitions(-DPROJ_DATA_PATH=\"${PROJECT_SOURCE_DIR}/data\")
 add_definitions(-DPROJ_BIN_PATH=\"${CMAKE_CURRENT_BINARY_DIR}\")
 
 # set(BOOST_ROOT "/home/vp76/local/")
-find_package(Boost 1.54.0 COMPONENTS unit_test_framework system log iostreams filesystem REQUIRED)
+find_package(Boost 1.54.0 COMPONENTS unit_test_framework thread system log iostreams filesystem REQUIRED)
+find_package (Threads REQUIRED)
 find_package (ZLIB REQUIRED)
 
 # set(BAMTOOLS_ROOT "/opt/bamtools-2.2.3/")
