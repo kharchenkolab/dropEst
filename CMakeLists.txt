@@ -19,10 +19,11 @@ find_package(Boost 1.54.0 COMPONENTS unit_test_framework thread system log iostr
 find_package (Threads REQUIRED)
 find_package (ZLIB REQUIRED)
 
-# set(BAMTOOLS_ROOT "/opt/bamtools-2.2.3/")
+set(BAMTOOLS_ROOT "/opt/bamtools-2.2.3/")
 find_package (BamTools REQUIRED)
 
-# set(R_ROOT "/home/vp76/local/lib64/R")
+# set(R_ROOT "/opt/R-3.3.1/lib64/R/")
+# set(R_PACKAGES "~/R/x86_64-pc-linux-gnu-library/3.3/")
 find_package (R REQUIRED)
 
 set(INCLUDE_DIRS ${Boost_INCLUDE_DIR} ${PROJECT_SOURCE_DIR} ${ZLIB_INCLUDE_DIRS} ${BAMTOOLS_INCLUDE_DIRS} ${R_INCLUDE_DIRS})

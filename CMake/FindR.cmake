@@ -3,7 +3,7 @@
 #
 # Find R, RCpp and RInside
 #
-# You can set R_ROOT to specify R paths
+# You can set R_ROOT and R_PACKAGES to specify R paths
 #
 # Result Variables
 # ^^^^^^^^^^^^^^^^
@@ -19,7 +19,7 @@ find_library(R_LIBRARY NAME R PATHS ${R_ROOT}/lib PATH_SUFFIXES R/lib lib)
 
 get_filename_component(R_LIBRARY ${R_LIBRARY} REALPATH)
 get_filename_component(R_LIB_DIR ${R_LIBRARY} PATH)
-set(R_LIBS_PATHS ${R_ROOT} ${R_ROOT}/library ${R_LOCAL_LIBS} ${R_ROOT}/site-library ${R_LIB_DIR}/../ ${R_LIB_DIR}/../../ /usr/local/lib /usr/lib)
+set(R_LIBS_PATHS ${R_ROOT} ${R_ROOT}/library ${R_LOCAL_LIBS} ${R_ROOT}/site-library ${R_PACKAGES} ${R_LIB_DIR}/../ ${R_LIB_DIR}/../../ /usr/local/lib /usr/lib)
 
 
 find_path(RCPP_INCLUDE_DIR Rcpp.h
