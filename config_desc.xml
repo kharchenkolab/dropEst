@@ -8,7 +8,7 @@
         <max_libtag_ed> 2 </max_libtag_ed> <!-- Optional. Maximal acceptable edit distance of the library tag. Used only with  cli argument 'lib-tag'. Default: 2.-->
     </BarcodesSearch>
 
-    <SpacerSearch> <!-- Required for the other protocols -->
+    <SpacerSearch> <!-- Required for InDrop V1 and some other -->
         <spacer>GAGTGATTGCTTGTGACGCCTT</spacer>
         <max_spacer_edit_distance> 3 </max_spacer_edit_distance>
         <spacer_search_length> 4 </spacer_search_length> <!-- Length of the part of the spacer, either at the begining ot at the end, which is used to find it -->
