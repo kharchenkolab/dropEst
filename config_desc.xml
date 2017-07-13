@@ -1,0 +1,45 @@
+<!-- indroptag -->
+<TagSearch>
+    <BarcodesSearch> <!-- Required for InDrop V3 -->
+        <barcode1_length> 8 </barcode1_length>  <!-- Length of the first CB part -->
+        <barcode2_length> 8 </barcode2_length> <!-- Length of the second CB part -->
+        <umi_length> 6 </umi_length> <!-- Length of UMI -->
+        <r1_rc_length>  8 </r1_rc_length> <!-- Length of the tail of read1, which is used to trim read2-->
+        <max_libtag_ed> 2 </max_libtag_ed> <!-- Optional. Maximal acceptable edit distance of the library tag. Used only with  cli argument 'lib-tag'. Default: 2.-->
+    </BarcodesSearch>
+
+    <SpacerSearch> <!-- Required for the other protocols -->
+        <spacer>GAGTGATTGCTTGTGACGCCTT</spacer>
+        <max_spacer_edit_distance> 3 </max_spacer_edit_distance>
+        <spacer_search_length> 4 </spacer_search_length> <!-- Length of the part of the spacer, either at the begining ot at the end, which is used to find it -->
+
+        <barcode1_min_length> 8 </barcode1_min_length>  <!-- Minimal length of the first CB part -->
+        <barcode1_max_length> 11 </barcode1_max_length>  <!-- Maximal length of the first CB part -->
+        <umi_length> 6 </umi_length> <!-- Length of UMI -->
+        <r1_rc_length>  8 </r1_rc_length> <!-- Length of the tail of read1, which is used to trim read2-->
+    </SpacerSearch>
+
+    <Processing> <!-- Required for all -->
+        <min_align_length>  10 </min_align_length> <!-- Optional. Minimal acceptable length of the read after trimming. Default: 10. -->
+        <reads_per_out_file> 10000000 </reads_per_out_file> <!-- Optional. Number of reads that can be written in one fastq file. Default: infinity. -->
+        <poly_a_tail> AAAAAAAA </poly_a_tail> <!-- Optional. Sequence, which is searched as poly-a tail. Default: AAAAAAAA. -->
+    </Processing>
+</TagSearch>
+
+<!-- indropest -->
+<Estimation>
+    <Merge> <!-- Used only with 'merge' or 'precise-merge' cli option. -->
+        <barcodes_file>~/indrop.txt</barcodes_file> <!-- Optional. File with the list of real barcodes. -->
+        <barcodes_type>indrop</barcodes_type> <!-- Optional. Used only with 'barcodes_file' provided. Barcoding type. Possible values: 'indrop' (two barcodes, the second has fixed length), 'const' (any fixed number of barcode parts, each part has constant length). Default: indrop. -->
+        <min_merge_fraction>0.2</min_merge_fraction>  <!-- Optional. Threshold for the merge procedure. Default: 0.2 -->
+        <max_cb_merge_edit_distance>2</max_cb_merge_edit_distance> <!-- Max edit distance between to barcodes. -->
+        <max_umi_merge_edit_distance>1</max_umi_merge_edit_distance> <!-- Optional. Max edit distance between to UMIs. Default: 2.-->
+        <min_genes_after_merge>100</min_genes_after_merge> <!-- Optional. Can be owervritten from the cli options. Minimal number of genes for cells after the merge procedure. Default: 10.  -->
+        <min_genes_before_merge>10</min_genes_before_merge> <!-- Optional. Minimal number of genes for cells before the merge procedure. Used mostly for optimization. Default: 10.-->
+    </Merge>
+
+    <PreciseMerge> <!-- Used only with 'precise-merge' cli option -->
+        <max_merge_prob>1e-5</max_merge_prob>  <!-- Optional. Threshold for the merge procedure. Default: 1e-5.-->
+        <max_real_merge_prob>1e-7</max_real_merge_prob>  <!-- Optional. Threshold for the merge procedure in the case when one real barcode is tested to be merged wit the other. Default: 1e-7.-->
+    </PreciseMerge>
+</Estimation>
