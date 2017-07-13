@@ -220,7 +220,7 @@ namespace Estimation
 		this->_is_cell_excluded = flags_t(this->_cell_barcodes.size(), false);
 		this->_is_cell_merged = flags_t(this->_cell_barcodes.size(), false);
 
-		this->update_cell_sizes(this->_merge_strategy->min_genes_before_merge(), this->_max_cells_num, true);
+		this->update_cell_sizes(this->_merge_strategy->min_genes_before_merge(), -1, true);
 		this->_is_initialized = true;
 	}
 
