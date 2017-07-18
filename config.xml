@@ -1,15 +1,18 @@
 <config>
+    <!-- indroptag -->
     <TagsSearch>
         <BarcodesSearch>
             <barcode1_length>8</barcode1_length>
             <barcode2_length>8</barcode2_length>
             <umi_length>6</umi_length>
             <r1_rc_length>8</r1_rc_length>
+            <max_libtag_ed> 2 </max_libtag_ed>
         </BarcodesSearch>
+
         <SpacerSearch>
             <spacer>GAGTGATTGCTTGTGACGCCTT</spacer>
             <max_spacer_edit_distance>3</max_spacer_edit_distance>
-            <spacer_prefix_length>4</spacer_prefix_length>
+            <spacer_search_length>4</spacer_search_length>
 
             <barcode1_min_length>8</barcode1_min_length>
             <barcode1_max_length>11</barcode1_max_length>
@@ -17,6 +20,7 @@
             <umi_length>6</umi_length>
             <r1_rc_length>8</r1_rc_length>
         </SpacerSearch>
+
         <Processing>
             <min_align_length>10</min_align_length>
             <reads_per_out_file>10000000</reads_per_out_file>
@@ -24,15 +28,21 @@
         </Processing>
     </TagsSearch>
 
+    <!-- indropest -->
     <Estimation>
         <Merge>
-            <barcodes_type>indrop</barcodes_type>
             <!--<barcodes_file>~/InDrop/cp/data/barcodes/indrop</barcodes_file>-->
+            <barcodes_type>indrop</barcodes_type>
             <min_merge_fraction>0.2</min_merge_fraction>
             <max_cb_merge_edit_distance>2</max_cb_merge_edit_distance>
             <max_umi_merge_edit_distance>1</max_umi_merge_edit_distance>
             <min_genes_after_merge>100</min_genes_after_merge>
             <min_genes_before_merge>20</min_genes_before_merge>
         </Merge>
+
+        <PreciseMerge>
+            <max_merge_prob>1e-5</max_merge_prob>
+            <max_real_merge_prob>1e-7</max_real_merge_prob>
+        </PreciseMerge>
     </Estimation>
 </config>
