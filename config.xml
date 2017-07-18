@@ -11,8 +11,8 @@
             <max_spacer_edit_distance>3</max_spacer_edit_distance>
             <spacer_prefix_length>4</spacer_prefix_length>
 
-            <barcode1_min_len>8</barcode1_min_len>
-            <barcode1_max_len>11</barcode1_max_len>
+            <barcode1_min_length>8</barcode1_min_length>
+            <barcode1_max_length>11</barcode1_max_length>
             <barcode2_length>8</barcode2_length>
             <umi_length>6</umi_length>
             <r1_rc_length>8</r1_rc_length>
