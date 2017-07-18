@@ -1,0 +1,61 @@
+#pragma once
+
+#include "Estimation/CellsDataContainer.h"
+#include "Tools/RefGenesContainer.h"
+#include "BamProcessorAbstract.h"
+
+#include <string>
+#include <vector>
+
+namespace Tools
+{
+	class ReadParameters;
+}
+
+namespace TestEstimation
+{
+	struct testGeneMatchLevelUmiExclusion;
+}
+
+namespace Estimation
+{
+	namespace BamProcessing
+	{
+		class ReadsParamsParser;
+		class BamController
+		{
+			friend struct TestEstimation::testGeneMatchLevelUmiExclusion;
+
+		public:
+			static const std::string GENE_TAG;
+			static const std::string CB_TAG;
+			static const std::string UMI_TAG;
+
+		private:
+			static void parse_bam_file(const std::string &bam_name, std::shared_ptr<BamProcessorAbstract> &processor,
+									   std::shared_ptr<ReadsParamsParser> &parser, bool trace);
+
+			static std::shared_ptr<ReadsParamsParser> get_parser(bool filled_bam, bool save_read_names,
+																 const std::string &reads_params_names_str,
+																 const std::string &gtf_path);
+
+			static void process_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams,
+										  bool filled_bam, const std::string &reads_params_names_str,
+										  const std::string &gtf_path, std::shared_ptr<BamProcessorAbstract> processor);
+
+		public:
+			static void parse_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams,
+										bool filled_bam, const std::string &reads_params_names_str,
+										const std::string &gtf_path, CellsDataContainer &container);
+
+			static void write_filtered_bam_files(const std::vector<std::string> &bam_files,
+										bool filled_bam, const std::string &reads_params_names_str,
+										const std::string &gtf_path, const CellsDataContainer &container);
+
+			static void process_alignment(std::shared_ptr<ReadsParamsParser> parser,
+			                              std::shared_ptr<BamProcessorAbstract> processor,
+			                              std::unordered_set<std::string> &unexpected_chromosomes,
+			                              const std::string &chr_name, const BamTools::BamAlignment &alignment);
+		};
+	}
+}
