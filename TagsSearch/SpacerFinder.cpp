@@ -12,24 +12,24 @@ namespace TagsSearch
 	SpacerFinder::SpacerFinder(const boost::property_tree::ptree &config, const std::string &reads_params_file)
 		: spacer(config.get<string>("spacer"))
 		, max_spacer_ed(config.get<unsigned>("max_spacer_edit_distance"))
-		, spacer_min_pos(config.get<size_t>("spacer_min_pos"))
-		, spacer_max_pos(config.get<size_t>("spacer_max_pos"))
-		, barcode_length(config.get<size_t>("barcode_length"))
+		, spacer_min_pos(config.get<size_t>("barcode1_min_length"))
+		, spacer_max_pos(config.get<size_t>("barcode1_max_length"))
+		, barcode_length(config.get<size_t>("barcode2_length"))
 		, umi_length(config.get<size_t>("umi_length"))
 		, r1_rc_length(config.get<size_t>("r1_rc_length"))
 	{
-		size_t spacer_prefix_length = config.get<size_t>("spacer_prefix_length");
+		size_t spacer_prefix_length = config.get<size_t>("spacer_search_length");
 
 		this->min_seq_len = this->spacer_min_pos + this->barcode_length + this->umi_length + this->spacer.length();
 
 		if (this->spacer.length() <= spacer_prefix_length)
 			throw std::runtime_error(
-					"Spacers length must be bigger then spacer_prefix_length (" +
+					"Spacers length must be larger than spacer_search_length (" +
 							std::to_string(spacer_prefix_length) + "): '" + this->spacer + "'");
 
 		if (this->max_spacer_ed >= spacer_prefix_length)
 			throw std::runtime_error(
-					"Max edit distance must be less then spacer_prefix_length (" +
+					"Max edit distance must be less than spacer_search_length (" +
 					std::to_string(spacer_prefix_length) + "): " + std::to_string(this->max_spacer_ed));
 
 		this->spacer_prefix = this->spacer.substr(0, spacer_prefix_length);

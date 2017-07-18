@@ -15,6 +15,7 @@
 
         <barcode1_min_length> 8 </barcode1_min_length>  <!-- Minimal length of the first CB part -->
         <barcode1_max_length> 11 </barcode1_max_length>  <!-- Maximal length of the first CB part -->
+        <barcode2_length> 8 </barcode2_length> <!-- Length of the second CB part -->
         <umi_length> 6 </umi_length> <!-- Length of UMI -->
         <r1_rc_length>  8 </r1_rc_length> <!-- Length of the tail of read1, which is used to trim read2-->
     </SpacerSearch>
