@@ -152,8 +152,8 @@ namespace Estimation
 		sort(this->_filtered_cells_gene_counts_sorted.begin(), this->_filtered_cells_gene_counts_sorted.end(), IndexedValue::value_less);
 
 		if (cell_threshold > 0 && cell_threshold < this->_filtered_cells_gene_counts_sorted.size()) {
-			this->_filtered_cells_gene_counts_sorted.erase(this->_filtered_cells_gene_counts_sorted.begin() + unsigned(cell_threshold),
-			                                               this->_filtered_cells_gene_counts_sorted.end());
+			this->_filtered_cells_gene_counts_sorted.erase(this->_filtered_cells_gene_counts_sorted.begin(),
+			                                               this->_filtered_cells_gene_counts_sorted.end() - unsigned(cell_threshold));
 		}
 
 		if (logs)
