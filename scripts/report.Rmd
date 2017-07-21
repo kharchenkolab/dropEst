@@ -1,0 +1,97 @@
+---
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    df_print: kable
+    theme: cerulean
+  pdf_document: default
+---
+
+
+<style>
+  .float_left {
+    float:left;
+  }
+  .float_right {
+    float:right;
+  }
+</style>
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(fig.width=5, fig.height=3, echo=FALSE, warning=FALSE, message=FALSE)
+ggplot2::theme_set(ggplot2::theme_bw(base_size = 16) + ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5)))
+library(dropestr)
+```
+
+```{r}
+x <- readRDS('/d0-mendel/home/viktor_petukhov/Data/10x/frozen_bmmc_healthy_donor1/est_07_19_rpu_fixed/f_bmmc1.rds')
+bc_data <- readRDS('/d0-mendel/home/viktor_petukhov/Data/10x/frozen_bmmc_healthy_donor1/est_07_19_rpu_fixed/f_bmmc1.rds.bc.rds')
+umi_counts <- sort(colSums(x$cm), decreasing=T)
+```
+
+## Common info
+<div class="float_left">
+```{r, fig.width=5.5, fig.height=3.5}
+PlotIntergenicFractionByChromosomes(x$ex_cells_chr_counts, x$nonex_cells_chr_counts)
+```
+</div>
+<div class="float_right">
+```{r, fig.width=3.5, fig.height=3.5}
+PlotUmisDistribution(bc_data$reads_per_umig)
+```
+</div>
+
+<div class="float_left">
+```{r, fig.width=4.5, fig.height=4.5}
+par(mar = c(4, 4, 0.5, 0))
+PlotReadsPerUmiByCells(bc_data$reads_per_umig, umi_counts, cex.lab=1.4)
+```
+</div>
+<div class="float_right">
+```{r, fig.width=4.5, fig.height=4.5}
+PlotGenesPerCell(bc_data$reads_per_umig)
+```
+</div>
+
+## Number of cells
+<div class="float_left">
+```{r, fig.width=4.5, fig.height=3.5}
+PlotCellsNumberLine(umi_counts, breaks=80, title=NULL, estimate.cells.number=T)
+```
+</div>
+<div class="float_right">
+```{r, fig.width=4.5, fig.height=3.5}
+PlotCellsNumberHist(umi_counts, breaks=60, estimate.cells.number=T, show.legend=F)
+```
+</div>
+```{r, fig.width=5, fig.height=3}
+PlotCellNumberLogLog(umi_counts, T, show.legend=F)
+```
+
+## Cells quality
+```{r}
+cells_quality <- EstimateCellsQuality(umi_counts)
+bc_df <- PrepareLqCellsPipelineData(bc_data, x$cm)
+scores <- ScoreCells(bc_df, cells_quality)
+```
+
+<div class="float_left">
+```{r, fig.width=4.5, fig.height=4}
+PlotCellScores(scores, cells.num=EstimateCellsNumber(umi_counts), main='Cell scores')
+```
+</div>
+<div class="float_right">
+```{r, fig.width=4.5, fig.height=4}
+mit_genes <- readRDS('/d0-mendel/home/viktor_petukhov/cp/data/mit_genes_human_ensembl.rds')
+if (exists("mit_genes")) {
+  PlotMitochondrialFraction(x$cm, mit_genes, plot.threshold=T)
+}
+```
+</div>
+
+## Saturation
+```{r, message=FALSE, warning=FALSE, fig.width=6, fig.height=4}
+data(saturation_srr1784312)
+saturation <- EstimateSaturation(x$reads_by_umig, x$reads_by_umig_cbs, sort(colSums(x$cm), decreasing=T))
+PlotSaturationEstimates(list(this=saturation, `mouse ES`=saturation_srr1784312))
+```

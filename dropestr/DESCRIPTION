@@ -1,0 +1,31 @@
+Package: dropestr
+Type: Package
+Title: Preprocessing of Droplet-based Single-Cell RNA-seq Data
+Version: 0.6.0
+Authors@R: c(
+    person("Viktor", "Petukhov", email = "viktor.s.petukhov@ya.ru", role = c("cre", "aut")),
+    person("Peter", "Kharchenko", email = "peter_kharchenko@hms.harvard.edu", role = "aut"))
+Description: Correction of UMI sequence errors, UMI collisions and filtration
+    of low-quality cells.
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Imports:
+  ks (>= 1.10.6),
+  ggplot2 (>= 2.1.0),
+  dplyr (>= 0.5),
+  Rcpp,
+  RcppProgress
+Suggests:
+  parallel,
+  data.table (>= 1.9.6),
+  knitr,
+  rmarkdown,
+  preseqR (>= 3.1.0)
+Depends:
+  R (>= 3.2.2)
+RoxygenNote: 6.0.1
+LinkingTo: 
+  Rcpp,
+  RcppProgress
+VignetteBuilder: knitr

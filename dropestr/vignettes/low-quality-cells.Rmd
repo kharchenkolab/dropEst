@@ -1,0 +1,49 @@
+---
+title: "Correction of UMI Sequence Errors"
+author: "Petukhov Viktor"
+date: "`r Sys.Date()`"
+output: 
+  rmarkdown::html_vignette:
+    css:
+vignette: >
+  %\VignetteIndexEntry{Filtration of low-quality cells}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## Data loading
+```{r, include=FALSE}
+ggplot2::theme_set(ggplot2::theme_bw(base_size = 18) + ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5)))
+```
+
+```{r}
+data("lq_cells_info")
+
+bc_df <- PrepareLqCellsPipelineData(lq_cells_info$pipeline, lq_cells_info$count_matrix, lq_cells_info$total_reads, lq_cells_info$mit_genes)
+umi_counts <- colSums(lq_cells_info$count_matrix)
+```
+
+```{r, fig.width=5, fig.height=3.5}
+PlotCellsNumberLine(umi_counts, breaks=80, title=NULL, estimate.cells.number=T)
+PlotCellsNumberHist(umi_counts, breaks=60, estimate.cells.number=T)
+PlotCellNumberLogLog(umi_counts, estimate.cells.number=T)
+```
+
+```{r}
+cells_number_manual <- list(min=300, max=800)
+
+cells_quality <- EstimateCellsQuality(umi_counts)
+cells_quality_manual <- EstimateCellsQuality(umi_counts, cells.number=cells_number_manual)
+cells_quality_filt <- FilterMitochondrionCells(lq_cells_info$count_matrix, lq_cells_info$mit_genes, cells_quality, plot=T)
+scores <- ScoreCells(bc_df, cells_quality)
+scores_filt <- ScoreCells(bc_df, cells_quality_filt)
+scores_manual <- ScoreCells(bc_df, cells_quality_manual)
+```
+
+```{r}
+PlotScores(scores, EstimateCellsNumber(umi_counts), 0.95, main='Cell scores')
+PlotScores(scores_filt, EstimateCellsNumber(umi_counts), 0.95, main='Cell scores')
+PlotScores(scores_manual,cells_number_manual, 0.95, main='Cell scores')
+```
+
+
