@@ -33,7 +33,7 @@ struct Fixture
 		this->umi_merge_strat = std::make_shared<Merge::UMIs::MergeUMIsStrategySimple>(1);
 
 		this->any_mark = Mark::get_by_code(Mark::DEFAULT_CODE);
-		this->container_full = std::make_shared<CellsDataContainer>(this->real_cb_strat, this->umi_merge_strat, 1, this->any_mark);
+		this->container_full = std::make_shared<CellsDataContainer>(this->real_cb_strat, this->umi_merge_strat, this->any_mark);
 
 		Tools::init_test_logs(boost::log::trivial::error);
 		this->container_full->add_record("AAATTAGGTCCA", "AAACCT", "Gene1"); //0, real
@@ -271,18 +271,18 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		BOOST_CHECK_EQUAL(splitted[2], "GTAACACGCTGTAACACGCT");
 	}
 
-	BOOST_FIXTURE_TEST_CASE(testStat, Fixture)
-	{
-		Stats stats;
-		stats.set(Stats::StrStrStatType::MERGE_EDIT_DISTANCE_BY_CELL, "AAA", "BBB", 10);
-		stats.set(Stats::StrStrStatType::MERGE_EDIT_DISTANCE_BY_CELL, "CCC", "BBB", 20);
-
-		auto map = stats.get_raw(Stats::StrStrStatType::MERGE_EDIT_DISTANCE_BY_CELL);
-		BOOST_REQUIRE_EQUAL(map.size(), 2);
-
-		BOOST_CHECK_EQUAL(map["AAA"]["BBB"], 10);
-		BOOST_CHECK_EQUAL(map["CCC"]["BBB"], 20);
-	}
+//	BOOST_FIXTURE_TEST_CASE(testStat, Fixture)
+//	{
+//		Stats stats;
+//		stats.set(Stats::StrStrStatType::MERGE_EDIT_DISTANCE_BY_CELL, "AAA", "BBB", 10);
+//		stats.set(Stats::StrStrStatType::MERGE_EDIT_DISTANCE_BY_CELL, "CCC", "BBB", 20);
+//
+//		auto map = stats.get_raw(Stats::StrStrStatType::MERGE_EDIT_DISTANCE_BY_CELL);
+//		BOOST_REQUIRE_EQUAL(map.size(), 2);
+//
+//		BOOST_CHECK_EQUAL(map["AAA"]["BBB"], 10);
+//		BOOST_CHECK_EQUAL(map["CCC"]["BBB"], 20);
+//	}
 
 	BOOST_FIXTURE_TEST_CASE(testMarkMatch, Fixture)
 	{
@@ -320,7 +320,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 	BOOST_FIXTURE_TEST_CASE(testUmiExclusion, Fixture)
 	{
-		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, 10, Mark::get_by_code("e"));
+		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, Mark::get_by_code("e"));
 		container.add_record("AAATTAGGTCCA", "AAACCT", "Gene1");
 		container.add_record("AAATTAGGTCCA", "CCCCCT", "Gene2");
 		container.add_record("AAATTAGGTCCA", "ACCCCT", "Gene3");
@@ -346,7 +346,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	BOOST_FIXTURE_TEST_CASE(testGeneMatchLevelUmiExclusion, Fixture)
 	{
 		using namespace BamProcessing;
-		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, 10, Mark::get_by_code("e"));
+		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, Mark::get_by_code("e"));
 		auto parser = std::make_shared<ReadsParamsParser>(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz");
 		std::shared_ptr<BamProcessorAbstract> processor(new BamProcessor(container, false));
 		std::unordered_set<std::string> unexpected_chromosomes;
@@ -382,7 +382,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	BOOST_FIXTURE_TEST_CASE(testGeneMatchLevelUmiExclusion2, Fixture)
 	{
 		using namespace BamProcessing;
-		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, 10, Mark::get_by_code("eE"));
+		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, Mark::get_by_code("eE"));
 		auto parser = std::make_shared<ReadsParamsParser>(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz");
 		std::shared_ptr<BamProcessorAbstract> processor(new BamProcessor(container, false));
 		std::unordered_set<std::string> unexpected_chromosomes;
@@ -417,7 +417,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 	BOOST_FIXTURE_TEST_CASE(testUMIMerge, Fixture)
 	{
-		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, 0, this->any_mark);
+		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, this->any_mark);
 
 		container.add_record("AAATTAGGTCCA", "AAACCT", "Gene1");
 		container.add_record("AAATTAGGTCCA", "CCCCCT", "Gene1");
@@ -471,7 +471,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 	BOOST_FIXTURE_TEST_CASE(testUMIMergeStrategy, Fixture)
 	{
-		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, 0, this->any_mark);
+		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, this->any_mark);
 
 		container.add_record("AAATTAGGTCCA", "AAACCT", "Gene1");
 		container.add_record("AAATTAGGTCCA", "AAACCT", "Gene1");
@@ -508,7 +508,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 	BOOST_FIXTURE_TEST_CASE(debugUMIMergeStrategy, Fixture)
 	{
-		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, 0, this->any_mark);
+		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, this->any_mark);
 
 		container.add_record("GTCCCATGTCTCAT-3", "TAAATTACAT", "ENSG00000100941");
 		container.add_record("GTCCCATGTCTCAT-3", "ATCGACNNNN", "ENSG00000100941");

@@ -89,7 +89,7 @@ namespace Estimation
 		std::shared_ptr<Merge::MergeStrategyAbstract> _merge_strategy;
 		std::shared_ptr<Merge::UMIs::MergeUMIsStrategySimple> _umi_merge_strategy;
 
-		const size_t _top_print_size;
+		static const size_t TOP_PRINT_SIZE;
 		const int _max_cells_num;
 
 		std::vector<genes_t> _cells_genes; //cell_id -> gen_name -> umi -> count
@@ -119,7 +119,7 @@ namespace Estimation
 	public:
 		CellsDataContainer(std::shared_ptr<Merge::MergeStrategyAbstract> merge_strategy,
 		                   std::shared_ptr<Merge::UMIs::MergeUMIsStrategySimple> umi_merge_strategy,
-		                   size_t top_print_size, const std::vector<Mark> &gene_match_levels, int max_cells_num = -1);
+		                   const std::vector<Mark> &gene_match_levels, int max_cells_num = -1);
 
 		size_t add_record(const std::string &cell_barcode, const std::string &umi, const std::string &gene,
 		                  const Mark &umi_mark = Mark::HAS_EXONS);

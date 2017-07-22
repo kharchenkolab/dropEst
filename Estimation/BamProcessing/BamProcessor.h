@@ -18,7 +18,7 @@ namespace Estimation
 			size_t total_intergenic_reads;
 
 		protected:
-			virtual std::string get_result_bam_name(const std::string &bam_name) const;
+			virtual std::string get_result_bam_name(const std::string &bam_name) const override;
 
 		public:
 			BamProcessor(CellsDataContainer &container, bool print_bam);

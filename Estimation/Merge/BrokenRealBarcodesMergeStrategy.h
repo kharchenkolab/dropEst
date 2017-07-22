@@ -14,8 +14,7 @@ namespace Estimation
 {
 namespace Merge
 {
-	[[deprecated("Was used for test purposes only")]]
-	class BrokenRealBarcodesMergeStrategy : public RealBarcodesMergeStrategy
+	class [[deprecated("Was used for test purposes only")]] BrokenRealBarcodesMergeStrategy : public RealBarcodesMergeStrategy
 	{
 	protected:
 		virtual void init(const Estimation::CellsDataContainer &container) override;

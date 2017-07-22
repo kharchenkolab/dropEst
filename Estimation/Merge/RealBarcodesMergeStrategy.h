@@ -45,7 +45,7 @@ namespace Merge
 		ul_list_t get_real_neighbour_cbs(const CellsDataContainer &container, size_t base_cell_ind) const;
 
 	protected:
-		long get_merge_target(const CellsDataContainer &container, size_t base_cell_ind) const;
+		virtual long get_merge_target(const CellsDataContainer &container, size_t base_cell_ind) const override;
 		virtual long get_best_merge_target(const CellsDataContainer &container, size_t base_cell_ind, const ul_list_t &neighbour_cells) const;
 		virtual unsigned get_max_merge_dist(unsigned min_real_cb_dist) const;
 

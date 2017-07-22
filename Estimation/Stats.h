@@ -12,36 +12,34 @@ namespace Estimation
 	{
 	public:
 		typedef std::vector<std::string> str_list_t;
-		typedef std::vector<long> int_list_t;
+		typedef std::vector<int> int_list_t;
 		typedef std::vector<size_t> ids_t;
 
 		enum CellStatType
 		{
-			MERGES_COUNT_PER_CB,
-			HAS_EXON_READS_PER_CB,
-			HAS_INTRON_READS_PER_CB,
-			HAS_NOT_ANNOTATED_READS_PER_CB,
 			TOTAL_READS_PER_CB,
+			TOTAL_UMIS_PER_CB,
 			CELL_STAT_SIZE
 		};
 
 		enum CellStrStatType
 		{
-			GENE_READS_PER_CHR_PER_CELL = 0,
-			GENE_UMIS_PER_CHR_PER_CELL,
+			EXON_READS_PER_CHR_PER_CELL = 0,
+			INTRON_READS_PER_CHR_PER_CELL,
 			INTERGENIC_READS_PER_CHR_PER_CELL,
+			GENE_UMIS_PER_CHR_PER_CELL,
 			CELL_S_STAT_SIZE
 		};
 
 		enum StrStrStatType
 		{
-			MERGE_EDIT_DISTANCE_BY_CELL,
+//			MERGE_EDIT_DISTANCE_BY_CELL,
 			S_S_STAT_SIZE
 		};
 
 		enum StrStrFloatType
 		{
-			MERGE_PROB_BY_CELL,
+//			MERGE_PROB_BY_CELL,
 			S_S_FLOAT_SIZE
 		};
 

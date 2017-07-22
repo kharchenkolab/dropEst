@@ -52,7 +52,7 @@ namespace Estimation
 		{
 			if (gene == "")
 				return;
-			
+
 			auto cb_iter = this->merge_cbs.find(read_params.cell_barcode());
 			if (cb_iter == this->merge_cbs.end())
 				return;

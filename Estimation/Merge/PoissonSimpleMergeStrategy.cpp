@@ -27,7 +27,7 @@ long PoissonSimpleMergeStrategy::get_merge_target(const Estimation::CellsDataCon
 		if (edit_distance > this->_max_merge_edit_distance)
 			continue;
 
-		container.stats().set(Stats::MERGE_EDIT_DISTANCE_BY_CELL, base_cb, current_cb, edit_distance);
+//		container.stats().set(Stats::MERGE_EDIT_DISTANCE_BY_CELL, base_cb, current_cb, edit_distance);
 		neighbour_cells.push_back(cell.first);
 	}
 

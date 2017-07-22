@@ -7,14 +7,10 @@
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
-#include <omp.h>
 #include <Estimation/BamProcessing/BamController.h>
 #include <Estimation/Merge/MergeStrategyFactory.h>
 
-#include "Estimation/Estimator.h"
-#include "Estimation/Results/ResultPrinter.h"
-#include "Estimation/Results/IndropResults.h"
-#include "Estimation/Results/BadCellsStats.h"
+#include "Estimation/ResultsPrinter.h"
 #include "Tools/Logs.h"
 #include "Tools/RefGenesContainer.h"
 #include "Tools/UtilFunctions.h"
@@ -30,12 +26,10 @@ struct Params
 	bool filtered_bam_output = false;
 	bool merge_tags = false;
 	bool merge_tags_precise = false;
-	bool not_filtered = false; // TODO: deprecated?
 	bool reads_output = false;
 	bool text_output = false;
 	bool quiet = false;
 	string config_file_name = "";
-	string genesets_rds = ""; // TODO: deprecated. Move updated version to xml.
 	string genes_filename = "";
 	string log_prefix = "";
 	string output_name = "";
@@ -50,9 +44,6 @@ static void check_files_existence(const Params &params, const vector<string> &ba
 {
 	if (params.config_file_name != "" && !std::ifstream(params.config_file_name))
 		throw std::runtime_error("Can't open config file '" + params.config_file_name + "'");
-
-	if (params.genesets_rds != "" && !std::ifstream(params.genesets_rds))
-		throw std::runtime_error("Can't open genesets file '" + params.genesets_rds + "'");
 
 	if (params.genes_filename != "" && !std::ifstream(params.genes_filename))
 		throw std::runtime_error("Can't open genes file '" + params.genes_filename + "'");
@@ -92,7 +83,6 @@ static void usage()
 			"\t\tDefault: -L " << Params().gene_match_level << "." << endl;
 	cerr << "\t-m, --merge-barcodes : merge linked cell tags" << endl;
 	cerr << "\t-M, --merge-barcodes-precise : use precise merge strategy (can be slow), recommended to use when the list of real barcodes is not available" << endl;
-	cerr << "\t-n, --not-filtered : print data for all cells" << endl;
 	cerr << "\t-o, --output-file filename : output file name" << endl;
 	cerr << "\t-p, --parallel number_of_threads : number of threads" << endl;
 //	cerr << "\t-r, --reads-params filename: file or files with serialized params from tags search step. If there are several files then it should be in quotes and splitted by space" << endl;
@@ -166,9 +156,6 @@ static Params parse_cmd_params(int argc, char **argv)
 				params.merge_tags = true;
 				params.merge_tags_precise = true;
 				break;
-			case 'n' :
-				params.not_filtered = true;
-				break;
 			case 'o' :
 				params.output_name = string(optarg);
 				break;
@@ -239,6 +226,28 @@ static Params parse_cmd_params(int argc, char **argv)
 	return params;
 }
 
+CellsDataContainer get_cells_container(const vector<string> &files, const Params &params)
+{
+	boost::property_tree::ptree pt;
+	if (!params.config_file_name.empty())
+	{
+		read_xml(params.config_file_name, pt);
+	}
+
+	auto match_levels = CellsDataContainer::Mark::get_by_code(params.gene_match_level);
+
+	Merge::MergeStrategyFactory merge_factory(pt, params.min_genes_after_merge);
+	CellsDataContainer container(merge_factory.get_cb_strat(params.merge_tags, params.merge_tags_precise),
+	                             merge_factory.get_umi(), match_levels, params.max_cells_number);
+
+	BamProcessing::BamController::parse_bam_files(files, params.bam_output, params.filled_bam,
+	                                              params.reads_params_names_str, params.genes_filename, container);
+
+	container.set_initialized();
+	container.merge_and_filter();
+	return container;
+}
+
 int main(int argc, char **argv)
 {
 	std::string command_line;
@@ -272,23 +281,8 @@ int main(int argc, char **argv)
 	try
 	{
 		check_files_existence(params, files);
-
-		auto match_levels = CellsDataContainer::Mark::get_by_code(params.gene_match_level);
-
 		Tools::trace_time("Run");
-
-		boost::property_tree::ptree pt;
-		if (!params.config_file_name.empty())
-		{
-			read_xml(params.config_file_name, pt);
-		}
-
-		Merge::MergeStrategyFactory merge_factory(pt, params.min_genes_after_merge);
-		Estimator estimator(merge_factory.get_cb_strat(params.merge_tags, params.merge_tags_precise), merge_factory.get_umi());
-
-		CellsDataContainer container = estimator.get_cells_container(files, params.bam_output, params.filled_bam,
-		                                                             params.max_cells_number, params.reads_params_names_str,
-		                                                             params.genes_filename, match_levels);
+		CellsDataContainer container = get_cells_container(files, params);
 
 		if (params.filtered_bam_output)
 		{
@@ -296,26 +290,15 @@ int main(int argc, char **argv)
 																   params.genes_filename, container);
 		}
 
+		ResultsPrinter printer(params.text_output, params.reads_output);
+		Tools::trace_time("Done");
+
+		if (params.text_output)
 		{
-			Results::IndropResult results = estimator.get_results(container, params.not_filtered, params.reads_output);
-		
-			Tools::trace_time("Done");
-
-			if (params.text_output)
-			{
-				Results::ResultPrinter::print_text_table(params.output_name, results.cm);
-				params.output_name += ".bin";
-			}
-
-			results.save_results(container, params.output_name, "", params.num_of_threads); // TODO: fix genesets_file after the report completion
+			throw std::runtime_error("Text output is not implemented");
 		}
 
-		{
-			L_TRACE << "Get bad cells results";
-			Results::BadCellsStats bad_cells_results = estimator.get_bad_cells_results(container);
-			L_TRACE << "Done";
-			bad_cells_results.save_rds(container, params.output_name + ".bc.rds");
-		}
+		printer.save_results(container, params.output_name);
 	}
 	catch (std::runtime_error err)
 	{

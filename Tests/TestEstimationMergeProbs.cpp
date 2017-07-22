@@ -42,7 +42,7 @@ struct Fixture
 		this->real_cb_strat = std::make_shared<Merge::PoissonRealBarcodesMergeStrategy>(target_estimator, barcodes_parser, 0, 0, 7);
 
 		this->container_full = std::make_shared<CellsDataContainer>(this->real_cb_strat, std::make_shared<Merge::UMIs::MergeUMIsStrategySimple>(1),
-		                                                            1, Mark::get_by_code(Mark::DEFAULT_CODE), -1);
+		                                                            Mark::get_by_code(Mark::DEFAULT_CODE), -1);
 
 		Tools::init_test_logs(boost::log::trivial::info);
 		this->container_full->add_record("AAATTAGGTCCA", "AAACCT", "Gene1");
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimatorMergeProbs)
 		this->estimator.init(*this->container_full);
 		BOOST_CHECK_EQUAL(this->estimator.get_bootstrap_intersect_prob(*this->container_full, 0, 1), 1);
 		BOOST_CHECK_LE(std::abs(this->estimator.get_bootstrap_intersect_prob(*this->container_full, 1, 2) - 0.16), 0.05);
-		BOOST_CHECK_LE(std::abs(this->estimator.get_bootstrap_intersect_prob(*this->container_full, 3, 4) - 0.15), 0.05);
+		BOOST_CHECK_LE(std::abs(this->estimator.get_bootstrap_intersect_prob(*this->container_full, 3, 4) - 0.2), 0.05);
 		BOOST_CHECK_LE(std::abs(this->estimator.get_bootstrap_intersect_prob(*this->container_full, 5, 6, 100000) - 0.045), 0.01);
 	}
 

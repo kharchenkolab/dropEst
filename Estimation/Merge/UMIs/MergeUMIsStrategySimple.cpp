@@ -76,7 +76,7 @@ MergeUMIsStrategySimple::find_targets(const CellsDataContainer::umi_map_t &all_u
 				continue;
 
 			unsigned ed = Tools::hamming_distance(target_umi.first, bad_umi);
-			if (ed < min_ed || ed == min_ed && target_umi.second.read_count > best_target_size)
+			if (ed < min_ed || (ed == min_ed && target_umi.second.read_count > best_target_size))
 			{
 				min_ed = ed;
 				best_target = target_umi.first;

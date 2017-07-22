@@ -35,7 +35,7 @@ namespace Tools
 		unsigned ed = 0;
 		for (std::string::size_type i = 0; i < s1.size(); ++i)
 		{
-			if (s1[i] != s2[i] && (!skip_n || s1[i] != 'N' && s2[i] != 'N'))
+			if (s1[i] != s2[i] && (!skip_n || (s1[i] != 'N' && s2[i] != 'N')))
 			{
 				++ed;
 			}

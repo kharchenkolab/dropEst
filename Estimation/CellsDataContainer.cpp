@@ -15,14 +15,13 @@ namespace Estimation
 	using Tools::IndexedValue;
 
 	const std::string CellsDataContainer::Mark::DEFAULT_CODE = "eEBA";
+	const size_t CellsDataContainer::TOP_PRINT_SIZE = 10;
 
 	CellsDataContainer::CellsDataContainer(std::shared_ptr<Merge::MergeStrategyAbstract> merge_strategy,
 	                                       std::shared_ptr<Merge::UMIs::MergeUMIsStrategySimple> umi_merge_strategy,
-		                                   size_t top_print_size, const std::vector<Mark> &gene_match_levels,
-		                                   int max_cells_num)
+		                                   const std::vector<Mark> &gene_match_levels, int max_cells_num)
 		: _merge_strategy(merge_strategy)
 		, _umi_merge_strategy(umi_merge_strategy)
-		, _top_print_size(top_print_size)
 		, _max_cells_num(max_cells_num)
 		, _is_initialized(false)
 		, _gene_match_levels(gene_match_levels)
@@ -61,19 +60,15 @@ namespace Estimation
 		if (umi_mark.check(Mark::HAS_EXONS))
 		{
 			++this->_has_exon_reads;
-			this->stats().inc(Stats::HAS_EXON_READS_PER_CB, cell_barcode);
 		}
 		if (umi_mark.check(Mark::HAS_INTRONS))
 		{
 			++this->_has_intron_reads;
-			this->stats().inc(Stats::HAS_INTRON_READS_PER_CB, cell_barcode);
 		}
 		if (umi_mark.check(Mark::HAS_NOT_ANNOTATED))
 		{
 			++this->_has_not_annotated_reads;
-			this->stats().inc(Stats::HAS_NOT_ANNOTATED_READS_PER_CB, cell_barcode);
 		}
-		this->stats().inc(Stats::TOTAL_READS_PER_CB, cell_barcode);
 
 		if (umi_mark == Mark::NONE)
 		{
@@ -168,7 +163,7 @@ namespace Estimation
 		if (cells_genes_counts.size() > 0)
 		{
 			ss << "top CBs:\n";
-			long low_border = cells_genes_counts.size() - min(cells_genes_counts.size(), this->_top_print_size - 1);
+			long low_border = cells_genes_counts.size() - min(cells_genes_counts.size(), CellsDataContainer::TOP_PRINT_SIZE - 1);
 			for (long i = cells_genes_counts.size() - 1; i >= low_border; --i)
 			{
 				ss << cells_genes_counts[i].value << "\t" << this->_cell_barcodes[cells_genes_counts[i].index] << "\n";

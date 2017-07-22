@@ -99,7 +99,7 @@ plot_all <- function() {
   ggsave(paste0(prefix, "preseq_umigs.jpeg"))
   print("preseq_umigs plotted")
   
-  plot_preseq(d$exone_reads_by_cb, "CB", 0.2)
+  plot_preseq(d$exon_reads_by_cb, "CB", 0.2)
   ggsave(paste0(prefix, "preseq_cb.jpeg"))
   print("preseq_cb plotted")
 }

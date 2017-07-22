@@ -89,7 +89,6 @@ void MergeStrategyBase::merge_force(Estimation::CellsDataContainer &container, s
 									    size_t target_cell_ind, ul_list_t &cb_reassign_targets, ISIHM &cb_reassigned_to_it) const
 {
 	L_DEBUG << "Merge: " << container.cell_barcode(src_cell_id) << " to " << container.cell_barcode(target_cell_ind);
-	container.stats().inc(Estimation::Stats::MERGES_COUNT_PER_CB, container.cell_barcode(target_cell_ind));
 
 	container.merge_cells(src_cell_id, target_cell_ind);
 	this->reassign(src_cell_id, target_cell_ind, cb_reassign_targets, cb_reassigned_to_it);
