@@ -1,1 +1,4 @@
 build/*
+.Rproj.user
+cmake-build-debug/
+.idea
