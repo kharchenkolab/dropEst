@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include <Rcpp.h>
+#include <RcppArmadillo.h>
 
 #include <Estimation/Stats.h>
 
@@ -33,7 +33,7 @@ namespace Estimation
 		Rcpp::DataFrame get_reads_per_chr_per_cell_info(Stats::CellStrStatType stat_type,
 		                                                const CellsDataContainer &container,
 		                                                const s_vec_t &cell_names) const;
-		Rcpp::DataFrame get_reads_per_chr_per_cell_info(const CellsDataContainer &container, const s_vec_t &cell_names) const;
+		Rcpp::List get_reads_per_chr_per_cell_info(const CellsDataContainer &container, const s_vec_t &cell_names) const;
 		s_vec_t get_filtered_cell_names(const CellsDataContainer &container) const;
 		Rcpp::IntegerMatrix
 		get_count_matrix(const CellsDataContainer &container, const s_counter_t &gene_counts) const;

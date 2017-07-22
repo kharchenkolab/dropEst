@@ -19,6 +19,8 @@ namespace Estimation
 			L_WARN << "WARNING: filtered cells is empty. Probably, filtration threshold is too strict"
 			       << " or you forgot to run 'merge_and_filter'";
 		}
+		RInside *R = Tools::init_r();
+
 		auto gene_counts = this->get_gene_counts_sorted(container);
 
 		L_TRACE << "compiling diagnostic stats: ";
@@ -31,8 +33,6 @@ namespace Estimation
 		L_TRACE << "Completed.";
 
 		auto count_matrix = this->get_count_matrix(container, gene_counts);
-
-		RInside *R = Tools::init_r();
 		(*R)["data"] = List::create(
 				_["cm"] = count_matrix,
 				_["reads_per_chr_per_cells"] = reads_per_chr_per_cell,
@@ -40,8 +40,8 @@ namespace Estimation
 				_["mean_reads_per_umi"] = mean_reads_per_umi,
 				_["saturation_info"] = saturation_info,
 				_["merge_targets"] = merge_targets,
-				_["total_reads_per_cell"] = wrap(container.stats().get_raw(Stats::TOTAL_READS_PER_CB)),
-				_["total_umis_per_cell"] = wrap(container.stats().get_raw(Stats::TOTAL_UMIS_PER_CB)),
+				_["aligned_reads_per_cell"] = wrap(container.stats().get_raw(Stats::TOTAL_READS_PER_CB)),
+				_["aligned_umis_per_cell"] = wrap(container.stats().get_raw(Stats::TOTAL_UMIS_PER_CB)),
 				_["fname"] = wrap(filename));
 
 		Tools::trace_time("Writing R data to " + filename);
@@ -53,16 +53,7 @@ namespace Estimation
 	IntegerMatrix ResultsPrinter::create_matrix(const s_vec_t &col_names, const s_vec_t &row_names,
 	                            const l_vec_t &counts)
 	{
-		std::cout << int(row_names.size()) << " " << int(col_names.size()) << " " << counts.size() << std::endl;
-		IntegerMatrix mat(int(row_names.size()), int(col_names.size()));
-//			IntegerMatrix mat(1000, 3);
-
-		int i = 0;
-		for (size_t row_num = 0; row_num < row_names.size(); ++row_num) {
-			for (size_t col_num = 0; col_num < col_names.size(); ++col_num) {
-				mat[row_num, col_num] = counts[i++];
-			}
-		}
+		IntegerMatrix mat(transpose(IntegerMatrix(int(col_names.size()), int(row_names.size()), counts.begin())));
 
 		colnames(mat) = wrap(col_names);
 		rownames(mat) = wrap(row_names);
@@ -111,30 +102,28 @@ namespace Estimation
 	{
 		s_vec_t chr_cell_names, chr_names;
 		l_vec_t reads_per_chr_per_cell;
-		container.stats().get_filtered(stat_type, cell_names, chr_cell_names, chr_names, reads_per_chr_per_cell);
+		container.stats().get(stat_type, chr_cell_names, chr_names, reads_per_chr_per_cell);
 
 		return ResultsPrinter::create_matrix(chr_names, chr_cell_names, reads_per_chr_per_cell);
 	}
 
-	DataFrame ResultsPrinter::get_reads_per_chr_per_cell_info(const CellsDataContainer &container,
+	List ResultsPrinter::get_reads_per_chr_per_cell_info(const CellsDataContainer &container,
 	                                                          const ResultsPrinter::s_vec_t &cell_names) const
 	{
 		L_TRACE << "Reads per chromosome per cell;";
 		L_TRACE << "Fill exon results";
 		auto exon = get_reads_per_chr_per_cell_info(Stats::EXON_READS_PER_CHR_PER_CELL, container, cell_names);
-		exon["Type"] = "Exon";
 
 		L_TRACE << "Fill intron results";
 		auto intron = get_reads_per_chr_per_cell_info(Stats::INTRON_READS_PER_CHR_PER_CELL, container, cell_names);
-		intron["Type"] = "Intron";
 
 		L_TRACE << "Fill intergenic results";
 		auto intergenic = get_reads_per_chr_per_cell_info(Stats::INTERGENIC_READS_PER_CHR_PER_CELL, container,
 		                                                  cell_names);
-		intergenic["Type"] = "Intergenic";
 
-		Function rbind = Environment("package:base")["rbind"];
-		return rbind(exon, intron, intergenic);
+		return List::create(_["Exon"] = exon,
+		                    _["Intron"] = intron,
+		                    _["Intergenic"] = intergenic);
 	}
 
 	ResultsPrinter::s_vec_t ResultsPrinter::get_filtered_cell_names(const CellsDataContainer &container) const
