@@ -338,11 +338,12 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		container.set_initialized();
 		container.merge_and_filter();
 
-		BOOST_CHECK_EQUAL(container.cell_genes(0).at("Gene3").at("ACCCCT").read_count, 1);
-		BOOST_CHECK_EQUAL(container.cell_genes(0).at("Gene3").size(), 1);
+		BOOST_CHECK_EQUAL(container.query_read_per_umi_per_gene(0).at("Gene3").at("ACCCCT"), 1);
+		BOOST_CHECK_EQUAL(container.query_read_per_umi_per_gene(0).at("Gene3").size(), 1);
 
-		BOOST_CHECK_THROW(container.cell_genes(0).at("Gene4").at("ACCCCT"), std::out_of_range);
-		BOOST_CHECK_THROW(container.cell_genes(0).at("Gene4"), std::out_of_range);
+		BOOST_CHECK_THROW(container.query_read_per_umi_per_gene(0).at("Gene4").at("ACCCCT"), std::out_of_range);
+		BOOST_CHECK_THROW(container.query_read_per_umi_per_gene(0).at("Gene4"), std::out_of_range);
+		BOOST_CHECK_EQUAL(container.cell_genes(0).at("Gene4").at("ACCCCT").read_count, 2);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testGeneMatchLevelUmiExclusion, Fixture)
@@ -378,7 +379,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		container.set_initialized();
 		container.merge_and_filter();
 
-		BOOST_CHECK_THROW(container.cell_genes(0).at("FAM138A"), std::out_of_range);
+		BOOST_CHECK_THROW(container.query_read_per_umi_per_gene(0).at("FAM138A"), std::out_of_range);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testGeneMatchLevelUmiExclusion2, Fixture)

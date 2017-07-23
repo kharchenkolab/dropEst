@@ -28,6 +28,7 @@ namespace Estimation
 		, _has_exon_reads(0)
 		, _has_intron_reads(0)
 		, _has_not_annotated_reads(0)
+		, _number_of_real_cells(0)
 	{
 		L_TRACE << this->_merge_strategy->merge_type() << " merge selected";
 	}
@@ -41,13 +42,20 @@ namespace Estimation
 		this->stats().merge(this->_merge_targets, this->cell_barcodes_raw());
 
 		this->_umi_merge_strategy->merge(*this);
-		this->remove_excluded_umis();
 		this->update_cell_sizes(this->_merge_strategy->min_genes_after_merge(), this->_max_cells_num, true);
 
 		this->_filtered_cells.clear();
 		for (auto const &val : this->cells_gene_counts_sorted())
 		{
 			this->_filtered_cells.push_back(val.index);
+		}
+
+		for (size_t i = 0; i < this->_cells_genes.size(); ++i)
+		{
+			if (this->is_cell_real(i))
+			{
+				this->_number_of_real_cells++;
+			}
 		}
 	}
 
@@ -280,36 +288,10 @@ namespace Estimation
 		return this->_is_cell_excluded.at(cell_id);
 	}
 
-	void CellsDataContainer::remove_excluded_umis()
+	bool CellsDataContainer::is_cell_real(size_t cell_id) const
 	{
-		for (auto &cell  : this->_cells_genes)
-		{
-			auto gene_iter = cell.begin();
-			while (gene_iter != cell.end())
-			{
-				auto umi_iter = gene_iter->second.begin();
-				while (umi_iter != gene_iter->second.end())
-				{
-					if (!umi_iter->second.mark.match(this->_gene_match_levels))
-					{
-						umi_iter = gene_iter->second.erase(umi_iter);
-					}
-					else
-					{
-						++umi_iter;
-					}
-				}
-
-				if (gene_iter->second.empty())
-				{
-					gene_iter = cell.erase(gene_iter);
-				}
-				else
-				{
-					++gene_iter;
-				}
-			}
-		}
+		return !this->is_cell_merged(cell_id) && !this->is_cell_excluded(cell_id) &&
+				this->cell_genes(cell_id).size() >= this->_merge_strategy->min_genes_before_merge(); // TODO: move it in a separate field in config and move it out of merge_strategy
 	}
 
 	void CellsDataContainer::merge_umis(size_t cell_id, const std::string &gene,
@@ -346,8 +328,66 @@ namespace Estimation
 		return this->_has_not_annotated_reads;
 	}
 
+	size_t CellsDataContainer::number_of_real_cells() const
+	{
+		return this->_number_of_real_cells;
+	}
+
+	CellsDataContainer::s_ul_hash_t CellsDataContainer::query_umis_per_gene(size_t cell_id, bool return_reads) const
+	{
+		s_ul_hash_t umis_per_gene;
+		for (auto const &gene : this->cell_genes(cell_id))
+		{
+			size_t umis_num = 0;
+			for (auto const &umi : gene.second)
+			{
+				if (!umi.second.mark.match(this->_gene_match_levels))
+					continue;
+
+				if (return_reads)
+				{
+					umis_num += umi.second.read_count;
+				}
+				else
+				{
+					umis_num++;
+				}
+			}
+
+			if (umis_num == 0)
+				continue;
+
+			umis_per_gene.emplace(gene.first, umis_num);
+		}
+
+		return umis_per_gene;
+	}
+
+	CellsDataContainer::ss_ul_hash_t CellsDataContainer::query_read_per_umi_per_gene(size_t cell_id) const
+	{
+		ss_ul_hash_t reads_per_umi_per_gene;
+		for (auto const &gene : this->cell_genes(cell_id))
+		{
+			s_ul_hash_t reads_per_umi;
+			for (auto const &umi : gene.second)
+			{
+				if (!umi.second.mark.match(this->_gene_match_levels))
+					continue;
+
+				reads_per_umi.emplace(umi.first, umi.second.read_count);
+			}
+
+			if (reads_per_umi.empty())
+				continue;
+
+			reads_per_umi_per_gene.emplace(gene.first, reads_per_umi);
+		}
+
+		return reads_per_umi_per_gene;
+	}
+
 	CellsDataContainer::Mark::Mark(Mark::MarkType type)
-			: _mark(type)
+		: _mark(type)
 	{}
 
 	void CellsDataContainer::Mark::add(Mark::MarkType type)

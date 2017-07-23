@@ -74,6 +74,7 @@ namespace Estimation
 		};
 
 		typedef std::unordered_map<std::string, size_t> s_ul_hash_t;
+		typedef std::unordered_map<std::string, s_ul_hash_t> ss_ul_hash_t;
 		typedef std::unordered_map<std::string, std::string> s_s_hash_t;
 
 		typedef std::map<std::string, UMI> umi_map_t;
@@ -108,12 +109,11 @@ namespace Estimation
 		size_t _has_exon_reads;
 		size_t _has_intron_reads;
 		size_t _has_not_annotated_reads;
+		size_t _number_of_real_cells;
 
 		mutable Stats _stats;
 
 	private:
-		void remove_excluded_umis();
-
 		std::string get_cb_count_top_verbose(const i_counter_t &cells_genes_counts) const;
 
 	public:
@@ -147,10 +147,15 @@ namespace Estimation
 		size_t cell_size(size_t cell_index) const;
 		bool is_cell_excluded(size_t cell_id) const;
 		bool is_cell_merged(size_t cell_id) const;
+		bool is_cell_real(size_t cell_id) const;
+
+		s_ul_hash_t query_umis_per_gene(size_t cell_id, bool return_reads) const;
+		ss_ul_hash_t query_read_per_umi_per_gene(size_t cell_id) const;
 
 		size_t has_exon_reads_num() const;
 		size_t has_intron_reads_num() const;
 		size_t has_not_annotated_reads_num() const;
+		size_t number_of_real_cells() const;
 
 		Stats &stats() const;
 		std::string merge_type() const;

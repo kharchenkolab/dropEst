@@ -216,12 +216,13 @@ static Params parse_cmd_params(int argc, char **argv)
 	return params;
 }
 
-CellsDataContainer get_cells_container(const vector<string> &files, const Params &params, const boost::property_tree::ptree &pt,
+CellsDataContainer get_cells_container(const vector<string> &files, const Params &params,
+                                       const boost::property_tree::ptree &est_config,
                                        const BamProcessing::BamController &bam_controller)
 {
 	auto match_levels = CellsDataContainer::Mark::get_by_code(params.gene_match_level);
 
-	Merge::MergeStrategyFactory merge_factory(pt.get_child("config.Estimation"), params.min_genes_after_merge);
+	Merge::MergeStrategyFactory merge_factory(est_config, params.min_genes_after_merge);
 	CellsDataContainer container(merge_factory.get_cb_strat(params.merge_tags, params.merge_tags_precise),
 	                             merge_factory.get_umi(), match_levels, params.max_cells_number);
 
@@ -293,5 +294,5 @@ int main(int argc, char **argv)
 		L_ERR << err.what();
 		return 1;
 	}
-	Tools::trace_time("All done.");
+	Tools::trace_time("All done");
 }
