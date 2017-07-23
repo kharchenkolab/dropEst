@@ -203,14 +203,7 @@ static Params parse_cmd_params(int argc, char **argv)
 
 	if (params.output_name == "")
 	{
-		if (params.write_matrix)
-		{
-			params.output_name = "cell.counts.txt";
-		}
-		else
-		{
-			params.output_name = "cell.counts.rds";
-		}
+		params.output_name = "cell.counts.rds";
 	}
 
 	return params;

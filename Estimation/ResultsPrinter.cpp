@@ -54,9 +54,12 @@ namespace Estimation
 		Tools::trace_time("Completed");
 
 		if (this->write_matrix) {
-			std::string mtx_file(filename + ".mtx");
+			std::string file_trimmed = filename.substr(0, filename.find_last_of("."));
+			std::string mtx_file(file_trimmed + ".mtx");
 			L_TRACE << "Writing " + mtx_file + " ...";
 			R->parseEvalQ("Matrix::writeMM(d$cm, '" + mtx_file + "')");
+			R->parseEvalQ("write.table(colnames(d$cm), '" + file_trimmed + ".cells.tsv', row.names = F, col.names = F, quote = F)");
+			R->parseEvalQ("write.table(rownames(d$cm), '" + file_trimmed + ".genes.tsv', row.names = F, col.names = F, quote = F)");
 			L_TRACE << "Completed.";
 		}
 	}
