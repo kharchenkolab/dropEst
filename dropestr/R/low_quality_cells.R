@@ -53,75 +53,81 @@ Scale <- function(x, center_func=min, norm_func=max) {
 #' @return Data frame for low-quality cells filtration.
 #'
 #' @export
-PrepareLqCellsData <- function(count.matrix, reads.per.gene, intergenic.reads.per.cell=NULL, total.reads.per.cb=NULL,
-                                 merge.targets=NULL, mitochondrion.genes=NULL, pcs.number=3) {
-  umi.counts <- sort(colSums(count.matrix), decreasing=T)
-  gene.reads <- sapply(reads.per.gene, sum)[names(umi.counts)] #TODO: fix it for different values of -G option
+PrepareLqCellsData <- function(count.matrix, aligned.reads.per.cell, total.umis.per.cell=NULL, total.reads.per.cell=NULL,
+                               intergenic.reads.per.cell=NULL, mitochondrion.genes=NULL, pcs.number=3) {
+  analyzed.cbs <- colnames(count.matrix)
 
-  reads.per.umi <- gene.reads / umi.counts
+  contains.all.cbs <- sapply(list(aligned.reads.per.cell, total.umis.per.cell, total.reads.per.cell, intergenic.reads.per.cell),
+         function(x) is.null(x) || length(setdiff(analyzed.cbs, names(x))) == 0)
 
-  genes.per.cb <- apply(count.matrix, 2, function(cell) sum(cell > 0))[names(umi.counts)]
-  umis.per.gene <- umi.counts / genes.per.cb
+  if (!all(contains.all.cbs))
+    stop("Each of the provided parameters must contain all cbs, presented in count.matrix")
 
-  low.exp.genes.sum <- colSums(count.matrix == 1)
-  low.exp.genes.frac <- (low.exp.genes.sum / colSums(count.matrix > 0))[names(umi.counts)]
-  low.exp.genes.umi.frac <- low.exp.genes.sum[names(umi.counts)] / umi.counts
+  if (is.null(total.umis.per.cell)) {
+    total.umis.per.cell <- Matrix::colSums(count.matrix)
+  }
+  total.umis.per.cell <- sort(total.umis.per.cell[analyzed.cbs], decreasing=T)
+  analyzed.cbs <- names(total.umis.per.cell)
+
+  aligned.reads.per.cell <- aligned.reads.per.cell[analyzed.cbs]
+  reads.per.umi <- aligned.reads.per.cell / total.umis.per.cell
+
+  genes.per.cell <- apply(count.matrix, 2, function(cell) sum(cell > 0))[analyzed.cbs]
+  umis.per.gene <- total.umis.per.cell / genes.per.cell
+
+  low.exp.genes.sum <- Matrix::colSums(count.matrix == 1)[analyzed.cbs]
+  low.exp.genes.frac <- low.exp.genes.sum / Matrix::colSums(count.matrix > 0)[analyzed.cbs]
+  low.exp.genes.umi.frac <- low.exp.genes.sum / total.umis.per.cell
 
   tech.features <- data.frame(ReadsPerUmi=reads.per.umi, UmiPerGene=umis.per.gene,
                               LowExpressedGenesFrac=low.exp.genes.frac, LowExpressedGenesUmiFrac=low.exp.genes.umi.frac)
 
   if (!is.null(intergenic.reads.per.cell)) {
-    tech.features$IntergenicFrac <- intergenic.reads.per.cell / (intergenic.reads.per.cell + gene.reads)
+    intergenic.reads.per.cell <- intergenic.reads.per.cell[analyzed.cbs]
+    tech.features$IntergenicFrac <- intergenic.reads.per.cell / (intergenic.reads.per.cell + aligned.reads.per.cell)
   }
 
-  if (!is.null(total.reads.per.cb)) {
-    if (!is.null(merge.targets)) {
-      merge.targets <- merge.targets[merge.targets != names(merge.targets)]
-      total.reads.per.cb[merge.targets] <- total.reads.per.cb[merge.targets] + total.reads.per.cb[names(merge.targets)]
-    }
-
-    total.reads.per.cb <- total.reads.per.cb[names(umi.counts)]
-    tech.features$NotAlignedUmisFrac <- pmax(total.reads.per.cb - gene.reads, 0) / total.reads.per.cb / reads.per.umi #TODO: here should be a total number of aligned reads, not only queried ones
+  if (!is.null(total.reads.per.cell)) {
+    total.reads.per.cell <- total.reads.per.cell[analyzed.cbs]
+    tech.features$NotAlignedUmisFrac <- pmax(total.reads.per.cell - aligned.reads.per.cell, 0) / total.reads.per.cell / reads.per.umi
   }
 
   if (!is.null(mitochondrion.genes)) {
-    mit.fraction <- colSums(count.matrix[intersect(rownames(count.matrix), mitochondrion.genes),]) / colSums(count.matrix)
-    tech.features$MitochondrionFraction <- mit.fraction[names(umi.counts)]
+    mit.fraction <- Matrix::colSums(count.matrix[rownames(count.matrix) %in% mitochondrion.genes,]) / Matrix::colSums(count.matrix)
+    if (any(mit.fraction > 1e-10)) {
+      tech.features$MitochondrionFraction <- mit.fraction[analyzed.cbs]
+    } else {
+      warning("All cells have zero mitochondrial fraction. Maybe you provided a wrong list of genes. The fearure won't be used for analysis.\n")
+    }
   }
 
   res <- Scale(tech.features)
 
-  if (is.null(pcs.number)) {
+  if (is.null(pcs.number))
     return(res)
-  }
 
   return(Scale(GetOptimalPcs(res, max.pcs=pcs.number)$pca.data))
 }
 
-# TODO: Change the name of the pipeline
-#' @describeIn PrepareLqCellsData wrapper for the data, obtained with the InDrop pipeline.
-#' @param data.bc data, extracted with the pipeline.
+#' @describeIn PrepareLqCellsData wrapper for the data, obtained with the dropEst pipeline.
+#' @param data data, extracted with the pipeline.
+#' @param merge.targets Targets of CB merge. Used only with total.reads.per.cell provided.
 #'
 #' @export
-PrepareLqCellsPipelineData <- function(data.bc, count.matrix, total.reads.per.cb=NULL, mitochondrion.genes=NULL, pcs.number=3) {
-  intergenic.reads.per.cell <- sapply(data.bc$cell_intergenic_reads_per_chr, sum)[names(data.bc$query_reads)]
-  intergenic.reads.per.cell[is.na(intergenic.reads.per.cell)] <- 0
+PrepareLqCellsPipelineData <- function(data, total.reads.per.cell=NULL, mitochondrion.genes=NULL, pcs.number=3) {
+  intergenic.reads.per.cell <- rep(0, length(data$aligned_umis_per_cell))
+  names(intergenic.reads.per.cell) <- names(data$aligned_umis_per_cell)
 
-  return(PrepareLqCellsData(count.matrix, data.bc$query_reads, intergenic.reads.per.cell, total.reads.per.cb,
-                            data.bc$merge_targets, mitochondrion.genes, pcs.number=pcs.number))
-}
+  intergenic.cbs <- intersect(names(data$aligned_umis_per_cell), rownames(data$reads_per_chr_per_cells$Intergenic))
+  intergenic.reads.per.cell[intergenic.cbs] <- apply(data$reads_per_chr_per_cells$Intergenic[intergenic.cbs,], 1, sum)
 
-#' Wrapper for PrepareLqCellsData for the data, obtained with the old version of InDrop pipeline.
-#'
-#' @describeIn PrepareLqCellsData wrapper for the data, obtained with the old version of InDrop pipeline.
-#'
-#' @export
-PrepareLqCellsPipelineDataOld <- function(data.bc, count.matrix, total.reads.per.cb=NULL, mitochondrion.genes=NULL, pcs.number=3) { # TODO: Deprecated
-  intergenic.reads.per.cell <- sapply(data.bc$cell_nonexone_reads_per_chr, sum)
-  intergenic.reads.per.cell[is.na(intergenic.reads.per.cell)] <- 0
+  if (!is.null(total.reads.per.cell)) {
+    merge.targets <- data$merge.targets[data$merge.targets != names(data$merge.targets)]
+    total.reads.per.cell[merge.targets] <- total.reads.per.cell[merge.targets] + total.reads.per.cell[names(merge.targets)]
+  }
 
-  return(PrepareLqCellsData(count.matrix, data.bc$genes_reads, intergenic.reads.per.cell, total.reads.per.cb,
-                            data.bc$merge_targets, mitochondrion.genes, pcs.number=pcs.number))
+  return(PrepareLqCellsData(data$cm_raw, data$aligned_reads_per_cell, data$aligned_umis_per_cell, total.reads.per.cell,
+                            intergenic.reads.per.cell,mitochondrion.genes, pcs.number=pcs.number))
 }
 
 #' Perform PCA with the optimal number of principal components.
@@ -155,7 +161,7 @@ EstimateCellsQuality <- function(umi.counts, cells.number=NULL) {
 
 #' @export
 FilterMitochondrionCells <- function(count.matrix, mitochondrion.genes, cells.quality, plot=F) {
-  mit.fraction <- colSums(count.matrix[intersect(rownames(count.matrix), mitochondrion.genes),]) / colSums(count.matrix)
+  mit.fraction <- Matrix::colSums(count.matrix[rownames(count.matrix) %in% mitochondrion.genes,]) / Matrix::colSums(count.matrix)
   mit.threshold <- stats::median(mit.fraction) + 4 * stats::mad(mit.fraction)
   mit.fraction <- mit.fraction[names(cells.quality)]
 

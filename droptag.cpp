@@ -186,7 +186,7 @@ void save_stats(const string &out_filename, shared_ptr<TagsFinderBase> tags_find
 	RInside *R = Tools::init_r();
 
 	(*R)["d"] = List::create(
-			Named("genes_reads") = wrap(tags_finder->num_reads_per_cb())
+		_["reads_per_cb"] = wrap(tags_finder->num_reads_per_cb())
 	);
 
 	R->parseEvalQ("saveRDS(d, '" + out_filename + "')");

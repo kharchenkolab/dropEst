@@ -38,14 +38,18 @@ PlotSaturationEstimates <- function(preseq.estimates) {
 }
 
 #' @export
-PlotIntergenicFractionByChromosomes <- function(exone.chr.counts, non.exone.chr.counts, chromosome.umi.threshold=0.001) {
-  dfs <- lapply(list(exone.chr.counts, non.exone.chr.counts), function(df) data.frame(Chromosome=colnames(df), ReadsNum=colSums(df)))
-  df <- merge(dfs[[1]], dfs[[2]], by='Chromosome') %>% dplyr::rename(Exonic=ReadsNum.x, `Non-exonic`=ReadsNum.y)
-  df <- df %>% dplyr::filter(Exonic + `Non-exonic` > chromosome.umi.threshold * (sum(Exonic) + sum(`Non-exonic`)))
-  ggplot2::ggplot(reshape2::melt(df, id.vars='Chromosome', variable.name='Type')) + ggplot2::geom_bar(ggplot2::aes(x=Chromosome, y=value, fill=Type), stat='identity', position='stack', col=I('black'), alpha=0.7) +
+PlotIntergenicFractionByChromosomes <- function(reads.per.chr.per.cells, chromosome.umi.threshold=0.001) {
+  dfs <- lapply(reads.per.chr.per.cells, colSums)
+  df <- lapply(names(dfs), function(n) data.frame(Chromosome=names(dfs[[n]]), ReadsNum=dfs[[n]], Type=n)) %>%
+    dplyr::bind_rows()
+
+  sum_reads_num <- (df %>% dplyr::group_by(Chromosome) %>% dplyr::summarise(ReadsNum=sum(ReadsNum)))$ReadsNum
+  df <- df[sum_reads_num > 0.001 * sum(sum_reads_num),]
+
+  ggplot2::ggplot(df) + ggplot2::geom_bar(ggplot2::aes(x=Chromosome, y=ReadsNum, fill=Type), stat='identity', position='stack', col=I('black'), alpha=0.7) +
     ggplot2::theme(legend.position=c(0.99, 0.99), legend.justification=c(1, 1), legend.background=ggplot2::element_rect(fill=ggplot2::alpha('white', 0.7))) + ggplot2::ylab('#Reads') +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1), panel.grid.major.x=ggplot2::element_blank()) +
-    ggplot2::scale_fill_manual(values=c("#1DA30C", "gray"))
+    ggplot2::scale_fill_manual(name=NULL, values=c("#1DA30C", "gray", '#D10404'))
 }
 
 #' @export
@@ -71,14 +75,13 @@ PlotUmisDistribution <- function(reads.per.umi.per.cb, trim.quantile=0.99, bins=
 }
 
 #' @export
-PlotReadsPerUmiByCells <- function(reads.per.umi.per.cb, umi.counts, ...) {
-  rpu.per.cell <- sapply(reads.per.umi.per.cb, function(cell) mean(unlist(cell)))
-  smoothScatter(log10(umi.counts), rpu.per.cell[names(umi.counts)], xlab='log10(#UMI in cell)', ylab='Mean reads/UMI per cell', ...)
+PlotReadsPerUmiByCells <- function(mean.reads.per.umi, umi.counts, ...) {
+  smoothScatter(log10(umi.counts), mean.reads.per.umi[names(umi.counts)], xlab='log10(#UMI in cell)', ylab='Mean reads/UMI per cell', ...)
 }
 
 #' @export
-PlotGenesPerCell <- function(reads.per.umi.per.cb, umi.counts, bins=50) {
-  genes.per.cell <- sapply(reads.per.umi.per.cb, length)
+PlotGenesPerCell <- function(count.matrix, bins=50) {
+  genes.per.cell <- Matrix::colSums(count.matrix > 0)
   ggplot2::qplot(genes.per.cell, col=I('black'), bins=bins) +
     ggplot2::labs(x='#Genes in cell', y='#Cells') +
     ggplot2::annotation_logticks(sides='b') +
@@ -87,9 +90,9 @@ PlotGenesPerCell <- function(reads.per.umi.per.cb, umi.counts, bins=50) {
 
 #' @export
 PlotMitochondrialFraction <- function(count.matrix, mitochondrion.genes, umi.counts, plot.threshold=F) {
-  umi.counts <- sort(colSums(count.matrix), decreasing=T)
+  umi.counts <- sort(Matrix::colSums(count.matrix), decreasing=T)
   presented.mit.genes <- intersect(mitochondrion.genes, rownames(count.matrix))
-  mit.frac <- colSums(count.matrix[presented.mit.genes, names(umi.counts)]) / umi.counts
+  mit.frac <- Matrix::colSums(count.matrix[presented.mit.genes, names(umi.counts)]) / umi.counts
   smoothScatter(mit.frac, xlab='Cell rank', ylab='Fraction', main='Mitochondrial fraction', cex.lab=1.4)
   if (plot.threshold) {
     abline(h=median(mit.frac) + 4 * mad(mit.frac), lty=2, lw=1.5)

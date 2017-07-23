@@ -15,7 +15,9 @@ Imports:
   ggplot2 (>= 2.1.0),
   dplyr (>= 0.5),
   Rcpp,
-  RcppProgress
+  RcppProgress,
+  RcppArmadillo,
+  Matrix (>= 1.2-10)
 Suggests:
   parallel,
   data.table (>= 1.9.6),
