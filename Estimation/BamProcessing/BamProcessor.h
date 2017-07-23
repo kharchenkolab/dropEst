@@ -21,7 +21,7 @@ namespace Estimation
 			virtual std::string get_result_bam_name(const std::string &bam_name) const override;
 
 		public:
-			BamProcessor(CellsDataContainer &container, bool print_bam);
+			BamProcessor(CellsDataContainer &container, const BamTags &tags, bool print_bam);
 
 			void update_bam(const std::string& bam_file, const BamTools::BamReader &reader) override;
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Estimation/CellsDataContainer.h>
+#include <Estimation/BamProcessing/BamTags.h>
 
 #include <cstdlib>
 #include <string>
@@ -21,6 +22,9 @@ namespace Estimation
 		private:
 			size_t _total_reads_num;
 			size_t _cant_parse_reads_num;
+
+			const BamTags _tags;
+
 			BamTools::BamWriter _writer;
 
 		protected:
@@ -29,7 +33,7 @@ namespace Estimation
 			virtual std::string get_result_bam_name(const std::string &bam_name) const = 0;
 
 		public:
-			BamProcessorAbstract();
+			BamProcessorAbstract(const BamTags &tags_info);
 			virtual ~BamProcessorAbstract();
 
 			size_t cant_parse_reads_num() const;

@@ -33,7 +33,7 @@ namespace Estimation
 		L_TRACE << "Completed.";
 
 		auto count_matrix = this->get_count_matrix(container, gene_counts);
-		(*R)["data"] = List::create(
+		(*R)["d"] = List::create(
 				_["cm"] = count_matrix,
 				_["reads_per_chr_per_cells"] = reads_per_chr_per_cell,
 				_["reads_per_umi_per_cell"] = reads_per_umi_per_cell,
@@ -44,10 +44,18 @@ namespace Estimation
 				_["aligned_umis_per_cell"] = wrap(container.stats().get_raw(Stats::TOTAL_UMIS_PER_CB)),
 				_["fname"] = wrap(filename));
 
-		Tools::trace_time("Writing R data to " + filename);
+		R->parseEvalQ("dimnames(d$cm$cm) <- list(d$cm$gene_names, d$cm$cell_names); d$cm <- d$cm$cm");
+		Tools::trace_time("Writing R data to " + filename + " ...");
 
-		R->parseEvalQ("saveRDS(data, '" + filename + "')");
-		Tools::trace_time("Done");
+		R->parseEvalQ("saveRDS(d, '" + filename + "')");
+		Tools::trace_time("Completed.");
+
+		if (this->write_matrix) {
+			std::string mtx_file(filename + ".mtx");
+			L_TRACE << "Writing " + mtx_file + " ...";
+			R->parseEvalQ("Matrix::writeMM(d$cm, '" + mtx_file + "')");
+			L_TRACE << "Completed.";
+		}
 	}
 
 	IntegerMatrix ResultsPrinter::create_matrix(const s_vec_t &col_names, const s_vec_t &row_names,
@@ -61,8 +69,8 @@ namespace Estimation
 		return mat;
 	}
 
-	ResultsPrinter::ResultsPrinter(bool text_output, bool reads_output)
-		: text_output(text_output)
+	ResultsPrinter::ResultsPrinter(bool write_matrix, bool reads_output)
+		: write_matrix(write_matrix)
 		, reads_output(reads_output)
 	{}
 
@@ -137,10 +145,12 @@ namespace Estimation
 		return cell_names;
 	}
 
-	IntegerMatrix
-	ResultsPrinter::get_count_matrix(const CellsDataContainer &container, const s_counter_t &gene_counts) const
+	List ResultsPrinter::get_count_matrix(const CellsDataContainer &container, const s_counter_t &gene_counts) const
 	{
 		Tools::trace_time("Compiling count matrix");
+
+		RInside *R = Tools::init_r();
+		R->parseEvalQ("library(Matrix)");
 		s_vec_t cell_names, gene_names(gene_counts.size());
 		l_vec_t counts(container.filtered_cells().size() * gene_names.size(), 0);
 		for (int i = 0; i < gene_counts.size(); ++i)
@@ -148,6 +158,7 @@ namespace Estimation
 			gene_names[i] = gene_counts[i].first;
 		}
 		std::unordered_map<std::string, size_t> gene_ids;
+		arma::sp_umat cm(arma::uword(gene_names.size()), arma::uword(container.filtered_cells().size()));
 
 		for (size_t i = 0; i < gene_names.size(); ++i)
 		{
@@ -175,12 +186,13 @@ namespace Estimation
 					cell_value = gene_it.second.size();
 				}
 
-				counts[(row * container.filtered_cells().size()) + col] = cell_value;
+//				counts[(row * container.filtered_cells().size()) + col] = cell_value;
+				cm(row, col) = arma::uword(cell_value);
 			}
 		}
 
 		Tools::trace_time("Done");
-		return ResultsPrinter::create_matrix(cell_names, gene_names, counts);
+		return List::create(_["cm"] = cm, _["gene_names"] = wrap(gene_names), _["cell_names"] = wrap(cell_names));
 	}
 
 	ResultsPrinter::s_counter_t ResultsPrinter::get_gene_counts_sorted(const CellsDataContainer &genes_container) const

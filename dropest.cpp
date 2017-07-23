@@ -18,6 +18,8 @@
 using namespace std;
 using namespace Estimation;
 
+static const std::string SCRIPT_NAME = "dropest";
+
 struct Params
 {
 	bool bam_output = false;
@@ -27,17 +29,16 @@ struct Params
 	bool merge_tags = false;
 	bool merge_tags_precise = false;
 	bool reads_output = false;
-	bool text_output = false;
 	bool quiet = false;
+	bool write_matrix = false;
 	string config_file_name = "";
 	string genes_filename = "";
 	string log_prefix = "";
 	string output_name = "";
-	string reads_params_names_str = ""; //TODO: deprecated. Should be updated after the implementation of quality parsing.
+	string read_params_names_str = ""; //TODO: deprecated. Should be updated after the implementation of quality parsing.
 	std::string gene_match_level = CellsDataContainer::Mark::DEFAULT_CODE;
 	int max_cells_number = -1;
 	int min_genes_after_merge = -1;
-	int num_of_threads = 1;
 };
 
 static void check_files_existence(const Params &params, const vector<string> &bam_files)
@@ -48,8 +49,8 @@ static void check_files_existence(const Params &params, const vector<string> &ba
 	if (params.genes_filename != "" && !std::ifstream(params.genes_filename))
 		throw std::runtime_error("Can't open genes file '" + params.genes_filename + "'");
 
-	if (params.reads_params_names_str != "" && !std::ifstream(params.reads_params_names_str))
-		throw std::runtime_error("Can't open reads file '" + params.reads_params_names_str + "'");
+	if (params.read_params_names_str != "" && !std::ifstream(params.read_params_names_str))
+		throw std::runtime_error("Can't open reads file '" + params.read_params_names_str + "'");
 
 	for (auto const &file : bam_files)
 	{
@@ -60,10 +61,9 @@ static void check_files_existence(const Params &params, const vector<string> &ba
 
 static void usage()
 {
-	cerr << "\tindropest: estimate molecular counts per cell" << endl;
+	cerr << "\t" << SCRIPT_NAME <<": estimate molecular counts per cell" << endl;
 	cerr << "SYNOPSIS\n";
-	cerr <<
-	"\tindropest [options] -c config.xml file_1.bam [..., file_n.bam]" << endl;
+	cerr << "\t" << SCRIPT_NAME << " [options] -c config.xml file_1.bam [..., file_n.bam]" << endl;
 	cerr << "OPTIONS:\n";
 	cerr << "\t-b, --bam-output: print tagged bam files" << endl;
 	cerr << "\t-c, --config filename: xml file with estimation parameters" << endl;
@@ -87,8 +87,8 @@ static void usage()
 	cerr << "\t-p, --parallel number_of_threads : number of threads" << endl;
 //	cerr << "\t-r, --reads-params filename: file or files with serialized params from tags search step. If there are several files then it should be in quotes and splitted by space" << endl;
 	cerr << "\t-R, --reads-output: print count matrix for reads and don't use UMI statistics" << endl;
-	cerr << "\t-t, --text-output : write out text matrix" << endl;
 	cerr << "\t-q, --quiet : disable logs" << endl;
+	cerr << "\t-w, --write-mtx : write out matrix in MatrixMarket format" << endl;
 }
 
 static Params parse_cmd_params(int argc, char **argv)
@@ -111,14 +111,13 @@ static Params parse_cmd_params(int argc, char **argv)
 			{"merge-barcodes-precise",  no_argument,       0, 'M'},
 			{"not-filtered",	no_argument, 	   0, 'n'},
 			{"output-file",     required_argument, 0, 'o'},
-			{"parallel",     required_argument, 0, 'p'},
 			{"reads-params",     required_argument, 0, 'r'},
 			{"reads-output",     no_argument, 		0, 'R'},
-			{"text-output",     no_argument,       0, 't'},
 			{"quiet",         no_argument,       0, 'q'},
+			{"write-mtx",     no_argument,       0, 'w'},
 			{0, 0,                                 0, 0}
 	};
-	while ((c = getopt_long(argc, argv, "bc:C:fFg:G:l:L:mM:no:p:r:Rtq", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "bc:C:fFg:G:l:L:mM:no:r:Rqw", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -159,23 +158,20 @@ static Params parse_cmd_params(int argc, char **argv)
 			case 'o' :
 				params.output_name = string(optarg);
 				break;
-			case 'p' :
-				params.num_of_threads = atoi(optarg);
-				break;
 			case 'r' :
-				params.reads_params_names_str = string(optarg);
+				params.read_params_names_str = string(optarg);
 				break;
 			case 'R' :
 				params.reads_output = true;
 				break;
-			case 't' :
-				params.text_output = true;
-				break;
 			case 'q' :
 				params.quiet = true;
 				break;
+			case 'w' :
+				params.write_matrix = true;
+				break;
 			default:
-				cerr << "indropest: unknown arguments passed: '" << (char)c <<"'"  << endl;
+				cerr << SCRIPT_NAME << ": unknown arguments passed: '" << (char)c <<"'"  << endl;
 				params.cant_parse = true;
 				return params;
 		}
@@ -183,37 +179,31 @@ static Params parse_cmd_params(int argc, char **argv)
 
 	if (optind > argc - 1)
 	{
-		cerr << "indropset: at least one bam file must be supplied" << endl;
+		cerr << SCRIPT_NAME << ": at least one bam file must be supplied" << endl;
 		params.cant_parse = true;
 	}
 
 	if (params.config_file_name == "")
 	{
-		cerr << "indropset: config file must be supplied" << endl;
+		cerr << SCRIPT_NAME << ": config file must be supplied" << endl;
 		params.cant_parse = true;
 	}
 
-	if (params.filled_bam && params.reads_params_names_str != "")
+	if (params.filled_bam && params.read_params_names_str != "")
 	{
-		cerr << "indropset: only one genes source must be provided (you can't use -r and -f at the same time)" << endl;
-		params.cant_parse = true;
-	}
-
-	if (params.num_of_threads < 1)
-	{
-		cerr << "The number of threads should be positive" << endl;
+		cerr << SCRIPT_NAME << ": only one genes source must be provided (you can't use -r and -f at the same time)" << endl;
 		params.cant_parse = true;
 	}
 
 	if (params.genes_filename == "" && params.gene_match_level.find_first_of("eE") == std::string::npos)
 	{
-		cerr << "indropset: you should provide genes file (-g option) to use intron annotations" << endl;
+		cerr << SCRIPT_NAME << ": you should provide genes file (-g option) to use intron annotations" << endl;
 		params.cant_parse = true;
 	}
 
 	if (params.output_name == "")
 	{
-		if (params.text_output)
+		if (params.write_matrix)
 		{
 			params.output_name = "cell.counts.txt";
 		}
@@ -226,22 +216,16 @@ static Params parse_cmd_params(int argc, char **argv)
 	return params;
 }
 
-CellsDataContainer get_cells_container(const vector<string> &files, const Params &params)
+CellsDataContainer get_cells_container(const vector<string> &files, const Params &params, const boost::property_tree::ptree &pt,
+                                       const BamProcessing::BamController &bam_controller)
 {
-	boost::property_tree::ptree pt;
-	if (!params.config_file_name.empty())
-	{
-		read_xml(params.config_file_name, pt);
-	}
-
 	auto match_levels = CellsDataContainer::Mark::get_by_code(params.gene_match_level);
 
-	Merge::MergeStrategyFactory merge_factory(pt, params.min_genes_after_merge);
+	Merge::MergeStrategyFactory merge_factory(pt.get_child("config.Estimation"), params.min_genes_after_merge);
 	CellsDataContainer container(merge_factory.get_cb_strat(params.merge_tags, params.merge_tags_precise),
 	                             merge_factory.get_umi(), match_levels, params.max_cells_number);
 
-	BamProcessing::BamController::parse_bam_files(files, params.bam_output, params.filled_bam,
-	                                              params.reads_params_names_str, params.genes_filename, container);
+	bam_controller.parse_bam_files(files, params.bam_output, container);
 
 	container.set_initialized();
 	container.merge_and_filter();
@@ -282,21 +266,25 @@ int main(int argc, char **argv)
 	{
 		check_files_existence(params, files);
 		Tools::trace_time("Run");
-		CellsDataContainer container = get_cells_container(files, params);
+		boost::property_tree::ptree estimation_config;
+		if (!params.config_file_name.empty())
+		{
+			boost::property_tree::ptree pt;
+			read_xml(params.config_file_name, pt);
+			estimation_config = pt.get_child("config.Estimation", boost::property_tree::ptree());
+		}
+
+		BamProcessing::BamTags t(estimation_config);
+		BamProcessing::BamController bam_controller(t, params.filled_bam, params.read_params_names_str, params.genes_filename);
+		CellsDataContainer container = get_cells_container(files, params, estimation_config, bam_controller);
 
 		if (params.filtered_bam_output)
 		{
-			BamProcessing::BamController::write_filtered_bam_files(files, params.filled_bam, params.reads_params_names_str,
-																   params.genes_filename, container);
+			bam_controller.write_filtered_bam_files(files, container);
 		}
 
-		ResultsPrinter printer(params.text_output, params.reads_output);
+		ResultsPrinter printer(params.write_matrix, params.reads_output);
 		Tools::trace_time("Done");
-
-		if (params.text_output)
-		{
-			throw std::runtime_error("Text output is not implemented");
-		}
 
 		printer.save_results(container, params.output_name);
 	}
@@ -305,5 +293,5 @@ int main(int argc, char **argv)
 		L_ERR << err.what();
 		return 1;
 	}
-	Tools::trace_time("All done");
+	Tools::trace_time("All done.");
 }

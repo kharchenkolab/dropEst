@@ -11,7 +11,7 @@ from os.path import isfile, join, splitext
 
 PROJECT_PATH = "/home/vp76/drop/cp/"
 WORK_DIR = os.getcwd() + '/' #"/home/vp76/drop/4_graphs/"
-EST_EXE_PATH = PROJECT_PATH + "build/indropest"
+EST_EXE_PATH = PROJECT_PATH + "build/dropest"
 R_EXE_PATH = PROJECT_PATH + "scripts/analyze_mit.r"
 
 

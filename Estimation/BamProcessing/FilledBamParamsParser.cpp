@@ -13,11 +13,11 @@ namespace BamProcessing
 											 Tools::ReadParameters &read_params)
 	{
 		std::string barcode;
-		if (!alignment.GetTag(BamController::CB_TAG, barcode))
+		if (!alignment.GetTag(this->tags.cb, barcode))
 			return false;
 
 		std::string umi;
-		if (!alignment.GetTag(BamController::UMI_TAG, umi))
+		if (!alignment.GetTag(this->tags.umi, umi))
 			return false;
 
 		try
@@ -33,8 +33,8 @@ namespace BamProcessing
 		return true;
 	}
 
-	FilledBamParamsParser::FilledBamParamsParser(const std::string &gtf_path)
-			: ReadsParamsParser(gtf_path)
+	FilledBamParamsParser::FilledBamParamsParser(const std::string &gtf_path, const BamTags &tags)
+		: ReadParamsParser(gtf_path, tags)
 	{}
 }
 }

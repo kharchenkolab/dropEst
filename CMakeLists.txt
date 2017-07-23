@@ -47,13 +47,14 @@ target_link_libraries(Estimation DropTools)
 set(LIBRARIES DropTools ${BASE_LIBRARIES})
 set(EST_LIBRARIES ${EST_LIBRARIES} ${BAMTOOLS_LIBRARIES} ${ZLIB_LIBRARIES} ${LIBRARIES})
 
-add_executable(indroptag indroptag.cpp)
-target_link_libraries(indroptag TagsSearch ${LIBRARIES})
+add_executable(droptag droptag.cpp)
+target_link_libraries(droptag TagsSearch ${LIBRARIES})
 
-add_executable(indropest indropest.cpp)
-target_link_libraries(indropest Estimation ${EST_LIBRARIES})
+add_executable(dropest dropest.cpp)
+target_link_libraries(dropest Estimation ${EST_LIBRARIES})
 
-add_custom_command(TARGET indropest POST_BUILD
+#TODO: check it
+add_custom_command(TARGET dropest POST_BUILD
         COMMAND cp
         ${CMAKE_SOURCE_DIR}/scripts/Report/*.R ${CMAKE_CURRENT_BINARY_DIR}/)
 

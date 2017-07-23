@@ -4,6 +4,7 @@
 #include <Tools/RefGenesContainer.h>
 #include <Estimation/CellsDataContainer.h>
 #include <Tools/RefGenesContainer.h>
+#include "BamTags.h"
 
 namespace Tools
 {
@@ -14,13 +15,16 @@ namespace Estimation
 {
 	namespace BamProcessing
 	{
-		class ReadsParamsParser
+		class ReadParamsParser
 		{
 		private:
 			Tools::RefGenesContainer _genes_container;
 
+		protected:
+			const BamTags tags;
+
 		public:
-			ReadsParamsParser(const std::string &genes_filename);
+			ReadParamsParser(const std::string &genes_filename, const BamTags &tags);
 
 			virtual bool get_read_params(const BamTools::BamAlignment &alignment, Tools::ReadParameters &read_params);
 			CellsDataContainer::Mark get_gene(const std::string &chr_name, BamTools::BamAlignment alignment,

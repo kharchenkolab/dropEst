@@ -11,8 +11,9 @@ namespace Estimation
 {
 	namespace BamProcessing
 	{
-		FilteringBamProcessor::FilteringBamProcessor(const CellsDataContainer &container)
-			: is_bam_open(false)
+		FilteringBamProcessor::FilteringBamProcessor(const BamTags &tags, const CellsDataContainer &container)
+			: BamProcessorAbstract(tags)
+			, is_bam_open(false)
 			, written_reads(0)
 			, _container(container)
 		{

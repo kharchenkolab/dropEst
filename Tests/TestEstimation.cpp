@@ -6,7 +6,7 @@
 #include "Estimation/CellsDataContainer.h"
 
 #include <RInside.h>
-#include <Estimation/BamProcessing/ReadsParamsParser.h>
+#include <Estimation/BamProcessing/ReadParamsParser.h>
 #include <Estimation/BamProcessing/BamController.h>
 #include <Estimation/BamProcessing/BamProcessor.h>
 #include <Estimation/Merge/BarcodesParsing/InDropBarcodesParser.h>
@@ -25,6 +25,7 @@ using Mark = CellsDataContainer::Mark;
 struct Fixture
 {
 	Fixture()
+		: test_bam_controller(BamProcessing::BamTags(), false, "", PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz")
 	{
 		auto barcodes_parser = std::shared_ptr<Merge::BarcodesParsing::BarcodesParser>(
 				new Merge::BarcodesParsing::InDropBarcodesParser(PROJ_DATA_PATH + std::string("/barcodes/test_est")));
@@ -66,6 +67,7 @@ struct Fixture
 	std::shared_ptr<Merge::UMIs::MergeUMIsStrategySimple> umi_merge_strat;
 	std::shared_ptr<CellsDataContainer> container_full;
 	std::vector<Mark> any_mark;
+	BamProcessing::BamController test_bam_controller;
 };
 
 BOOST_AUTO_TEST_SUITE(TestEstimator)
@@ -291,7 +293,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		align.Position = 34610;
 		align.Length = 10;
 		align.CigarData.push_back(BamTools::CigarOp('M', 10));
-		ReadsParamsParser parser(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz");
+		ReadParamsParser parser(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", BamTags());
 
 		std::string gene;
 		Mark umi_mark = parser.get_gene("chrX", align, gene);
@@ -347,8 +349,8 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	{
 		using namespace BamProcessing;
 		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, Mark::get_by_code("e"));
-		auto parser = std::make_shared<ReadsParamsParser>(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz");
-		std::shared_ptr<BamProcessorAbstract> processor(new BamProcessor(container, false));
+		auto parser = this->test_bam_controller.get_parser(false);
+		std::shared_ptr<BamProcessorAbstract> processor(new BamProcessor(container, BamTags(), false));
 		std::unordered_set<std::string> unexpected_chromosomes;
 
 		BamTools::BamAlignment align;
@@ -357,20 +359,20 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		align.Length = 10;
 		align.CigarData.push_back(BamTools::CigarOp('M', 10));
 
-		BamController::process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
+		this->test_bam_controller.process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
 		BOOST_CHECK_EQUAL(container.cell_genes(0).at("FAM138A").at("ATGGGC").read_count, 1);
 
 		align.Position = 34600;
-		BamController::process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
+		this->test_bam_controller.process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
 		BOOST_CHECK(container.cell_genes(0).at("FAM138A").at("ATGGGC").mark.check(Mark::HAS_NOT_ANNOTATED));
 
 		align.Position = 34610;
-		BamController::process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
+		this->test_bam_controller.process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
 		BOOST_CHECK(container.cell_genes(0).at("FAM138A").at("ATGGGC").mark.check(Mark::HAS_NOT_ANNOTATED));
 
 		align.Name = "152228477!TGAGTTCTGTTACTGCATC#ATTTTC";
 		align.Position = 34600;
-		BamController::process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
+		this->test_bam_controller.process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
 		BOOST_CHECK(container.cell_genes(0).at("FAM138A").at("ATTTTC").mark.check(Mark::HAS_NOT_ANNOTATED));
 
 		container.set_initialized();
@@ -383,8 +385,8 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	{
 		using namespace BamProcessing;
 		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, Mark::get_by_code("eE"));
-		auto parser = std::make_shared<ReadsParamsParser>(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz");
-		std::shared_ptr<BamProcessorAbstract> processor(new BamProcessor(container, false));
+		auto parser = this->test_bam_controller.get_parser(false);
+		std::shared_ptr<BamProcessorAbstract> processor(new BamProcessor(container, BamTags(), false));
 		std::unordered_set<std::string> unexpected_chromosomes;
 
 		BamTools::BamAlignment align;
@@ -393,20 +395,20 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		align.Length = 10;
 		align.CigarData.push_back(BamTools::CigarOp('M', 10));
 
-		BamController::process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
+		this->test_bam_controller.process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
 		BOOST_CHECK_EQUAL(container.cell_genes(0).at("FAM138A").at("ATGGGC").read_count, 1);
 
 		align.Position = 34600;
-		BamController::process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
+		this->test_bam_controller.process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
 		BOOST_CHECK(container.cell_genes(0).at("FAM138A").at("ATGGGC").mark.check(Mark::HAS_NOT_ANNOTATED));
 
 		align.Name = "152228477!TGAGTTCTGTTACTGCATC#ATTTTC";
 		align.Position = 34610;
-		BamController::process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
+		this->test_bam_controller.process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
 		BOOST_CHECK(container.cell_genes(0).at("FAM138A").at("ATTTTC").mark == Mark::HAS_EXONS);
 
 		align.Position = 34600;
-		BamController::process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
+		this->test_bam_controller.process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
 		BOOST_CHECK(container.cell_genes(0).at("FAM138A").at("ATTTTC").mark.check(Mark::HAS_NOT_ANNOTATED));
 
 		container.set_initialized();
@@ -548,7 +550,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	BOOST_FIXTURE_TEST_CASE(testGetGeneWithIntrons, Fixture)
 	{
 		using namespace BamProcessing;
-		auto parser = ReadsParamsParser(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz");
+		auto parser = ReadParamsParser(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", BamTags());
 
 		BamTools::BamAlignment align;
 		align.Name = "152228477!TGAGTTCTGTTACTGCATC#ATGGGC";

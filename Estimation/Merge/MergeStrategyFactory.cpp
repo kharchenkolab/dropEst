@@ -20,7 +20,7 @@ namespace Merge
 {
 	MergeStrategyFactory::MergeStrategyFactory(const boost::property_tree::ptree &config, int min_genes_after_merge)
 	{
-		auto main_config = config.get_child("config.Estimation.Merge", boost::property_tree::ptree());
+		auto main_config = config.get_child("Merge", boost::property_tree::ptree());
 
 		this->_min_genes_before_merge = main_config.get<unsigned>("min_genes_before_merge", 10);
 
@@ -42,7 +42,7 @@ namespace Merge
 		if (!this->_barcodes_filename.empty() && !std::ifstream(this->_barcodes_filename))
 			throw std::runtime_error("Can't open barcodes file '" + this->_barcodes_filename + "'");
 
-		auto poisson_config = config.get_child("config.Estimation.PreciseMerge", boost::property_tree::ptree());
+		auto poisson_config = config.get_child("PreciseMerge", boost::property_tree::ptree());
 
 		this->_max_merge_prob = poisson_config .get<double>("max_merge_prob", 1e-4);
 		this->_max_real_cb_merge_prob = poisson_config.get<double>("max_real_merge_prob", 1e-7);

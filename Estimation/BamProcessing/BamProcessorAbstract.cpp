@@ -6,9 +6,10 @@ namespace Estimation
 {
 namespace BamProcessing
 {
-	BamProcessorAbstract::BamProcessorAbstract()
+	BamProcessorAbstract::BamProcessorAbstract(const BamTags &tags_info)
 		: _total_reads_num(0)
 		, _cant_parse_reads_num(0)
+		, _tags(tags_info)
 	{}
 
 	BamProcessorAbstract::~BamProcessorAbstract()
@@ -53,11 +54,11 @@ namespace BamProcessing
 		alignment.Name = name;
 		if (gene != "")
 		{
-			alignment.AddTag(BamController::GENE_TAG, "Z", gene);
+			alignment.AddTag(this->_tags.gene, "Z", gene);
 		}
 
-		alignment.AddTag(BamController::CB_TAG, "Z", barcode);
-		alignment.AddTag(BamController::UMI_TAG, "Z", umi);
+		alignment.AddTag(this->_tags.cb, "Z", barcode);
+		alignment.AddTag(this->_tags.umi, "Z", umi);
 		this->_writer.SaveAlignment(alignment);
 	}
 

@@ -9,10 +9,11 @@ namespace Estimation
 {
 	namespace BamProcessing
 	{
-		BamProcessor::BamProcessor(CellsDataContainer &container, bool print_bam)
-				: _container(container)
-				, print_bam(print_bam)
-				, total_intergenic_reads(0)
+		BamProcessor::BamProcessor(CellsDataContainer &container, const BamTags &tags, bool print_bam)
+			: BamProcessorAbstract(tags)
+			, _container(container)
+			, print_bam(print_bam)
+			, total_intergenic_reads(0)
 		{}
 
 		void BamProcessor::save_read(const std::string& cell_barcode, const std::string& chr_name, const std::string& umi,

@@ -1,5 +1,5 @@
 <config>
-    <!-- indroptag -->
+    <!-- droptag -->
     <TagsSearch>
         <BarcodesSearch> <!-- Required for InDrop V3 -->
             <barcode1_length> 8 </barcode1_length>  <!-- Length of the first CB part -->
@@ -28,7 +28,7 @@
         </Processing>
     </TagsSearch>
 
-    <!-- indropest -->
+    <!-- dropest -->
     <Estimation>
         <Merge> <!-- Used only with 'merge' or 'precise-merge' cli option. -->
             <barcodes_file>~/indrop.txt</barcodes_file> <!-- Optional. File with the list of real barcodes. -->
@@ -44,5 +44,11 @@
             <max_merge_prob>1e-5</max_merge_prob>  <!-- Optional. Threshold for the merge procedure. Default: 1e-5.-->
             <max_real_merge_prob>1e-7</max_real_merge_prob>  <!-- Optional. Threshold for the merge procedure in the case when one real barcode is tested to be merged wit the other. Default: 1e-7.-->
         </PreciseMerge>
+
+        <BamTags> <!-- Optional. Tags, which are used to parse .bam file (-f option) or to print tagged .bam file (-b or -F options). Default values corresponds to 10x protocol. -->
+            <cb>CB</cb> <!-- Cell barcode. Default: CB. -->
+            <umi>UB</umi> <!-- UMI. Default: UB. -->
+            <gene>GX</gene> <!-- Gene and print index. Default: GX. -->
+        </BamTags>
     </Estimation>
 </config>

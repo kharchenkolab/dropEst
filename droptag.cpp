@@ -25,6 +25,8 @@ const std::string PROCESSING_CONFIG_PATH = "config.TagsSearch.Processing";
 const std::string BARCODES_CONFIG_PATH = "config.TagsSearch.BarcodesSearch";
 const std::string SPACER_CONFIG_PATH = "config.TagsSearch.SpacerSearch";
 
+static const std::string SCRIPT_NAME = "droptag";
+
 struct Params
 {
 	bool cant_parse = false;
@@ -42,12 +44,12 @@ void save_stats(const string &out_filename, shared_ptr<TagsFinderBase> tags_find
 
 static void usage()
 {
-	cerr << "\tindroptag -- generate tagged indrop fastq files for alignment\n";
+	cerr << "\t" << SCRIPT_NAME << " -- generate tagged fastq files for alignment\n";
 	cerr << "SYNOPSIS\n";
-	cerr << "\tindroptag [options] "
+	cerr << "\t" << SCRIPT_NAME << " [options] "
 					<< "-c config.xml read_1.fastq read_2.fastq [read_3.fastq] [library_tags.fastq]\n";
 	cerr << "OPTIONS:\n";
-	cerr << "\t-c, --config filename: xml file with indroptag parameters" << endl;
+	cerr << "\t-c, --config filename: xml file with " << SCRIPT_NAME << " parameters" << endl;
 	cerr << "\t-l, --log-prefix : logs prefix" << endl;
 	cerr << "\t-n, --name BASE_NAME : specify alternative output base name\n";
 	cerr << "\t-s, --save-reads-names : serialize reads parameters to save names\n";
@@ -142,7 +144,7 @@ Params parse_cmd_params(int argc, char **argv)
 				params.quiet = true;
 				break;
 			default:
-				cerr << "indroptag: unknown arguments passed" << endl;
+				cerr << SCRIPT_NAME << ": unknown arguments passed" << endl;
 				usage();
 				params.cant_parse = true;
 				return params;
@@ -151,13 +153,13 @@ Params parse_cmd_params(int argc, char **argv)
 
 	if (params.config_file_name == "")
 	{
-		cerr << "indroptag: config file must be supplied" << endl;
+		cerr << SCRIPT_NAME << ": config file must be supplied" << endl;
 		params.cant_parse = true;
 	}
 
 	if (optind == argc)
 	{
-		cerr << "indroptag: read files must be supplied" << endl;
+		cerr << SCRIPT_NAME << ": read files must be supplied" << endl;
 		usage();
 		params.cant_parse = true;
 		return params;

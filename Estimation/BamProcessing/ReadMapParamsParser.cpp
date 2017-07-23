@@ -10,10 +10,10 @@ namespace Estimation
 namespace BamProcessing
 {
 	ReadMapParamsParser::ReadMapParamsParser(const std::string &gtf_path, bool save_read_names,
-											 const std::string &read_param_names)
-			: ReadsParamsParser(gtf_path)
+											 const std::string &read_param_filenames, const BamTags &tags)
+		: ReadParamsParser(gtf_path, tags)
 	{
-		this->init(read_param_names, save_read_names);
+		this->init(read_param_filenames, save_read_names);
 	}
 
 	bool ReadMapParamsParser::get_read_params(const BamTools::BamAlignment &alignment,
@@ -45,13 +45,13 @@ namespace BamProcessing
 		return true;
 	}
 
-	void ReadMapParamsParser::init(const std::string & read_param_names, bool save_read_name)
+	void ReadMapParamsParser::init(const std::string &read_param_filenames, bool save_read_name)
 	{
-		std::vector<std::string> params_names;
-		boost::split(params_names, read_param_names, boost::is_any_of(" \t"));
+		std::vector<std::string> param_filenames;
+		boost::split(param_filenames, read_param_filenames, boost::is_any_of(" \t"));
 		size_t total_reads_count = 0;
 		L_TRACE << "Start loading reads names";
-		for (auto const &name : params_names)
+		for (auto const &name : param_filenames)
 		{
 			if (name.empty())
 				continue;

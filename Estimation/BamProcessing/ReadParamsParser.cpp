@@ -1,14 +1,23 @@
 #include <Tools/Logs.h>
 #include <Tools/ReadParameters.h>
 #include <Tools/RefGenesContainer.h>
-#include "ReadsParamsParser.h"
+#include "ReadParamsParser.h"
 #include "BamController.h"
 
 namespace Estimation
 {
 namespace BamProcessing
 {
-	bool ReadsParamsParser::get_read_params(const BamTools::BamAlignment &alignment, Tools::ReadParameters &read_params)
+	ReadParamsParser::ReadParamsParser(const std::string &genes_filename, const BamTags &tags)
+		: tags(tags)
+	{
+		if (genes_filename.length() != 0)
+		{
+			this->_genes_container = Tools::RefGenesContainer(genes_filename);
+		}
+	}
+
+	bool ReadParamsParser::get_read_params(const BamTools::BamAlignment &alignment, Tools::ReadParameters &read_params)
 	{
 		try
 		{
@@ -23,7 +32,7 @@ namespace BamProcessing
 		return true;
 	}
 
-	CellsDataContainer::Mark ReadsParamsParser::get_gene(const std::string &chr_name, BamTools::BamAlignment alignment,
+	CellsDataContainer::Mark ReadParamsParser::get_gene(const std::string &chr_name, BamTools::BamAlignment alignment,
 	                                                         std::string &gene) const
 	{
 		CellsDataContainer::Mark mark;
@@ -32,7 +41,7 @@ namespace BamProcessing
 		if (!this->_genes_container.is_empty())
 			return this->get_gene_from_reference(chr_name, alignment, gene);
 
-		if (!alignment.GetTag(BamController::GENE_TAG, gene))
+		if (!alignment.GetTag(this->tags.gene, gene))
 		{
 			gene = "";
 			mark.add(CellsDataContainer::Mark::HAS_NOT_ANNOTATED);
@@ -45,7 +54,7 @@ namespace BamProcessing
 		return mark;
 	}
 
-	CellsDataContainer::Mark ReadsParamsParser::get_gene_from_reference(const std::string &chr_name,
+	CellsDataContainer::Mark ReadParamsParser::get_gene_from_reference(const std::string &chr_name,
 	                                                                    const BamTools::BamAlignment &alignment,
 	                                                                    std::string &gene) const
 	{
@@ -106,15 +115,7 @@ namespace BamProcessing
 		return mark;
 	}
 
-	ReadsParamsParser::ReadsParamsParser(const std::string &genes_filename)
-	{
-		if (genes_filename.length() != 0)
-		{
-			this->_genes_container = Tools::RefGenesContainer(genes_filename);
-		}
-	}
-
-	bool ReadsParamsParser::find_exon(Tools::RefGenesContainer::query_results_t query_results,
+	bool ReadParamsParser::find_exon(Tools::RefGenesContainer::query_results_t query_results,
 	                                  Tools::RefGenesContainer::QueryResult &exon_result) const
 	{
 		for (auto const &query_res : query_results)
@@ -135,7 +136,7 @@ namespace BamProcessing
 		return true;
 	}
 
-	bool ReadsParamsParser::has_introns() const
+	bool ReadParamsParser::has_introns() const
 	{
 		return this->_genes_container.has_introns();
 	}

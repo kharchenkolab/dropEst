@@ -20,7 +20,7 @@ namespace Estimation
 		typedef std::vector<int> l_vec_t;
 
 	private:
-		const bool text_output; //TODO: implement matrix output format
+		const bool write_matrix;
 		const bool reads_output;
 
 		static const size_t top_print_size = 10;
@@ -35,15 +35,14 @@ namespace Estimation
 		                                                const s_vec_t &cell_names) const;
 		Rcpp::List get_reads_per_chr_per_cell_info(const CellsDataContainer &container, const s_vec_t &cell_names) const;
 		s_vec_t get_filtered_cell_names(const CellsDataContainer &container) const;
-		Rcpp::IntegerMatrix
-		get_count_matrix(const CellsDataContainer &container, const s_counter_t &gene_counts) const;
+		Rcpp::List get_count_matrix(const CellsDataContainer &container, const s_counter_t &gene_counts) const;
 		s_counter_t get_gene_counts_sorted(const CellsDataContainer &genes_container) const;
 		Rcpp::NumericVector get_mean_reads_per_umi(const CellsDataContainer &container) const;
 		Rcpp::List get_reads_per_umi_per_cell(const CellsDataContainer &container) const;
 		Rcpp::List get_merge_targets(const CellsDataContainer &container) const;
 
 	public:
-		ResultsPrinter(bool text_output, bool reads_output);
+		ResultsPrinter(bool write_matrix, bool reads_output);
 
 		void save_results(const CellsDataContainer &container, const std::string &filename) const;
 	};
