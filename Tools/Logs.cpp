@@ -1,5 +1,7 @@
 #include "Logs.h"
 
+#include <ctime>
+
 #include <boost/log/expressions.hpp>
 #include <boost/log/support/date_time.hpp>
 #include <boost/log/utility/setup/file.hpp>
@@ -62,6 +64,9 @@ namespace Tools
 	{
 		std::string format = print_date ? "%m/%d/%Y %H:%M:%S" : "%H:%M:%S";
 		time_t ctt = time(0);
-		L_TRACE << message << ": " << std::put_time(localtime(&ctt), format.c_str()) << ".";
+		char time_str[100];
+		strftime(time_str, sizeof(time_str), format.c_str(), localtime(&ctt));
+		//L_TRACE << message << ": " << std::put_time(localtime(&ctt), format.c_str()) << ".";
+		L_TRACE << message << ": " << time_str << ".";
 	}
 }
