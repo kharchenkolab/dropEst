@@ -22,12 +22,15 @@ MergeUMIsStrategySimple::MergeUMIsStrategySimple(unsigned int max_merge_distance
 void MergeUMIsStrategySimple::merge(CellsDataContainer &container) const
 {
 	Tools::trace_time("UMI merge start");
-	size_t total_cell_merged = 0, total_umi_merged = 0;
-	auto const &cells_gene_counts = container.cells_gene_counts_sorted();
-	for (size_t genes_count_id = 0; genes_count_id < cells_gene_counts.size(); ++genes_count_id)
+	size_t total_cell_merged = 0, total_umi_merged = 0, total_cells_processed = 0;
+	for (size_t cell_id = 0; cell_id < container.total_cells_number(); ++cell_id)
 	{
-		size_t cell_id = cells_gene_counts[genes_count_id].index;
-		for (auto const &gene : container.cell(cell_id).genes())
+		auto const &cell = container.cell(cell_id);
+		if (!cell.is_real())
+			continue;
+
+		total_cells_processed++;
+		for (auto const &gene : cell.genes())
 		{
 			s_hash_t bad_umis;
 			for (auto const &umi : gene.second)
@@ -49,7 +52,8 @@ void MergeUMIsStrategySimple::merge(CellsDataContainer &container) const
 			container.merge_umis(cell_id, gene.first, merge_targets);
 		}
 	}
-	L_TRACE << cells_gene_counts.size() << " cells processed. " << total_umi_merged << " UMIs merged from "
+
+	L_TRACE << total_cells_processed << " cells processed. Merged " << total_umi_merged << " UMIs from "
 	        << total_cell_merged << " cells.";
 	Tools::trace_time("UMI merge finished");
 }

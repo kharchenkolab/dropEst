@@ -23,6 +23,7 @@ namespace BamProcessing
 	void BamController::parse_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams,
 										CellsDataContainer &container) const
 	{
+		L_TRACE << "";
 		Tools::trace_time("Start parse bams");
 
 		auto processor = std::shared_ptr<BamProcessorAbstract>(new BamProcessor(container, this->_tags, print_result_bams));
@@ -34,6 +35,7 @@ namespace BamProcessing
 	void BamController::write_filtered_bam_files(const std::vector<std::string> &bam_files,
 	                                             const CellsDataContainer &container) const
 	{
+		L_TRACE << "";
 		Tools::trace_time("Start write filtered bam");
 
 		auto processor = std::shared_ptr<BamProcessorAbstract>(new FilteringBamProcessor(this->_tags, container));
@@ -94,10 +96,9 @@ namespace BamProcessing
 			}
 
 			processor->inc_reads(); // reads with unknown chromosome are not counted
-			if (trace && processor->total_reads_num() % 2000000 == 0)
+			if (trace && processor->total_reads_num() % 10000000 == 0)
 			{
 				processor->trace_state(bam_name);
-				break;
 			}
 
 			BamController::process_alignment(parser, processor, unexpected_chromosomes, chr_name, alignment);

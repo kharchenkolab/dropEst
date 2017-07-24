@@ -58,10 +58,10 @@ namespace Tools
 		logging::core::get()->set_filter(logging::trivial::severity >= level);
 	}
 
-	void trace_time(const std::string &message)
+	void trace_time(const std::string &message, bool print_date)
 	{
+		std::string format = print_date ? "%m/%d/%Y %H:%M:%S" : "%H:%M:%S";
 		time_t ctt = time(0);
-		L_TRACE << message << ": " << asctime(localtime(&ctt));
+		L_TRACE << message << ": " << std::put_time(localtime(&ctt), format.c_str()) << ".";
 	}
 }
-

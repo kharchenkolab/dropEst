@@ -15,26 +15,27 @@ MergeStrategyAbstract::ul_list_t MergeStrategyBase::merge_inited(CellsDataContai
 	ul_list_t cb_reassign_targets(container.total_cells_number());
 	std::iota(cb_reassign_targets.begin(), cb_reassign_targets.end(), 0);
 
-	auto const& cell_genes_counts = container.cells_gene_counts_sorted();
-	std::vector<long> target_cell_inds(cell_genes_counts.size());
+	auto const& genes_per_cell_nums = container.cells_gene_counts_sorted();
+	std::vector<long> target_cell_inds(genes_per_cell_nums.size());
 
-	for (size_t genes_count_id = 0; genes_count_id < cell_genes_counts.size(); ++genes_count_id)
+	for (size_t genes_count_id = 0; genes_count_id < genes_per_cell_nums.size(); ++genes_count_id)
 	{
-		target_cell_inds[genes_count_id] = this->get_merge_target(container, cell_genes_counts[genes_count_id].index);
+		target_cell_inds[genes_count_id] = this->get_merge_target(container, genes_per_cell_nums[genes_count_id].index);
 		if (genes_count_id % this->get_log_period() == 0 && genes_count_id > 0)
 		{
 			L_TRACE << "Total " << genes_count_id << " tags processed";
 		}
 	}
 
-	size_t merges_count = 0;
-	for (size_t genes_count_id = 0; genes_count_id < cell_genes_counts.size(); ++genes_count_id)
+	size_t merges_count = 0, excluded_cells_num = 0;
+	for (size_t genes_count_id = 0; genes_count_id < genes_per_cell_nums.size(); ++genes_count_id)
 	{
-		size_t base_cell_ind = cell_genes_counts[genes_count_id].index;
+		size_t base_cell_ind = genes_per_cell_nums[genes_count_id].index;
 		long target_cell_ind = target_cell_inds[genes_count_id];
 		if (target_cell_ind < 0)
 		{
 			container.exclude_cell(base_cell_ind);
+			excluded_cells_num++;
 			continue;
 		}
 
@@ -50,12 +51,8 @@ MergeStrategyAbstract::ul_list_t MergeStrategyBase::merge_inited(CellsDataContai
 		merges_count++;
 	}
 
-	size_t excluded_cells_num = container.excluded_cells().size();
-	L_INFO << "Total " << merges_count << " merges";
-	L_INFO << "Total " << excluded_cells_num << " cells excluded";
-	L_INFO << container.cells_gene_counts_sorted().size() - merges_count - excluded_cells_num << " cells with " << this->min_genes_before_merge() << " genes left";
-
-	container.update_cell_sizes(this->min_genes_after_merge(), -1, false);
+	L_TRACE << "Total " << merges_count << " cells merged";
+	L_TRACE << "Total " << excluded_cells_num << " cells excluded";
 
 	return cb_reassign_targets;
 }

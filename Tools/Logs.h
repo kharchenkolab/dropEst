@@ -17,5 +17,5 @@ namespace Tools
 
 	void init_test_logs(boost::log::trivial::severity_level level = boost::log::trivial::fatal);
 
-	void trace_time(const std::string &message);
+	void trace_time(const std::string &message, bool print_date=false);
 }

@@ -55,7 +55,7 @@ namespace Estimation
 		ids_t _filtered_cells;
 		ids_t _merge_targets;
 
-		i_counter_t _filtered_cells_gene_counts_sorted;
+		i_counter_t _filtered_gene_counts_sorted;
 		bool _is_initialized;
 		const std::vector<UMI::Mark> _query_marks;
 
@@ -68,6 +68,7 @@ namespace Estimation
 
 	private:
 		std::string get_cb_count_top_verbose(const i_counter_t &cells_genes_counts) const;
+		size_t update_cell_sizes(size_t requested_genes_threshold, int cell_threshold);
 
 	public:
 		CellsDataContainer(std::shared_ptr<Merge::MergeStrategyAbstract> merge_strategy,
@@ -83,8 +84,6 @@ namespace Estimation
 
 		void merge_umis(size_t cell_id, const std::string &gene, const s_s_hash_t &merge_targets);
 
-		void update_cell_sizes(size_t genes_threshold, int cell_threshold, bool logs);
-
 		void set_initialized();
 
 		size_t total_cells_number() const;
@@ -94,6 +93,8 @@ namespace Estimation
 		const ids_t& filtered_cells() const;
 		const ids_t& merge_targets() const;
 		const std::vector<UMI::Mark>& gene_match_level() const;
+		size_t get_filtered_gene_counts(size_t requested_genes_threshold, int cell_threshold,
+		                                i_counter_t& filtered_gene_counts_sorted) const;
 
 		const Cell &cell(size_t index) const;
 

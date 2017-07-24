@@ -30,7 +30,7 @@ namespace Estimation
 		, _has_not_annotated_reads(0)
 		, _number_of_real_cells(0)
 	{
-		L_TRACE << this->_merge_strategy->merge_type() << " merge selected";
+		L_TRACE << this->_merge_strategy->merge_type() << " merge selected.";
 	}
 
 	void CellsDataContainer::merge_and_filter()
@@ -42,20 +42,19 @@ namespace Estimation
 		this->stats().merge(this->_merge_targets, this->_cells);
 
 		this->_umi_merge_strategy->merge(*this);
-		this->update_cell_sizes(this->_merge_strategy->min_genes_after_merge(), this->_max_cells_num, true);
+		size_t filtered_cells_num = this->update_cell_sizes(this->_merge_strategy->min_genes_after_merge(), this->_max_cells_num);
+
+		L_TRACE << this->_number_of_real_cells << " cells are considered as real.\n";
+
+		L_TRACE << filtered_cells_num << " CBs with more than " << this->_merge_strategy->min_genes_after_merge()
+		        << " genes, which have UMIs of the requested type.";
+
+		L_TRACE << this->get_cb_count_top_verbose(this->_filtered_gene_counts_sorted);
 
 		this->_filtered_cells.clear();
 		for (auto const &val : this->cells_gene_counts_sorted())
 		{
 			this->_filtered_cells.push_back(val.index);
-		}
-
-		for (size_t i = 0; i < this->_cells.size(); ++i)
-		{
-			if (this->_cells[i].is_real())
-			{
-				this->_number_of_real_cells++;
-			}
 		}
 	}
 
@@ -105,38 +104,19 @@ namespace Estimation
 		this->_cells.at(index).set_excluded();
 	}
 
-	void CellsDataContainer::update_cell_sizes(size_t genes_threshold, int cell_threshold, bool logs)
+	size_t CellsDataContainer::update_cell_sizes(size_t requested_genes_threshold, int cell_threshold)
 	{
-		this->_filtered_cells_gene_counts_sorted.clear(); // <genes_count,cell_id> pairs
+		this->_number_of_real_cells = 0;
 		for (size_t i = 0; i < this->_cells.size(); i++)
 		{
 			this->_cells[i].update_requested_size();
 			if (!this->_cells[i].is_real())
 				continue;
 
-			size_t genes_count = this->_cells[i].requested_genes_num();
-			if (genes_count >= genes_threshold)
-			{
-				this->_filtered_cells_gene_counts_sorted.push_back(IndexedValue(i, genes_count));
-			}
+			this->_number_of_real_cells++;
 		}
 
-		if (logs)
-		{
-			L_TRACE << this->_filtered_cells_gene_counts_sorted.size() << " CBs with more than " << genes_threshold << " genes";
-		}
-
-		sort(this->_filtered_cells_gene_counts_sorted.begin(), this->_filtered_cells_gene_counts_sorted.end(), IndexedValue::value_less);
-
-		if (cell_threshold > 0 && cell_threshold < this->_filtered_cells_gene_counts_sorted.size()) {
-			this->_filtered_cells_gene_counts_sorted.erase(this->_filtered_cells_gene_counts_sorted.begin(),
-			                                               this->_filtered_cells_gene_counts_sorted.end() - unsigned(cell_threshold));
-		}
-
-		if (logs)
-		{
-			L_TRACE << this->get_cb_count_top_verbose(this->_filtered_cells_gene_counts_sorted);
-		}
+		return this->get_filtered_gene_counts(requested_genes_threshold, cell_threshold, this->_filtered_gene_counts_sorted);
 	}
 
 	string CellsDataContainer::get_cb_count_top_verbose(const i_counter_t &cells_genes_counts) const
@@ -171,7 +151,7 @@ namespace Estimation
 
 	const CellsDataContainer::i_counter_t &CellsDataContainer::cells_gene_counts_sorted() const
 	{
-		return this->_filtered_cells_gene_counts_sorted;
+		return this->_filtered_gene_counts_sorted;
 	}
 
 	const CellsDataContainer::ids_t &CellsDataContainer::filtered_cells() const
@@ -184,7 +164,12 @@ namespace Estimation
 		if (this->_is_initialized)
 			throw std::runtime_error("Container is already initialized");
 
-		this->update_cell_sizes(this->_merge_strategy->min_genes_before_merge(), -1, true);
+		this->update_cell_sizes(0, -1);
+
+		L_TRACE << "\n" << this->_filtered_gene_counts_sorted.size() << " CBs with more than "
+		        << this->_merge_strategy->min_genes_before_merge() << " genes";
+		L_TRACE << this->get_cb_count_top_verbose(this->_filtered_gene_counts_sorted);
+
 		this->_is_initialized = true;
 	}
 
@@ -210,7 +195,7 @@ namespace Estimation
 	CellsDataContainer::s_ul_hash_t CellsDataContainer::umis_distribution() const
 	{
 		s_ul_hash_t umis_dist;
-		for (auto const &cell : this->_filtered_cells_gene_counts_sorted)
+		for (auto const &cell : this->_filtered_gene_counts_sorted)
 		{
 			for (auto const &gene : this->_cells[cell.index].genes())
 			{
@@ -268,5 +253,34 @@ namespace Estimation
 	size_t CellsDataContainer::total_cells_number() const
 	{
 		return this->_cells.size();
+	}
+
+	size_t CellsDataContainer::get_filtered_gene_counts(size_t requested_genes_threshold, int cell_threshold,
+	                                                    i_counter_t &filtered_gene_counts_sorted) const
+	{
+		filtered_gene_counts_sorted.clear();
+		for (size_t i = 0; i < this->_cells.size(); i++)
+		{
+			if (!this->_cells[i].is_real())
+				continue;
+
+			size_t genes_count = this->_cells[i].requested_genes_num();
+			if (genes_count >= requested_genes_threshold)
+			{
+				filtered_gene_counts_sorted.push_back(IndexedValue(i, genes_count));
+			}
+		}
+
+		sort(filtered_gene_counts_sorted.begin(), filtered_gene_counts_sorted.end(), IndexedValue::value_less);
+
+		size_t filtered_cells_num = filtered_gene_counts_sorted.size();
+
+		if (cell_threshold > 0 && cell_threshold < filtered_gene_counts_sorted.size())
+		{
+			filtered_gene_counts_sorted.erase(filtered_gene_counts_sorted.begin(),
+			                                  filtered_gene_counts_sorted.end() - unsigned(cell_threshold));
+		}
+
+		return filtered_cells_num;
 	}
 }

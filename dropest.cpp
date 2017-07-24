@@ -259,7 +259,7 @@ int main(int argc, char **argv)
 	try
 	{
 		check_files_existence(params, files);
-		Tools::trace_time("Run");
+		Tools::trace_time("Run", true);
 		boost::property_tree::ptree estimation_config;
 		if (!params.config_file_name.empty())
 		{

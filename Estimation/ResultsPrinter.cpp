@@ -23,7 +23,7 @@ namespace Estimation
 
 		this->trace_gene_counts(container);
 
-		L_TRACE << "compiling diagnostic stats: ";
+		L_TRACE << "Compiling diagnostic stats: ";
 		auto real_cell_names = this->get_real_cell_names(container);
 		auto reads_per_chr_per_cell = this->get_reads_per_chr_per_cell_info(container, real_cell_names); // Real cells, all UMIs.
 		auto saturation_info = this->get_saturation_analysis_info(container); // Filtered cells, query UMIs.
@@ -33,7 +33,7 @@ namespace Estimation
 		IntegerVector aligned_reads_per_cb = wrap(container.stats().get_filtered(Stats::TOTAL_READS_PER_CB, real_cell_names)); // Real cells, all UMIs
 		IntegerVector aligned_umis_per_cb = wrap(container.stats().get_filtered(Stats::TOTAL_UMIS_PER_CB, real_cell_names)); // Real cells, all UMIs
 		auto requested_umis_per_cb = this->get_requested_umis_per_cb(container); // Real cells, query UMIs
-		L_TRACE << "Completed.";
+		L_TRACE << "Completed.\n";
 
 		auto count_matrix_filt = this->get_count_matrix(container, true);
 		auto count_matrix_raw = this->get_count_matrix(container, false);
@@ -61,6 +61,8 @@ namespace Estimation
 		}
 
 		std::string rds_filename = filename_base + ".rds";
+
+		L_TRACE << "";
 		Tools::trace_time("Writing R data to " + rds_filename + " ...");
 		R->parseEvalQ("saveRDS(d, '" + rds_filename + "')");
 		Tools::trace_time("Completed");
@@ -73,6 +75,8 @@ namespace Estimation
 			R->parseEvalQ("write.table(rownames(d$cm), '" + filename_base + ".genes.tsv', row.names = F, col.names = F, quote = F)");
 			L_TRACE << "Completed.";
 		}
+
+		L_TRACE << "";
 	}
 
 	IntegerMatrix ResultsPrinter::create_matrix(const s_vec_t &col_names, const s_vec_t &row_names,
@@ -322,7 +326,8 @@ namespace Estimation
 			}
 		}
 
-		arma::sp_umat cm(arma::uword(gene_ids.size()), arma::uword(container.filtered_cells().size()));
+		L_TRACE << gene_ids.size() << " genes, " << cell_names.size() << " cells.";
+		arma::sp_umat cm(arma::uword(gene_ids.size()), arma::uword(cell_names.size()));
 		for (size_t col = 0; col < container.filtered_cells().size(); col++)
 		{
 			for (auto const &umis_per_gene : container.cell(container.filtered_cells()[col]).requested_umis_per_gene(
@@ -355,7 +360,10 @@ namespace Estimation
 		}
 
 		size_t column_num = 0;
-		arma::sp_umat cm(arma::uword(gene_ids.size()), arma::uword(container.real_cells_number()));
+		arma::sp_umat cm(arma::uword(gene_ids.size()), arma::uword(cell_names.size()));
+
+		L_TRACE << gene_ids.size() << " genes, " << cell_names.size() << " cells.";
+
 		for (size_t cell_id = 0; cell_id < container.total_cells_number(); cell_id++)
 		{
 			if (!container.cell(cell_id).is_real())
