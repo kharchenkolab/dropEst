@@ -80,7 +80,7 @@ namespace Estimation
 	}
 
 	IntegerMatrix ResultsPrinter::create_matrix(const s_vec_t &col_names, const s_vec_t &row_names,
-	                            const l_vec_t &counts)
+	                            const i_vec_t &counts)
 	{
 		IntegerMatrix mat(transpose(IntegerMatrix(int(col_names.size()), int(row_names.size()), counts.begin())));
 
@@ -98,7 +98,7 @@ namespace Estimation
 	List ResultsPrinter::get_saturation_analysis_info(const CellsDataContainer &container) const
 	{
 		L_TRACE << "Saturation info;";
-		l_vec_t reads_by_umig;
+		i_vec_t reads_by_umig;
 		s_vec_t reads_by_umig_cbs;
 		s_vec_t reads_by_umig_umis;
 
@@ -130,7 +130,7 @@ namespace Estimation
 	                                                          const s_vec_t &cell_names) const
 	{
 		s_vec_t chr_cell_names, chr_names;
-		l_vec_t reads_per_chr_per_cell;
+		i_vec_t reads_per_chr_per_cell;
 		container.stats().get_filtered(stat_type, cell_names, chr_cell_names, chr_names, reads_per_chr_per_cell);
 
 		return ResultsPrinter::create_matrix(chr_names, chr_cell_names, reads_per_chr_per_cell);
@@ -313,37 +313,40 @@ namespace Estimation
 	                                                        s_vec_t &gene_names, s_vec_t &cell_names) const
 	{
 		std::unordered_map<std::string, size_t> gene_ids;
-		for (size_t i = 0; i < container.filtered_cells().size(); i++)
+		std::vector<arma::uword> column_numbers, row_numbers, counts;
+
+		for (size_t column_num = 0; column_num < container.filtered_cells().size(); ++column_num)
 		{
-			size_t cur_cell_id = container.filtered_cells()[i];
-			cell_names.push_back(container.cell(cur_cell_id).barcode());
-			for (auto const &umis_per_gene : container.cell(cur_cell_id).requested_umis_per_gene(false))
+			auto const &cur_cell = container.cell(container.filtered_cells()[column_num]);
+			cell_names.push_back(cur_cell.barcode());
+
+			for (auto const &umis_per_gene : cur_cell.requested_umis_per_gene(this->reads_output))
 			{
-				if (gene_ids.emplace(umis_per_gene.first, gene_ids.size()).second)
+				auto gene_it = gene_ids.emplace(umis_per_gene.first, gene_ids.size());
+				if (gene_it.second)
 				{
 					gene_names.push_back(umis_per_gene.first);
 				}
+
+				size_t row_num = gene_it.first->second;
+
+				column_numbers.push_back(arma::uword(column_num));
+				row_numbers.push_back(arma::uword(row_num));
+				counts.push_back(arma::uword(umis_per_gene.second));
 			}
 		}
 
 		L_TRACE << gene_ids.size() << " genes, " << cell_names.size() << " cells.";
-		arma::sp_umat cm(arma::uword(gene_ids.size()), arma::uword(cell_names.size()));
-		for (size_t col = 0; col < container.filtered_cells().size(); col++)
-		{
-			for (auto const &umis_per_gene : container.cell(container.filtered_cells()[col]).requested_umis_per_gene(
-					this->reads_output))
-			{
-				size_t row = gene_ids.at(umis_per_gene.first);
-				cm(row, col) = arma::uword(umis_per_gene.second);
-			}
-		}
-		return cm;
+		return ResultsPrinter::create_matrix(row_numbers, column_numbers, counts, gene_ids.size(), cell_names.size());
 	}
 
 	arma::sp_umat ResultsPrinter::get_count_matrix_raw(const CellsDataContainer &container,
 	                                                   s_vec_t &gene_names, s_vec_t &cell_names) const
 	{
 		std::unordered_map<std::string, size_t> gene_ids;
+		std::vector<arma::uword> column_numbers, row_numbers, counts;
+
+		size_t column_num = 0;
 		for (size_t cell_id = 0; cell_id < container.total_cells_number(); cell_id++)
 		{
 			if (!container.cell(cell_id).is_real())
@@ -352,26 +355,13 @@ namespace Estimation
 			cell_names.push_back(container.cell(cell_id).barcode());
 			for (auto const &gene : container.cell(cell_id).genes())
 			{
-				if (gene_ids.emplace(gene.first, gene_ids.size()).second)
+				auto gene_it = gene_ids.emplace(gene.first, gene_ids.size());
+				if (gene_it.second)
 				{
 					gene_names.push_back(gene.first);
 				}
-			}
-		}
 
-		size_t column_num = 0;
-		arma::sp_umat cm(arma::uword(gene_ids.size()), arma::uword(cell_names.size()));
-
-		L_TRACE << gene_ids.size() << " genes, " << cell_names.size() << " cells.";
-
-		for (size_t cell_id = 0; cell_id < container.total_cells_number(); cell_id++)
-		{
-			if (!container.cell(cell_id).is_real())
-				continue;
-
-			for (auto const &gene : container.cell(cell_id).genes())
-			{
-				size_t row = gene_ids.at(gene.first);
+				size_t row_num = gene_it.first->second;
 				size_t cell_value = 0;
 
 				if (this->reads_output)
@@ -386,13 +376,16 @@ namespace Estimation
 					cell_value = gene.second.size();
 				}
 
-				cm(row, column_num) = arma::uword(cell_value);
+				column_numbers.push_back(arma::uword(column_num));
+				row_numbers.push_back(arma::uword(row_num));
+				counts.push_back(arma::uword(cell_value));
 			}
 
 			column_num++;
 		}
 
-		return cm;
+		L_TRACE << gene_ids.size() << " genes, " << cell_names.size() << " cells.";
+		return ResultsPrinter::create_matrix(row_numbers, column_numbers, counts, gene_ids.size(), cell_names.size());
 	}
 
 	IntegerVector ResultsPrinter::get_requested_umis_per_cb(const CellsDataContainer &container) const
@@ -414,5 +407,13 @@ namespace Estimation
 
 		requested_umis_per_cb.attr("names") = cell_names;
 		return requested_umis_per_cb;
+	}
+
+	arma::sp_umat ResultsPrinter::create_matrix(const arma_uvec &row_numbers, const arma_uvec &column_numbers,
+	                                            const arma_uvec &counts, size_t total_rows, size_t total_cols)
+	{
+		using namespace arma;
+		return sp_umat(umat(join_rows(umat(row_numbers), umat(column_numbers)).t()), uvec(counts),
+		               uword(total_rows), uword(total_cols));
 	}
 }

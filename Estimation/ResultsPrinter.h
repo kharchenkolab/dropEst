@@ -14,7 +14,8 @@ namespace Estimation
 	{
 	private:
 		typedef std::vector<std::string> s_vec_t;
-		typedef std::vector<int> l_vec_t;
+		typedef std::vector<int> i_vec_t;
+		typedef std::vector<arma::uword> arma_uvec;
 
 	private:
 		const bool write_matrix;
@@ -24,7 +25,9 @@ namespace Estimation
 
 	private:
 		static Rcpp::IntegerMatrix create_matrix(const s_vec_t &col_names, const s_vec_t &row_names,
-		                                         const l_vec_t &counts);
+		                                         const i_vec_t &counts);
+		static arma::sp_umat create_matrix(const arma_uvec &row_numbers, const arma_uvec &column_numbers,
+		                                   const arma_uvec &counts, size_t total_rows, size_t total_cols);
 
 		Rcpp::List get_saturation_analysis_info(const CellsDataContainer &container) const;
 		Rcpp::DataFrame get_reads_per_chr_per_cell_info(Stats::CellStrStatType stat_type,
