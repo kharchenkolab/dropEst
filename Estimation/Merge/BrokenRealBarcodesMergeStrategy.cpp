@@ -23,7 +23,7 @@ namespace Merge
 		ul_list_t ids_distr;
 		for (auto id : neighbour_cells)
 		{
-			for (int i = 0; i < (size_t)std::sqrt(container.cell_genes(id).size()) + 1; ++i)
+			for (int i = 0; i < (size_t)std::sqrt(container.cell(id).size()) + 1; ++i)
 			{
 				ids_distr.push_back(id);
 			}

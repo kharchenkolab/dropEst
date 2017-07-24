@@ -30,6 +30,9 @@ namespace Estimation
 		auto mean_reads_per_umi = this->get_mean_reads_per_umi(container); // Real cells, all UMIs.
 		auto reads_per_umi_per_cell = this->get_reads_per_umi_per_cell(container); // Filtered cells, query UMIs.
 		auto merge_targets = this->get_merge_targets(container); // All cells.
+		IntegerVector aligned_reads_per_cb = wrap(container.stats().get_filtered(Stats::TOTAL_READS_PER_CB, real_cell_names)); // Real cells, all UMIs
+		IntegerVector aligned_umis_per_cb = wrap(container.stats().get_filtered(Stats::TOTAL_UMIS_PER_CB, real_cell_names)); // Real cells, all UMIs
+		auto requested_umis_per_cb = this->get_requested_umis_per_cb(container); // Real cells, query UMIs
 		L_TRACE << "Completed.";
 
 		auto count_matrix_filt = this->get_count_matrix(container, true);
@@ -42,24 +45,32 @@ namespace Estimation
 				_["mean_reads_per_umi"] = mean_reads_per_umi,
 				_["saturation_info"] = saturation_info,
 				_["merge_targets"] = merge_targets,
-				_["aligned_reads_per_cell"] = wrap(container.stats().get_raw(Stats::TOTAL_READS_PER_CB)), // All cells. -
-				_["aligned_umis_per_cell"] = wrap(container.stats().get_raw(Stats::TOTAL_UMIS_PER_CB)), // All cells. -
+				_["aligned_reads_per_cell"] = aligned_reads_per_cb,
+				_["aligned_umis_per_cell"] = aligned_umis_per_cb,
+				_["requested_umis_per_cb"] = requested_umis_per_cb,
 				_["fname"] = wrap(filename));
 
 		R->parseEvalQ("dimnames(d$cm$cm) <- list(d$cm$gene_names, d$cm$cell_names); d$cm <- d$cm$cm");
 		R->parseEvalQ("dimnames(d$cm_raw$cm) <- list(d$cm_raw$gene_names, d$cm_raw$cell_names); d$cm_raw <- d$cm_raw$cm");
-		Tools::trace_time("Writing R data to " + filename + " ...");
 
-		R->parseEvalQ("saveRDS(d, '" + filename + "')");
+		std::string filename_base = filename;
+		auto extension_pos = filename.find_last_of(".");
+		if (extension_pos != std::string::npos && filename.substr(extension_pos + 1) == "rds")
+		{
+			filename_base = filename.substr(0, extension_pos);
+		}
+
+		std::string rds_filename = filename_base + ".rds";
+		Tools::trace_time("Writing R data to " + rds_filename + " ...");
+		R->parseEvalQ("saveRDS(d, '" + rds_filename + "')");
 		Tools::trace_time("Completed");
 
 		if (this->write_matrix) {
-			std::string file_trimmed = filename.substr(0, filename.find_last_of("."));
-			std::string mtx_file(file_trimmed + ".mtx");
+			std::string mtx_file = filename_base + ".mtx";
 			L_TRACE << "Writing " + mtx_file + " ...";
 			R->parseEvalQ("Matrix::writeMM(d$cm, '" + mtx_file + "')");
-			R->parseEvalQ("write.table(colnames(d$cm), '" + file_trimmed + ".cells.tsv', row.names = F, col.names = F, quote = F)");
-			R->parseEvalQ("write.table(rownames(d$cm), '" + file_trimmed + ".genes.tsv', row.names = F, col.names = F, quote = F)");
+			R->parseEvalQ("write.table(colnames(d$cm), '" + filename_base + ".cells.tsv', row.names = F, col.names = F, quote = F)");
+			R->parseEvalQ("write.table(rownames(d$cm), '" + filename_base + ".genes.tsv', row.names = F, col.names = F, quote = F)");
 			L_TRACE << "Completed.";
 		}
 	}
@@ -87,13 +98,13 @@ namespace Estimation
 		s_vec_t reads_by_umig_cbs;
 		s_vec_t reads_by_umig_umis;
 
-		for (size_t cell_id = 0; cell_id < container.cell_barcodes_raw().size(); ++cell_id)
+		for (size_t cell_id = 0; cell_id < container.total_cells_number(); ++cell_id)
 		{
-			if (!container.is_cell_real(cell_id))
+			if (!container.cell(cell_id).is_real())
 				continue;
 
-			const auto &cb = container.cell_barcode(cell_id);
-			for (auto const& gene : container.query_read_per_umi_per_gene(cell_id))
+			const auto &cb = container.cell(cell_id).barcode();
+			for (auto const& gene : container.cell(cell_id).requested_reads_per_umi_per_gene())
 			{
 				for (auto const &reads_per_umi : gene.second)
 				{
@@ -146,7 +157,7 @@ namespace Estimation
 		cell_names.reserve(container.filtered_cells().size());
 		for (auto const &cell_id : container.filtered_cells())
 		{
-			cell_names.push_back(container.cell_barcode(cell_id));
+			cell_names.push_back(container.cell(cell_id).barcode());
 		}
 		return cell_names;
 	}
@@ -154,13 +165,13 @@ namespace Estimation
 	ResultsPrinter::s_vec_t ResultsPrinter::get_real_cell_names(const CellsDataContainer &container) const
 	{
 		s_vec_t cell_names;
-		cell_names.reserve(container.number_of_real_cells());
-		for (size_t cell_id = 0; cell_id < container.cell_barcodes_raw().size(); ++cell_id)
+		cell_names.reserve(container.real_cells_number());
+		for (size_t cell_id = 0; cell_id < container.total_cells_number(); ++cell_id)
 		{
-			if (!container.is_cell_real(cell_id))
+			if (!container.cell(cell_id).is_real())
 				continue;
 
-			cell_names.push_back(container.cell_barcode(cell_id));
+			cell_names.push_back(container.cell(cell_id).barcode());
 		}
 
 		return cell_names;
@@ -201,7 +212,7 @@ namespace Estimation
 		std::unordered_map<std::string, unsigned long> gene_counts_map;
 		for (size_t cell_id : genes_container.filtered_cells())
 		{
-			for (auto const &gm : genes_container.cell_genes(cell_id))
+			for (auto const &gm : genes_container.cell(cell_id).genes())
 			{
 				gene_counts_map[gm.first] += gm.second.size();
 			}
@@ -227,18 +238,19 @@ namespace Estimation
 	NumericVector ResultsPrinter::get_mean_reads_per_umi(const CellsDataContainer &container) const
 	{
 		L_TRACE << "Mean reads per UMI;";
-		NumericVector reads_per_umis(container.number_of_real_cells());
-		CharacterVector cell_names(container.number_of_real_cells());
+		NumericVector reads_per_umis(container.real_cells_number());
+		CharacterVector cell_names(container.real_cells_number());
 
 		size_t out_id = 0;
-		for (size_t cell_id = 0; cell_id < container.cell_barcodes_raw().size(); ++cell_id)
+		for (size_t cell_id = 0; cell_id < container.total_cells_number(); ++cell_id)
 		{
-			if (!container.is_cell_real(cell_id))
+			auto const &cell = container.cell(cell_id);
+			if (!cell.is_real())
 				continue;
 
 			size_t umis_num = 0;
 			double reads_per_umi = 0.0;
-			for (auto const &gene_rec : container.cell_genes(cell_id))
+			for (auto const &gene_rec : cell.genes())
 			{
 				for (auto const &umi_rec : gene_rec.second)
 				{
@@ -249,7 +261,7 @@ namespace Estimation
 			}
 			reads_per_umi /= umis_num;
 			reads_per_umis.at(out_id) = reads_per_umi;
-			cell_names.at(out_id) = container.cell_barcode(cell_id);
+			cell_names.at(out_id) = cell.barcode();
 			out_id++;
 		}
 
@@ -265,8 +277,8 @@ namespace Estimation
 		unordered_map<string, unordered_map<string, unordered_map<string, unsigned>>> reads_per_umi_per_cell;
 		for (auto cell_id : container.filtered_cells())
 		{
-			auto &cell_reads_p_umigs = reads_per_umi_per_cell[container.cell_barcode(cell_id)];
-			for (auto const &gene_rpus : container.query_read_per_umi_per_gene(cell_id))
+			auto &cell_reads_p_umigs = reads_per_umi_per_cell[container.cell(cell_id).barcode()];
+			for (auto const &gene_rpus : container.cell(cell_id).requested_reads_per_umi_per_gene())
 			{
 				auto &out_gene_umis = cell_reads_p_umigs[gene_rpus.first];
 				for (auto const &umi_reads : gene_rpus.second)
@@ -283,10 +295,10 @@ namespace Estimation
 	{
 		L_TRACE << "Merge targets;";
 		std::unordered_map<std::string, std::string> merge_targets;
-		for (size_t cell_from_id = 0; cell_from_id < container.cell_barcodes_raw().size(); ++cell_from_id)
+		for (size_t cell_from_id = 0; cell_from_id < container.total_cells_number(); ++cell_from_id)
 		{
-			auto const &barcode_from = container.cell_barcodes_raw()[cell_from_id];
-			auto const &barcode_to = container.cell_barcodes_raw()[container.merge_targets()[cell_from_id]];
+			auto const &barcode_from = container.cell(cell_from_id).barcode();
+			auto const &barcode_to = container.cell(container.merge_targets()[cell_from_id]).barcode();
 			merge_targets[barcode_from] = barcode_to;
 		}
 
@@ -300,8 +312,8 @@ namespace Estimation
 		for (size_t i = 0; i < container.filtered_cells().size(); i++)
 		{
 			size_t cur_cell_id = container.filtered_cells()[i];
-			cell_names.push_back(container.cell_barcode(cur_cell_id));
-			for (auto const &umis_per_gene : container.query_umis_per_gene(cur_cell_id, false))
+			cell_names.push_back(container.cell(cur_cell_id).barcode());
+			for (auto const &umis_per_gene : container.cell(cur_cell_id).requested_umis_per_gene(false))
 			{
 				if (gene_ids.emplace(umis_per_gene.first, gene_ids.size()).second)
 				{
@@ -313,7 +325,8 @@ namespace Estimation
 		arma::sp_umat cm(arma::uword(gene_ids.size()), arma::uword(container.filtered_cells().size()));
 		for (size_t col = 0; col < container.filtered_cells().size(); col++)
 		{
-			for (auto const &umis_per_gene : container.query_umis_per_gene(container.filtered_cells()[col], this->reads_output))
+			for (auto const &umis_per_gene : container.cell(container.filtered_cells()[col]).requested_umis_per_gene(
+					this->reads_output))
 			{
 				size_t row = gene_ids.at(umis_per_gene.first);
 				cm(row, col) = arma::uword(umis_per_gene.second);
@@ -326,13 +339,13 @@ namespace Estimation
 	                                                   s_vec_t &gene_names, s_vec_t &cell_names) const
 	{
 		std::unordered_map<std::string, size_t> gene_ids;
-		for (size_t cell_id = 0; cell_id < container.cell_barcodes_raw().size(); cell_id++)
+		for (size_t cell_id = 0; cell_id < container.total_cells_number(); cell_id++)
 		{
-			if (!container.is_cell_real(cell_id))
+			if (!container.cell(cell_id).is_real())
 				continue;
 
-			cell_names.push_back(container.cell_barcode(cell_id));
-			for (auto const &gene : container.cell_genes(cell_id))
+			cell_names.push_back(container.cell(cell_id).barcode());
+			for (auto const &gene : container.cell(cell_id).genes())
 			{
 				if (gene_ids.emplace(gene.first, gene_ids.size()).second)
 				{
@@ -342,13 +355,13 @@ namespace Estimation
 		}
 
 		size_t column_num = 0;
-		arma::sp_umat cm(arma::uword(gene_ids.size()), arma::uword(container.number_of_real_cells()));
-		for (size_t cell_id = 0; cell_id < container.cell_barcodes_raw().size(); cell_id++)
+		arma::sp_umat cm(arma::uword(gene_ids.size()), arma::uword(container.real_cells_number()));
+		for (size_t cell_id = 0; cell_id < container.total_cells_number(); cell_id++)
 		{
-			if (!container.is_cell_real(cell_id))
+			if (!container.cell(cell_id).is_real())
 				continue;
 
-			for (auto const &gene : container.cell_genes(cell_id))
+			for (auto const &gene : container.cell(cell_id).genes())
 			{
 				size_t row = gene_ids.at(gene.first);
 				size_t cell_value = 0;
@@ -372,5 +385,26 @@ namespace Estimation
 		}
 
 		return cm;
+	}
+
+	IntegerVector ResultsPrinter::get_requested_umis_per_cb(const CellsDataContainer &container) const
+	{
+		IntegerVector requested_umis_per_cb(container.real_cells_number());
+		CharacterVector cell_names(container.real_cells_number());
+
+		int real_cell_id = 0;
+		for (size_t i = 0; i < container.total_cells_number(); ++i)
+		{
+			auto const &cell = container.cell(i);
+			if (!cell.is_real())
+				continue;
+
+			cell_names[real_cell_id] = cell.barcode();
+			requested_umis_per_cb[real_cell_id] = cell.requested_umis_num();
+			real_cell_id++;
+		}
+
+		requested_umis_per_cb.attr("names") = cell_names;
+		return requested_umis_per_cb;
 	}
 }

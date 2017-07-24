@@ -49,5 +49,7 @@ namespace Estimation
 		ResultsPrinter(bool write_matrix, bool reads_output);
 
 		void save_results(const CellsDataContainer &container, const std::string &filename) const;
+
+		Rcpp::IntegerVector get_requested_umis_per_cb(const CellsDataContainer &container) const;
 	};
 }

@@ -11,7 +11,7 @@ namespace Merge
 	protected:
 		virtual ul_list_t merge_inited(Estimation::CellsDataContainer &container) const override
 		{
-			ul_list_t reassign_targets(container.cell_barcodes_raw().size());
+			ul_list_t reassign_targets(container.total_cells_number());
 			std::iota(reassign_targets.begin(), reassign_targets.end(), 0);
 			return reassign_targets;
 		}

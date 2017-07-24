@@ -5,7 +5,7 @@ namespace Estimation
 {
 namespace Merge
 {
-	MergeStrategyAbstract::MergeStrategyAbstract(unsigned min_genes_before_merge, unsigned min_genes_after_merge)
+	MergeStrategyAbstract::MergeStrategyAbstract(size_t min_genes_before_merge, size_t min_genes_after_merge)
 			: _min_genes_before_merge(min_genes_before_merge)
 			, _min_genes_after_merge(std::max(min_genes_after_merge, min_genes_before_merge))
 	{}
@@ -28,12 +28,12 @@ namespace Merge
 	void MergeStrategyAbstract::release()
 	{}
 
-	int MergeStrategyAbstract::min_genes_before_merge() const
+	size_t MergeStrategyAbstract::min_genes_before_merge() const
 	{
 		return this->_min_genes_before_merge;
 	}
 
-	int MergeStrategyAbstract::min_genes_after_merge() const
+	size_t MergeStrategyAbstract::min_genes_after_merge() const
 	{
 		return this->_min_genes_after_merge;
 	}

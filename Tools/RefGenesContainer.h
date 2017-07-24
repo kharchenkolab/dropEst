@@ -54,7 +54,6 @@ namespace Tools
 		typedef std::set<QueryResult> query_results_t;
 
 	private:
-		typedef std::set<GtfRecord> genes_set_t;
 		typedef std::unordered_map<std::string, IntervalsContainer<std::string>> transcript_intervals_map_t;
 		typedef std::unordered_map<std::string, std::unordered_map<std::string, IntervalsContainer<GtfRecord::RecordType>>> exon_intervals_map_t;
 		typedef std::unordered_map<std::string, std::unordered_map<std::string, Interval>> transcript_positions_map_t;

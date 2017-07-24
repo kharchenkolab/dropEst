@@ -32,7 +32,7 @@ struct Fixture
 								 "        <min_genes_before_merge>0</min_genes_before_merge>\n"
 								 "    </Estimation>");
 
-		using Mark = CellsDataContainer::Mark;
+		using Mark = UMI::Mark;
 
 		auto barcodes_parser = std::shared_ptr<Merge::BarcodesParsing::BarcodesParser>(
 				new Merge::BarcodesParsing::InDropBarcodesParser(PROJ_DATA_PATH + std::string("/barcodes/test_est")));
@@ -98,8 +98,8 @@ BOOST_AUTO_TEST_SUITE(TestEstimatorMergeProbs)
 		BOOST_CHECK_EQUAL(this->estimator._umis_distribution["TTCTTT"], 2);
 		BOOST_CHECK_EQUAL(this->estimator._umis_distribution["AAAAAA"], 1);
 
-		BOOST_CHECK_EQUAL(this->container_full->cell_genes(5).size(), 2);
-		BOOST_CHECK_EQUAL(this->container_full->cell_genes(6).size(), 2);
+		BOOST_CHECK_EQUAL(this->container_full->cell(5).size(), 2);
+		BOOST_CHECK_EQUAL(this->container_full->cell(6).size(), 2);
 
 //		std::map<Merge::PoissonRealBarcodesMergeStrategy::bs_umi_t, int> distr;
 //		for (auto const &umi : this->real_cb_strat->_umis_bootstrap_distribution)

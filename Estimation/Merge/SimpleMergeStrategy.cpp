@@ -14,7 +14,7 @@ namespace Merge
 																					 size_t base_cell_ind) const
 	{
 		u_u_hash_t common_umigs_per_cell;
-		for (auto const &gene: container.cell_genes(base_cell_ind))
+		for (auto const &gene: container.cell(base_cell_ind).genes())
 		{
 			const std::string &gene_name = gene.first;
 			auto const &umis = gene.second;
@@ -29,7 +29,7 @@ namespace Merge
 						continue;
 
 					// We don't need to check if cell is reassigned, because of sorting in descending order
-					if (container.cell_genes(cell_with_same_umig_id).size() >= container.cell_genes(base_cell_ind).size())
+					if (container.cell(cell_with_same_umig_id).size() >= container.cell(base_cell_ind).size())
 					{
 						common_umigs_per_cell[cell_with_same_umig_id]++;
 					}
@@ -40,7 +40,7 @@ namespace Merge
 		return common_umigs_per_cell;
 	}
 
-	SimpleMergeStrategy::SimpleMergeStrategy(unsigned min_genes_before_merge, unsigned min_genes_after_merge,
+	SimpleMergeStrategy::SimpleMergeStrategy(size_t min_genes_before_merge, size_t min_genes_after_merge,
 	                                         unsigned max_merge_edit_distance, double min_merge_fraction)
 		: MergeStrategyBase(min_genes_before_merge, min_genes_after_merge, max_merge_edit_distance, min_merge_fraction)
 	{}
@@ -60,16 +60,17 @@ namespace Merge
 		for (auto const &cell: cells_with_common_umigs)
 		{
 			size_t cell_ind = cell.first;
-			double cb_fraction =  0.5 * cell.second *( 1. / container.cell_size(base_cell_ind) + 1. / container.cell_size(cell_ind));
+			double cb_fraction =  0.5 * cell.second *
+					(1. / container.cell(base_cell_ind).umis_number() + 1. / container.cell(cell_ind).umis_number());
 
 //			container.stats().set(Stats::MERGE_PROB_BY_CELL, container.cell_barcode(base_cell_ind),
 //								  container.cell_barcode(cell_ind), cb_fraction);
 
 			if (cb_fraction - top_cb_fraction > EPS || (std::abs(cb_fraction - top_cb_fraction) < EPS &&
-														container.cell_genes(cell_ind).size() > top_cb_genes_count))
+					container.cell(cell_ind).size() > top_cb_genes_count))
 			{
-				int ed = Tools::edit_distance(container.cell_barcode((size_t)base_cell_ind).c_str(),
-											  container.cell_barcode(cell_ind).c_str());
+				int ed = Tools::edit_distance(container.cell((size_t)base_cell_ind).barcode().c_str(),
+											  container.cell(cell_ind).barcode().c_str());
 
 				if (ed >= this->_max_merge_edit_distance)
 					continue;
@@ -79,7 +80,7 @@ namespace Merge
 
 				top_cell_ind = cell_ind;
 				top_cb_fraction = cb_fraction;
-				top_cb_genes_count = container.cell_genes(cell_ind).size();
+				top_cb_genes_count = container.cell(cell_ind).size();
 			}
 		}
 
@@ -94,7 +95,7 @@ namespace Merge
 		MergeStrategyAbstract::init(container);
 		for (auto const &genes_count : container.cells_gene_counts_sorted())
 		{
-			for (auto const &gene : container.cell_genes(genes_count.index))
+			for (auto const &gene : container.cell(genes_count.index).genes())
 			{
 				for (auto const &umi : gene.second)
 				{

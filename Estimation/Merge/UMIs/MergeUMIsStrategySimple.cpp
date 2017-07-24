@@ -27,7 +27,7 @@ void MergeUMIsStrategySimple::merge(CellsDataContainer &container) const
 	for (size_t genes_count_id = 0; genes_count_id < cells_gene_counts.size(); ++genes_count_id)
 	{
 		size_t cell_id = cells_gene_counts[genes_count_id].index;
-		for (auto const &gene : container.cell_genes(cell_id))
+		for (auto const &gene : container.cell(cell_id).genes())
 		{
 			s_hash_t bad_umis;
 			for (auto const &umi : gene.second)
@@ -59,9 +59,8 @@ bool MergeUMIsStrategySimple::is_umi_real(const std::string &umi) const
 	return umi.find('N') == std::string::npos;
 }
 
-CellsDataContainer::s_s_hash_t
-MergeUMIsStrategySimple::find_targets(const CellsDataContainer::umi_map_t &all_umis,
-                                      const s_hash_t &bad_umis) const
+CellsDataContainer::s_s_hash_t MergeUMIsStrategySimple::find_targets(const Cell::umi_map_t &all_umis,
+                                                                     const s_hash_t &bad_umis) const
 {
 	s_vec_t umis_without_pairs;
 	CellsDataContainer::s_s_hash_t merge_targets;

@@ -12,7 +12,7 @@ namespace Merge
 MergeStrategyAbstract::ul_list_t MergeStrategyBase::merge_inited(CellsDataContainer &container) const
 {
 	ISIHM cb_reassigned_to_it;
-	ul_list_t cb_reassign_targets(container.cell_barcodes_raw().size());
+	ul_list_t cb_reassign_targets(container.total_cells_number());
 	std::iota(cb_reassign_targets.begin(), cb_reassign_targets.end(), 0);
 
 	auto const& cell_genes_counts = container.cells_gene_counts_sorted();
@@ -88,13 +88,13 @@ MergeStrategyAbstract::ul_list_t MergeStrategyBase::merge_inited(CellsDataContai
 void MergeStrategyBase::merge_force(Estimation::CellsDataContainer &container, size_t src_cell_id,
 									    size_t target_cell_ind, ul_list_t &cb_reassign_targets, ISIHM &cb_reassigned_to_it) const
 {
-	L_DEBUG << "Merge: " << container.cell_barcode(src_cell_id) << " to " << container.cell_barcode(target_cell_ind);
+	L_DEBUG << "Merge: " << container.cell(src_cell_id).barcode() << " to " << container.cell(target_cell_ind).barcode();
 
 	container.merge_cells(src_cell_id, target_cell_ind);
 	this->reassign(src_cell_id, target_cell_ind, cb_reassign_targets, cb_reassigned_to_it);
 }
 
-MergeStrategyBase::MergeStrategyBase(unsigned min_genes_before_merge, unsigned min_genes_after_merge,
+MergeStrategyBase::MergeStrategyBase(size_t min_genes_before_merge, size_t min_genes_after_merge,
                                      unsigned max_merge_edit_distance, double min_merge_fraction)
 	: MergeStrategyAbstract(min_genes_before_merge, min_genes_after_merge)
 	, _max_merge_edit_distance(max_merge_edit_distance)
@@ -102,13 +102,13 @@ MergeStrategyBase::MergeStrategyBase(unsigned min_genes_before_merge, unsigned m
 {}
 
 
-size_t MergeStrategyBase::get_umigs_intersect_size(const genes_t &cell1_dist, const genes_t &cell2_dist)
+size_t MergeStrategyBase::get_umigs_intersect_size(const Cell &cell1, const Cell &cell2)
 {
-	std::map<std::string, CellsDataContainer::umi_map_t>::const_iterator gene1_it = cell1_dist.begin(); //Not unordered!!!
-	std::map<std::string, CellsDataContainer::umi_map_t>::const_iterator gene2_it = cell2_dist.begin();
+	std::map<std::string, Cell::umi_map_t>::const_iterator gene1_it = cell1.genes().begin(); //Not unordered!!!
+	std::map<std::string, Cell::umi_map_t>::const_iterator gene2_it = cell2.genes().begin();
 
 	size_t intersect_size = 0;
-	while (gene1_it != cell1_dist.end() && gene2_it != cell2_dist.end())
+	while (gene1_it != cell1.genes().end() && gene2_it != cell2.genes().end())
 	{
 		int comp_res = gene1_it->first.compare(gene2_it->first);
 		if (comp_res < 0)

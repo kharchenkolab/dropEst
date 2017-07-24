@@ -74,8 +74,8 @@ double PoissonTargetEstimator::get_bootstrap_intersect_prob(const CellsDataConta
 																	  size_t repeats_count, unsigned multiplies_count) const
 {
 	const size_t test_sample_size = 100;
-	auto const &cell1_dist = container.cell_genes(cell1_ind);
-	auto const &cell2_dist = container.cell_genes(cell2_ind);
+	auto const &cell1_dist = container.cell(cell1_ind);
+	auto const &cell2_dist = container.cell(cell2_ind);
 	size_t intersect_size = MergeStrategyBase::get_umigs_intersect_size(cell1_dist, cell2_dist);
 	if (intersect_size == 0)
 		return 1;
@@ -119,16 +119,15 @@ double PoissonTargetEstimator::estimate_by_r(ul_list_t sizes, size_t val) const
 	return (*this->_r)["res"];
 }
 
-double PoissonTargetEstimator::get_bootstrap_intersect_sizes(const genes_t &cell1_dist,
-																	   const genes_t &cell2_dist,
-																	   size_t real_intersect_size,
-																	   size_t repeats_count, ul_list_t &sizes) const
+double PoissonTargetEstimator::get_bootstrap_intersect_sizes(const Cell &cell1, const Cell &cell2,
+                                                             size_t real_intersect_size, size_t repeats_count,
+                                                             ul_list_t &sizes) const
 {
 	std::vector<size_t >c1_dist, c2_dist;
-	for (auto const &item : cell1_dist)
+	for (auto const &item : cell1.genes())
 	{
-		auto const& cell2_it = cell2_dist.find(item.first);
-		if (cell2_it == cell2_dist.end())
+		auto const& cell2_it = cell2.genes().find(item.first);
+		if (cell2_it == cell2.genes().end())
 			continue;
 
 		c1_dist.push_back(item.second.size());

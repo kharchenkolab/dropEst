@@ -11,7 +11,7 @@ namespace Estimation
 	namespace Merge
 	{
 		RealBarcodesMergeStrategy::RealBarcodesMergeStrategy(barcodes_parser_ptr barcodes_parser,
-		                                                     unsigned min_genes_before_merge, unsigned min_genes_after_merge,
+		                                                     size_t min_genes_before_merge, size_t min_genes_after_merge,
 		                                                     unsigned max_merge_edit_distance, double min_merge_fraction)
 				: MergeStrategyBase(min_genes_before_merge, min_genes_after_merge, max_merge_edit_distance, min_merge_fraction)
 				, _barcodes_parser(barcodes_parser)
@@ -38,9 +38,11 @@ namespace Estimation
 			size_t best_neighbour_cell_ind = neighbour_cells[0];
 			for (size_t neighbour_cell_ind: neighbour_cells)
 			{
-				size_t intersect_size = RealBarcodesMergeStrategy::get_umigs_intersect_size(container.cell_genes(base_cell_ind),
-																							container.cell_genes(neighbour_cell_ind));
-				double current_frac =  0.5 * intersect_size *( 1. / container.cell_size(base_cell_ind) + 1. / container.cell_size(neighbour_cell_ind));
+				size_t intersect_size = RealBarcodesMergeStrategy::get_umigs_intersect_size(
+						container.cell(base_cell_ind), container.cell(neighbour_cell_ind));
+
+				double current_frac =  0.5 * intersect_size *
+						( 1. / container.cell(base_cell_ind).umis_number() + 1. / container.cell(neighbour_cell_ind).umis_number());
 
 				if (max_umigs_intersection_frac < current_frac)
 				{
@@ -62,7 +64,7 @@ namespace Estimation
 																							   size_t base_cell_ind) const
 		{
 			using BarcodesParsing::BarcodesParser;
-			const std::string &base_cb = container.cell_barcode(base_cell_ind);
+			const std::string &base_cb = container.cell(base_cell_ind).barcode();
 			std::vector<BarcodesParser::BarcodesDistance> barcodes_dists(this->_barcodes_parser->get_real_neighbour_cbs(base_cb));
 
 			ul_list_t neighbour_cbs;
@@ -87,8 +89,8 @@ namespace Estimation
 
 				auto const current_cell_it = container.cell_ids_by_cb().find(cur_real_cb);
 				if (current_cell_it != container.cell_ids_by_cb().end() &&
-						container.cell_genes(current_cell_it->second).size() >= this->min_genes_before_merge() &&
-						container.cell_size(current_cell_it->second) >= container.cell_size(base_cell_ind)) // Should pass equal sizes because it should pass current cell
+						container.cell(current_cell_it->second).size() >= this->min_genes_before_merge() &&
+						container.cell(current_cell_it->second).umis_number() >= container.cell(base_cell_ind).umis_number()) // Should pass equal sizes because it should pass current cell
 				{
 					neighbour_cbs.push_back(current_cell_it->second);
 				}

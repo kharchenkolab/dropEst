@@ -22,7 +22,7 @@ namespace Merge
 	{
 		auto main_config = config.get_child("Merge", boost::property_tree::ptree());
 
-		this->_min_genes_before_merge = main_config.get<unsigned>("min_genes_before_merge", 10);
+		this->_min_genes_before_merge = main_config.get<size_t>("min_genes_before_merge", 10);
 
 		if (min_genes_after_merge > 0)
 		{
@@ -30,7 +30,7 @@ namespace Merge
 		}
 		else
 		{
-			this->_min_genes_after_merge = main_config.get<unsigned>("min_genes_after_merge", 10);
+			this->_min_genes_after_merge = main_config.get<size_t>("min_genes_after_merge", 10);
 		}
 
 		this->_max_merge_edit_distance = main_config.get<unsigned>("max_cb_merge_edit_distance");

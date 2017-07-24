@@ -36,7 +36,7 @@ struct Params
 	string log_prefix = "";
 	string output_name = "";
 	string read_params_names_str = ""; //TODO: deprecated. Should be updated after the implementation of quality parsing.
-	std::string gene_match_level = CellsDataContainer::Mark::DEFAULT_CODE;
+	std::string gene_match_level = UMI::Mark::DEFAULT_CODE;
 	int max_cells_number = -1;
 	int min_genes_after_merge = -1;
 };
@@ -213,7 +213,7 @@ CellsDataContainer get_cells_container(const vector<string> &files, const Params
                                        const boost::property_tree::ptree &est_config,
                                        const BamProcessing::BamController &bam_controller)
 {
-	auto match_levels = CellsDataContainer::Mark::get_by_code(params.gene_match_level);
+	auto match_levels = UMI::Mark::get_by_code(params.gene_match_level);
 
 	Merge::MergeStrategyFactory merge_factory(est_config, params.min_genes_after_merge);
 	CellsDataContainer container(merge_factory.get_cb_strat(params.merge_tags, params.merge_tags_precise),

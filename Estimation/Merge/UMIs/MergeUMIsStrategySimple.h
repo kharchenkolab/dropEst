@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Estimation/Cell.h>
 #include <Estimation/CellsDataContainer.h>
 
 #include <unordered_set>
@@ -30,7 +31,7 @@ namespace Estimation
 				static const std::string nucleotides;
 
 			private:
-				CellsDataContainer::s_s_hash_t find_targets(const CellsDataContainer::umi_map_t &all_umis, const s_hash_t &bad_umis) const;
+				CellsDataContainer::s_s_hash_t find_targets(const Cell::umi_map_t &all_umis, const s_hash_t &bad_umis) const;
 				void remove_similar_wrong_umis(s_vec_t &wrong_umis) const;
 				CellsDataContainer::s_s_hash_t fill_wrong_umis(s_vec_t &wrong_umis) const;
 

@@ -5,6 +5,7 @@
 #include <boost/unordered_set.hpp>
 
 #include <boost/functional/hash.hpp>
+#include "Cell.h"
 
 namespace Estimation
 {
@@ -12,6 +13,7 @@ namespace Estimation
 	{
 	public:
 		typedef std::vector<std::string> str_list_t;
+		typedef std::vector<Cell> cells_list_t;
 		typedef std::vector<int> int_list_t;
 		typedef std::vector<size_t> ids_t;
 
@@ -68,6 +70,7 @@ namespace Estimation
 		void get(CellStatType counter, str_list_t &names, int_list_t &counts) const;
 		int_list_t get(CellStatType counter) const;
 		const s_cnt_t& get_raw(CellStatType stat) const;
+		const s_cnt_t get_filtered(CellStatType stat, const str_list_t &filter_cells) const;
 
 		void set(StrStrStatType stat, const std::string &base_type, const std::string &subtype, int value);
 		void set(StrStrFloatType stat, const std::string &base_type, const std::string &subtype, double value);
@@ -84,6 +87,6 @@ namespace Estimation
 		const ss_cnt_t& get_raw(StrStrStatType stat) const;
 		const ss_float_t& get_raw(StrStrFloatType stat) const;
 
-		void merge(const ids_t &reassigned, const str_list_t &cell_names);
+		void merge(const ids_t &reassigned, const cells_list_t &cell_names);
 	};
 }

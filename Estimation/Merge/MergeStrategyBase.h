@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MergeStrategyAbstract.h"
+#include <Estimation/Cell.h>
 
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
@@ -23,7 +24,6 @@ namespace Merge
 		typedef boost::unordered_map<size_t, size_t> u_u_hash_t;
 		typedef boost::unordered_set<size_t> i_set_t;
 		typedef boost::unordered_map<size_t, i_set_t> ISIHM;
-		typedef Estimation::CellsDataContainer::genes_t genes_t;
 
 	protected:
 		const double _min_merge_fraction;
@@ -43,10 +43,10 @@ namespace Merge
 		virtual size_t get_log_period() const;
 
 	public:
-		MergeStrategyBase(unsigned min_genes_before_merge, unsigned min_genes_after_merge,
+		MergeStrategyBase(size_t min_genes_before_merge, size_t min_genes_after_merge,
 		                  unsigned max_merge_edit_distance, double min_merge_fraction);
 
-		static size_t get_umigs_intersect_size(const genes_t &cell1_dist, const genes_t &cell2_dist);
+		static size_t get_umigs_intersect_size(const Cell &cell1, const Cell &cell2);
 	};
 }
 }

@@ -29,8 +29,8 @@ namespace Merge
 		typedef std::shared_ptr<BarcodesParsing::BarcodesParser> barcodes_parser_ptr;
 
 	private:
-		unsigned int _min_genes_before_merge;
-		unsigned int _min_genes_after_merge;
+		size_t _min_genes_before_merge;
+		size_t _min_genes_after_merge;
 		unsigned int _max_merge_edit_distance;
 
 		double _min_merge_fraction;

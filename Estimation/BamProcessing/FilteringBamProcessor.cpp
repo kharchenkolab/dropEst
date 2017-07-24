@@ -31,7 +31,7 @@ namespace Estimation
 				if (!good_cells_mask[target_cell])
 					continue;
 
-				this->merge_cbs[container.cell_barcode(base_cell_id)] = container.cell_barcode(target_cell);
+				this->merge_cbs[container.cell(base_cell_id).barcode()] = container.cell(target_cell).barcode();
 			}
 
 			L_TRACE << "Writer prepared, " << this->merge_cbs.size() << " cbs to write";
@@ -45,7 +45,7 @@ namespace Estimation
 
 		void FilteringBamProcessor::save_read(const std::string &cell_barcode, const std::string &chr_name,
 											  const std::string &umi, const std::string &gene,
-											  const CellsDataContainer::Mark &umi_mark)
+											  const UMI::Mark &umi_mark)
 		{}
 
 		void FilteringBamProcessor::write_alignment(BamTools::BamAlignment alignment, const std::string &gene,
@@ -58,9 +58,9 @@ namespace Estimation
 			if (cb_iter == this->merge_cbs.end())
 				return;
 
-			auto const &cell_map = _container.cell_genes(_container.cell_ids_by_cb().at(cb_iter->second));
-			auto gene_map_iter = cell_map.find(gene);
-			if (gene_map_iter == cell_map.end())
+			auto const &genes = _container.cell(_container.cell_ids_by_cb().at(cb_iter->second)).genes();
+			auto gene_map_iter = genes.find(gene);
+			if (gene_map_iter == genes.end())
 				return;
 
 			if (gene_map_iter->second.find(read_params.umi()) == gene_map_iter->second.end())

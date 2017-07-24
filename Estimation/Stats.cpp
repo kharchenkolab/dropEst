@@ -38,6 +38,20 @@ namespace Estimation
 		return this->_cell_counters[stat];
 	}
 
+	const Stats::s_cnt_t Stats::get_filtered(Stats::CellStatType stat, const Stats::str_list_t &filter_cells) const
+	{
+		s_cnt_t counter;
+		for (auto const &cell : filter_cells)
+		{
+			auto iter = this->_cell_counters[stat].find(cell);
+			if (iter == this->_cell_counters[stat].end())
+				continue;
+
+			counter.insert(*iter);
+		}
+		return counter;
+	}
+
 	void Stats::inc(CellStrStatType stat, const std::string &cell_barcode, const std::string &subtype)
 	{
 		this->_str_cell_counters[stat][cell_barcode][subtype]++;
@@ -81,7 +95,7 @@ namespace Estimation
 		}
 	}
 
-	void Stats::merge(const ids_t &reassigned, const str_list_t &cell_names)
+	void Stats::merge(const ids_t &reassigned, const cells_list_t &cells)
 	{
 		for (auto &cur_stat : this->_str_cell_counters)
 		{
@@ -90,8 +104,8 @@ namespace Estimation
 				if (reassigned[ind] == ind)
 					continue;
 
-				const std::string &cur_name = cell_names[ind];
-				const std::string &target_name = cell_names[reassigned[ind]];
+				const std::string &cur_name = cells.at(ind).barcode();
+				const std::string &target_name = cells.at(reassigned[ind]).barcode();
 				ss_cnt_t::const_iterator cell_from_it = cur_stat.find(cur_name);
 				if (cell_from_it == cur_stat.end())
 					continue;
@@ -113,8 +127,8 @@ namespace Estimation
 				if (reassigned[ind] == ind)
 					continue;
 
-				const std::string &cur_name = cell_names[ind];
-				const std::string &target_name = cell_names[reassigned[ind]];
+				const std::string &cur_name = cells.at(ind).barcode();
+				const std::string &target_name = cells.at(reassigned[ind]).barcode();
 				auto const cell_from_it = cur_stat.find(cur_name);
 				if (cell_from_it == cur_stat.end())
 					continue;

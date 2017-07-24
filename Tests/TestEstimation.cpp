@@ -20,7 +20,7 @@
 #include <Tools/UtilFunctions.h>
 
 using namespace Estimation;
-using Mark = CellsDataContainer::Mark;
+using Mark = UMI::Mark;
 
 struct Fixture
 {
@@ -153,14 +153,20 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	{
 		using namespace Merge;
 		auto cell_ids_by_cb = this->container_full->cell_ids_by_cb();
-		long is1 = RealBarcodesMergeStrategy::get_umigs_intersect_size(this->container_full->cell_genes(cell_ids_by_cb["AAATTAGGTCCA"]),
-																		 this->container_full->cell_genes(cell_ids_by_cb["CCCTTAGGTCCA"]));
+		long is1 = RealBarcodesMergeStrategy::get_umigs_intersect_size(
+				this->container_full->cell(cell_ids_by_cb["AAATTAGGTCCA"]),
+		                                                               this->container_full->cell(
+				                                                               cell_ids_by_cb["CCCTTAGGTCCA"]));
 
-		long is2 = RealBarcodesMergeStrategy::get_umigs_intersect_size(this->container_full->cell_genes(cell_ids_by_cb["AAATTAGGTCCC"]),
-																		 this->container_full->cell_genes(cell_ids_by_cb["AAATTAGGTCCG"]));
+		long is2 = RealBarcodesMergeStrategy::get_umigs_intersect_size(
+				this->container_full->cell(cell_ids_by_cb["AAATTAGGTCCC"]),
+		                                                               this->container_full->cell(
+				                                                               cell_ids_by_cb["AAATTAGGTCCG"]));
 
-		long is3 = RealBarcodesMergeStrategy::get_umigs_intersect_size(this->container_full->cell_genes(cell_ids_by_cb["AAATTAGGTCCA"]),
-																		 this->container_full->cell_genes(cell_ids_by_cb["AAATTAGGTCCC"]));
+		long is3 = RealBarcodesMergeStrategy::get_umigs_intersect_size(
+				this->container_full->cell(cell_ids_by_cb["AAATTAGGTCCA"]),
+		                                                               this->container_full->cell(
+				                                                               cell_ids_by_cb["AAATTAGGTCCC"]));
 
 		BOOST_CHECK_EQUAL(is1, 2);
 		BOOST_CHECK_EQUAL(is2, 1);
@@ -201,8 +207,8 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 		BOOST_REQUIRE_EQUAL(ids.size(), 2);
 
-		BOOST_CHECK_EQUAL(this->container_full->cell_barcode(ids[0]), "AAATTAGGTCCA");
-		BOOST_CHECK_EQUAL(this->container_full->cell_barcode(ids[1]), "AAATTAGGTCCC");
+		BOOST_CHECK_EQUAL(this->container_full->cell(ids[0]).barcode(), "AAATTAGGTCCA");
+		BOOST_CHECK_EQUAL(this->container_full->cell(ids[1]).barcode(), "AAATTAGGTCCC");
 
 		ids = this->real_cb_strat->get_real_neighbour_cbs(*this->container_full, this->container_full->cell_ids_by_cb().at("AAATTAGGTCCC"));
 
@@ -210,7 +216,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 		if (ids.size() >= 2)
 		{
-			BOOST_CHECK_EQUAL(this->container_full->cell_barcode(ids[0]), "AAATTAGGTCCC");
+			BOOST_CHECK_EQUAL(this->container_full->cell(ids[0]).barcode(), "AAATTAGGTCCC");
 		}
 	}
 
@@ -228,13 +234,13 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	{
 		this->container_full->merge_and_filter();
 
-		BOOST_CHECK_EQUAL(this->container_full->cell_barcodes_raw().size(), 7);
+		BOOST_CHECK_EQUAL(this->container_full->total_cells_number(), 7);
 		BOOST_CHECK_EQUAL(this->container_full->filtered_cells().size(), 2);
 
 		BOOST_REQUIRE(this->container_full->filtered_cells().size() >= 2);
 
-		auto &cell0 = this->container_full->cell_genes(this->container_full->filtered_cells()[0]);
-		auto &cell1 = this->container_full->cell_genes(this->container_full->filtered_cells()[1]);
+		auto &cell0 = this->container_full->cell(this->container_full->filtered_cells()[0]);
+		auto &cell1 = this->container_full->cell(this->container_full->filtered_cells()[1]);
 
 		BOOST_CHECK_EQUAL(cell0.size(), 3);
 		BOOST_CHECK_EQUAL(cell1.size(), 4);
@@ -250,13 +256,13 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		BOOST_CHECK_EQUAL(cell1.at("Gene3").at("ACCCCT").read_count, 2);
 		BOOST_CHECK_EQUAL(cell1.at("Gene3").at("CCATTC").read_count, 1);
 
-		BOOST_CHECK(!this->container_full->is_cell_merged(0));
-		BOOST_CHECK(!this->container_full->is_cell_merged(1));
-		BOOST_CHECK(this->container_full->is_cell_merged(2));
-		BOOST_CHECK(this->container_full->is_cell_merged(3));
-		BOOST_CHECK(this->container_full->is_cell_merged(4));
-		BOOST_CHECK(this->container_full->is_cell_merged(5));
-		BOOST_CHECK(!this->container_full->is_cell_merged(6));
+		BOOST_CHECK(!this->container_full->cell(0).is_merged());
+		BOOST_CHECK(!this->container_full->cell(1).is_merged());
+		BOOST_CHECK(this->container_full->cell(2).is_merged());
+		BOOST_CHECK(this->container_full->cell(3).is_merged());
+		BOOST_CHECK(this->container_full->cell(4).is_merged());
+		BOOST_CHECK(this->container_full->cell(5).is_merged());
+		BOOST_CHECK(!this->container_full->cell(6).is_merged());
 
 		BOOST_CHECK_EQUAL(this->container_full->excluded_cells().size(), 1);
 	}
@@ -328,22 +334,22 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		container.add_record("AAATTAGGTCCA", "ACCCCT", "Gene3");
 		container.add_record("AAATTAGGTCCA", "ACCCCT", "Gene4");
 
-		BOOST_CHECK_EQUAL(container.cell_genes(0).at("Gene4").at("ACCCCT").read_count, 1);
+		BOOST_CHECK_EQUAL(container.cell(0).at("Gene4").at("ACCCCT").read_count, 1);
 
 		container.add_record("AAATTAGGTCCA", "TTTTTT", "Gene3", Mark::HAS_NOT_ANNOTATED);
 		container.add_record("AAATTAGGTCCA", "ACCCCT", "Gene4", Mark::HAS_NOT_ANNOTATED);
-		BOOST_CHECK(container.cell_genes(0).at("Gene3").at("TTTTTT").mark.check(Mark::HAS_NOT_ANNOTATED));
-		BOOST_CHECK(container.cell_genes(0).at("Gene4").at("ACCCCT").mark.check(Mark::HAS_NOT_ANNOTATED));
+		BOOST_CHECK(container.cell(0).at("Gene3").at("TTTTTT").mark.check(Mark::HAS_NOT_ANNOTATED));
+		BOOST_CHECK(container.cell(0).at("Gene4").at("ACCCCT").mark.check(Mark::HAS_NOT_ANNOTATED));
 
 		container.set_initialized();
 		container.merge_and_filter();
 
-		BOOST_CHECK_EQUAL(container.query_read_per_umi_per_gene(0).at("Gene3").at("ACCCCT"), 1);
-		BOOST_CHECK_EQUAL(container.query_read_per_umi_per_gene(0).at("Gene3").size(), 1);
+		BOOST_CHECK_EQUAL(container.cell(0).requested_reads_per_umi_per_gene().at("Gene3").at("ACCCCT"), 1);
+		BOOST_CHECK_EQUAL(container.cell(0).requested_reads_per_umi_per_gene().at("Gene3").size(), 1);
 
-		BOOST_CHECK_THROW(container.query_read_per_umi_per_gene(0).at("Gene4").at("ACCCCT"), std::out_of_range);
-		BOOST_CHECK_THROW(container.query_read_per_umi_per_gene(0).at("Gene4"), std::out_of_range);
-		BOOST_CHECK_EQUAL(container.cell_genes(0).at("Gene4").at("ACCCCT").read_count, 2);
+		BOOST_CHECK_THROW(container.cell(0).requested_reads_per_umi_per_gene().at("Gene4").at("ACCCCT"), std::out_of_range);
+		BOOST_CHECK_THROW(container.cell(0).requested_reads_per_umi_per_gene().at("Gene4"), std::out_of_range);
+		BOOST_CHECK_EQUAL(container.cell(0).at("Gene4").at("ACCCCT").read_count, 2);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testGeneMatchLevelUmiExclusion, Fixture)
@@ -361,25 +367,25 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		align.CigarData.push_back(BamTools::CigarOp('M', 10));
 
 		this->test_bam_controller.process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
-		BOOST_CHECK_EQUAL(container.cell_genes(0).at("FAM138A").at("ATGGGC").read_count, 1);
+		BOOST_CHECK_EQUAL(container.cell(0).at("FAM138A").at("ATGGGC").read_count, 1);
 
 		align.Position = 34600;
 		this->test_bam_controller.process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
-		BOOST_CHECK(container.cell_genes(0).at("FAM138A").at("ATGGGC").mark.check(Mark::HAS_NOT_ANNOTATED));
+		BOOST_CHECK(container.cell(0).at("FAM138A").at("ATGGGC").mark.check(Mark::HAS_NOT_ANNOTATED));
 
 		align.Position = 34610;
 		this->test_bam_controller.process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
-		BOOST_CHECK(container.cell_genes(0).at("FAM138A").at("ATGGGC").mark.check(Mark::HAS_NOT_ANNOTATED));
+		BOOST_CHECK(container.cell(0).at("FAM138A").at("ATGGGC").mark.check(Mark::HAS_NOT_ANNOTATED));
 
 		align.Name = "152228477!TGAGTTCTGTTACTGCATC#ATTTTC";
 		align.Position = 34600;
 		this->test_bam_controller.process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
-		BOOST_CHECK(container.cell_genes(0).at("FAM138A").at("ATTTTC").mark.check(Mark::HAS_NOT_ANNOTATED));
+		BOOST_CHECK(container.cell(0).at("FAM138A").at("ATTTTC").mark.check(Mark::HAS_NOT_ANNOTATED));
 
 		container.set_initialized();
 		container.merge_and_filter();
 
-		BOOST_CHECK_THROW(container.query_read_per_umi_per_gene(0).at("FAM138A"), std::out_of_range);
+		BOOST_CHECK_THROW(container.cell(0).requested_reads_per_umi_per_gene().at("FAM138A"), std::out_of_range);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testGeneMatchLevelUmiExclusion2, Fixture)
@@ -397,25 +403,25 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		align.CigarData.push_back(BamTools::CigarOp('M', 10));
 
 		this->test_bam_controller.process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
-		BOOST_CHECK_EQUAL(container.cell_genes(0).at("FAM138A").at("ATGGGC").read_count, 1);
+		BOOST_CHECK_EQUAL(container.cell(0).at("FAM138A").at("ATGGGC").read_count, 1);
 
 		align.Position = 34600;
 		this->test_bam_controller.process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
-		BOOST_CHECK(container.cell_genes(0).at("FAM138A").at("ATGGGC").mark.check(Mark::HAS_NOT_ANNOTATED));
+		BOOST_CHECK(container.cell(0).at("FAM138A").at("ATGGGC").mark.check(Mark::HAS_NOT_ANNOTATED));
 
 		align.Name = "152228477!TGAGTTCTGTTACTGCATC#ATTTTC";
 		align.Position = 34610;
 		this->test_bam_controller.process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
-		BOOST_CHECK(container.cell_genes(0).at("FAM138A").at("ATTTTC").mark == Mark::HAS_EXONS);
+		BOOST_CHECK(container.cell(0).at("FAM138A").at("ATTTTC").mark == Mark::HAS_EXONS);
 
 		align.Position = 34600;
 		this->test_bam_controller.process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
-		BOOST_CHECK(container.cell_genes(0).at("FAM138A").at("ATTTTC").mark.check(Mark::HAS_NOT_ANNOTATED));
+		BOOST_CHECK(container.cell(0).at("FAM138A").at("ATTTTC").mark.check(Mark::HAS_NOT_ANNOTATED));
 
 		container.set_initialized();
 		container.merge_and_filter();
 
-		BOOST_CHECK_EQUAL(container.cell_genes(0).at("FAM138A").size(), 2);
+		BOOST_CHECK_EQUAL(container.cell(0).at("FAM138A").size(), 2);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testUMIMerge, Fixture)
@@ -434,10 +440,10 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 		container.merge_umis(0, "Gene1", merge_targets);
 
-		BOOST_REQUIRE_EQUAL(container.cell_genes(0).at("Gene1").size(), 3);
-		BOOST_CHECK_EQUAL(container.cell_genes(0).at("Gene1").at("CCCCCT").read_count, 2);
-		BOOST_CHECK_EQUAL(container.cell_genes(0).at("Gene1").at("GGGGGG").read_count, 1);
-		BOOST_CHECK_EQUAL(container.cell_genes(0).at("Gene1").at("ACCCCT").read_count, 1);
+		BOOST_REQUIRE_EQUAL(container.cell(0).at("Gene1").size(), 3);
+		BOOST_CHECK_EQUAL(container.cell(0).at("Gene1").at("CCCCCT").read_count, 2);
+		BOOST_CHECK_EQUAL(container.cell(0).at("Gene1").at("GGGGGG").read_count, 1);
+		BOOST_CHECK_EQUAL(container.cell(0).at("Gene1").at("ACCCCT").read_count, 1);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testFillWrongUmis, Fixture)
@@ -492,18 +498,18 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		container.set_initialized();
 
 		this->umi_merge_strat->merge(container);
-		BOOST_REQUIRE_EQUAL(container.cell_genes(0).at("Gene1").size(), 4);
-		BOOST_REQUIRE_EQUAL(container.cell_genes(0).at("Gene2").size(), 3);
+		BOOST_REQUIRE_EQUAL(container.cell(0).at("Gene1").size(), 4);
+		BOOST_REQUIRE_EQUAL(container.cell(0).at("Gene2").size(), 3);
 
-		BOOST_CHECK_EQUAL(container.cell_genes(0).at("Gene1").at("AAACCT").read_count, 3);
-		BOOST_CHECK_EQUAL(container.cell_genes(0).at("Gene1").at("AAACCG").read_count, 1);
-		BOOST_CHECK_EQUAL(container.cell_genes(0).at("Gene1").at("CCCCCT").read_count, 1);
-		BOOST_CHECK_EQUAL(container.cell_genes(0).at("Gene1").at("ACCCCT").read_count, 1);
+		BOOST_CHECK_EQUAL(container.cell(0).at("Gene1").at("AAACCT").read_count, 3);
+		BOOST_CHECK_EQUAL(container.cell(0).at("Gene1").at("AAACCG").read_count, 1);
+		BOOST_CHECK_EQUAL(container.cell(0).at("Gene1").at("CCCCCT").read_count, 1);
+		BOOST_CHECK_EQUAL(container.cell(0).at("Gene1").at("ACCCCT").read_count, 1);
 
-		BOOST_CHECK_NO_THROW(container.cell_genes(0).at("Gene2").at("TTTTTT"));
-		BOOST_CHECK_NO_THROW(container.cell_genes(0).at("Gene2").at("ACCCCT"));
+		BOOST_CHECK_NO_THROW(container.cell(0).at("Gene2").at("TTTTTT"));
+		BOOST_CHECK_NO_THROW(container.cell(0).at("Gene2").at("ACCCCT"));
 
-		for (auto const &umi :container.cell_genes(0).at("Gene2"))
+		for (auto const &umi :container.cell(0).at("Gene2"))
 		{
 			BOOST_CHECK_EQUAL(umi.first.find('N'), std::string::npos);
 		}
@@ -542,7 +548,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		container.set_initialized();
 
 		this->umi_merge_strat->merge(container);
-		for (auto const &umi :container.cell_genes(0).at("ENSG00000100941"))
+		for (auto const &umi :container.cell(0).at("ENSG00000100941"))
 		{
 			BOOST_CHECK_EQUAL(umi.first.find('N'), std::string::npos);
 		}

@@ -32,10 +32,10 @@ namespace BamProcessing
 		return true;
 	}
 
-	CellsDataContainer::Mark ReadParamsParser::get_gene(const std::string &chr_name, BamTools::BamAlignment alignment,
+	UMI::Mark ReadParamsParser::get_gene(const std::string &chr_name, BamTools::BamAlignment alignment,
 	                                                         std::string &gene) const
 	{
-		CellsDataContainer::Mark mark;
+		UMI::Mark mark;
 		gene = "";
 
 		if (!this->_genes_container.is_empty())
@@ -44,21 +44,21 @@ namespace BamProcessing
 		if (!alignment.GetTag(this->tags.gene, gene))
 		{
 			gene = "";
-			mark.add(CellsDataContainer::Mark::HAS_NOT_ANNOTATED);
+			mark.add(UMI::Mark::HAS_NOT_ANNOTATED);
 		}
 		else
 		{
-			mark.add(CellsDataContainer::Mark::HAS_EXONS);
+			mark.add(UMI::Mark::HAS_EXONS);
 		}
 
 		return mark;
 	}
 
-	CellsDataContainer::Mark ReadParamsParser::get_gene_from_reference(const std::string &chr_name,
+	UMI::Mark ReadParamsParser::get_gene_from_reference(const std::string &chr_name,
 	                                                                    const BamTools::BamAlignment &alignment,
 	                                                                    std::string &gene) const
 	{
-		CellsDataContainer::Mark mark;
+		UMI::Mark mark;
 		// TODO: parse CIGAR
 		auto gene_set1 = _genes_container.get_gene_info(chr_name, alignment.Position, alignment.Position + 1);
 		int end_position = alignment.GetEndPosition();
@@ -85,7 +85,7 @@ namespace BamProcessing
 			auto const &non_empty = gene_set1.empty() ? *gene_set2.begin() : *gene_set1.begin();
 			gene = non_empty.gene_name;
 			mark.add(non_empty.type);
-			mark.add(CellsDataContainer::Mark::HAS_NOT_ANNOTATED);
+			mark.add(UMI::Mark::HAS_NOT_ANNOTATED);
 
 			return mark;
 		}

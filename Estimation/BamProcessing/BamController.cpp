@@ -49,7 +49,7 @@ namespace BamProcessing
 
 		for (auto const &match_level : processor->container().gene_match_level())
 		{
-			if (match_level.check(CellsDataContainer::Mark::HAS_INTRONS) && !parser->has_introns())
+			if (match_level.check(UMI::Mark::HAS_INTRONS) && !parser->has_introns())
 			{
 				throw std::runtime_error("Genes file should have transcript_id tag or intron records for intron/exon search option");
 			}
@@ -94,9 +94,10 @@ namespace BamProcessing
 			}
 
 			processor->inc_reads(); // reads with unknown chromosome are not counted
-			if (trace && processor->total_reads_num() % 10000000 == 0)
+			if (trace && processor->total_reads_num() % 2000000 == 0)
 			{
 				processor->trace_state(bam_name);
+				break;
 			}
 
 			BamController::process_alignment(parser, processor, unexpected_chromosomes, chr_name, alignment);
@@ -129,7 +130,7 @@ namespace BamProcessing
 		}
 
 		std::string gene;
-		CellsDataContainer::Mark mark;
+		UMI::Mark mark;
 		try
 		{
 			mark = parser->get_gene(chr_name, alignment, gene);
