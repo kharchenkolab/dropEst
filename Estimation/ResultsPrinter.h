@@ -53,6 +53,6 @@ namespace Estimation
 
 		void save_results(const CellsDataContainer &container, const std::string &filename) const;
 
-		Rcpp::IntegerVector get_requested_umis_per_cb(const CellsDataContainer &container) const;
+		Rcpp::IntegerVector get_requested_umis_per_cb(const CellsDataContainer &container, bool return_reads = false) const;
 	};
 }

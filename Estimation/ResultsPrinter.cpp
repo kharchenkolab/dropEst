@@ -33,6 +33,7 @@ namespace Estimation
 		IntegerVector aligned_reads_per_cb = wrap(container.stats().get_filtered(Stats::TOTAL_READS_PER_CB, real_cell_names)); // Real cells, all UMIs
 		IntegerVector aligned_umis_per_cb = wrap(container.stats().get_filtered(Stats::TOTAL_UMIS_PER_CB, real_cell_names)); // Real cells, all UMIs
 		auto requested_umis_per_cb = this->get_requested_umis_per_cb(container); // Real cells, query UMIs
+		auto requested_reads_per_cb = this->get_requested_umis_per_cb(container, true); // Real cells, query UMIs
 		L_TRACE << "Completed.\n";
 
 		auto count_matrix_filt = this->get_count_matrix(container, true);
@@ -48,6 +49,7 @@ namespace Estimation
 				_["aligned_reads_per_cell"] = aligned_reads_per_cb,
 				_["aligned_umis_per_cell"] = aligned_umis_per_cb,
 				_["requested_umis_per_cb"] = requested_umis_per_cb,
+				_["requested_reads_per_cb"] = requested_reads_per_cb,
 				_["fname"] = wrap(filename));
 
 		R->parseEvalQ("dimnames(d$cm$cm) <- list(d$cm$gene_names, d$cm$cell_names); d$cm <- d$cm$cm");
@@ -388,12 +390,12 @@ namespace Estimation
 		return ResultsPrinter::create_matrix(row_numbers, column_numbers, counts, gene_ids.size(), cell_names.size());
 	}
 
-	IntegerVector ResultsPrinter::get_requested_umis_per_cb(const CellsDataContainer &container) const
+	IntegerVector ResultsPrinter::get_requested_umis_per_cb(const CellsDataContainer &container, bool return_reads) const
 	{
 		IntegerVector requested_umis_per_cb(container.real_cells_number());
 		CharacterVector cell_names(container.real_cells_number());
 
-		int real_cell_id = 0;
+		size_t real_cell_id = 0;
 		for (size_t i = 0; i < container.total_cells_number(); ++i)
 		{
 			auto const &cell = container.cell(i);
@@ -401,7 +403,21 @@ namespace Estimation
 				continue;
 
 			cell_names[real_cell_id] = cell.barcode();
-			requested_umis_per_cb[real_cell_id] = cell.requested_umis_num();
+
+			size_t cell_expression = 0;
+			if (return_reads)
+			{
+				for (auto const &gene : cell.requested_umis_per_gene(true))
+				{
+					cell_expression += gene.second;
+				}
+			}
+			else
+			{
+				cell_expression = cell.requested_umis_num();
+			}
+
+			requested_umis_per_cb[real_cell_id] = cell_expression;
 			real_cell_id++;
 		}
 
