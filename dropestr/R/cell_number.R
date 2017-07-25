@@ -121,10 +121,13 @@ PlotCellsNumberLine <- function(umi.counts, breaks=100, title=NULL, estimate.cel
       gg.theme <- ggplot2::theme(legend.position='none')
     }
     cell.num.df <- plot.df %>% dplyr::group_by(Quality) %>% dplyr::filter(Quality != 'Unknown') %>%
-      dplyr::summarise(x=(max(breaks) + min(breaks)) / 2, n=max(breaks) - min(breaks))
+      dplyr::summarise(x=(max(breaks) + min(breaks)) / 2)
+
+    cell.num.df$n <- length(umi.counts) - plot.data$cell.num$max
+    cell.num.df$n[cell.num.df$Quality == 'High'] <- plot.data$cell.num$min
 
     gg <- gg + ggplot2::geom_area(ggplot2::aes(fill=Quality), alpha=0.4) +
-      ggplot2::geom_text(data=cell.num.df, mapping=ggplot2::aes(x=x, y=-Inf, label=paste0(round(n), '\ncells'), vjust=-1)) +
+      ggplot2::geom_label(data=cell.num.df, mapping=ggplot2::aes(x=x, y=-Inf, label=paste0(round(n), '\ncells'), vjust=-1, hjust=0), fill='white', alpha=0.7) +
       ggplot2::geom_vline(ggplot2::aes(xintercept=plot.data$cell.num$expected), linetype='dashed') + plot.data$fill.scalse +
       gg.theme
   } else {
@@ -193,6 +196,7 @@ PlotCellsNumberSummary <- function(umi.counts, breaks=100, mask=c(T,T,T)) { #TOD
 
 #' @export
 PlotCellNumberLogLog <- function(umi.counts, estimate.cells.number=F, show.legend=T) {
+  umi.counts <- sort(umi.counts, decreasing=T)
   n.cells <- EstimateCellsNumber(umi.counts)
   plot.df <- data.frame(x=1:length(umi.counts), y=umi.counts)
 
@@ -218,8 +222,8 @@ PlotCellNumberLogLog <- function(umi.counts, estimate.cells.number=F, show.legen
 
     gg <- gg + ggplot2::geom_ribbon(ggplot2::aes(ymin=y.min, ymax=y, fill=Quality), alpha=0.4) +
       ggplot2::scale_fill_manual(values=c('green', 'red', 'gray')) +
-      ggplot2::annotate("text", exp(log(n.cells$min) / 2), y=y.min, vjust=-1, label=paste0(n.cells$min, '\ncells')) +
-      ggplot2::annotate("text", exp((log(n.cells$max) + log(length(umi.counts))) / 2), y=y.min, vjust=-1, label=paste0(length(umi.counts) - n.cells$max, '\ncells')) +
+      ggplot2::annotate("label", exp(log(n.cells$min) / 2), y=y.min, vjust=-1, hjust=0, label=paste0(n.cells$min, '\ncells'), alpha=0.7) +
+      ggplot2::annotate("label", exp((log(n.cells$max) + log(length(umi.counts))) / 2), y=y.min, vjust=-1, label=paste0(length(umi.counts) - n.cells$max, '\ncells'), alpha=0.7) +
       gg.theme
   }
 

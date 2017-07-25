@@ -1,4 +1,5 @@
 ---
+title: ''
 date: '`r Sys.Date()`'
 output:
   html_document:
@@ -24,9 +25,18 @@ Input parameters:
 </style>
 
 ```{r, include=FALSE}
+library(ggplot2)
+library(dropestr)
 knitr::opts_chunk$set(fig.width=5, fig.height=3, echo=FALSE, warning=FALSE, message=FALSE)
 ggplot2::theme_set(ggplot2::theme_bw(base_size = 16) + ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5)))
-library(dropestr)
+
+PrintVectorAsTibble <- function(vector, col.names, top.print.size=10) {
+  df.func <- if (require(tibble)) tibble else data.frame
+  vector <- sort(vector, decreasing=T)
+  res <- df.func(names(vector[1:top.print.size]), as.vector(vector[1:top.print.size]))
+  colnames(res) <- col.names
+  return(res)
+}
 ```
 
 ```{r}
@@ -34,68 +44,114 @@ umi_counts <- sort(Matrix::colSums(d$cm), decreasing=T)
 ```
 
 ## Common info
-<div class="float_left">
-```{r, fig.width=5.5, fig.height=3.5, include=FALSE, warning=FALSE}
+<div class = "row">
+<div class = "float_left">
+```{r, fig.width=5.5, fig.height=3.5, warning=FALSE}
 PlotIntergenicFractionByChromosomes(d$reads_per_chr_per_cells, d$nonex_cells_chr_counts)
 ```
 </div>
-<div class="float_right">
+<div class = "float_left">
 ```{r, fig.width=3.5, fig.height=3.5}
 PlotUmisDistribution(d$reads_per_umi_per_cell)
 ```
 </div>
+</div>
 
-<div class="float_left">
-```{r, fig.width=4.5, fig.height=4.5}
+<div class = "row">
+<div class = "col-md-6">
+```{r, fig.width=4.5, fig.height=3.5}
 par(mar = c(4, 4, 0.5, 0))
 PlotReadsPerUmiByCells(d$mean_reads_per_umi, umi_counts, cex.lab=1.4)
 ```
 </div>
-<div class="float_right">
-```{r, fig.width=4.5, fig.height=4.5}
+<div class = "col-md-6">
+```{r, fig.width=4.5, fig.height=3.5}
 PlotGenesPerCell(d$cm)
 ```
 </div>
+</div>
 
 ## Number of cells
-<div class="float_left">
+<div class = "row">
+<div class = "col-md-6">
 ```{r, fig.width=4.5, fig.height=3.5}
-PlotCellsNumberLine(umi_counts, breaks=80, title=NULL, estimate.cells.number=T)
+PlotCellsNumberLine(d$aligned_umis_per_cell, breaks=80, title=NULL, estimate.cells.number=T)
 ```
 </div>
-<div class="float_right">
+<div class = "col-md-6">
 ```{r, fig.width=4.5, fig.height=3.5}
-PlotCellsNumberHist(umi_counts, breaks=60, estimate.cells.number=T, show.legend=F)
+PlotCellsNumberHist(d$aligned_umis_per_cell, breaks=60, estimate.cells.number=T, show.legend=F)
 ```
 </div>
+</div>
+<div class = "row">
 ```{r, fig.width=5, fig.height=3}
-PlotCellNumberLogLog(umi_counts, T, show.legend=F)
+PlotCellNumberLogLog(d$aligned_umis_per_cell, T, show.legend=F)
 ```
+</div>
 
 ## Cells quality
-```{r}
-cells_quality <- EstimateCellsQuality(umi_counts)
-bc_df <- PrepareLqCellsPipelineData(d, mitochondrion.genes = if (exists("mit_genes")) mit_genes else NULL, 
-                                    total.reads.per.cb = if (exists("tags_data")) tags_data$reads_per_cb else NULL)
-scores <- ScoreCells(bc_df, cells_quality)
+```{r, warning=TRUE}
+scores <- ScorePipelineCells(d, mitochondrion.genes = if (exists("mit_genes")) mit_genes else NULL,
+                             tags.data = if (exists("tags_data")) tags_data else NULL)
 ```
 
-<div class="float_left">
+<div class = "row">
+<div class = "col-md-6">
 ```{r, fig.width=4.5, fig.height=4}
-PlotCellScores(scores, cells.num=EstimateCellsNumber(umi_counts), main='Cell scores')
+PlotCellScores(scores, main=paste0('Cell scores (', sum(scores > 0.9), ' cells > 0.9)'), y.threshold=0.9)
 ```
 </div>
-<div class="float_right">
+<div class = "col-md-6">
 ```{r, fig.width=4.5, fig.height=4}
 if (exists("mit_genes")) {
   PlotMitochondrialFraction(d$cm, mit_genes, plot.threshold=T)
 }
 ```
 </div>
+</div>
 
+<div class = "row">
+<div class = "col-md-6">
 ## Saturation
-```{r, message=FALSE, warning=FALSE, fig.width=6, fig.height=4}
+```{r, message=FALSE, warning=FALSE, fig.width=4.5, fig.height=4}
 data(saturation_srr1784312)
-saturation <- EstimateSaturation(d$reads_by_umig, d$reads_by_umig_cbs, sort(Matrix::colSums(d$cm), decreasing=T))
+saturation <- EstimateSaturation(d$saturation_info$reads, d$saturation_info$cbs, sort(Matrix::colSums(d$cm), decreasing=T))
 PlotSaturationEstimates(list(this=saturation, `mouse ES`=saturation_srr1784312))
 ```
+</div>
+<div class = "col-md-6">
+## #UMIs per gene
+```{r, fig.width=4.5, fig.height=4}
+umis_per_gene <- lapply(d$reads_per_umi_per_cell, sapply, length)
+umis_per_gene_vec <- unlist(umis_per_gene)
+
+ggplot() + geom_histogram(aes(x=umis_per_gene_vec[1:100], y= 1 - cumsum(..count../sum(..count..))), bins=50, col=I('black')) + ggplot2::scale_x_log10(expand=c(0, 0.0)) + 
+  labs(x='#UMIs per gene', y='Fraction of genes\nwith higher #UMIs') + ggplot2::annotation_logticks(sides='b')
+```
+</div>
+</div>
+
+## Statistics
+<div class = "row">
+<div class = "col-md-6">
+Top genes:
+```{r}
+PrintVectorAsTibble(Matrix::rowSums(d$cm), c('Gene', '#Molecules'))
+```
+</div>
+<div class = "col-md-6">
+Top UMIs:
+```{r}
+PrintVectorAsTibble(GetUmisDistribution(d$reads_per_umi_per_cell), c('UMI', '#Molecules'), 10)
+```
+</div>
+</div>
+
+```{r}
+# sum(d$requested_reads_per_cb[colnames(d$cm)]) / sum(d$aligned_reads_per_cell)
+# sum(d$requested_reads_per_cb[colnames(d$cm)]) / sum(d$aligned_reads_per_cell[colnames(d$cm)])
+# sum(d$requested_umis_per_cb[colnames(d$cm)]) / sum(d$aligned_umis_per_cell)
+# sum(d$requested_umis_per_cb[colnames(d$cm)]) / sum(d$aligned_umis_per_cell[colnames(d$cm)])
+```
+

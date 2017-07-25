@@ -3,35 +3,34 @@
 \name{PrepareLqCellsData}
 \alias{PrepareLqCellsData}
 \alias{PrepareLqCellsPipelineData}
-\alias{PrepareLqCellsPipelineDataOld}
 \title{Prepare data frame for low-quality cells filtration.}
 \usage{
-PrepareLqCellsData(count.matrix, reads.per.gene,
-  intergenic.reads.per.cell = NULL, total.reads.per.cb = NULL,
-  merge.targets = NULL, mitochondrion.genes = NULL, pcs.number = 3)
+PrepareLqCellsData(count.matrix, aligned.reads.per.cell,
+  total.umis.per.cell = NULL, total.reads.per.cell = NULL,
+  intergenic.reads.per.cell = NULL, mitochondrion.genes = NULL,
+  pcs.number = 3)
 
-PrepareLqCellsPipelineData(data.bc, count.matrix, total.reads.per.cb = NULL,
+PrepareLqCellsPipelineData(data, total.reads.per.cell = NULL,
   mitochondrion.genes = NULL, pcs.number = 3)
-
-PrepareLqCellsPipelineDataOld(data.bc, count.matrix,
-  total.reads.per.cb = NULL, mitochondrion.genes = NULL, pcs.number = 3)
 }
 \arguments{
 \item{count.matrix}{Matrix with counts of umi per gene per cell.}
 
-\item{reads.per.gene}{List, which contains number of reads per gene per cell.}
-
 \item{intergenic.reads.per.cell}{Number of intergenic reads per cell.}
-
-\item{total.reads.per.cb}{Number of reads per cell before alignment.}
-
-\item{merge.targets}{Targets of CB merge. Used only with total.reads.per.cb provided.}
 
 \item{mitochondrion.genes}{Vector of names of mitochondrion genes.}
 
 \item{pcs.number}{maximal number of principal components, which is returned. Set to NULL to return raw data.}
 
-\item{data.bc}{data, extracted with the pipeline.}
+\item{data}{data, extracted with the pipeline.}
+
+\item{reads.per.gene}{List, which contains number of reads per gene per cell.}
+
+\item{total.reads.per.cb}{Number of reads per cell before alignment.}
+
+\item{merge.targets}{Targets of CB merge. Used only with total.reads.per.cb provided.}
+
+\item{merge.targets}{Targets of CB merge. Used only with total.reads.per.cell provided.}
 }
 \value{
 Data frame for low-quality cells filtration.
@@ -39,13 +38,9 @@ Data frame for low-quality cells filtration.
 \description{
 Prepare data frame for low-quality cells filtration.
 The more parameters provided, the more detailed matrix returned.
-
-Wrapper for PrepareLqCellsData for the data, obtained with the old version of InDrop pipeline.
 }
 \section{Functions}{
 \itemize{
-\item \code{PrepareLqCellsPipelineData}: wrapper for the data, obtained with the InDrop pipeline.
-
-\item \code{PrepareLqCellsPipelineDataOld}: wrapper for the data, obtained with the old version of InDrop pipeline.
+\item \code{PrepareLqCellsPipelineData}: wrapper for the data, obtained with the dropEst pipeline.
 }}
 

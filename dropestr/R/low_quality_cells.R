@@ -72,10 +72,10 @@ PrepareLqCellsData <- function(count.matrix, aligned.reads.per.cell, total.umis.
   aligned.reads.per.cell <- aligned.reads.per.cell[analyzed.cbs]
   reads.per.umi <- aligned.reads.per.cell / total.umis.per.cell
 
-  genes.per.cell <- apply(count.matrix, 2, function(cell) sum(cell > 0))[analyzed.cbs]
+  genes.per.cell <- Matrix::colSums(count.matrix[,analyzed.cbs] > 0)
   umis.per.gene <- total.umis.per.cell / genes.per.cell
 
-  low.exp.genes.sum <- Matrix::colSums(count.matrix == 1)[analyzed.cbs]
+  low.exp.genes.sum <- Matrix::colSums(count.matrix[,analyzed.cbs] == 1)
   low.exp.genes.frac <- low.exp.genes.sum / Matrix::colSums(count.matrix > 0)[analyzed.cbs]
   low.exp.genes.umi.frac <- low.exp.genes.sum / total.umis.per.cell
 

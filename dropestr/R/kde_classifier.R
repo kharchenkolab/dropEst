@@ -47,18 +47,38 @@ PredictKDE <- function(clf, x) {
   return(ans)
 }
 
+#' @export
+TrainClassifier <- function(tr.data, cells.quality, umi.counts=NULL, trim.low.quality.rate = 1.5, prior.probs=c(0.5, 0.5)) {
+  hq.cbs <- names(cells.quality)[cells.quality == 'High']
+  lq.cbs <- names(cells.quality)[cells.quality == 'Low']
+  if (!is.null(trim.low.quality.rate) && !is.null(umi.counts) && length(lq.cbs) > length(hq.cbs) * trim.low.quality.rate) {
+    lq.cbs <- names(sort(umi.counts[lq.cbs], decreasing=T)[1:round(length(hq.cbs) * trim.low.quality.rate)])
+  }
+  tr.data <- tr.data[c(hq.cbs, lq.cbs),]
+  tr.answers <- c(rep(1, length(hq.cbs)), rep(0, length(lq.cbs)))
+  return(TrainKDE(tr.data, tr.answers, prior.probs=prior.probs))
+}
+
 #' Score cells with a KDE classifier.
 #'
-#' @param data data for classification.
-#' @param hq.cbs vector of cell barcodes, which mostly have high quality.
-#' @param lq.cbs vector of cell barcodes, which mostly have low quality.
+#' @param pipeline.data data for classification.
 #' @return Probability of cell to be high-quality.
 #'
 #' @export
-ScoreCells <- function(data, cells.quality) {
-  hq.cbs <- names(cells.quality)[cells.quality == 'High']
-  lq.cbs <- names(cells.quality)[cells.quality == 'Low']
-  tr.data <- data[c(hq.cbs, lq.cbs),]
-  tr.answers <- c(rep(1, length(hq.cbs)), rep(0, length(lq.cbs)))
-  return(PredictKDE(TrainKDE(tr.data, tr.answers), data)[, 2])
+ScorePipelineCells <- function(pipeline.data, filter.high.mit.fraction=F, mitochondrion.genes=NULL, tags.data=NULL) {
+  if (filter.high.mit.fraction && is.null(mitochondrion.genes))
+    stop("List of mitochondrial genes must be provided to filter cells with high mitochondrial fraction")
+
+  umi.counts.raw <- sort(Matrix::colSums(pipeline.data$cm_raw), decreasing=T)
+  cells.quality <- EstimateCellsQuality(umi.counts.raw)
+
+  if (filter.high.mit.fraction) {
+    cells.quality <- FilterMitochondrionCells(pipeline.data$cm_raw, mitochondrion.genes, cells.quality)
+  }
+
+  bc.df <- PrepareLqCellsPipelineData(pipeline.data, mitochondrion.genes = mitochondrion.genes, tags.data$reads_per_cb)
+  clf <- TrainClassifier(bc.df, cells.quality, umi.counts.raw)
+
+  umi.counts <- sort(Matrix::colSums(pipeline.data$cm), decreasing=T)
+  return(PredictKDE(clf, bc.df[names(umi.counts),])[,2])
 }
