@@ -37,7 +37,7 @@ Build:
 
 ```bash
 cd dropEst
-cmake && make
+cmake . && make
 ```
 
 ### Troubleshooting
@@ -46,7 +46,7 @@ If `cmake` can't find one of the libraries, or you want to use some specific ver
 * BamTools: BAMTOOLS_ROOT.
 * R: R_ROOT. Can be found by running the `cat(R.home())` in R.
 
-These variables should be set to the path to the installed library. It can be done either using command line options: `cmake -D R_ROOT="path_to_r"` or by adding variable declaration to CMakeLists.txt: `set(R_ROOT path_to_r)`.
+These variables should be set to the path to the installed library. It can be done either by using command line options: `cmake -D R_ROOT="path_to_r"` or by adding the variable declaration to CMakeLists.txt: `set(R_ROOT path_to_r)`.
 
 ## dropTag
     droptag -- generate tagged fastq files for alignment
@@ -80,10 +80,10 @@ Currently supported Indrop Library versions for Tag stage:
 
 ### inDrop v3
 * Reads to provide: (can be fastq or fastq.gz)
-  * Read_1: Cell barcode part 1 (length 8)
-  * Read_2: Cell barcode part 2 + UMI (length 14)
-  * Read_3: Gene read (length 61)
-  * Read_4: Library barcode (length 8) *(optional)*
+  * Read 1: Cell barcode part 1 (length 8)
+  * Read 2: Cell barcode part 2 + UMI (length 14)
+  * Read 3: Gene read (length 61)
+  * Read 4: Library barcode (length 8) *(optional)*
 * Provide the config.xml file *(Explanation of the Paramters in "config-desc.xml" (write more about important parameters here?))*
 * Call `droptag`:
 ```bash
@@ -99,7 +99,7 @@ Currently supported Indrop Library versions for Tag stage:
 *  -q, --quiet : disable logs  
 
 ## Alignment
-dropTag write the tagged reads into multiple files. All these files must be aligned to reference, and all bam files with the alignments must be provided as input for the dropEst stage. In the paper we used [TopHat2](https://ccb.jhu.edu/software/tophat/tutorial.shtml) aligner, however any RNA-seq aligners (i.e. [Kallisto](https://pachterlab.github.io/kallisto/)) can be used.
+dropTag writes the tagged reads into multiple files. All these files must be aligned to reference, and all bam files with the alignments must be provided as input for the dropEst stage. In the paper we used [TopHat2](https://ccb.jhu.edu/software/tophat/tutorial.shtml) aligner, however any RNA-seq aligners (i.e. [Kallisto](https://pachterlab.github.io/kallisto/)) can be used.
 
 Alignment with TopHat2:
 1. Install [bowtie index](http://bowtie-bio.sourceforge.net/tutorial.shtml#preb) for the sequenced organism.
@@ -108,8 +108,7 @@ Alignment with TopHat2:
 ```bash
 tophat2 -p number_of_threads --no-coverage-search -g 1 -G genes.gtf -o output_dir Bowtie2Index/genome reads.fastq.gz
 ```
-4.
-The result needed for the count estimation is *./output_dir/accepted_hits.bam*.
+4. The result needed for the count estimation is *./output_dir/accepted_hits.bam*.
 
 ## dropEst
 
@@ -123,9 +122,9 @@ You have to provide a `genomes.gtf` file with the genome information to run drop
 
 For indrop-v3 you should use the option -m which fixes barcode errors and improves estimation per cell.
 
-
-> dropest [options] -g ./hg19/genes.gtf -c ./config.xml ./align-output/Sample_1.\*/accepted_hits.bam
-
+```bash
+dropest [options] -g ./hg19/genes.gtf -c ./config.xml ./align-output/Sample_1.\*/accepted_hits.bam
+```
 
 ### Options for dropest  
 *  -b, --bam-output: print tagged bam files  
@@ -137,13 +136,13 @@ For indrop-v3 you should use the option -m which fixes barcode errors and improv
 *  -G, --genes-min num: minimal number of genes in output cells  
 *  -l, --log-prefix : logs prefix  
 *  -L, --gene-match-level :  
-  *  e: count UMIs with exonic reads only;  
-  *  i: count UMIs with intronic reads only;  
-  *  E: count UMIs, which have both exonic and not annotated reads;  
-  *  I: count UMIs, which have both intronic and not annotated reads;  
-  *  B: count UMIs, which have both exonic and intronic reads;  
-  *  A: count UMIs, which have exonic, intronic and not annotated reads.  
-  *  Default: -L eEBA.  
+   *  e: count UMIs with exonic reads only;  
+   *  i: count UMIs with intronic reads only;  
+   *  E: count UMIs, which have both exonic and not annotated reads;  
+   *  I: count UMIs, which have both intronic and not annotated reads;  
+   *  B: count UMIs, which have both exonic and intronic reads;  
+   *  A: count UMIs, which have exonic, intronic and not annotated reads.  
+   *  Default: -L eEBA.  
 *  -m, --merge-barcodes : merge linked cell tags  
 *  -M, --merge-barcodes-precise : use precise merge strategy (can be slow), recommended to use when the list of real barcodes is not available  
 *  -o, --output-file filename : output file name  
@@ -154,8 +153,27 @@ For indrop-v3 you should use the option -m which fixes barcode errors and improv
 ## dropReport
 To run the report you have to install [dropestr](#dropest-r-package) R package.
 
+
+
+Required R packages for the report script:
+
+
+```R
+install.packages(c("rmarkdown","preseqR"))
+```
+You need pandoc for the creation of the report.html.
+
+The Report can be called with
+
+```bash
+Rscript dropReport.Rsc cell.counts.rds
+````
+
 # dropEst R package
 I haven't used this yet! I'd like to try it and help you with documentation.
 
 To install the package, use
-> devtools::install_github('hms-dbmi/dropEst/dropestr').
+
+```R
+devtools::install_github('hms-dbmi/dropEst/dropestr').
+```
