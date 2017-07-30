@@ -60,18 +60,19 @@ static void check_files_existence(const Params &params, const vector<string> &ba
 
 static void usage()
 {
-	cerr << "\t" << SCRIPT_NAME <<": estimate molecular counts per cell" << endl;
+	cerr << SCRIPT_NAME <<": estimate molecular counts per cell\n\n";
 	cerr << "SYNOPSIS\n";
-	cerr << "\t" << SCRIPT_NAME << " [options] -c config.xml file_1.bam [..., file_n.bam]" << endl;
+	cerr << "\t" << SCRIPT_NAME << " [options] -c config.xml file_1.bam [..., file_n.bam]\n";
 	cerr << "OPTIONS:\n";
-	cerr << "\t-b, --bam-output: print tagged bam files" << endl;
-	cerr << "\t-c, --config filename: xml file with estimation parameters" << endl;
-	cerr << "\t-C, --cells num: maximal number of output cells" << endl;
-	cerr << "\t-f, --filled-bam: bam file already contains genes/barcodes tags" << endl;
-	cerr << "\t-F, --filtered-bam: print tagged bam file after the merge and filtration" << endl;
-	cerr << "\t-g, --genes filename: file with genes annotations (.bed or .gtf)" << endl;
-	cerr << "\t-G, --genes-min num: minimal number of genes in output cells" << endl;
-	cerr << "\t-l, --log-prefix : logs prefix" << endl;
+	cerr << "\t-b, --bam-output: print tagged bam files\n";
+	cerr << "\t-c, --config filename: xml file with estimation parameters\n";
+	cerr << "\t-C, --cells num: maximal number of output cells\n";
+	cerr << "\t-f, --filled-bam: bam file already contains genes/barcodes tags\n";
+	cerr << "\t-F, --filtered-bam: print tagged bam file after the merge and filtration\n";
+	cerr << "\t-g, --genes filename: file with genes annotations (.bed or .gtf)\n";
+	cerr << "\t-G, --genes-min num: minimal number of genes in output cells\n";
+	cerr << "\t-h, --help: show this info\n";
+	cerr << "\t-l, --log-prefix : logs prefix\n";
 	cerr << "\t-L, --gene-match-level :\n"
 			"\t\te: count UMIs with exonic reads only;\n"
 			"\t\ti: count UMIs with intronic reads only;\n"
@@ -81,12 +82,12 @@ static void usage()
 			"\t\tA: count UMIs, which have exonic, intronic and not annotated reads.\n"
 			"\t\tDefault: -L " << Params().gene_match_level << "." << endl;
 	cerr << "\t-m, --merge-barcodes : merge linked cell tags" << endl;
-	cerr << "\t-M, --merge-barcodes-precise : use precise merge strategy (can be slow), recommended to use when the list of real barcodes is not available" << endl;
-	cerr << "\t-o, --output-file filename : output file name" << endl;
+	cerr << "\t-M, --merge-barcodes-precise : use precise merge strategy (can be slow), recommended to use when the list of real barcodes is not available\n";
+	cerr << "\t-o, --output-file filename : output file name\n";
 //	cerr << "\t-r, --reads-params filename: file or files with serialized params from tags search step. If there are several files then it should be in quotes and splitted by space" << endl;
-	cerr << "\t-R, --reads-output: print count matrix for reads and don't use UMI statistics" << endl;
-	cerr << "\t-q, --quiet : disable logs" << endl;
-	cerr << "\t-w, --write-mtx : write out matrix in MatrixMarket format" << endl;
+	cerr << "\t-R, --reads-output: print count matrix for reads and don't use UMI statistics\n";
+	cerr << "\t-q, --quiet : disable logs\n";
+	cerr << "\t-w, --write-mtx : write out matrix in MatrixMarket format\n";
 }
 
 static Params parse_cmd_params(int argc, char **argv)
@@ -103,6 +104,7 @@ static Params parse_cmd_params(int argc, char **argv)
 			{"filtered-bam",    no_argument,		0, 'F'},
 			{"genes",     		required_argument, 0, 'g'},
 			{"genes-min",     		required_argument, 0, 'G'},
+			{"help",     		no_argument, 0, 'h'},
 			{"log-prefix",		required_argument, 0, 'l'},
 			{"gene-match-level",	required_argument, 0, 'L'},
 			{"merge-barcodes",  no_argument,       0, 'm'},
@@ -115,7 +117,7 @@ static Params parse_cmd_params(int argc, char **argv)
 			{"write-mtx",     no_argument,       0, 'w'},
 			{0, 0,                                 0, 0}
 	};
-	while ((c = getopt_long(argc, argv, "bc:C:fFg:G:l:L:mM:no:r:Rqw", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "bc:C:fFg:G:hl:L:mM:no:r:Rqw", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -140,6 +142,9 @@ static Params parse_cmd_params(int argc, char **argv)
 			case 'G' :
 				params.min_genes_after_merge = atoi(optarg);
 				break;
+			case 'h' :
+				usage();
+				exit(0);
 			case 'l' :
 				params.log_prefix = string(optarg);
 				break;

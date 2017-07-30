@@ -29,8 +29,7 @@ else()
     if(NOT R_ROOT)
         find_program(R_EXECUTABLE R)
     else()
-        find_program(R_EXECUTABLE R
-                HINTS ${LIBRARY_ARCH_HINT_PATH} ${R_ROOT}/bin)
+        find_program(R_EXECUTABLE R HINTS ${R_ROOT}/bin NO_DEFAULT_PATH)
     endif()
 
     if(R_EXECUTABLE-NOTFOUND)
@@ -108,7 +107,7 @@ execute_process(
         OUTPUT_VARIABLE R_MATRIX_PKG
 )
 
-if(${R_MATRIX_PKG} STREQUAL FALSE)
+if(NOT "${R_MATRIX_PKG}" STREQUAL TRUE)
     message(STATUS "Unable to locate R package 'Matrix'")
     set(R_MATRIX_PKG )
 endif()
