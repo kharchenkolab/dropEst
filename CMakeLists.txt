@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 2.8)
 
-project(cp)
+project(dropEst)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMake")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -DBOOST_LOG_DYN_LINK -std=c++11 -Wno-attributes")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -DBOOST_LOG_DYN_LINK -std=c++11 -Wno-attributes -Wno-deprecated -Wno-deprecated-declarations")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -ggdb -gdwarf-2 -g3")
 
 if (NOT "${CMAKE_BUILD_TYPE}" STREQUAL Debug)
@@ -19,11 +19,10 @@ find_package(Boost 1.54.0 COMPONENTS unit_test_framework thread system log iostr
 find_package (Threads REQUIRED)
 find_package (ZLIB REQUIRED)
 
-set(BAMTOOLS_ROOT "/opt/bamtools-2.2.3/")
+#set(BAMTOOLS_ROOT "/opt/bamtools-2.2.3/")
 find_package (BamTools REQUIRED)
 
 # set(R_ROOT "/opt/R-3.3.1/lib64/R/")
-# set(R_PACKAGES "~/R/x86_64-pc-linux-gnu-library/3.3/")
 find_package (R REQUIRED)
 
 set(INCLUDE_DIRS ${Boost_INCLUDE_DIR} ${PROJECT_SOURCE_DIR} ${ZLIB_INCLUDE_DIRS} ${BAMTOOLS_INCLUDE_DIRS} ${R_INCLUDE_DIRS})
