@@ -91,7 +91,7 @@ PlotCellNumberLogLog(d$aligned_umis_per_cell, T, show.legend=F)
 </div>
 
 ## Cells quality
-```{r, warning=TRUE}
+```{r}
 scores <- ScorePipelineCells(d, mitochondrion.genes = if (exists("mit_genes")) mit_genes else NULL,
                              tags.data = if (exists("tags_data")) tags_data else NULL)
 ```
