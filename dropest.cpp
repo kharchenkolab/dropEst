@@ -12,7 +12,6 @@
 
 #include "Estimation/ResultsPrinter.h"
 #include "Tools/Logs.h"
-#include "Tools/RefGenesContainer.h"
 #include "Tools/UtilFunctions.h"
 
 using namespace std;
@@ -84,7 +83,6 @@ static void usage()
 	cerr << "\t-m, --merge-barcodes : merge linked cell tags" << endl;
 	cerr << "\t-M, --merge-barcodes-precise : use precise merge strategy (can be slow), recommended to use when the list of real barcodes is not available" << endl;
 	cerr << "\t-o, --output-file filename : output file name" << endl;
-	cerr << "\t-p, --parallel number_of_threads : number of threads" << endl;
 //	cerr << "\t-r, --reads-params filename: file or files with serialized params from tags search step. If there are several files then it should be in quotes and splitted by space" << endl;
 	cerr << "\t-R, --reads-output: print count matrix for reads and don't use UMI statistics" << endl;
 	cerr << "\t-q, --quiet : disable logs" << endl;
