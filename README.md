@@ -145,7 +145,7 @@ AA//AEEE
 
 ### Example: Resulting fastq file
 @1150996099X2!`AAAGAGGT`GTCATATT#`ACGTTC` 
-*CCTACNACGACAACTAAAATTTCACTNCACATNAAAACATCACTTCGGATTGCAAGCCGC* 
+*CCTACNACGACAACTAAAATTTCACTNCACATNAAAACATCACTTCGGATTGCAAGCCGC*  
 +  
 AA/AA#E<EAEEEEEEEEEEEEEEEE#AEEEE#EEEEAAEEAEE/<EEE///////E///  
 
@@ -183,7 +183,7 @@ For indrop-v3 you should use the option -m which fixes barcode errors and improv
 > dropest [options] -g ./hg19/genes.gtf -c ./config.xml ./align-output/Sample_1.*/accepted_hits.bam 
 
   
-## Options for dropest  
+### Options for dropest  
 -	-b, --bam-output: print tagged bam files  
 -	-c, --config filename: xml file with estimation parameters  
 -	-C, --cells num: maximal number of output cells  
