@@ -89,12 +89,29 @@ PlotGenesPerCell <- function(count.matrix, bins=50) {
 }
 
 #' @export
-PlotMitochondrialFraction <- function(count.matrix, mitochondrion.genes, umi.counts, plot.threshold=F) {
-  umi.counts <- sort(Matrix::colSums(count.matrix), decreasing=T)
-  presented.mit.genes <- intersect(mitochondrion.genes, rownames(count.matrix))
-  mit.frac <- Matrix::colSums(count.matrix[presented.mit.genes, names(umi.counts)]) / umi.counts
-  smoothScatter(mit.frac, xlab='Cell rank', ylab='Fraction', main='Mitochondrial fraction', cex.lab=1.4)
+FractionSmoothScatter <- function(fraction, plot.threshold=F, main='') {
+  smoothScatter(fraction, xlab='Cell rank', ylab='Fraction', main=main, cex.lab=1.4, ylim=c(0, 1))
   if (plot.threshold) {
-    abline(h=median(mit.frac) + 4 * mad(mit.frac), lty=2, lw=1.5)
+    abline(h=median(fraction) + 4 * mad(fraction), lty=2, lw=1.5)
   }
+}
+
+#' @export
+GetChromosomeFraction <- function(reads.per.chr.per.cell, chromosome.name) {
+  read.counts <- sort(rowSums(reads.per.chr.per.cell), decreasing=T)
+  if (!is.null(reads.per.chr.per.cell[[chromosome.name]])) {
+    chromosome.frac <- reads.per.chr.per.cell[names(read.counts), chromosome.name] / read.counts
+  } else {
+    chromosome.frac <- rep(0, nrow(reads.per.chr.per.cell))
+  }
+  names(chromosome.frac) <- names(read.counts)
+  return(chromosome.frac)
+}
+
+#' @export
+GetGenesetFraction <- function(count.matrix, genes) {
+  umi.counts <- sort(Matrix::colSums(count.matrix), decreasing=T)
+  presented.mit.genes <- intersect(genes, rownames(count.matrix))
+  genes.frac <- Matrix::colSums(count.matrix[presented.mit.genes, names(umi.counts)]) / umi.counts
+  return(genes.frac)
 }

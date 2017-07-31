@@ -2,11 +2,11 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 GetCrossmergedMask <- function(base_umis, target_umis) {
-    .Call('dropestr_GetCrossmergedMask', PACKAGE = 'dropestr', base_umis, target_umis)
+    .Call('_dropestr_GetCrossmergedMask', PACKAGE = 'dropestr', base_umis, target_umis)
 }
 
 SubsetAdjacentUmis <- function(umis) {
-    .Call('dropestr_SubsetAdjacentUmis', PACKAGE = 'dropestr', umis)
+    .Call('_dropestr_SubsetAdjacentUmis', PACKAGE = 'dropestr', umis)
 }
 
 #' Fill information about adjacent UMIs, their probabilities and differences for each UMI.
@@ -18,60 +18,60 @@ SubsetAdjacentUmis <- function(umis) {
 #'
 #' @export
 FillAdjacentUmisData <- function(umi_probabilites, adjacent_only = FALSE, show_progress = FALSE) {
-    .Call('dropestr_FillAdjacentUmisData', PACKAGE = 'dropestr', umi_probabilites, adjacent_only, show_progress)
+    .Call('_dropestr_FillAdjacentUmisData', PACKAGE = 'dropestr', umi_probabilites, adjacent_only, show_progress)
 }
 
 GetAdjacentUmisNum <- function(reads_per_umi_from, reads_per_umi_to, neighbourhood, total = TRUE, larger = FALSE, smaller = FALSE) {
-    .Call('dropestr_GetAdjacentUmisNum', PACKAGE = 'dropestr', reads_per_umi_from, reads_per_umi_to, neighbourhood, total, larger, smaller)
+    .Call('_dropestr_GetAdjacentUmisNum', PACKAGE = 'dropestr', reads_per_umi_from, reads_per_umi_to, neighbourhood, total, larger, smaller)
 }
 
 #' @export
 FillDpMatrix <- function(prior_prob, neighbours_num, max_umi_per_cell) {
-    .Call('dropestr_FillDpMatrix', PACKAGE = 'dropestr', prior_prob, neighbours_num, max_umi_per_cell)
+    .Call('_dropestr_FillDpMatrix', PACKAGE = 'dropestr', prior_prob, neighbours_num, max_umi_per_cell)
 }
 
 GetSmallerNeighboursDistributionsBySizes <- function(dp_matrices, larger_neighbours_num, neighbour_prob_inds, size_adj, max_neighbour_num, smaller_neighbours_num = integer()) {
-    .Call('dropestr_GetSmallerNeighboursDistributionsBySizes', PACKAGE = 'dropestr', dp_matrices, larger_neighbours_num, neighbour_prob_inds, size_adj, max_neighbour_num, smaller_neighbours_num)
+    .Call('_dropestr_GetSmallerNeighboursDistributionsBySizes', PACKAGE = 'dropestr', dp_matrices, larger_neighbours_num, neighbour_prob_inds, size_adj, max_neighbour_num, smaller_neighbours_num)
 }
 
 GetSmallerNeighbourProbabilities <- function(small_neighs_dist, neighb_per_umi) {
-    .Call('dropestr_GetSmallerNeighbourProbabilities', PACKAGE = 'dropestr', small_neighs_dist, neighb_per_umi)
+    .Call('_dropestr_GetSmallerNeighbourProbabilities', PACKAGE = 'dropestr', small_neighs_dist, neighb_per_umi)
 }
 
 FilterUmisInGeneSimple <- function(reads_per_umi, neighbourhood, mult = 1) {
-    .Call('dropestr_FilterUmisInGeneSimple', PACKAGE = 'dropestr', reads_per_umi, neighbourhood, mult)
+    .Call('_dropestr_FilterUmisInGeneSimple', PACKAGE = 'dropestr', reads_per_umi, neighbourhood, mult)
 }
 
 PredictNBC <- function(clf, predict_data) {
-    .Call('dropestr_PredictNBC', PACKAGE = 'dropestr', clf, predict_data)
+    .Call('_dropestr_PredictNBC', PACKAGE = 'dropestr', clf, predict_data)
 }
 
 PredictLeftPart <- function(neg_clf, rpu_prob, predict_data, gene_size) {
-    .Call('dropestr_PredictLeftPart', PACKAGE = 'dropestr', neg_clf, rpu_prob, predict_data, gene_size)
+    .Call('_dropestr_PredictLeftPart', PACKAGE = 'dropestr', neg_clf, rpu_prob, predict_data, gene_size)
 }
 
 ArrangePredictions <- function(target_umi_factors, probs) {
-    .Call('dropestr_ArrangePredictions', PACKAGE = 'dropestr', target_umi_factors, probs)
+    .Call('_dropestr_ArrangePredictions', PACKAGE = 'dropestr', target_umi_factors, probs)
 }
 
 FilterPredictions <- function(not_filtered_umis, base_umis, target_umis) {
-    .Call('dropestr_FilterPredictions', PACKAGE = 'dropestr', not_filtered_umis, base_umis, target_umis)
+    .Call('_dropestr_FilterPredictions', PACKAGE = 'dropestr', not_filtered_umis, base_umis, target_umis)
 }
 
 PrepareClassifierData <- function(reads_per_umi, neighborhood, umi_probabilities = numeric()) {
-    .Call('dropestr_PrepareClassifierData', PACKAGE = 'dropestr', reads_per_umi, neighborhood, umi_probabilities)
+    .Call('_dropestr_PrepareClassifierData', PACKAGE = 'dropestr', reads_per_umi, neighborhood, umi_probabilities)
 }
 
 GetTrimCollisionsNum <- function(rpu_per_cell, trim_length) {
-    .Call('dropestr_GetTrimCollisionsNum', PACKAGE = 'dropestr', rpu_per_cell, trim_length)
+    .Call('_dropestr_GetTrimCollisionsNum', PACKAGE = 'dropestr', rpu_per_cell, trim_length)
 }
 
 GetBootstrapUmisMeanNum <- function(umi_probabilities, size, repeats_num, seed = -1L) {
-    .Call('dropestr_GetBootstrapUmisMeanNum', PACKAGE = 'dropestr', umi_probabilities, size, repeats_num, seed)
+    .Call('_dropestr_GetBootstrapUmisMeanNum', PACKAGE = 'dropestr', umi_probabilities, size, repeats_num, seed)
 }
 
 AdjustGeneExpressionClassic <- function(value, umis_number) {
-    .Call('dropestr_AdjustGeneExpressionClassic', PACKAGE = 'dropestr', value, umis_number)
+    .Call('_dropestr_AdjustGeneExpressionClassic', PACKAGE = 'dropestr', value, umis_number)
 }
 
 #' Adjust gene expression value for collisions.
@@ -83,24 +83,24 @@ AdjustGeneExpressionClassic <- function(value, umis_number) {
 #'
 #' @export
 AdjustGeneExpression <- function(value, observed_sizes, adjusted_sizes) {
-    .Call('dropestr_AdjustGeneExpression', PACKAGE = 'dropestr', value, observed_sizes, adjusted_sizes)
+    .Call('_dropestr_AdjustGeneExpression', PACKAGE = 'dropestr', value, observed_sizes, adjusted_sizes)
 }
 
 ValueCountsC <- function(values) {
-    .Call('dropestr_ValueCountsC', PACKAGE = 'dropestr', values)
+    .Call('_dropestr_ValueCountsC', PACKAGE = 'dropestr', values)
 }
 
 #' @export
 ValueCounts <- function(values) {
-    .Call('dropestr_ValueCounts', PACKAGE = 'dropestr', values)
+    .Call('_dropestr_ValueCounts', PACKAGE = 'dropestr', values)
 }
 
 GetUmisDifference <- function(umi1, umi2, rpu1, rpu2, force_neighbours, umi_prob) {
-    .Call('dropestr_GetUmisDifference', PACKAGE = 'dropestr', umi1, umi2, rpu1, rpu2, force_neighbours, umi_prob)
+    .Call('_dropestr_GetUmisDifference', PACKAGE = 'dropestr', umi1, umi2, rpu1, rpu2, force_neighbours, umi_prob)
 }
 
 BuildCountMatrix <- function(umis_per_gene) {
-    .Call('dropestr_BuildCountMatrix', PACKAGE = 'dropestr', umis_per_gene)
+    .Call('_dropestr_BuildCountMatrix', PACKAGE = 'dropestr', umis_per_gene)
 }
 
 #' Parse UMIgs.
@@ -111,16 +111,16 @@ BuildCountMatrix <- function(umis_per_gene) {
 #'
 #' @export
 ParseUmisPerGene <- function(reads_per_umigs, umi_length) {
-    .Call('dropestr_ParseUmisPerGene', PACKAGE = 'dropestr', reads_per_umigs, umi_length)
+    .Call('_dropestr_ParseUmisPerGene', PACKAGE = 'dropestr', reads_per_umigs, umi_length)
 }
 
 TrimUmis <- function(rpu_per_cell, trim_length) {
-    .Call('dropestr_TrimUmis', PACKAGE = 'dropestr', rpu_per_cell, trim_length)
+    .Call('_dropestr_TrimUmis', PACKAGE = 'dropestr', rpu_per_cell, trim_length)
 }
 
 #' @export
 AddIndexesToRpU <- function(reads_per_umi_per_cb, umis) {
-    .Call('dropestr_AddIndexesToRpU', PACKAGE = 'dropestr', reads_per_umi_per_cb, umis)
+    .Call('_dropestr_AddIndexesToRpU', PACKAGE = 'dropestr', reads_per_umi_per_cb, umis)
 }
 
 #' Estimate a distribution of observed UMI probabilities.
@@ -132,18 +132,18 @@ AddIndexesToRpU <- function(reads_per_umi_per_cb, umis) {
 #'
 #' @export
 GetUmisDistribution <- function(umis_per_gene_per_cell, smooth = 1L) {
-    .Call('dropestr_GetUmisDistribution', PACKAGE = 'dropestr', umis_per_gene_per_cell, smooth)
+    .Call('_dropestr_GetUmisDistribution', PACKAGE = 'dropestr', umis_per_gene_per_cell, smooth)
 }
 
 GetUmisList <- function(umi_len) {
-    .Call('dropestr_GetUmisList', PACKAGE = 'dropestr', umi_len)
+    .Call('_dropestr_GetUmisList', PACKAGE = 'dropestr', umi_len)
 }
 
 ConcatLists <- function(lists) {
-    .Call('dropestr_ConcatLists', PACKAGE = 'dropestr', lists)
+    .Call('_dropestr_ConcatLists', PACKAGE = 'dropestr', lists)
 }
 
 GetMirrorPairs <- function(pairs, probs, tol = 1e-5) {
-    .Call('dropestr_GetMirrorPairs', PACKAGE = 'dropestr', pairs, probs, tol)
+    .Call('_dropestr_GetMirrorPairs', PACKAGE = 'dropestr', pairs, probs, tol)
 }
 

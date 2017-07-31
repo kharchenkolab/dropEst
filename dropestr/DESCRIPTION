@@ -11,13 +11,13 @@ License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Imports:
-  ks (>= 1.10.6),
+  ks (>= 1.10.4),
   ggplot2 (>= 2.1.0),
   dplyr (>= 0.5),
   Rcpp,
   RcppProgress,
   RcppArmadillo,
-  Matrix (>= 1.2-10)
+  Matrix (>= 1.2-7.1)
 Suggests:
   parallel,
   data.table (>= 1.9.6),

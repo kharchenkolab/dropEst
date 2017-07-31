@@ -8,7 +8,7 @@ using namespace Rcpp;
 
 // GetCrossmergedMask
 std::vector<bool> GetCrossmergedMask(const s_vec_t& base_umis, const s_vec_t& target_umis);
-RcppExport SEXP dropestr_GetCrossmergedMask(SEXP base_umisSEXP, SEXP target_umisSEXP) {
+RcppExport SEXP _dropestr_GetCrossmergedMask(SEXP base_umisSEXP, SEXP target_umisSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -20,7 +20,7 @@ END_RCPP
 }
 // SubsetAdjacentUmis
 List SubsetAdjacentUmis(const s_vec_t& umis);
-RcppExport SEXP dropestr_SubsetAdjacentUmis(SEXP umisSEXP) {
+RcppExport SEXP _dropestr_SubsetAdjacentUmis(SEXP umisSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -31,7 +31,7 @@ END_RCPP
 }
 // FillAdjacentUmisData
 List FillAdjacentUmisData(const NumericVector& umi_probabilites, bool adjacent_only, bool show_progress);
-RcppExport SEXP dropestr_FillAdjacentUmisData(SEXP umi_probabilitesSEXP, SEXP adjacent_onlySEXP, SEXP show_progressSEXP) {
+RcppExport SEXP _dropestr_FillAdjacentUmisData(SEXP umi_probabilitesSEXP, SEXP adjacent_onlySEXP, SEXP show_progressSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -44,7 +44,7 @@ END_RCPP
 }
 // GetAdjacentUmisNum
 List GetAdjacentUmisNum(const IntegerVector& reads_per_umi_from, const IntegerVector& reads_per_umi_to, const List& neighbourhood, bool total, bool larger, bool smaller);
-RcppExport SEXP dropestr_GetAdjacentUmisNum(SEXP reads_per_umi_fromSEXP, SEXP reads_per_umi_toSEXP, SEXP neighbourhoodSEXP, SEXP totalSEXP, SEXP largerSEXP, SEXP smallerSEXP) {
+RcppExport SEXP _dropestr_GetAdjacentUmisNum(SEXP reads_per_umi_fromSEXP, SEXP reads_per_umi_toSEXP, SEXP neighbourhoodSEXP, SEXP totalSEXP, SEXP largerSEXP, SEXP smallerSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -60,7 +60,7 @@ END_RCPP
 }
 // FillDpMatrix
 NumericMatrix FillDpMatrix(double prior_prob, int neighbours_num, int max_umi_per_cell);
-RcppExport SEXP dropestr_FillDpMatrix(SEXP prior_probSEXP, SEXP neighbours_numSEXP, SEXP max_umi_per_cellSEXP) {
+RcppExport SEXP _dropestr_FillDpMatrix(SEXP prior_probSEXP, SEXP neighbours_numSEXP, SEXP max_umi_per_cellSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -73,7 +73,7 @@ END_RCPP
 }
 // GetSmallerNeighboursDistributionsBySizes
 NumericMatrix GetSmallerNeighboursDistributionsBySizes(const List& dp_matrices, const IntegerVector& larger_neighbours_num, const s_vec_t& neighbour_prob_inds, int size_adj, int max_neighbour_num, const IntegerVector& smaller_neighbours_num);
-RcppExport SEXP dropestr_GetSmallerNeighboursDistributionsBySizes(SEXP dp_matricesSEXP, SEXP larger_neighbours_numSEXP, SEXP neighbour_prob_indsSEXP, SEXP size_adjSEXP, SEXP max_neighbour_numSEXP, SEXP smaller_neighbours_numSEXP) {
+RcppExport SEXP _dropestr_GetSmallerNeighboursDistributionsBySizes(SEXP dp_matricesSEXP, SEXP larger_neighbours_numSEXP, SEXP neighbour_prob_indsSEXP, SEXP size_adjSEXP, SEXP max_neighbour_numSEXP, SEXP smaller_neighbours_numSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -89,7 +89,7 @@ END_RCPP
 }
 // GetSmallerNeighbourProbabilities
 NumericVector GetSmallerNeighbourProbabilities(const NumericMatrix& small_neighs_dist, const IntegerVector& neighb_per_umi);
-RcppExport SEXP dropestr_GetSmallerNeighbourProbabilities(SEXP small_neighs_distSEXP, SEXP neighb_per_umiSEXP) {
+RcppExport SEXP _dropestr_GetSmallerNeighbourProbabilities(SEXP small_neighs_distSEXP, SEXP neighb_per_umiSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -101,7 +101,7 @@ END_RCPP
 }
 // FilterUmisInGeneSimple
 IntegerVector FilterUmisInGeneSimple(const IntegerVector& reads_per_umi, const std::vector<s_vec_t>& neighbourhood, double mult);
-RcppExport SEXP dropestr_FilterUmisInGeneSimple(SEXP reads_per_umiSEXP, SEXP neighbourhoodSEXP, SEXP multSEXP) {
+RcppExport SEXP _dropestr_FilterUmisInGeneSimple(SEXP reads_per_umiSEXP, SEXP neighbourhoodSEXP, SEXP multSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -114,7 +114,7 @@ END_RCPP
 }
 // PredictNBC
 NumericVector PredictNBC(const List& clf, const List& predict_data);
-RcppExport SEXP dropestr_PredictNBC(SEXP clfSEXP, SEXP predict_dataSEXP) {
+RcppExport SEXP _dropestr_PredictNBC(SEXP clfSEXP, SEXP predict_dataSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -126,7 +126,7 @@ END_RCPP
 }
 // PredictLeftPart
 NumericVector PredictLeftPart(const List& neg_clf, const std::vector<double>& rpu_prob, const DataFrame& predict_data, int gene_size);
-RcppExport SEXP dropestr_PredictLeftPart(SEXP neg_clfSEXP, SEXP rpu_probSEXP, SEXP predict_dataSEXP, SEXP gene_sizeSEXP) {
+RcppExport SEXP _dropestr_PredictLeftPart(SEXP neg_clfSEXP, SEXP rpu_probSEXP, SEXP predict_dataSEXP, SEXP gene_sizeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -140,7 +140,7 @@ END_RCPP
 }
 // ArrangePredictions
 std::vector<int> ArrangePredictions(const std::vector<int>& target_umi_factors, const std::vector<double>& probs);
-RcppExport SEXP dropestr_ArrangePredictions(SEXP target_umi_factorsSEXP, SEXP probsSEXP) {
+RcppExport SEXP _dropestr_ArrangePredictions(SEXP target_umi_factorsSEXP, SEXP probsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -152,7 +152,7 @@ END_RCPP
 }
 // FilterPredictions
 std::vector<bool> FilterPredictions(const s_vec_t& not_filtered_umis, const s_vec_t& base_umis, const s_vec_t& target_umis);
-RcppExport SEXP dropestr_FilterPredictions(SEXP not_filtered_umisSEXP, SEXP base_umisSEXP, SEXP target_umisSEXP) {
+RcppExport SEXP _dropestr_FilterPredictions(SEXP not_filtered_umisSEXP, SEXP base_umisSEXP, SEXP target_umisSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -165,7 +165,7 @@ END_RCPP
 }
 // PrepareClassifierData
 List PrepareClassifierData(const IntegerVector& reads_per_umi, const List& neighborhood, const NumericVector& umi_probabilities);
-RcppExport SEXP dropestr_PrepareClassifierData(SEXP reads_per_umiSEXP, SEXP neighborhoodSEXP, SEXP umi_probabilitiesSEXP) {
+RcppExport SEXP _dropestr_PrepareClassifierData(SEXP reads_per_umiSEXP, SEXP neighborhoodSEXP, SEXP umi_probabilitiesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -178,7 +178,7 @@ END_RCPP
 }
 // GetTrimCollisionsNum
 List GetTrimCollisionsNum(const List& rpu_per_cell, int trim_length);
-RcppExport SEXP dropestr_GetTrimCollisionsNum(SEXP rpu_per_cellSEXP, SEXP trim_lengthSEXP) {
+RcppExport SEXP _dropestr_GetTrimCollisionsNum(SEXP rpu_per_cellSEXP, SEXP trim_lengthSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -190,7 +190,7 @@ END_RCPP
 }
 // GetBootstrapUmisMeanNum
 double GetBootstrapUmisMeanNum(const std::vector<double>& umi_probabilities, size_t size, unsigned repeats_num, int seed);
-RcppExport SEXP dropestr_GetBootstrapUmisMeanNum(SEXP umi_probabilitiesSEXP, SEXP sizeSEXP, SEXP repeats_numSEXP, SEXP seedSEXP) {
+RcppExport SEXP _dropestr_GetBootstrapUmisMeanNum(SEXP umi_probabilitiesSEXP, SEXP sizeSEXP, SEXP repeats_numSEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -204,7 +204,7 @@ END_RCPP
 }
 // AdjustGeneExpressionClassic
 int AdjustGeneExpressionClassic(int value, int umis_number);
-RcppExport SEXP dropestr_AdjustGeneExpressionClassic(SEXP valueSEXP, SEXP umis_numberSEXP) {
+RcppExport SEXP _dropestr_AdjustGeneExpressionClassic(SEXP valueSEXP, SEXP umis_numberSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -216,7 +216,7 @@ END_RCPP
 }
 // AdjustGeneExpression
 int AdjustGeneExpression(int value, const std::vector<int>& observed_sizes, const std::vector<double>& adjusted_sizes);
-RcppExport SEXP dropestr_AdjustGeneExpression(SEXP valueSEXP, SEXP observed_sizesSEXP, SEXP adjusted_sizesSEXP) {
+RcppExport SEXP _dropestr_AdjustGeneExpression(SEXP valueSEXP, SEXP observed_sizesSEXP, SEXP adjusted_sizesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -229,7 +229,7 @@ END_RCPP
 }
 // ValueCountsC
 si_map_t ValueCountsC(const s_vec_t& values);
-RcppExport SEXP dropestr_ValueCountsC(SEXP valuesSEXP) {
+RcppExport SEXP _dropestr_ValueCountsC(SEXP valuesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -240,7 +240,7 @@ END_RCPP
 }
 // ValueCounts
 std::unordered_map<int, int> ValueCounts(const std::vector<int>& values);
-RcppExport SEXP dropestr_ValueCounts(SEXP valuesSEXP) {
+RcppExport SEXP _dropestr_ValueCounts(SEXP valuesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -251,7 +251,7 @@ END_RCPP
 }
 // GetUmisDifference
 List GetUmisDifference(const std::string& umi1, const std::string& umi2, int rpu1, int rpu2, bool force_neighbours, double umi_prob);
-RcppExport SEXP dropestr_GetUmisDifference(SEXP umi1SEXP, SEXP umi2SEXP, SEXP rpu1SEXP, SEXP rpu2SEXP, SEXP force_neighboursSEXP, SEXP umi_probSEXP) {
+RcppExport SEXP _dropestr_GetUmisDifference(SEXP umi1SEXP, SEXP umi2SEXP, SEXP rpu1SEXP, SEXP rpu2SEXP, SEXP force_neighboursSEXP, SEXP umi_probSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -267,7 +267,7 @@ END_RCPP
 }
 // BuildCountMatrix
 IntegerMatrix BuildCountMatrix(const List& umis_per_gene);
-RcppExport SEXP dropestr_BuildCountMatrix(SEXP umis_per_geneSEXP) {
+RcppExport SEXP _dropestr_BuildCountMatrix(SEXP umis_per_geneSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -278,7 +278,7 @@ END_RCPP
 }
 // ParseUmisPerGene
 List ParseUmisPerGene(const List& reads_per_umigs, int umi_length);
-RcppExport SEXP dropestr_ParseUmisPerGene(SEXP reads_per_umigsSEXP, SEXP umi_lengthSEXP) {
+RcppExport SEXP _dropestr_ParseUmisPerGene(SEXP reads_per_umigsSEXP, SEXP umi_lengthSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -290,7 +290,7 @@ END_RCPP
 }
 // TrimUmis
 List TrimUmis(const List& rpu_per_cell, int trim_length);
-RcppExport SEXP dropestr_TrimUmis(SEXP rpu_per_cellSEXP, SEXP trim_lengthSEXP) {
+RcppExport SEXP _dropestr_TrimUmis(SEXP rpu_per_cellSEXP, SEXP trim_lengthSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -302,7 +302,7 @@ END_RCPP
 }
 // AddIndexesToRpU
 List AddIndexesToRpU(const List& reads_per_umi_per_cb, const std::vector<std::string>& umis);
-RcppExport SEXP dropestr_AddIndexesToRpU(SEXP reads_per_umi_per_cbSEXP, SEXP umisSEXP) {
+RcppExport SEXP _dropestr_AddIndexesToRpU(SEXP reads_per_umi_per_cbSEXP, SEXP umisSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -314,7 +314,7 @@ END_RCPP
 }
 // GetUmisDistribution
 si_map_t GetUmisDistribution(List umis_per_gene_per_cell, int smooth);
-RcppExport SEXP dropestr_GetUmisDistribution(SEXP umis_per_gene_per_cellSEXP, SEXP smoothSEXP) {
+RcppExport SEXP _dropestr_GetUmisDistribution(SEXP umis_per_gene_per_cellSEXP, SEXP smoothSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -326,7 +326,7 @@ END_RCPP
 }
 // GetUmisList
 s_vec_t GetUmisList(unsigned umi_len);
-RcppExport SEXP dropestr_GetUmisList(SEXP umi_lenSEXP) {
+RcppExport SEXP _dropestr_GetUmisList(SEXP umi_lenSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -337,7 +337,7 @@ END_RCPP
 }
 // ConcatLists
 List ConcatLists(const List& lists);
-RcppExport SEXP dropestr_ConcatLists(SEXP listsSEXP) {
+RcppExport SEXP _dropestr_ConcatLists(SEXP listsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -348,7 +348,7 @@ END_RCPP
 }
 // GetMirrorPairs
 std::unordered_set<int> GetMirrorPairs(const StringVector& pairs, const NumericVector& probs, double tol);
-RcppExport SEXP dropestr_GetMirrorPairs(SEXP pairsSEXP, SEXP probsSEXP, SEXP tolSEXP) {
+RcppExport SEXP _dropestr_GetMirrorPairs(SEXP pairsSEXP, SEXP probsSEXP, SEXP tolSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -358,4 +358,41 @@ BEGIN_RCPP
     rcpp_result_gen = Rcpp::wrap(GetMirrorPairs(pairs, probs, tol));
     return rcpp_result_gen;
 END_RCPP
+}
+
+static const R_CallMethodDef CallEntries[] = {
+    {"_dropestr_GetCrossmergedMask", (DL_FUNC) &_dropestr_GetCrossmergedMask, 2},
+    {"_dropestr_SubsetAdjacentUmis", (DL_FUNC) &_dropestr_SubsetAdjacentUmis, 1},
+    {"_dropestr_FillAdjacentUmisData", (DL_FUNC) &_dropestr_FillAdjacentUmisData, 3},
+    {"_dropestr_GetAdjacentUmisNum", (DL_FUNC) &_dropestr_GetAdjacentUmisNum, 6},
+    {"_dropestr_FillDpMatrix", (DL_FUNC) &_dropestr_FillDpMatrix, 3},
+    {"_dropestr_GetSmallerNeighboursDistributionsBySizes", (DL_FUNC) &_dropestr_GetSmallerNeighboursDistributionsBySizes, 6},
+    {"_dropestr_GetSmallerNeighbourProbabilities", (DL_FUNC) &_dropestr_GetSmallerNeighbourProbabilities, 2},
+    {"_dropestr_FilterUmisInGeneSimple", (DL_FUNC) &_dropestr_FilterUmisInGeneSimple, 3},
+    {"_dropestr_PredictNBC", (DL_FUNC) &_dropestr_PredictNBC, 2},
+    {"_dropestr_PredictLeftPart", (DL_FUNC) &_dropestr_PredictLeftPart, 4},
+    {"_dropestr_ArrangePredictions", (DL_FUNC) &_dropestr_ArrangePredictions, 2},
+    {"_dropestr_FilterPredictions", (DL_FUNC) &_dropestr_FilterPredictions, 3},
+    {"_dropestr_PrepareClassifierData", (DL_FUNC) &_dropestr_PrepareClassifierData, 3},
+    {"_dropestr_GetTrimCollisionsNum", (DL_FUNC) &_dropestr_GetTrimCollisionsNum, 2},
+    {"_dropestr_GetBootstrapUmisMeanNum", (DL_FUNC) &_dropestr_GetBootstrapUmisMeanNum, 4},
+    {"_dropestr_AdjustGeneExpressionClassic", (DL_FUNC) &_dropestr_AdjustGeneExpressionClassic, 2},
+    {"_dropestr_AdjustGeneExpression", (DL_FUNC) &_dropestr_AdjustGeneExpression, 3},
+    {"_dropestr_ValueCountsC", (DL_FUNC) &_dropestr_ValueCountsC, 1},
+    {"_dropestr_ValueCounts", (DL_FUNC) &_dropestr_ValueCounts, 1},
+    {"_dropestr_GetUmisDifference", (DL_FUNC) &_dropestr_GetUmisDifference, 6},
+    {"_dropestr_BuildCountMatrix", (DL_FUNC) &_dropestr_BuildCountMatrix, 1},
+    {"_dropestr_ParseUmisPerGene", (DL_FUNC) &_dropestr_ParseUmisPerGene, 2},
+    {"_dropestr_TrimUmis", (DL_FUNC) &_dropestr_TrimUmis, 2},
+    {"_dropestr_AddIndexesToRpU", (DL_FUNC) &_dropestr_AddIndexesToRpU, 2},
+    {"_dropestr_GetUmisDistribution", (DL_FUNC) &_dropestr_GetUmisDistribution, 2},
+    {"_dropestr_GetUmisList", (DL_FUNC) &_dropestr_GetUmisList, 1},
+    {"_dropestr_ConcatLists", (DL_FUNC) &_dropestr_ConcatLists, 1},
+    {"_dropestr_GetMirrorPairs", (DL_FUNC) &_dropestr_GetMirrorPairs, 3},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_dropestr(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
 }

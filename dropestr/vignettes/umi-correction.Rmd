@@ -17,34 +17,32 @@ ggplot2::theme_set(ggplot2::theme_bw(base_size = 18) + ggplot2::theme(plot.title
 
 ## Initialization
 ```{r, fig.width=5}
-data("reads_per_umi_per_cb")
+data("reads_per_umi_per_cell")
 
-umis_distribution <- GetUmisDistribution(reads_per_umi_per_cb)
+umis_distribution <- GetUmisDistribution(reads_per_umi_per_cell)
 umi_probabilities <- umis_distribution / sum(umis_distribution)
 
-ggplot2::qplot(umi_probabilities[umi_probabilities < quantile(umi_probabilities, 0.99)], bins=50, color=I('black')) + 
-  ggplot2::labs(x='UMI probability', y='#UMIs')
+PlotUmisDistribution(reads_per_umi_per_cell)
 ```
 
 ## Collisions adjustment:
 ```{r}
-umis_per_gene <- lapply(reads_per_umi_per_cb, sapply, length)
+umis_per_gene <- lapply(reads_per_umi_per_cell, sapply, length)
 max_umi_per_gene <- max(sapply(umis_per_gene, max))
 
-collisions_info <- FillCollisionsAdjustmentInfo(umi_probabilities, max_umi_per_gene, step=20, mc.cores=30, verbose=T)
+collisions_info <- FillCollisionsAdjustmentInfo(umi_probabilities, max_umi_per_gene, step=20, mc.cores=5, verbose=T)
 (max_umi_per_gene_adj <- AdjustGeneExpression(max_umi_per_gene, collisions_info$adjusted, collisions_info$observed))
 ```
 
 # Algorithm:
-To run the UMI errors correction you only need a function:
+To run the UMI errors correction you only need a single function:
 ```{r}
-cm <- CorrectUmiSequenceErrors(reads_per_umi_per_cb, umi_probabilities, collisions_info, mc.cores=30, verbosity_level=2)
+cm <- CorrectUmiSequenceErrors(reads_per_umi_per_cell, umi_probabilities, collisions_info, mc.cores=5, verbosity.level=2)
 ```
 
-If the additional info isn't provided, the function will estimate it from the data (though it takes more time):
+If the additional info isn't provided, the function will estimate it from the data (though it takes a bit longer):
 ```{r}
-cm2 <- CorrectUmiSequenceErrors(reads_per_umi_per_cb, mc.cores=30, verbosity_level=2)
-
+cm2 <- CorrectUmiSequenceErrors(reads_per_umi_per_cell, mc.cores=5, verbosity.level=2)
 all(cm == cm2)
 ```
 

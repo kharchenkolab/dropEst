@@ -2,23 +2,23 @@
 % Please edit documentation in R/low_quality_cells.R
 \name{PrepareLqCellsData}
 \alias{PrepareLqCellsData}
-\alias{PrepareLqCellsPipelineData}
+\alias{PrepareLqCellsDataPipeline}
 \title{Prepare data frame for low-quality cells filtration.}
 \usage{
 PrepareLqCellsData(count.matrix, aligned.reads.per.cell,
   total.umis.per.cell = NULL, total.reads.per.cell = NULL,
-  intergenic.reads.per.cell = NULL, mitochondrion.genes = NULL,
+  intergenic.reads.per.cell = NULL, mitochondrion.fraction = NULL,
   pcs.number = 3)
 
-PrepareLqCellsPipelineData(data, total.reads.per.cell = NULL,
-  mitochondrion.genes = NULL, pcs.number = 3)
+PrepareLqCellsDataPipeline(data, total.reads.per.cell = NULL,
+  mitochondrion.genes = NULL, mit.chromosome.name = NULL, pcs.number = 3)
 }
 \arguments{
 \item{count.matrix}{Matrix with counts of umi per gene per cell.}
 
 \item{intergenic.reads.per.cell}{Number of intergenic reads per cell.}
 
-\item{mitochondrion.genes}{Vector of names of mitochondrion genes.}
+\item{mitochondrion.fraction}{Fraction of mitochondrion reads or UMIs per cell}
 
 \item{pcs.number}{maximal number of principal components, which is returned. Set to NULL to return raw data.}
 
@@ -41,6 +41,6 @@ The more parameters provided, the more detailed matrix returned.
 }
 \section{Functions}{
 \itemize{
-\item \code{PrepareLqCellsPipelineData}: wrapper for the data, obtained with the dropEst pipeline.
+\item \code{PrepareLqCellsDataPipeline}: wrapper for the data, obtained with the dropEst pipeline.
 }}
 

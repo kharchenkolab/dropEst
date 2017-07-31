@@ -195,7 +195,7 @@ PlotCellsNumberSummary <- function(umi.counts, breaks=100, mask=c(T,T,T)) { #TOD
 }
 
 #' @export
-PlotCellNumberLogLog <- function(umi.counts, estimate.cells.number=F, show.legend=T) {
+PlotCellsNumberLogLog <- function(umi.counts, estimate.cells.number=F, show.legend=T) {
   umi.counts <- sort(umi.counts, decreasing=T)
   n.cells <- EstimateCellsNumber(umi.counts)
   plot.df <- data.frame(x=1:length(umi.counts), y=umi.counts)

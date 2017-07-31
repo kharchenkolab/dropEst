@@ -1,5 +1,5 @@
 ---
-title: "Correction of UMI Sequence Errors"
+title: "Filtration of low-quality cells"
 author: "Petukhov Viktor"
 date: "`r Sys.Date()`"
 output: 
@@ -11,39 +11,102 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-## Data loading
 ```{r, include=FALSE}
-ggplot2::theme_set(ggplot2::theme_bw(base_size = 18) + ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5)))
+ggplot2::theme_set(ggplot2::theme_bw(base_size = 14) + ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5)))
 ```
+
+```{r}
+bc_data <- readRDS('/d0-mendel/home/viktor_petukhov/Data/allon_new/SRR3879617/est_07_30/cell.counts.rds')
+mouse_genes <- readRDS('~/dropEst/data/genesets_mouse.rds')
+# umis_cnt_per_cb <- sort(sapply(bc_data$reads_per_umi_per_cell, function(gene) sum(sapply(gene, length))), decreasing=T)
+# reads_per_umi_per_cell <- bc_data$reads_per_umi_per_cell[names(umis_cnt_per_cb)[1:100]]
+# devtools::use_data(reads_per_umi_per_cell, overwrite=T)
+```
+
+## Quick start
+The simplest way to score the cells for data, obtained with the pipeline:
+```{r, fig.width=5, fig.height=4}
+scores <- ScorePipelineCells(bc_data)
+PlotCellScores(scores, y.threshold=0.9)
+```
+
+Cells with high mitochondrial fraction are probably dead, so it's reasonable to filter them out. There are two ways of 
+distinguishing of mitochondrial reads: by chromosome name and by genesets. The first approach estimates the fraction of reads,
+while the second works with UMIs. However, results are quite similar.
+
+
+```{r, fig.width=4.5, fig.height=3}
+scores_chromosome_filt <- ScorePipelineCells(bc_data, filter.high.mit.fraction=T, mit.chromosome.name='chrM')
+scores_geneset_filt <- ScorePipelineCells(bc_data, filter.high.mit.fraction=T, mitochondrion.genes=mouse_genes$mitochondrion)
+PlotCellScores(scores_chromosome_filt, y.threshold=0.9, main='Chromosome')
+PlotCellScores(scores_geneset_filt, y.threshold=0.9, main='Geneset')
+```
+
+Answers are the same for `r round(mean((scores_chromosome_filt > 0.9) == (scores_geneset_filt > 0.9)) * 100, 2)`% cells.
+
+## Manual filtration
+This filtration can be done manually in more flexible way.
+The first step is the estimation of the approximate number of real cells. It can be done using one of the following plots,
+each of which shows the expected number of cells, however for different datasets some of them can give more precise result than the other:
+```{r, fig.width=5, fig.height=3}
+PlotCellsNumberLogLog(bc_data$aligned_umis_per_cell, estimate.cells.number=T)
+PlotCellsNumberLine(bc_data$aligned_umis_per_cell, estimate.cells.number=T)
+PlotCellsNumberHist(bc_data$aligned_umis_per_cell, estimate.cells.number=T)
+cell_number <- EstimateCellsNumber(bc_data$aligned_umis_per_cell)
+```
+
+Some cells can die prior to the sequencing, and they should be filtered. Such cell can be distinuished by mitochondrial fraction.
+As was mentioned above, this fraction can be estimated using the chromosome name or the list of genes.
+```{r, fig.width=4, fig.height=3}
+mit_chromosome_fraction <- GetChromosomeFraction(bc_data$reads_per_chr_per_cells$Exon[colnames(bc_data$cm),], 'chrM')
+mit_geneset_fraction <- GetGenesetFraction(bc_data$cm, mouse_genes$mitochondrion)
+
+FractionSmoothScatter(mit_chromosome_fraction, plot.threshold=T, main='Chromosome')
+FractionSmoothScatter(mit_geneset_fraction, plot.threshold=T, main='Geneset')
+```
+
+
+```{r}
+mit_fraction <- GetGenesetFraction(bc_data$cm, mouse_genes$mitochondrion)
+mit_fraction <- GetChromosomeFraction(bc_data$reads_per_chr_per_cells$Exon[colnames(bc_data$cm),], 'chrM')
+
+```
+
+
+```{r}
+bc_df <- PrepareLqCellsDataPipeline(bc_data, mit.chromosome.name="chrM")
+```
+
 
 ```{r}
 data("lq_cells_info")
 
 bc_df <- PrepareLqCellsPipelineData(lq_cells_info$pipeline, lq_cells_info$count_matrix, lq_cells_info$total_reads, lq_cells_info$mit_genes)
-umi_counts <- colSums(lq_cells_info$count_matrix)
 ```
 
 ```{r, fig.width=5, fig.height=3.5}
-PlotCellsNumberLine(umi_counts, breaks=80, title=NULL, estimate.cells.number=T)
-PlotCellsNumberHist(umi_counts, breaks=60, estimate.cells.number=T)
-PlotCellNumberLogLog(umi_counts, estimate.cells.number=T)
+PlotCellsNumberLine(bc_data$aligned_umis_per_cell, title=NULL, estimate.cells.number=T)
+PlotCellsNumberHist(bc_data$aligned_umis_per_cell, estimate.cells.number=T)
+PlotCellNumberLogLog(bc_data$aligned_umis_per_cell, estimate.cells.number=T)
 ```
 
 ```{r}
 cells_number_manual <- list(min=300, max=800)
 
-cells_quality <- EstimateCellsQuality(umi_counts)
-cells_quality_manual <- EstimateCellsQuality(umi_counts, cells.number=cells_number_manual)
-cells_quality_filt <- FilterMitochondrionCells(lq_cells_info$count_matrix, lq_cells_info$mit_genes, cells_quality, plot=T)
+cells_quality <- EstimateCellsQuality(bc_data$aligned_umis_per_cell)
+cells_quality_manual <- EstimateCellsQuality(bc_data$aligned_umis_per_cell, cells.number=cells_number_manual)
+
+mit_fraction <- GetChromosomeFraction(bc_data$reads_per_chr_per_cells$Exon, 'chrM')
+cells_quality_filt <- FilterMitochondrionCells(mit_fraction, cells_quality, plot=T)
 scores <- ScoreCells(bc_df, cells_quality)
 scores_filt <- ScoreCells(bc_df, cells_quality_filt)
 scores_manual <- ScoreCells(bc_df, cells_quality_manual)
 ```
 
 ```{r}
-PlotScores(scores, EstimateCellsNumber(umi_counts), 0.95, main='Cell scores')
-PlotScores(scores_filt, EstimateCellsNumber(umi_counts), 0.95, main='Cell scores')
-PlotScores(scores_manual,cells_number_manual, 0.95, main='Cell scores')
+PlotCellScores(scores, EstimateCellsNumber(bc_data$aligned_umis_per_cell), 0.95, main='Cell scores')
+PlotCellScores(scores_filt, EstimateCellsNumber(bc_data$aligned_umis_per_cell), 0.95, main='Cell scores')
+PlotCellScores(scores_manual,cells_number_manual, 0.95, main='Cell scores')
 ```
 
 
