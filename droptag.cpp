@@ -32,11 +32,11 @@ struct Params
 	bool cant_parse = false;
 	bool save_reads_names = false;
 	bool quiet = false;
+	bool save_stats = false;
 	string base_name = "";
 	string config_file_name = "";
 	string log_prefix = "";
 	string lib_tag = "";
-	string stats_file = "";
 	vector<string> read_files = vector<string>();
 };
 
@@ -44,16 +44,17 @@ void save_stats(const string &out_filename, shared_ptr<TagsFinderBase> tags_find
 
 static void usage()
 {
-	cerr << "\t" << SCRIPT_NAME << " -- generate tagged fastq files for alignment\n";
+	cerr << SCRIPT_NAME << " -- generate tagged fastq files for alignment\n\n";
 	cerr << "SYNOPSIS\n";
 	cerr << "\t" << SCRIPT_NAME << " [options] "
-					<< "-c config.xml read_1.fastq read_2.fastq [read_3.fastq] [library_tags.fastq]\n";
+	     << "-c config.xml barcode_reads.fastq [barcode_umi_reads.fastq] gene_reads.fastq [library_tags.fastq]\n";
 	cerr << "OPTIONS:\n";
-	cerr << "\t-c, --config filename: xml file with " << SCRIPT_NAME << " parameters" << endl;
-	cerr << "\t-l, --log-prefix : logs prefix" << endl;
-	cerr << "\t-n, --name BASE_NAME : specify alternative output base name\n";
-	cerr << "\t-s, --save-reads-names : serialize reads parameters to save names\n";
-	cerr << "\t-S, --save-stats filename : save stats to rds file\n";
+	cerr << "\t-c, --config filename: xml file with " << SCRIPT_NAME << " parameters\n";
+	cerr << "\t-h, --help: show this info\n";
+	cerr << "\t-l, --log-prefix prefix: logs prefix\n";
+	cerr << "\t-n, --name name: alternative output base name\n";
+//	cerr << "\t-s, --save-reads-names : serialize reads parameters to save names\n";
+	cerr << "\t-S, --save-stats : save stats to rds file\n";
 	cerr << "\t-t, --lib-tag library tag : (for IndropV3 with library tag only)\n";
 	cerr << "\t-q, --quiet : disable logs\n";
 }
@@ -108,6 +109,7 @@ Params parse_cmd_params(int argc, char **argv)
 	int c;
 	static struct option long_options[] = {
 			{"config",     required_argument, 0, 'c'},
+			{"help", no_argument, 0, 'h'},
 			{"log-prefix", required_argument, 0, 'l'},
 			{"name",       required_argument, 0, 'n'},
 			{"save-reads-names",    no_argument,       0, 's'},
@@ -118,7 +120,7 @@ Params parse_cmd_params(int argc, char **argv)
 	};
 
 	Params params;
-	while ((c = getopt_long(argc, argv, "c:l:n:sS:t:q", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "c:hl:n:St:q", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -128,6 +130,9 @@ Params parse_cmd_params(int argc, char **argv)
 			case 'l' :
 				params.log_prefix = string(optarg);
 				break;
+			case 'h' :
+				usage();
+				exit(0);
 			case 'n' :
 				params.base_name = string(optarg);
 				break;
@@ -135,7 +140,7 @@ Params parse_cmd_params(int argc, char **argv)
 				params.save_reads_names = true;
 				break;
 			case 'S' :
-				params.stats_file = string(optarg);
+				params.save_stats = true;
 				break;
 			case 't' :
 				params.lib_tag= string(optarg);
@@ -224,11 +229,11 @@ int main(int argc, char **argv)
 		shared_ptr<TagsFinderBase> finder = get_tags_finder(params, pt);
 
 		Tools::trace_time("Run");
-		finder->run(params.save_reads_names, !params.stats_file.empty());
+		finder->run(params.save_reads_names, params.save_stats);
 		Tools::trace_time("All done");
-		if (!params.stats_file.empty())
+		if (params.save_stats)
 		{
-			save_stats(params.stats_file, finder);
+			save_stats(params.base_name + ".rds", finder);
 		}
 	}
 	catch (std::runtime_error &err)

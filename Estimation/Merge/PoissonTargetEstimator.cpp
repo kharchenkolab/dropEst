@@ -111,7 +111,7 @@ double PoissonTargetEstimator::estimate_by_r(ul_list_t sizes, size_t val) const
 	//TODO: optimize it with lambda = mean, "Use The d/q/p/q Statistical Functions (see RCpp book)"
 	(*this->_r)["sizes"] = sizes;
 	(*this->_r)["val"] = val;
-	this->_r->parseEvalQ("p_fit <- fitdistr(sizes, \"poisson\")\n"
+	this->_r->parseEvalQ("p_fit <- fitdistr(sizes, 'poisson')\n"
 								 "res <- ppois(lambda=p_fit$estimate[1], q = val - 1, lower.tail=F)\n"
 								 "res_upper <- max(ppois(lambda=p_fit$estimate[1] + 3 * p_fit$sd, q = val - 1, lower.tail=F),"
 								 "ppois(lambda=max(p_fit$estimate[1] - 3 * p_fit$sd, 0), q = val - 1, lower.tail=F))\n"
