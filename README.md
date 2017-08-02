@@ -1,5 +1,5 @@
 # dropEst - Pipeline
-Pipeline for initial analysis of droplet-based single-cell RNA-seq data
+Pipeline for estimating molecular count matrices for droplet-based single-cell RNA-seq measurements
 
 ## General processing steps
 1. **dropTag** - Tagging and merging of the reads
@@ -99,7 +99,7 @@ Currently supported Indrop Library versions for Tag stage:
 *  -q, --quiet : disable logs  
 
 ## Alignment
-dropTag writes the tagged reads into multiple files. All these files must be aligned to reference, and all bam files with the alignments must be provided as input for the dropEst stage. In the paper we used [TopHat2](https://ccb.jhu.edu/software/tophat/tutorial.shtml) aligner, however any RNA-seq aligners (i.e. [Kallisto](https://pachterlab.github.io/kallisto/)) can be used.
+dropTag writes the tagged reads into multiple files. All these files must be aligned to reference, and all bam files with the alignments must be provided as input for the dropEst stage. In the paper we used [TopHat2](https://ccb.jhu.edu/software/tophat/tutorial.shtml) aligner, however any RNA-seq aligners (i.e. [Kallisto](https://pachterlab.github.io/kallisto/) or [STAR](https://github.com/alexdobin/STAR)) can be used.
 
 Alignment with TopHat2:
 1. Install [bowtie index](http://bowtie-bio.sourceforge.net/tutorial.shtml#preb) for the sequenced organism.
@@ -118,12 +118,12 @@ tophat2 -p number_of_threads --no-coverage-search -g 1 -G genes.gtf -o output_di
 
 After running tophat you can run the dropest command on all ./align-output/Sample_1.\*/accepted_hits.bam at once.
 
-You have to provide a `genomes.gtf` file with the genome information to run dropest.
+You have to provide a genome annotation (`genomes.gtf`) file with the genome information to run dropest.
 
 For indrop-v3 you should use the option -m which fixes barcode errors and improves estimation per cell.
 
 ```bash
-dropest [options] -g ./hg19/genes.gtf -c ./config.xml ./align-output/Sample_1.\*/accepted_hits.bam
+dropest [options] -g ./hg38/genes.gtf -c ./config.xml ./align-output/Sample_1.\*/accepted_hits.bam
 ```
 
 ### Options for dropest  
@@ -135,14 +135,6 @@ dropest [options] -g ./hg19/genes.gtf -c ./config.xml ./align-output/Sample_1.\*
 *  -g, --genes filename: file with genes annotations (.bed or .gtf)  
 *  -G, --genes-min num: minimal number of genes in output cells  
 *  -l, --log-prefix : logs prefix  
-*  -L, --gene-match-level :  
-   *  e: count UMIs with exonic reads only;  
-   *  i: count UMIs with intronic reads only;  
-   *  E: count UMIs, which have both exonic and not annotated reads;  
-   *  I: count UMIs, which have both intronic and not annotated reads;  
-   *  B: count UMIs, which have both exonic and intronic reads;  
-   *  A: count UMIs, which have exonic, intronic and not annotated reads.  
-   *  Default: -L eEBA.  
 *  -m, --merge-barcodes : merge linked cell tags  
 *  -M, --merge-barcodes-precise : use precise merge strategy (can be slow), recommended to use when the list of real barcodes is not available  
 *  -o, --output-file filename : output file name  
