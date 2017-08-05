@@ -1,14 +1,6 @@
 <config>
-    <!-- indroptag -->
+    <!-- droptag -->
     <TagsSearch>
-        <BarcodesSearch>
-            <barcode1_length>8</barcode1_length>
-            <barcode2_length>8</barcode2_length>
-            <umi_length>6</umi_length>
-            <r1_rc_length>8</r1_rc_length>
-            <max_libtag_ed> 2 </max_libtag_ed>
-        </BarcodesSearch>
-
         <SpacerSearch>
             <spacer>GAGTGATTGCTTGTGACGCCTT</spacer>
             <max_spacer_edit_distance>3</max_spacer_edit_distance>
@@ -28,10 +20,10 @@
         </Processing>
     </TagsSearch>
 
-    <!-- indropest -->
+    <!-- dropest -->
     <Estimation>
         <Merge>
-            <!--<barcodes_file>~/InDrop/cp/data/barcodes/indrop</barcodes_file>-->
+            <!-- <barcodes_file>~/dropEst/data/barcodes/indrop_v1_2</barcodes_file> -->
             <barcodes_type>indrop</barcodes_type>
             <min_merge_fraction>0.2</min_merge_fraction>
             <max_cb_merge_edit_distance>2</max_cb_merge_edit_distance>
