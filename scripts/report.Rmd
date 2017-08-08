@@ -86,7 +86,7 @@ PlotCellsNumberHist(d$aligned_umis_per_cell, breaks=60, estimate.cells.number=T,
 </div>
 <div class = "row">
 ```{r, fig.width=5, fig.height=3}
-PlotCellNumberLogLog(d$aligned_umis_per_cell, T, show.legend=F)
+PlotCellsNumberLogLog(d$aligned_umis_per_cell, T, show.legend=F)
 ```
 </div>
 
@@ -105,7 +105,7 @@ PlotCellScores(scores, main=paste0('Cell scores (', sum(scores > 0.9), ' cells >
 <div class = "col-md-6">
 ```{r, fig.width=4.5, fig.height=4}
 if (exists("mit_genes")) {
-  PlotMitochondrialFraction(d$cm, mit_genes, plot.threshold=T)
+  FractionSmoothScatter(GetGenesetFraction(d$cm, mit_genes), plot.threshold=T, main='Mirochondrial fraction')
 }
 ```
 </div>
