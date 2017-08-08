@@ -75,6 +75,9 @@ If `cmake` can't find one of the libraries, or you want to use some specific ver
 
 These variables should be set to the path to the installed library. It can be done either by using command line options: `cmake -D R_ROOT="path_to_r"` or by adding the variable declaration to CMakeLists.txt: `set(R_ROOT path_to_r)`.
 
+
+In case you have some issues with the linker for specific library, please try to build this library manually with the version of compiler, which you're going to use for dropEst build.
+
 ## dropTag
     droptag -- generate tagged fastq files for alignment
 
