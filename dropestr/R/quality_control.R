@@ -21,8 +21,11 @@ EstimateSaturation <- function(reads.by.umig.vec, reads.by.umig.cbs, umi.counts,
               current=data.frame(depth=sum(top.reads.by.umig), estimates=length(top.reads.by.umig))))
 }
 
-#' @param preseq.estimates named list of results of EstimateSaturation calls.
+#' Plot estimated library saturation
+#'
 #' @export
+#' @param preseq.estimates named list of results of EstimateSaturation calls.
+#' @return ggplot object with the plot.
 PlotSaturationEstimates <- function(preseq.estimates) {
   plot.df <- lapply(names(preseq.estimates), function(n) cbind(preseq.estimates[[n]]$sat,
                                                                IsPrediction = preseq.estimates[[n]]$sat$depth < preseq.estimates[[n]]$current$depth,
@@ -91,8 +94,11 @@ PlotGenesPerCell <- function(count.matrix, bins=50) {
 #' @export
 FractionSmoothScatter <- function(fraction, plot.threshold=F, main='') {
   smoothScatter(fraction, xlab='Cell rank', ylab='Fraction', main=main, cex.lab=1.4, ylim=c(0, 1))
-  if (plot.threshold) {
-    abline(h=median(fraction) + 4 * mad(fraction), lty=2, lw=1.5)
+  if (is.logical(plot.threshold) && plot.threshold) {
+    plot.threshold <- median(fraction) + 4 * mad(fraction)
+  }
+  if (is.numeric(plot.threshold)) {
+    abline(h=plot.threshold, lty=2, lw=1.5)
   }
 }
 

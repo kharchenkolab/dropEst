@@ -168,12 +168,14 @@ EstimateCellsQuality <- function(umi.counts, cells.number=NULL) {
 }
 
 #' @export
-FilterMitochondrionCells <- function(mitochondrion.fraction, cells.quality, plot=F) {
-  mit.threshold <- stats::median(mitochondrion.fraction) + 4 * stats::mad(mitochondrion.fraction)
+FilterMitochondrionCells <- function(mitochondrion.fraction, cells.quality, plot=F, mit.threshold=NULL) {
+  if (is.null(mit.threshold)) {
+    mit.threshold <- stats::median(mitochondrion.fraction) + 4 * stats::mad(mitochondrion.fraction)
+  }
   mitochondrion.fraction <- mitochondrion.fraction[names(cells.quality)]
 
   if (plot) {
-    FractionSmoothScatter(mitochondrion.fraction, plot.threshold=T)
+    FractionSmoothScatter(mitochondrion.fraction, plot.threshold=mit.threshold)
   }
 
   cells.quality[mitochondrion.fraction > mit.threshold] <- 'Low'
