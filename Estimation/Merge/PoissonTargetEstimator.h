@@ -3,7 +3,6 @@
 
 #include <Estimation/Cell.h>
 #include <Estimation/CellsDataContainer.h>
-#include <RInside.h>
 
 namespace TestEstimatorMergeProbs
 {
@@ -24,7 +23,6 @@ namespace Estimation
 			friend struct TestEstimatorMergeProbs::testPoissonMergeTime;
 
 		private:
-			typedef Estimation::CellsDataContainer::s_ul_hash_t s_ul_hash_t;
 			typedef Estimation::CellsDataContainer::counts_t ul_list_t;
 			typedef unsigned bs_umi_t;
 
@@ -32,11 +30,7 @@ namespace Estimation
 			const double max_merge_prob;
 			const double max_real_cb_merge_prob;
 
-			bs_umi_t _umis_number;
-
-			s_ul_hash_t _umis_distribution;
-			std::vector<bs_umi_t> _umis_bootstrap_distribution;
-			RInside* _r;
+			std::vector<double> _umis_distribution;
 
 		private:
 			double get_bootstrap_intersect_prob(const CellsDataContainer &container, size_t cell1_ind, size_t cell2_ind,
