@@ -50,7 +50,7 @@ namespace Estimation
 				_["aligned_umis_per_cell"] = aligned_umis_per_cb,
 				_["requested_umis_per_cb"] = requested_umis_per_cb,
 				_["requested_reads_per_cb"] = requested_reads_per_cb,
-				_["fname"] = wrap(filename));
+				_["fname"] = wrap(filename)); // TODO: remove?
 
 		R->parseEvalQ("dimnames(d$cm$cm) <- list(d$cm$gene_names, d$cm$cell_names); d$cm <- d$cm$cm");
 		R->parseEvalQ("dimnames(d$cm_raw$cm) <- list(d$cm_raw$gene_names, d$cm_raw$cell_names); d$cm_raw <- d$cm_raw$cm");

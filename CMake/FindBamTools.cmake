@@ -8,7 +8,7 @@
 #   BAMTOOLS_LIBRARIES - libraries to link against BAM
 #   BAMTOOLS_FOUND - true if BAM has been found and can be used
 
-find_path(BAMTOOLS_INCLUDE_DIR api/BamReader.h PATHS ${BAMTOOLS_ROOT}/include PATH_SUFFIXES bamtools ../include)
+find_path(BAMTOOLS_INCLUDE_DIR api/BamReader.h PATHS ${BAMTOOLS_ROOT}/include PATH_SUFFIXES bamtools ../include ../include/bamtools)
 find_library(BAMTOOLS_LIBRARY bamtools PATHS ${BAMTOOLS_ROOT}/lib PATH_SUFFIXES bamtools ../lib)
 
 include(FindPackageHandleStandardArgs)

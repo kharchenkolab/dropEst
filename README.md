@@ -1,18 +1,45 @@
 # dropEst - Pipeline
-Pipeline for initial analysis of droplet-based single-cell RNA-seq data
+Pipeline for estimating molecular count matrices for droplet-based single-cell RNA-seq measurements. Implements methods, described at [this paper](https://doi.org/10.1101/171496).
+
+## Table of contents
+<!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
+
+- [dropEst - Pipeline](#dropest-pipeline)
+	- [Table of contents](#table-of-contents)
+	- [General processing steps](#general-processing-steps)
+	- [Setup](#setup)
+		- [System requirements](#system-requirements)
+		- [Installation](#installation)
+		- [Troubleshooting](#troubleshooting)
+	- [dropTag](#droptag)
+		- [Protocols](#protocols)
+			- [inDrop v1 & v2](#indrop-v1-v2)
+			- [inDrop v3](#indrop-v3)
+			- [10x](#10x)
+		- [Command line arguments for dropTag](#command-line-arguments-for-droptag)
+	- [Alignment](#alignment)
+	- [dropEst](#dropest)
+		- [Command line arguments for dropEst](#command-line-arguments-for-dropest)
+		- [Output](#output)
+	- [dropReport](#dropreport)
+	- [dropEstR package](#dropestr-package)
+	- [Additional notes](#additional-notes)
+
+<!-- /TOC -->
+
 
 ## General processing steps
-1. **dropTag** - Tagging and merging of the reads
-2. Alignment to reference genome
-3. **dropEst** - Counting of Reads, Merging of cells by barcode and export to .rds count matrix.
+1. **dropTag**: extraction of cell barcodes and UMIs from the library. Result: demultiplexed .fastq.gz files, which should be aligned to the reference.
+2. Alignment of the demultiplexed files to reference genome. Result: .bam files with the alignment.
+3. **dropEst**: building count matrix and estimation of some statistics, necessary for quality control. Result: .rds file with the count matrix and statistics. *Optionally: count matrix in MatrixMarket format.*
 4. **dropReport** - Generating report on library quality.
 
-## Setup & Installation
+## Setup
 ### System requirements
 * Boost >= 1.54
 * BamTools
 * Zlib
-* R >= 3.2.2 with pacakges:
+* R >= 3.2.2 with packages:
   * Rcpp
   * RcppAramdillo
   * RInside
@@ -37,7 +64,7 @@ Build:
 
 ```bash
 cd dropEst
-cmake && make
+cmake . && make
 ```
 
 ### Troubleshooting
@@ -46,60 +73,71 @@ If `cmake` can't find one of the libraries, or you want to use some specific ver
 * BamTools: BAMTOOLS_ROOT.
 * R: R_ROOT. Can be found by running the `cat(R.home())` in R.
 
-These variables should be set to the path to the installed library. It can be done either using command line options: `cmake -D R_ROOT="path_to_r"` or by adding variable declaration to CMakeLists.txt: `set(R_ROOT path_to_r)`.
+These variables should be set to the path to the installed library. It can be done either by using command line options: `cmake -D R_ROOT="path_to_r"` or by adding the variable declaration to CMakeLists.txt: `set(R_ROOT path_to_r)`.
+
+
+In case you have some issues with the linker for specific library, please try to build this library manually with the version of compiler, which you're going to use for dropEst build.
 
 ## dropTag
     droptag -- generate tagged fastq files for alignment
 
-Currently supported Indrop Library versions for Tag stage:  
-* Indrop v1
-  * Read structure:
-    * Biological Read (gene)
-    * Metadata Read (barcode)
-* Indrop v2
-  * Read structure:
-    * Biological Read (gene)
-    * Metadata Read (barcode)
-* Indrop v3
-  * Read structure (You need 4 different read-files from your sequencing facility)
-    * Biological Read (~ 60 bp)
-    * Barcode + UMI (14 bp)
-    * Cell Barcode (8 bp)
-    * Library Barcode (8 bp)
-
-### inDrop v1 & v2
-* Reads to provide: (can be fastq or fastq.gz)
-  * Read_1: Index reads (length?)
-  * Read_2: Biological read (length longer?)
-* Provide the config.xml file *(Explanation of the Paramters in "config-desc.xml"
-(write more about important parameters here?)*
-* Call `droptag`:
+Example command:
 ```bash
-./droptag -c ./config.xml barcode_reads gene_reads
+./droptag -c config.xml [-S] reads1.fastq reads2.fastq [...]
 ```
 
-### inDrop v3
-* Reads to provide: (can be fastq or fastq.gz)
-  * Read_1: Cell barcode part 1 (length 8)
-  * Read_2: Cell barcode part 2 + UMI (length 14)
-  * Read_3: Gene read (length 61)
-  * Read_4: Library barcode (length 8) *(optional)*
-* Provide the config.xml file *(Explanation of the Paramters in "config-desc.xml" (write more about important parameters here?))*
-* Call `droptag`:
+Positional arguments of the dropTag phase contain paths to the read files, obtained with a sequencer. These files can be either in *.fastq* of *.fastq.gz* format. The file order depends on the type of used protocol. Below is the instruction on the usage for currently supported protocols.
+
+### Protocols
+#### inDrop v1 & v2
+* File 1: barcode reads. Structure:
+  * Cell barcode, part 1
+  * Spacer
+  * Cell barcode, part 2
+  * UMI
+* File 2: gene reads
+
+Example config file is located at "*dropEst/configs/indrop_v1_2.xml*".  
+Example command:
 ```bash
-./droptag -c ./config.xml [-S] [-t library_tag] barcode1_reads barcode2_umi_reads gene_reads [library_tags]
+./droptag -c ./configs/indrop_v1_2.xml barcode_reads.fastq gene_reads.fastq
 ```
 
-#### further options / flags:
+#### inDrop v3
+* Reads to provide: (can be fastq or fastq.gz)
+  * Read 1: Cell barcode part 1 (length 8)
+  * Read 2: Cell barcode part 2 + UMI (length 14)
+  * Read 3: Gene read (length 61)
+  * Read 4: Library barcode (length 8) *(optional)*
+* File 1: cell barcode, part 1 *(default length: 8bp)*
+* File 2: cell barcode + UMI, part 1 *(default length: >= 14bp)*
+* File 3: gene read
+* *File 4 (optional): library tag*
+
+If a file with library tags provided, option "-t" is required.
+<!-- To get data from multiple libraries **TODO: understand what happens with barcode in the case of multiple library tags**. -->
+
+Example config file is located at "*dropEst/configs/indrop_v1_2.xml*".  
+Example command:
+```bash
+./droptag -c dropEst/configs/indrop_v3.xml [-S] [-t library_tag] barcode1_reads.fastq barcode2_reads.fastq gene_reads.fastq [library_tags.fastq]
+```
+
+#### 10x
+[Cell Ranger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger) is recommended tool for demultiplexing of 10x data. However, [dropEst](##dropEst) can be ran on the demultiplexed .bam file to obtain data in the format, optimized for the subsequent analysis.
+
+### Command line arguments for dropTag
 *  -c, --config filename: xml file with droptag parameters  
 *  -l, --log-prefix prefix: logs prefix  
 *  -n, --name name: alternative output base name  
-*  -S, --save-stats : save stats to rds file  
+*  -S, --save-stats : save stats to rds file. This data is used on the dropReport phase.
 *  -t, --lib-tag library tag : (for IndropV3 with library tag only)  
 *  -q, --quiet : disable logs  
 
+Please, use `./droptag -h` for additional help.
+
 ## Alignment
-dropTag write the tagged reads into multiple files. All these files must be aligned to reference, and all bam files with the alignments must be provided as input for the dropEst stage. In the paper we used [TopHat2](https://ccb.jhu.edu/software/tophat/tutorial.shtml) aligner, however any RNA-seq aligners (i.e. [Kallisto](https://pachterlab.github.io/kallisto/)) can be used.
+dropTag writes the tagged reads into multiple files. All these files must be aligned to reference, and all bam files with the alignments must be provided as input for the dropEst stage. In the paper we used [TopHat2](https://ccb.jhu.edu/software/tophat/tutorial.shtml) aligner, however any RNA-seq aligners (i.e. [Kallisto](https://pachterlab.github.io/kallisto/) or [STAR](https://github.com/alexdobin/STAR)) can be used.
 
 Alignment with TopHat2:
 1. Install [bowtie index](http://bowtie-bio.sourceforge.net/tutorial.shtml#preb) for the sequenced organism.
@@ -108,26 +146,30 @@ Alignment with TopHat2:
 ```bash
 tophat2 -p number_of_threads --no-coverage-search -g 1 -G genes.gtf -o output_dir Bowtie2Index/genome reads.fastq.gz
 ```
-4.
-The result needed for the count estimation is *./output_dir/accepted_hits.bam*.
+4. The result needed for the count estimation is *./output_dir/accepted_hits.bam*.
 
 ## dropEst
 
     dropest: estimate molecular counts per cell
 
-**You need to provide the right barcode file in the config.xml file!** (How to find the right file?)
+This phase requires aligned .bam files as input and uses them to estimate count matrix. These files must contain information about cell barcode and UMI for each read (reads, which don't contain such information are ignored). Two possible ways to encode this information are acceptable:
+1. Encode it in read names (as a result of dropTag phase).
+2. Use .bam tags (i.e. output of 10x Cell Ranger). Tag names can be configured in [*config.xml* file](##additional-notes).
 
-After running tophat you can run the dropest command on all ./align-output/Sample_1.\*/accepted_hits.bam at once.
+Count matrix estimation also requires information about the source gene for the reads. It can be provided in two ways:
+1. Use gene annotation in either *.bad* or *.gtf* format. To provide such file, "*-g*" option should be used.
+2. Use .bam tags. Tag name can be configured in [*config.xml* file](##additional-notes).
 
-You have to provide a `genomes.gtf` file with the genome information to run dropest.
+Another crucial moment in estimation of count matrix is correction of cell barcode errors. Most protocols provide the list of real barcodes, which simplifies the task of correction. If such file is available, path to the file **should be specified in the *config.xml* file** (*Estimation/Merge/barcodes_file*). This can dramatically increase quality of the result. Lists for inDrop protocols can be found at *dropEst/data/barcodes/*. Two algorithms of barcode correction are available:
+1. Simple, "*-m*" option. This algorithm is recommended in the case, where barcodes list is supplied.
+2. Precise, "*-M*" option. Doesn't requires list of real barcodes to obtain high-quality results, however has significantly lower performance.
 
-For indrop-v3 you should use the option -m which fixes barcode errors and improves estimation per cell.
+Example command:
+```bash
+dropest [options] [-m] -g ./hg38/genes.gtf -c ./config.xml ./alignment.*/accepted_hits.bam
+```
 
-
-> dropest [options] -g ./hg19/genes.gtf -c ./config.xml ./align-output/Sample_1.\*/accepted_hits.bam
-
-
-### Options for dropest  
+### Command line arguments for dropEst
 *  -b, --bam-output: print tagged bam files  
 *  -c, --config filename: xml file with estimation parameters  
 *  -C, --cells num: maximal number of output cells  
@@ -136,14 +178,6 @@ For indrop-v3 you should use the option -m which fixes barcode errors and improv
 *  -g, --genes filename: file with genes annotations (.bed or .gtf)  
 *  -G, --genes-min num: minimal number of genes in output cells  
 *  -l, --log-prefix : logs prefix  
-*  -L, --gene-match-level :  
-  *  e: count UMIs with exonic reads only;  
-  *  i: count UMIs with intronic reads only;  
-  *  E: count UMIs, which have both exonic and not annotated reads;  
-  *  I: count UMIs, which have both intronic and not annotated reads;  
-  *  B: count UMIs, which have both exonic and intronic reads;  
-  *  A: count UMIs, which have exonic, intronic and not annotated reads.  
-  *  Default: -L eEBA.  
 *  -m, --merge-barcodes : merge linked cell tags  
 *  -M, --merge-barcodes-precise : use precise merge strategy (can be slow), recommended to use when the list of real barcodes is not available  
 *  -o, --output-file filename : output file name  
@@ -151,11 +185,46 @@ For indrop-v3 you should use the option -m which fixes barcode errors and improv
 *  -q, --quiet : disable logs  
 *  -w, --write-mtx : write out matrix in MatrixMarket format  
 
+### Output
+<!-- TODO: add that output has data of two types: all cells and filtered cells -->
+Result of this phase is .rds file with the next fields:
+* **cm** (sparse matrix): count matrix in sparse format
+* **reads_per_chr_per_cell** (list of data.frame): number of reads per cell (row) for each chromosome (column):
+  * **Exon** (data.frame): exonic reads
+  * **Intron** (data.frame): intronic reads
+  * **Intergenic** (data.frame): intergenic reads
+* **mean_reads_per_umi** (vector): mean number of reads per UMI for each cell
+* some additional info <!-- TODO: describe it -->
+
+To additionaly print the file with count matrix in MatrixMarket format use "*-w*" option.
+
 ## dropReport
-To run the report you have to install [dropestr](#dropest-r-package) R package.
+To run the report you have to install [dropestr](#dropestr-package) R package.
 
-# dropEst R package
-I haven't used this yet! I'd like to try it and help you with documentation.
+Required R packages for the report script:
 
-To install the package, use
-> devtools::install_github('hms-dbmi/dropEst/dropestr').
+```R
+install.packages(c("rmarkdown","preseqR"))
+```
+You need pandoc for the creation of the report.html.
+
+The Report can be called with
+
+```bash
+Rscript dropReport.Rsc cell.counts.rds
+```
+
+## dropEstR package
+To install the package, use:
+
+```r
+devtools::install_github('hms-dbmi/dropEst/dropestr')
+```
+
+This package allows you to perform:
+  * filtration of low-quality cells (see vignette "*low-quality-cells*")
+  * correction of UMI errors (see vignette "*umi-correction*")
+  * quality control (see *dropReport.Rsc*)  <!-- TODO: create vignette -->
+
+## Additional notes
+Description of the fields for the config file is provided in *dropEst/configs/config_desc.xml*.
