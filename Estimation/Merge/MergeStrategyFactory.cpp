@@ -53,7 +53,7 @@ namespace Merge
 	MergeStrategyFactory::merge_cb_ptr MergeStrategyFactory::get_cb_strat(bool merge_tags, bool use_poisson) const
 	{
 		if (!merge_tags)
-			return merge_cb_ptr(new DummyMergeStrategy());
+			return merge_cb_ptr(new DummyMergeStrategy(this->_min_genes_before_merge, this->_min_genes_after_merge));
 
 		if (!use_poisson)
 			return this->get_cb_strat();

@@ -17,8 +17,8 @@ namespace Merge
 		}
 
 	public:
-		DummyMergeStrategy()
-			: MergeStrategyAbstract(0, 0)
+		DummyMergeStrategy(size_t min_genes_before_merge, size_t min_genes_after_merge)
+			: MergeStrategyAbstract(min_genes_before_merge, min_genes_after_merge)
 		{}
 
 		virtual std::string merge_type() const override {
