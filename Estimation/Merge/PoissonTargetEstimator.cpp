@@ -1,6 +1,9 @@
-#include <Tools/UtilFunctions.h>
 #include "PoissonTargetEstimator.h"
+
+#include <Tools/UtilFunctions.h>
 #include "MergeStrategyBase.h"
+
+#include <random>
 
 namespace Estimation
 {
@@ -47,25 +50,26 @@ long PoissonTargetEstimator::get_best_merge_target(const CellsDataContainer &con
 
 void PoissonTargetEstimator::init(const Estimation::CellsDataContainer &container)
 {
-	this->_umis_distribution = container.umis_distribution();
-	bs_umi_t umi_ind = 0;
-	for (auto const &umi: this->_umis_distribution)
+	auto umis_distribution = container.umis_distribution();
+	double sum = 0;
+	for (auto const &it : umis_distribution)
 	{
-		this->_umis_bootstrap_distribution.insert(this->_umis_bootstrap_distribution.end(), umi.second, umi_ind);
-		++umi_ind;
+		sum += it.second;
 	}
 
-	this->_umis_number = umi_ind;
+	for (auto const &it : umis_distribution)
+	{
+		this->_umis_distribution.push_back(it.second / sum);
+	}
 
-	this->_r = Tools::init_r();
-	this->_r->parseEvalQ("library(fitdistrplus)");
+	auto r = Tools::init_r();
+	r->parseEvalQ("set.seed(48)");
 
 	srand(48);
 }
 
 void PoissonTargetEstimator::release()
 {
-	this->_umis_bootstrap_distribution.clear();
 	this->_umis_distribution.clear();
 }
 
@@ -108,15 +112,22 @@ double PoissonTargetEstimator::get_bootstrap_intersect_prob(const CellsDataConta
 
 double PoissonTargetEstimator::estimate_by_r(ul_list_t sizes, size_t val) const
 {
-	//TODO: optimize it with lambda = mean, "Use The d/q/p/q Statistical Functions (see RCpp book)"
-	(*this->_r)["sizes"] = sizes;
-	(*this->_r)["val"] = val;
-	this->_r->parseEvalQ("p_fit <- fitdistr(sizes, 'poisson')\n"
-								 "res <- ppois(lambda=p_fit$estimate[1], q = val - 1, lower.tail=F)\n"
-								 "res_upper <- max(ppois(lambda=p_fit$estimate[1] + 3 * p_fit$sd, q = val - 1, lower.tail=F),"
-								 "ppois(lambda=max(p_fit$estimate[1] - 3 * p_fit$sd, 0), q = val - 1, lower.tail=F))\n"
-								 "if (res_upper > 4 * res) {res <- -res_upper}\n"); // Check that we have enough observations
-	return (*this->_r)["res"];
+	using namespace Rcpp;
+	double mean = std::accumulate(sizes.begin(), sizes.end(), 0.0) / sizes.size();
+
+	std::vector<double> diff(sizes.size());
+	std::transform(sizes.begin(), sizes.end(), diff.begin(), [mean](double x) { return x - mean; });
+	double sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
+	double stderr = std::sqrt(sq_sum / (sizes.size() * sizes.size()));
+
+	double res = ppois(IntegerVector::create(val - 1), mean, false)[0];
+	double res_upper = std::max(ppois(IntegerVector::create(val - 1), mean + 3 * stderr, false)[0],
+	                            ppois(IntegerVector::create(val - 1), mean - 3 * stderr, false)[0]);
+
+	if (res_upper > 4 * res) // Check that we have enough observations
+		return -res_upper;
+
+	return res;
 }
 
 double PoissonTargetEstimator::get_bootstrap_intersect_sizes(const Cell &cell1, const Cell &cell2,
@@ -135,7 +146,10 @@ double PoissonTargetEstimator::get_bootstrap_intersect_sizes(const Cell &cell1, 
 	}
 
 	size_t repeats_sum = 0;
-	std::vector<bs_umi_t> intersection_marks(this->_umis_number, 0);
+	std::vector<bs_umi_t> intersection_marks(this->_umis_distribution.size(), 0);
+	std::discrete_distribution<unsigned> dist(this->_umis_distribution.begin(), this->_umis_distribution.end());
+	std::mt19937 gen;
+
 	for (unsigned repeat_num = 1; repeat_num <= repeats_count; ++repeat_num)
 	{
 		size_t intersect_size = 0;
@@ -144,13 +158,13 @@ double PoissonTargetEstimator::get_bootstrap_intersect_sizes(const Cell &cell1, 
 			size_t cell1_gene_size = *c1_it;
 			for (size_t choice_num = 0; choice_num < cell1_gene_size; ++choice_num)
 			{
-				intersection_marks[this->_umis_bootstrap_distribution[rand() % this->_umis_bootstrap_distribution.size()]] = repeat_num;
+				intersection_marks[dist(gen)] = repeat_num;
 			}
 
 			size_t cell2_gene_size = *c2_it;
 			for (size_t choice_num = 0; choice_num < cell2_gene_size; ++choice_num)
 			{
-				bs_umi_t umi = this->_umis_bootstrap_distribution[rand() % this->_umis_bootstrap_distribution.size()];
+				bs_umi_t umi = dist(gen);
 				if (intersection_marks[umi] == repeat_num)
 				{
 					intersect_size++;
@@ -159,7 +173,7 @@ double PoissonTargetEstimator::get_bootstrap_intersect_sizes(const Cell &cell1, 
 			}
 		}
 		sizes.push_back(intersect_size);
-		repeats_sum += intersect_size >= real_intersect_size;
+		repeats_sum += (intersect_size >= real_intersect_size);
 	}
 
 	return repeats_sum / (double) repeats_count;

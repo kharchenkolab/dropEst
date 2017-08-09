@@ -89,15 +89,6 @@ BOOST_AUTO_TEST_SUITE(TestEstimatorMergeProbs)
 		this->estimator.init(*this->container_full);
 		BOOST_CHECK_EQUAL(this->estimator._umis_distribution.size(), 8);
 
-		BOOST_CHECK_EQUAL(this->estimator._umis_distribution["AAACCT"], 4);
-		BOOST_CHECK_EQUAL(this->estimator._umis_distribution["CCCCCT"], 5);
-		BOOST_CHECK_EQUAL(this->estimator._umis_distribution["ACCCCT"], 2);
-		BOOST_CHECK_EQUAL(this->estimator._umis_distribution["CAACCT"], 4);
-		BOOST_CHECK_EQUAL(this->estimator._umis_distribution["CCATTC"], 1);
-		BOOST_CHECK_EQUAL(this->estimator._umis_distribution["TTTTTT"], 2);
-		BOOST_CHECK_EQUAL(this->estimator._umis_distribution["TTCTTT"], 2);
-		BOOST_CHECK_EQUAL(this->estimator._umis_distribution["AAAAAA"], 1);
-
 		BOOST_CHECK_EQUAL(this->container_full->cell(5).size(), 2);
 		BOOST_CHECK_EQUAL(this->container_full->cell(6).size(), 2);
 
