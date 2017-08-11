@@ -16,7 +16,7 @@ Imports:
   dplyr (>= 0.5),
   Rcpp,
   RcppProgress,
-  RcppArmadillo,
+  RcppEigen,
   Matrix (>= 1.2-7.1)
 Suggests:
   parallel,
@@ -29,5 +29,6 @@ Depends:
 RoxygenNote: 6.0.1
 LinkingTo: 
   Rcpp,
-  RcppProgress
+  RcppProgress,
+  RcppEigen
 VignetteBuilder: knitr

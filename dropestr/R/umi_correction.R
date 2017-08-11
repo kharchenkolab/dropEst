@@ -104,7 +104,7 @@ CorrectUmiSequenceErrors <- function(reads.per.umi.per.cb, umi.probabilities=NUL
   if (verbosity.level > 0) {
     cat(" Completed.\n")
   }
-  return(as.data.frame(BuildCountMatrix(filt.umis.per.gene)))
+  return(BuildCountMatrix(filt.umis.per.gene))
 }
 
 #' @export
@@ -117,7 +117,11 @@ FillCollisionsAdjustmentInfo <- function(umi.probabilities, max.umi.per.gene, st
   }
 
   umis.number <- 4^umi.length
-  adjusted.sizes <- seq(0, AdjustGeneExpressionClassic(max.umi.per.gene, umis.number), by=step)
+  max.umi.per.gene.adj.classic <- AdjustGeneExpressionClassic(max.umi.per.gene, umis.number)
+  if (step >= max.umi.per.gene.adj.classic) {
+    step <- max.umi.per.gene.adj.classic %/% 2
+  }
+  adjusted.sizes <- seq(0, max.umi.per.gene.adj.classic, by=step)
   seeds <- round(runif(length(adjusted.sizes), 0, 1e9))
   estimated.sizes <- unlist(plapply(1:length(adjusted.sizes), function(i) GetBootstrapUmisMeanNum(umi.probabilities, adjusted.sizes[i], repeats.number, seeds[i]), mc.cores=mc.cores))
 

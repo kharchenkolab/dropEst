@@ -109,7 +109,7 @@ List GetUmisDifference(const std::string &umi1, const std::string &umi2, int rpu
 }
 
 // [[Rcpp::export]]
-IntegerMatrix BuildCountMatrix(const List &umis_per_gene) {
+SEXP BuildCountMatrix(const List &umis_per_gene) {
   si_map_t gene_inds;
   StringVector gene_names;
 
@@ -128,24 +128,26 @@ IntegerMatrix BuildCountMatrix(const List &umis_per_gene) {
     }
   }
 
-  IntegerMatrix count_matrix(Dimension(gene_names.size(), umis_per_gene.size()));
+  using Triplet=Eigen::Triplet<unsigned>;
+  std::vector<Triplet> triplet_list;
   for (int cell_ind = 0; cell_ind < umis_per_gene.size(); ++cell_ind) {
     auto const &upg = as<IntegerVector>(umis_per_gene[cell_ind]);
     const s_vec_t &genes = as<s_vec_t>(as<StringVector>(upg.names()));
-    auto cell_column = count_matrix.column(cell_ind);
 
     for (int gene_ind = 0; gene_ind < genes.size(); ++gene_ind) {
-      cell_column[gene_inds.at(genes[gene_ind])] = upg[gene_ind];
+      triplet_list.push_back(Triplet(gene_inds.at(genes[gene_ind]), cell_ind, upg[gene_ind]));
     }
 
     if (p.check_abort())
-      return count_matrix;
+      return IntegerMatrix();
   }
 
-  colnames(count_matrix) = as<StringVector>(umis_per_gene.names());
-  rownames(count_matrix) = gene_names;
+  Eigen::SparseMatrix<unsigned> mat(gene_names.size(), umis_per_gene.size());
+  mat.setFromTriplets(triplet_list.begin(), triplet_list.end());
 
-  return count_matrix;
+  S4 res(wrap(mat));
+  res.slot("Dimnames") = List::create(gene_names, as<StringVector>(umis_per_gene.names()));
+  return res;
 }
 
 //' Parse UMIgs.

@@ -2,6 +2,7 @@
 // Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #include "../inst/include/dropestr.h"
+#include <RcppEigen.h>
 #include <Rcpp.h>
 
 using namespace Rcpp;
@@ -266,7 +267,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // BuildCountMatrix
-IntegerMatrix BuildCountMatrix(const List& umis_per_gene);
+SEXP BuildCountMatrix(const List& umis_per_gene);
 RcppExport SEXP _dropestr_BuildCountMatrix(SEXP umis_per_geneSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;

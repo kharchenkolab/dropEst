@@ -23,7 +23,6 @@ pipeline_data <- lq_cells_data$pipeline
 mit_genes <- lq_cells_data$genes
 ```
 
-
 The simplest way to score the cells for data, obtained with the pipeline:
 ```{r, fig.width=5, fig.height=4}
 scores <- ScorePipelineCells(pipeline_data)

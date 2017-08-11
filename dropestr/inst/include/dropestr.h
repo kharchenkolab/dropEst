@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Rcpp.h>
+#include <RcppEigen.h>
 
 #include <progress.hpp>
 

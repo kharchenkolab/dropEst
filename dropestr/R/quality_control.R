@@ -1,7 +1,16 @@
 #' @importFrom dplyr %>%
 NULL
 
+#' Estimate library saturation with preseqR
+#'
 #' @export
+#' @param reads.by.umig.vec
+#' @param reads.by.umig.cbs
+#' @param umi.counts
+#' @param steps.num
+#' @param max.estimate.rate
+#' @param top.cells
+#' @return list
 EstimateSaturation <- function(reads.by.umig.vec, reads.by.umig.cbs, umi.counts, steps.num=100, max.estimate.rate=10, top.cells=1000) {
   if (!requireNamespace("preseqR", quietly = TRUE))
     stop("preseqR package is required")
@@ -40,14 +49,21 @@ PlotSaturationEstimates <- function(preseq.estimates) {
     ggplot2::labs(x='Sequencing depth', y='#Unique molecules')
 }
 
+#' Plot fraction of different read types for each chromosome
+#'
 #' @export
-PlotIntergenicFractionByChromosomes <- function(reads.per.chr.per.cells, chromosome.umi.threshold=0.001) {
+#' @param reads.per.chr.per.cells named list, which contains data frames for each type of reads
+#' @param chromosome.reads.threshold minimal fraction of reads for chromosome to be plotted
+#' @return ggplot object with the plot.
+PlotIntergenicFractionByChromosomes <- function(reads.per.chr.per.cells, chromosome.reads.threshold=0.001) {
   dfs <- lapply(reads.per.chr.per.cells, colSums)
+  dfs <- dfs[sapply(dfs, length) > 0]
   df <- lapply(names(dfs), function(n) data.frame(Chromosome=names(dfs[[n]]), ReadsNum=dfs[[n]], Type=n)) %>%
     dplyr::bind_rows()
 
-  sum_reads_num <- (df %>% dplyr::group_by(Chromosome) %>% dplyr::summarise(ReadsNum=sum(ReadsNum)))$ReadsNum
-  df <- df[sum_reads_num > 0.001 * sum(sum_reads_num),]
+  sum.reads.num <- (df %>% dplyr::group_by(Chromosome) %>% dplyr::summarise(ReadsNum=sum(ReadsNum))) %>%
+    dplyr::filter(ReadsNum > 0.001 * sum(ReadsNum))
+  df <- df %>% dplyr::filter(Chromosome %in% sum.reads.num$Chromosome)
 
   ggplot2::ggplot(df) + ggplot2::geom_bar(ggplot2::aes(x=Chromosome, y=ReadsNum, fill=Type), stat='identity', position='stack', col=I('black'), alpha=0.7) +
     ggplot2::theme(legend.position=c(0.99, 0.99), legend.justification=c(1, 1), legend.background=ggplot2::element_rect(fill=ggplot2::alpha('white', 0.7))) + ggplot2::ylab('#Reads') +
@@ -55,7 +71,14 @@ PlotIntergenicFractionByChromosomes <- function(reads.per.chr.per.cells, chromos
     ggplot2::scale_fill_manual(name=NULL, values=c("#1DA30C", "gray", '#D10404'))
 }
 
+#' Plot smoothScatter with cell quality scores by cell rank
+#'
 #' @export
+#' @param scores
+#' @param cells.number
+#' @param y.threshold
+#' @param main
+#' @param bandwidth
 PlotCellScores <- function(scores, cells.number=NULL, y.threshold=NULL, main=NULL, bandwidth=c(length(scores) / 100, 0.008)) {
   smoothScatter(scores, bandwidth=bandwidth, xlab='Cell rank', ylab='Score', cex.lab=1.4, main=main)
   if (!is.null(cells.number)) {
@@ -67,7 +90,13 @@ PlotCellScores <- function(scores, cells.number=NULL, y.threshold=NULL, main=NUL
   }
 }
 
+#' Plot distribution of UMI
+#'
 #' @export
+#' @param reads.per.umi.per.cb
+#' @param trim.quantile
+#' @param bins number of bins in histogram
+#' @return ggplot object with the plot.
 PlotUmisDistribution <- function(reads.per.umi.per.cb, trim.quantile=0.99, bins=50) {
   umi.distribution <- GetUmisDistribution(reads.per.umi.per.cb)
   umi.probabilities <- umi.distribution / sum(umi.distribution)
@@ -77,12 +106,22 @@ PlotUmisDistribution <- function(reads.per.umi.per.cb, trim.quantile=0.99, bins=
   ggplot2::qplot(umi.probabilities, bins=bins, color=I('black')) + ggplot2::labs(x='UMI probability', y='#UMIs')
 }
 
+#' Plot mean number of reads per UMI for each cell by cell rank
+#'
 #' @export
+#' @param mean.reads.per.umi
+#' @param umi.counts
+#' @param ... additional parameters of smoothScatter
 PlotReadsPerUmiByCells <- function(mean.reads.per.umi, umi.counts, ...) {
   smoothScatter(log10(umi.counts), mean.reads.per.umi[names(umi.counts)], xlab='log10(#UMI in cell)', ylab='Mean reads/UMI per cell', ...)
 }
 
+#' Plot distribution of log number of genes by cells
+#'
 #' @export
+#' @param count.matrix
+#' @param bins number of bins in histogram
+#' @return ggplot object with the plot.
 PlotGenesPerCell <- function(count.matrix, bins=50) {
   genes.per.cell <- Matrix::colSums(count.matrix > 0)
   ggplot2::qplot(genes.per.cell, col=I('black'), bins=bins) +
@@ -91,7 +130,12 @@ PlotGenesPerCell <- function(count.matrix, bins=50) {
     ggplot2::scale_x_continuous(limits=range(genes.per.cell), expand = c(0, 0), trans='log10')
 }
 
+#' Plot smoothScatter of geneset fraction for each cell by cell rank
+#'
 #' @export
+#' @param fraction
+#' @param plot.threshold
+#' @param main
 FractionSmoothScatter <- function(fraction, plot.threshold=F, main='') {
   smoothScatter(fraction, xlab='Cell rank', ylab='Fraction', main=main, cex.lab=1.4, ylim=c(0, 1))
   if (is.logical(plot.threshold) && plot.threshold) {
