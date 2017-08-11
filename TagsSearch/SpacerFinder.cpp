@@ -46,8 +46,6 @@ namespace TagsSearch
 		if (seq.length() < this->min_seq_len)
 		{
 			this->outcomes.inc(OutcomesCounter::SHORT_SEQ);
-			L_DEBUG << "-- read is too short";
-
 			return std::make_pair(SpacerFinder::ERR_CODE, SpacerFinder::ERR_CODE);
 		}
 
@@ -60,7 +58,6 @@ namespace TagsSearch
 
 		if (spacer_pos.first == SpacerFinder::ERR_CODE)
 		{
-			L_DEBUG << "-- spacer not found";
 			this->outcomes.inc(OutcomesCounter::NO_SPACER);
 			return std::make_pair(SpacerFinder::ERR_CODE, SpacerFinder::ERR_CODE);
 		}
@@ -68,8 +65,6 @@ namespace TagsSearch
 		if (seq.length() < spacer_pos.second + this->barcode_length + this->umi_length)
 		{
 			this->outcomes.inc(OutcomesCounter::SHORT_SEQ);
-			L_DEBUG << "-- read is too short for this spacer";
-
 			return std::make_pair(SpacerFinder::ERR_CODE, SpacerFinder::ERR_CODE);
 		}
 
@@ -89,11 +84,8 @@ namespace TagsSearch
 				return std::make_pair(SpacerFinder::ERR_CODE, SpacerFinder::ERR_CODE);
 		}
 
-		L_DEBUG << "-- match at " << spacer_pos;
-
-		int ed = Tools::edit_distance(this->spacer.c_str(), seq.substr(spacer_pos, this->spacer.length()).c_str());
-
-		L_DEBUG << "Edit distance = " << ed;
+		int ed = Tools::edit_distance(this->spacer.c_str(), seq.substr(spacer_pos, this->spacer.length()).c_str(), true,
+		                              this->max_spacer_ed);
 
 		if (ed > this->max_spacer_ed)
 			return std::make_pair(SpacerFinder::ERR_CODE, SpacerFinder::ERR_CODE);

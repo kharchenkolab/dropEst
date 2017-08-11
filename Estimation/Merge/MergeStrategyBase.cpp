@@ -85,8 +85,6 @@ MergeStrategyAbstract::ul_list_t MergeStrategyBase::merge_inited(CellsDataContai
 void MergeStrategyBase::merge_force(Estimation::CellsDataContainer &container, size_t src_cell_id,
 									    size_t target_cell_ind, ul_list_t &cb_reassign_targets, ISIHM &cb_reassigned_to_it) const
 {
-	L_DEBUG << "Merge: " << container.cell(src_cell_id).barcode() << " to " << container.cell(target_cell_ind).barcode();
-
 	container.merge_cells(src_cell_id, target_cell_ind);
 	this->reassign(src_cell_id, target_cell_ind, cb_reassign_targets, cb_reassigned_to_it);
 }

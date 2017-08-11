@@ -136,7 +136,8 @@ namespace TagsSearch
 					cb_quality += r1_quality.substr(cur_pos, mask_part.length);
 					break;
 				case MaskPart::SPACER:
-					if (Tools::edit_distance(mask_part.spacer.c_str(), r1_seq.substr(cur_pos, mask_part.length).c_str()) > mask_part.min_edit_distance)
+					if (Tools::edit_distance(mask_part.spacer.c_str(), r1_seq.substr(cur_pos, mask_part.length).c_str(),
+					                         mask_part.min_edit_distance) > mask_part.min_edit_distance)
 					{
 						this->outcomes.inc_no_spacer(spacer_ind);
 						return std::string::npos;

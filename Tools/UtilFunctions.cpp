@@ -1,30 +1,42 @@
 #include "UtilFunctions.h"
+#include <limits>
+
 
 namespace Tools
 {
-	unsigned edit_distance(const char *s1, const char *s2, bool skip_n)
+	unsigned edit_distance(const char *s1, const char *s2, bool skip_n, unsigned max_ed)
 	{
-		size_t s1len, s2len;
-		unsigned x, y, lastdiag, olddiag;
-		s1len = strlen(s1);
-		s2len = strlen(s2);
-		unsigned column[s1len + 1];
-		for (y = 1; y <= s1len; y++)
+		int olddiag;
+		int s1len = strlen(s1);
+		int s2len = strlen(s2);
+		int column[s1len + 1];
+		for (int s1_ind = 0; s1_ind <= s1len; s1_ind++)
 		{
-			column[y] = y;
+			column[s1_ind] = s1_ind;
 		}
-		for (x = 1; x <= s2len; x++)
+
+		for (int s2_ind = 1; s2_ind <= s2len; s2_ind++)
 		{
-			column[0] = x;
-			for (y = 1, lastdiag = x - 1; y <= s1len; y++)
+			int lower_index = std::max(0, s2_ind - int(max_ed));
+			int upper_index = std::min(s1len, s2_ind + int(max_ed));
+			int lastdiag = column[lower_index];
+			column[lower_index] = s2_ind;
+			int min_ed = s2_ind;
+			for (int s1_ind = lower_index + 1; s1_ind <= upper_index; s1_ind++)
 			{
-				olddiag = column[y];
-				int penalty = ((s1[y - 1] == s2[x - 1]) || (skip_n && (s1[y - 1] == 'N' || s2[x - 1] == 'N'))) ? 0 : 1;
-				column[y] = MIN3(column[y] + 1, column[y - 1] + 1, lastdiag + penalty);
+				olddiag = column[s1_ind];
+				bool is_match = (s1[s1_ind - 1] == s2[s2_ind - 1]) || (skip_n && (s1[s1_ind - 1] == 'N' || s2[s2_ind - 1] == 'N'));
+				int new_ed = MIN3(column[s1_ind] + 1, column[s1_ind - 1] + 1, lastdiag + int(!is_match));
+				min_ed = std::min(min_ed, new_ed + std::abs(s1_ind - s2_ind));
+				column[s1_ind] = new_ed;
 				lastdiag = olddiag;
 			}
+
+			if (min_ed > max_ed)
+				return unsigned(min_ed);
 		}
-		return column[s1len];
+
+		return unsigned(column[s1len]);
 	}
 
 	unsigned hamming_distance(const std::string &s1, const std::string &s2, bool skip_n)
@@ -44,35 +56,6 @@ namespace Tools
 		return ed;
 	}
 
-	std::string reverse_complement(const std::string &s)
-	{
-		char rcs[s.length()];
-
-		for (int i = 0; i < s.length(); i++)
-		{
-			switch (s[s.length() - i - 1])
-			{
-				case 'A':
-					rcs[i] = 'T';
-					break;
-				case 'T':
-					rcs[i] = 'A';
-					break;
-				case 'C':
-					rcs[i] = 'G';
-					break;
-				case 'G':
-					rcs[i] = 'C';
-					break;
-				default:
-					rcs[i] = 'N';
-					break;
-			}
-		}
-
-		return std::string(rcs, s.length());
-	}
-
 	RInside* init_r()
 	{
 		RInside *r = RInside::instancePtr();
@@ -80,6 +63,26 @@ namespace Tools
 			return new RInside(0, 0);
 
 		return r;
+	}
+
+	ReverseComplement::ReverseComplement()
+	{
+		this->complements['A'] = 'T';
+		this->complements['T'] = 'A';
+		this->complements['G'] = 'C';
+		this->complements['C'] = 'G';
+		this->complements['N'] = 'N';
+	}
+
+	std::string ReverseComplement::rc(const std::string &s) const
+	{
+		std::string res = s;
+		for (int i = 0; i < s.length(); i++)
+		{
+			res[i] = this->complements[s[s.length() - i - 1]];
+		}
+
+		return res;
 	}
 }
 

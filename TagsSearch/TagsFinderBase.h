@@ -3,6 +3,7 @@
 #include "Counters/TrimsCounter.h"
 #include "FilesProcessor.h"
 #include "SpacerFinder.h"
+#include "Tools/UtilFunctions.h"
 
 #include <string>
 
@@ -39,6 +40,7 @@ namespace TagsSearch
 		const size_t max_reads;
 		const unsigned min_read_len;
 		const std::string poly_a;
+		const Tools::ReverseComplement rc;
 
 		const std::shared_ptr<FilesProcessor> _files_processor;
 		TrimsCounter _trims_counter;

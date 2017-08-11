@@ -112,26 +112,26 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		BOOST_CHECK_THROW(parser.get_barcodes_list("/barcodes.wrong"), std::runtime_error);
 	}
 
-	BOOST_FIXTURE_TEST_CASE(testConstLengthBarcodesFile, Fixture)
-	{
-		Merge::BarcodesParsing::ConstLengthBarcodesParser parser(PROJ_DATA_PATH + std::string("/barcodes/hifibio"));
-		parser.init();
-		auto cbs = parser._barcodes;
-
-		BOOST_REQUIRE_EQUAL(cbs.size(), 3);
-
-		BOOST_REQUIRE_EQUAL(cbs[0].size(), 96);
-		BOOST_REQUIRE_EQUAL(cbs[1].size(), cbs[0].size());
-		BOOST_REQUIRE_EQUAL(cbs[2].size(), cbs[0].size());
-
-		BOOST_CHECK_EQUAL(cbs[0][0], "GCTTGGTTGCGCTTGGTTGC");
-		BOOST_CHECK_EQUAL(cbs[1][0], "ACTTGGCGCTACTTGGCGCT");
-		BOOST_CHECK_EQUAL(cbs[2][0], "GCCATTGGACGCCATTGGAC");
-
-		BOOST_CHECK_EQUAL(cbs[0][1], "GGAGTGGTTCGGAGTGGTTC");
-		BOOST_CHECK_EQUAL(cbs[1][1], "AGAACGCTCCAGAACGCTCC");
-		BOOST_CHECK_EQUAL(cbs[2][1], "GCCGAATCCTGCCGAATCCT");
-	}
+//	BOOST_FIXTURE_TEST_CASE(testConstLengthBarcodesFile, Fixture)
+//	{
+//		Merge::BarcodesParsing::ConstLengthBarcodesParser parser(PROJ_DATA_PATH + std::string("/barcodes/hifibio"));
+//		parser.init();
+//		auto cbs = parser._barcodes;
+//
+//		BOOST_REQUIRE_EQUAL(cbs.size(), 3);
+//
+//		BOOST_REQUIRE_EQUAL(cbs[0].size(), 96);
+//		BOOST_REQUIRE_EQUAL(cbs[1].size(), cbs[0].size());
+//		BOOST_REQUIRE_EQUAL(cbs[2].size(), cbs[0].size());
+//
+//		BOOST_CHECK_EQUAL(cbs[0][0], "GCTTGGTTGCGCTTGGTTGC");
+//		BOOST_CHECK_EQUAL(cbs[1][0], "ACTTGGCGCTACTTGGCGCT");
+//		BOOST_CHECK_EQUAL(cbs[2][0], "GCCATTGGACGCCATTGGAC");
+//
+//		BOOST_CHECK_EQUAL(cbs[0][1], "GGAGTGGTTCGGAGTGGTTC");
+//		BOOST_CHECK_EQUAL(cbs[1][1], "AGAACGCTCCAGAACGCTCC");
+//		BOOST_CHECK_EQUAL(cbs[2][1], "GCCGAATCCTGCCGAATCCT");
+//	}
 
 	BOOST_FIXTURE_TEST_CASE(testIncrement, Fixture)
 	{
@@ -269,14 +269,13 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 	BOOST_FIXTURE_TEST_CASE(testSplitBarcode, Fixture)
 	{
-		Merge::BarcodesParsing::ConstLengthBarcodesParser parser(PROJ_DATA_PATH + std::string("/barcodes/hifibio"));
+		Merge::BarcodesParsing::ConstLengthBarcodesParser parser(PROJ_DATA_PATH + std::string("/barcodes/indrop_v3"));
 		parser.init();
-		auto splitted = parser.split_barcode("TAATGAGCACTAATGAGCACATACTGATGCATACTGATGCGTAACACGCTGTAACACGCT");
+		auto splitted = parser.split_barcode("TAATGAGCACTAATGA");
 
-		BOOST_REQUIRE_EQUAL(splitted.size(), 3);
-		BOOST_CHECK_EQUAL(splitted[0], "TAATGAGCACTAATGAGCAC");
-		BOOST_CHECK_EQUAL(splitted[1], "ATACTGATGCATACTGATGC");
-		BOOST_CHECK_EQUAL(splitted[2], "GTAACACGCTGTAACACGCT");
+		BOOST_REQUIRE_EQUAL(splitted.size(), 2);
+		BOOST_CHECK_EQUAL(splitted[0], "TAATGAGC");
+		BOOST_CHECK_EQUAL(splitted[1], "ACTAATGA");
 	}
 
 //	BOOST_FIXTURE_TEST_CASE(testStat, Fixture)

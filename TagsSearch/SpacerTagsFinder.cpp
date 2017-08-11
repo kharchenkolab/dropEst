@@ -13,11 +13,8 @@ namespace TagsSearch
 	Tools::ReadParameters SpacerTagsFinder::parse(const std::string &r1_seq, const std::string &r1_quality,
 		                                              const SpacerFinder::spacer_pos_t &spacer_pos)
 	{
-		L_DEBUG << r1_seq << ":";
-
 		std::string cell_barcode = this->spacer_finder.parse_cell_barcode(r1_seq, spacer_pos.first, spacer_pos.second);
 		std::string cell_barcode_quality = this->spacer_finder.parse_cell_barcode(r1_quality, spacer_pos.first, spacer_pos.second);
-		L_DEBUG << "-- cell barcode: " << cell_barcode << " (" << cell_barcode.length() << "nt)";
 
 		std::string umi_barcode = this->spacer_finder.parse_umi_barcode(r1_seq, spacer_pos.second);
 		std::string umi_barcode_quality = this->spacer_finder.parse_umi_barcode(r1_quality, spacer_pos.second);
@@ -26,8 +23,6 @@ namespace TagsSearch
 			umi_barcode = "N";
 			umi_barcode_quality = "@";
 		}
-
-		L_DEBUG << "-- umi barcode: " << umi_barcode;
 
 		return Tools::ReadParameters(cell_barcode, umi_barcode, cell_barcode_quality, umi_barcode_quality);
 	}

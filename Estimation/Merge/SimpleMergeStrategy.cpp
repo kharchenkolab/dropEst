@@ -10,6 +10,11 @@ namespace Merge
 
 	using Tools::IndexedValue;
 
+	SimpleMergeStrategy::SimpleMergeStrategy(size_t min_genes_before_merge, size_t min_genes_after_merge,
+	                                         unsigned max_merge_edit_distance, double min_merge_fraction)
+			: MergeStrategyBase(min_genes_before_merge, min_genes_after_merge, max_merge_edit_distance, min_merge_fraction)
+	{}
+
 	SimpleMergeStrategy::u_u_hash_t SimpleMergeStrategy::get_cells_with_common_umigs(const CellsDataContainer &container,
 																					 size_t base_cell_ind) const
 	{
@@ -39,11 +44,6 @@ namespace Merge
 
 		return common_umigs_per_cell;
 	}
-
-	SimpleMergeStrategy::SimpleMergeStrategy(size_t min_genes_before_merge, size_t min_genes_after_merge,
-	                                         unsigned max_merge_edit_distance, double min_merge_fraction)
-		: MergeStrategyBase(min_genes_before_merge, min_genes_after_merge, max_merge_edit_distance, min_merge_fraction)
-	{}
 
 	std::string SimpleMergeStrategy::merge_type() const
 	{

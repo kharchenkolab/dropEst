@@ -2,7 +2,6 @@
 
 #include "Tools/Logs.h"
 #include "Tools/ReadParameters.h"
-#include "Tools/UtilFunctions.h"
 
 #include <fstream>
 #include <iomanip>
@@ -88,15 +87,13 @@ namespace TagsSearch
 		len_t trim_pos = sequence.length();
 		// attempt 1: check for reverse complement of the UMI+second barcode, remove trailing As
 		// RC of UMI+second barcode (up to a length r1_rc_length - spacer_finder parameter)
-		std::string rcb = Tools::reverse_complement(barcodes_tail);
+		std::string rcb = this->rc.rc(barcodes_tail);
 
-		L_DEBUG << "-- barcode RC: " << rcb;
 		len_t rc_pos = sequence.find(rcb);
 		if (rc_pos != std::string::npos)
 		{
 			trim_pos = rc_pos;
 			this->_trims_counter.inc(TrimsCounter::RC);
-			L_DEBUG << "-- found barcode RC at " << rc_pos;
 		}
 		else
 		{
@@ -106,7 +103,6 @@ namespace TagsSearch
 			{
 				trim_pos = rc_pos;
 				this->_trims_counter.inc(TrimsCounter::POLY_A);
-				L_DEBUG << "-- found polyA at " << rc_pos;
 			}
 		}
 
@@ -123,8 +119,6 @@ namespace TagsSearch
 		{
 			this->_trims_counter.inc(TrimsCounter::A_TRIM);
 		}
-
-		L_DEBUG << std::string(skip_count, '-') << "   trimming " << (sequence.length() - trim_pos);
 
 		//attempt 4: apply
 		if (sequence.length() != trim_pos)

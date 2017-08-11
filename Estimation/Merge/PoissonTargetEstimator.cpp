@@ -74,8 +74,8 @@ void PoissonTargetEstimator::release()
 }
 
 double PoissonTargetEstimator::get_bootstrap_intersect_prob(const CellsDataContainer &container,
-																	  size_t cell1_ind, size_t cell2_ind,
-																	  size_t repeats_count, unsigned multiplies_count) const
+														    size_t cell1_ind, size_t cell2_ind,
+															size_t repeats_count, unsigned multiplies_count) const
 {
 	const size_t test_sample_size = 100;
 	auto const &cell1_dist = container.cell(cell1_ind);

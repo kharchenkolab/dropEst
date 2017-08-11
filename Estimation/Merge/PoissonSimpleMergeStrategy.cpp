@@ -12,7 +12,7 @@ PoissonSimpleMergeStrategy::PoissonSimpleMergeStrategy(const PoissonTargetEstima
 	, _target_estimator(target_estimator)
 {}
 
-long PoissonSimpleMergeStrategy::get_merge_target(const Estimation::CellsDataContainer &container, size_t base_cell_ind) const
+long PoissonSimpleMergeStrategy::get_merge_target(const CellsDataContainer &container, size_t base_cell_ind) const
 {
 	const std::string &base_cb = container.cell(base_cell_ind).barcode();
 	u_u_hash_t cells_with_common_umigs = this->get_cells_with_common_umigs(container, base_cell_ind);
