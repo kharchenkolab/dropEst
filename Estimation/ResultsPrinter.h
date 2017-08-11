@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include <RcppArmadillo.h>
+#include <RcppEigen.h>
 
 #include <Estimation/Stats.h>
 
@@ -15,7 +15,8 @@ namespace Estimation
 	private:
 		typedef std::vector<std::string> s_vec_t;
 		typedef std::vector<int> i_vec_t;
-		typedef std::vector<arma::uword> arma_uvec;
+		typedef Eigen::Triplet<unsigned> eigen_triplet_t;
+		typedef std::vector<eigen_triplet_t> triplets_vec_t;
 
 	private:
 		const bool write_matrix;
@@ -26,8 +27,8 @@ namespace Estimation
 	private:
 		static Rcpp::IntegerMatrix create_matrix(const s_vec_t &col_names, const s_vec_t &row_names,
 		                                         const i_vec_t &counts);
-		static arma::sp_umat create_matrix(const arma_uvec &row_numbers, const arma_uvec &column_numbers,
-		                                   const arma_uvec &counts, size_t total_rows, size_t total_cols);
+		static SEXP create_matrix(const triplets_vec_t &triplets, size_t total_rows, size_t total_cols,
+		                          const s_vec_t &row_names, const s_vec_t &col_names);
 
 		Rcpp::List get_saturation_analysis_info(const CellsDataContainer &container) const;
 		Rcpp::DataFrame get_reads_per_chr_per_cell_info(Stats::CellStrStatType stat_type,
@@ -36,17 +37,15 @@ namespace Estimation
 		Rcpp::List get_reads_per_chr_per_cell_info(const CellsDataContainer &container, const s_vec_t &cell_names) const;
 		s_vec_t get_filtered_cell_names(const CellsDataContainer &container) const;
 		s_vec_t get_real_cell_names(const CellsDataContainer &container) const;
-		Rcpp::List get_count_matrix(const CellsDataContainer &container, bool filtered) const;
+		SEXP get_count_matrix(const CellsDataContainer &container, bool filtered) const;
 		void trace_gene_counts(const CellsDataContainer &genes_container) const;
 		Rcpp::NumericVector get_mean_reads_per_umi(const CellsDataContainer &container) const;
 		Rcpp::List get_reads_per_umi_per_cell(const CellsDataContainer &container) const;
 		Rcpp::List get_merge_targets(const CellsDataContainer &container) const;
 
-		arma::sp_umat get_count_matrix_filtered(const CellsDataContainer &container, s_vec_t &gene_names,
-		                                        s_vec_t &cell_names) const;
+		SEXP get_count_matrix_filtered(const CellsDataContainer &container) const;
 
-		arma::sp_umat get_count_matrix_raw(const CellsDataContainer &container, s_vec_t &gene_names,
-		                                        s_vec_t &cell_names) const;
+		SEXP get_count_matrix_raw(const CellsDataContainer &container) const;
 
 	public:
 		ResultsPrinter(bool write_matrix, bool reads_output);

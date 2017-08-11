@@ -41,17 +41,16 @@ Pipeline for estimating molecular count matrices for droplet-based single-cell R
 * Zlib
 * R >= 3.2.2 with packages:
   * Rcpp
-  * RcppAramdillo
+  * RcppEigen
   * RInside
   * Matrix
-  * fitdistrplus *(optional, used only with "-M" option)*
 * Compiler with c++11 support *(was tested with gcc >= 4.8.5 and CLang 3.9.1)*
 
 ### Installation
 Install R packages:
 
 ```R
-install.packages(c("Rcpp","RcppArmadillo", "RInside", "Matrix", "fitdistrplus"))
+install.packages(c("Rcpp","RcppEigen", "RInside", "Matrix"))
 ```
 
 Clone this repository:

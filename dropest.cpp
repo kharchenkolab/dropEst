@@ -290,5 +290,15 @@ int main(int argc, char **argv)
 		L_ERR << err.what();
 		return 1;
 	}
+	catch (std::logic_error err)
+	{
+		L_ERR << err.what();
+		return 1;
+	}
+	catch (std::exception err)
+	{
+		L_ERR << err.what();
+		return 1;
+	}
 	Tools::trace_time("All done");
 }

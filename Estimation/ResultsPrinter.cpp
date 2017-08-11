@@ -49,11 +49,7 @@ namespace Estimation
 				_["aligned_reads_per_cell"] = aligned_reads_per_cb,
 				_["aligned_umis_per_cell"] = aligned_umis_per_cb,
 				_["requested_umis_per_cb"] = requested_umis_per_cb,
-				_["requested_reads_per_cb"] = requested_reads_per_cb,
-				_["fname"] = wrap(filename)); // TODO: remove?
-
-		R->parseEvalQ("dimnames(d$cm$cm) <- list(d$cm$gene_names, d$cm$cell_names); d$cm <- d$cm$cm");
-		R->parseEvalQ("dimnames(d$cm_raw$cm) <- list(d$cm_raw$gene_names, d$cm_raw$cell_names); d$cm_raw <- d$cm_raw$cm");
+				_["requested_reads_per_cb"] = requested_reads_per_cb);
 
 		std::string filename_base = filename;
 		auto extension_pos = filename.find_last_of(".");
@@ -183,7 +179,7 @@ namespace Estimation
 		return cell_names;
 	}
 
-	List ResultsPrinter::get_count_matrix(const CellsDataContainer &container, bool filtered) const
+	SEXP ResultsPrinter::get_count_matrix(const CellsDataContainer &container, bool filtered) const
 	{
 		if (filtered)
 		{
@@ -198,19 +194,19 @@ namespace Estimation
 		R->parseEvalQ("library(Matrix)");
 
 		s_vec_t gene_names, cell_names;
-		arma::sp_umat cm;
+		SEXP cm;
 		if (filtered)
 		{
-			cm = this->get_count_matrix_filtered(container, gene_names, cell_names);
+			cm = this->get_count_matrix_filtered(container);
 		}
 		else
 		{
-			cm = this->get_count_matrix_raw(container, gene_names, cell_names);
+			cm = this->get_count_matrix_raw(container);
 		}
 
 
 		Tools::trace_time("Done");
-		return List::create(_["cm"] = cm, _["gene_names"] = wrap(gene_names), _["cell_names"] = wrap(cell_names));
+		return cm;
 	}
 
 	void ResultsPrinter::trace_gene_counts(const CellsDataContainer &genes_container) const
@@ -311,11 +307,11 @@ namespace Estimation
 		return wrap(merge_targets);
 	}
 
-	arma::sp_umat ResultsPrinter::get_count_matrix_filtered(const CellsDataContainer &container,
-	                                                        s_vec_t &gene_names, s_vec_t &cell_names) const
+	SEXP ResultsPrinter::get_count_matrix_filtered(const CellsDataContainer &container) const
 	{
+		s_vec_t gene_names, cell_names;
 		std::unordered_map<std::string, size_t> gene_ids;
-		std::vector<arma::uword> column_numbers, row_numbers, counts;
+		triplets_vec_t triplets;
 
 		for (size_t column_num = 0; column_num < container.filtered_cells().size(); ++column_num)
 		{
@@ -332,21 +328,19 @@ namespace Estimation
 
 				size_t row_num = gene_it.first->second;
 
-				column_numbers.push_back(arma::uword(column_num));
-				row_numbers.push_back(arma::uword(row_num));
-				counts.push_back(arma::uword(umis_per_gene.second));
+				triplets.push_back(eigen_triplet_t(row_num, column_num, umis_per_gene.second));
 			}
 		}
 
 		L_TRACE << gene_ids.size() << " genes, " << cell_names.size() << " cells.";
-		return ResultsPrinter::create_matrix(row_numbers, column_numbers, counts, gene_ids.size(), cell_names.size());
+		return ResultsPrinter::create_matrix(triplets, gene_ids.size(), cell_names.size(), gene_names, cell_names);
 	}
 
-	arma::sp_umat ResultsPrinter::get_count_matrix_raw(const CellsDataContainer &container,
-	                                                   s_vec_t &gene_names, s_vec_t &cell_names) const
+	SEXP ResultsPrinter::get_count_matrix_raw(const CellsDataContainer &container) const
 	{
+		s_vec_t gene_names, cell_names;
 		std::unordered_map<std::string, size_t> gene_ids;
-		std::vector<arma::uword> column_numbers, row_numbers, counts;
+		triplets_vec_t triplets;
 
 		size_t column_num = 0;
 		for (size_t cell_id = 0; cell_id < container.total_cells_number(); cell_id++)
@@ -378,16 +372,14 @@ namespace Estimation
 					cell_value = gene.second.size();
 				}
 
-				column_numbers.push_back(arma::uword(column_num));
-				row_numbers.push_back(arma::uword(row_num));
-				counts.push_back(arma::uword(cell_value));
+				triplets.push_back(eigen_triplet_t(row_num, column_num, cell_value));
 			}
 
 			column_num++;
 		}
 
 		L_TRACE << gene_ids.size() << " genes, " << cell_names.size() << " cells.";
-		return ResultsPrinter::create_matrix(row_numbers, column_numbers, counts, gene_ids.size(), cell_names.size());
+		return ResultsPrinter::create_matrix(triplets, gene_ids.size(), cell_names.size(), gene_names, cell_names);
 	}
 
 	IntegerVector ResultsPrinter::get_requested_umis_per_cb(const CellsDataContainer &container, bool return_reads) const
@@ -425,11 +417,14 @@ namespace Estimation
 		return requested_umis_per_cb;
 	}
 
-	arma::sp_umat ResultsPrinter::create_matrix(const arma_uvec &row_numbers, const arma_uvec &column_numbers,
-	                                            const arma_uvec &counts, size_t total_rows, size_t total_cols)
+	SEXP ResultsPrinter::create_matrix(const triplets_vec_t &triplets, size_t total_rows, size_t total_cols,
+	                                   const s_vec_t &row_names, const s_vec_t &col_names)
 	{
-		using namespace arma;
-		return sp_umat(umat(join_rows(umat(row_numbers), umat(column_numbers)).t()), uvec(counts),
-		               uword(total_rows), uword(total_cols));
+		Eigen::SparseMatrix<unsigned> mat(total_rows, total_cols);
+		mat.setFromTriplets(triplets.begin(), triplets.end());
+
+		S4 res(wrap(mat));
+		res.slot("Dimnames") = List::create(row_names, col_names);
+		return res;
 	}
 }

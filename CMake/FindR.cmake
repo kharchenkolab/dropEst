@@ -1,7 +1,7 @@
 # FindR
 # --------
 #
-# Find R, RCpp, RCpArmadillo and RInside
+# Find R, RCpp, RCppEigen and RInside
 #
 # You can set R_ROOT and R_PACKAGES to specify R paths
 #
@@ -89,9 +89,9 @@ if (NOT R_PACKAGES_DIRS)
     )
 endif()
 
-find_path(RCPP_ARM_INCLUDE_DIR RcppArmadillo.h
+find_path(RCPP_EIGEN_INCLUDE_DIR RcppEigen.h
         HINTS ${R_PACKAGES_DIRS}
-        PATH_SUFFIXES /RcppArmadillo/include/)
+        PATH_SUFFIXES /RcppEigen/include/)
 find_path(RCPP_INCLUDE_DIR Rcpp.h
         HINTS ${R_PACKAGES_DIRS}
         PATH_SUFFIXES /Rcpp/include)
@@ -118,14 +118,14 @@ find_package_handle_standard_args(R DEFAULT_MSG
         R_LIBRARIES
         R_INCLUDE_DIRS
         RCPP_INCLUDE_DIR
-        RCPP_ARM_INCLUDE_DIR
+        RCPP_EIGEN_INCLUDE_DIR
         RINSIDE_INCLUDE_DIR
         RINSIDE_LIBRARY
         R_MATRIX_PKG
 )
 
 if (R_FOUND)
-    set(R_INCLUDE_DIRS ${R_INCLUDE_DIRS} ${RCPP_INCLUDE_DIR} ${RCPP_ARM_INCLUDE_DIR} ${RINSIDE_INCLUDE_DIR})
+    set(R_INCLUDE_DIRS ${R_INCLUDE_DIRS} ${RCPP_INCLUDE_DIR} ${RCPP_EIGEN_INCLUDE_DIR} ${RINSIDE_INCLUDE_DIR})
     set(R_LIBRARIES ${R_LIBRARIES} ${RINSIDE_LIBRARY})
     message(STATUS "Found R: ${R_ROOT}")
 endif()
@@ -133,7 +133,7 @@ endif()
 # mark low-level variables from FIND_* calls as advanced
 mark_as_advanced(
         R_CORE_LIBRARY
-        RCPP_ARM_INCLUDE_DIR
+        RCPP_EIGEN_INCLUDE_DIR
         RCPP_INCLUDE_DIR
         RINSIDE_INCLUDE_DIR
         R_MATRIX_PKG
