@@ -198,20 +198,22 @@ Result of this phase is .rds file with the next fields:
 To additionaly print the file with count matrix in MatrixMarket format use "*-w*" option.
 
 ## dropReport
-To run the report you have to install [dropestr](#dropestr-package) R package.
+To run the report you have to install [dropestr](#dropestr-package) R package with all dependencies (`dependencies = T`).
 
-Required R packages for the report script:
-
-```R
-install.packages(c("rmarkdown","preseqR"))
-```
 You need pandoc for the creation of the report.html.
 
-The Report can be called with
-
+The Report can be called with:
 ```bash
-Rscript dropReport.Rsc cell.counts.rds
+./dropReport.Rsc cell.counts.rds
 ```
+
+To see full list of options use:
+```bash
+./dropReport.Rsc -h
+```
+
+### Troubleshooting
+If you get the error *"pandoc version 1.12.3 or higher is required and was not found"*, try to set path in the system variable:  `export RSTUDIO_PANDOC=/path/to/pandoc`.
 
 ## dropEstR package
 
