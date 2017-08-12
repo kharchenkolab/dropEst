@@ -220,7 +220,7 @@ This package implements UMI errors corrections and low-quality cells filtration,
 To install the package, use:
 
 ```r
-devtools::install_github('hms-dbmi/dropEst/dropestr')
+devtools::install_github('hms-dbmi/dropEst/dropestr', dependencies = T)
 ```
 
 Package content:

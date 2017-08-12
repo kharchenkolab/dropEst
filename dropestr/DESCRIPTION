@@ -20,6 +20,7 @@ Imports:
   Matrix (>= 1.2-7.1)
 Suggests:
   parallel,
+  optparse,
   data.table (>= 1.9.6),
   knitr,
   rmarkdown,
