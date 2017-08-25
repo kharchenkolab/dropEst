@@ -113,7 +113,12 @@ namespace TagsSearch
 			return true;
 		}
 
-		this->trim(f1_rec.sequence.substr(seq_end - this->_trim_tail_length, this->_trim_tail_length), record.sequence, record.quality);
+		if (this->_trim_tail_length != 0)
+		{
+			auto tail = f1_rec.sequence.substr(seq_end - this->_trim_tail_length, this->_trim_tail_length);
+			this->trim(tail, record.sequence, record.quality);
+		}
+
 		return true;
 	}
 

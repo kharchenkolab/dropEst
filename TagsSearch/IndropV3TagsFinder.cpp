@@ -46,8 +46,12 @@ namespace TagsSearch
 		std::string cb_quality = this->parse_cb(cb1_rec.quality, cb2_rec.quality);
 		std::string umi_quality = this->parse_umi(cb2_rec.quality);
 
-		std::string tail = cb2_rec.sequence.substr(this->barcode2_length + this->umi_length - this->trim_tail_length, this->trim_tail_length);
-		this->trim(tail, record.sequence, record.quality);
+		if (this->trim_tail_length != 0)
+		{
+			std::string tail = cb2_rec.sequence.substr(this->barcode2_length + this->umi_length - this->trim_tail_length, this->trim_tail_length);
+			this->trim(tail, record.sequence, record.quality);
+		}
+
 		read_params = Tools::ReadParameters(cb, umi, cb_quality, umi_quality);
 		return true;
 	}

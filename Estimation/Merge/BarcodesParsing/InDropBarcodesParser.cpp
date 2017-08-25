@@ -27,12 +27,19 @@ namespace BarcodesParsing
 			size_t space_ind = line.find(' ');
 			if (space_ind == std::string::npos)
 			{
-				L_WARN << "WARNING: barcodes line has bad format: '" << line << "'";
+				L_WARN << "WARNING: barcodes line has wrong format: '" << line << "'";
 				continue;
 			}
 
-			barcodes[0].push_back(rc.rc(line.substr(0, space_ind)));
-			barcodes[1].push_back(rc.rc(line.substr(space_ind + 1)));
+			if (space_ind != 0)
+			{
+				barcodes[0].push_back(rc.rc(line.substr(0, space_ind)));
+			}
+
+			if (space_ind + 1 < line.length())
+			{
+				barcodes[1].push_back(rc.rc(line.substr(space_ind + 1)));
+			}
 		}
 
 		return barcodes;

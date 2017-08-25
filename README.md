@@ -1,5 +1,5 @@
 # dropEst - Pipeline
-Pipeline for estimating molecular count matrices for droplet-based single-cell RNA-seq measurements. Implements methods, described at [this paper](https://doi.org/10.1101/171496).
+Pipeline for estimating molecular count matrices for droplet-based single-cell RNA-seq measurements. Implements methods, described in [this paper](https://doi.org/10.1101/171496).
 
 ## Table of contents
 <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
@@ -19,14 +19,15 @@ Pipeline for estimating molecular count matrices for droplet-based single-cell R
 		- [Command line arguments for dropTag](#command-line-arguments-for-droptag)
 	- [Alignment](#alignment)
 	- [dropEst](#dropest)
+		- [Usage of tagged bam files (e.g. 10x, Drop-seq) as input](#usage-of-tagged-bam-files-eg-10x-drop-seq-as-input)
 		- [Command line arguments for dropEst](#command-line-arguments-for-dropest)
 		- [Output](#output)
 	- [dropReport](#dropreport)
+		- [Troubleshooting](#troubleshooting)
 	- [dropEstR package](#dropestr-package)
 	- [Additional notes](#additional-notes)
 
 <!-- /TOC -->
-
 
 ## General processing steps
 1. **dropTag**: extraction of cell barcodes and UMIs from the library. Result: demultiplexed .fastq.gz files, which should be aligned to the reference.
@@ -103,11 +104,6 @@ Example command:
 ```
 
 #### inDrop v3
-* Reads to provide: (can be fastq or fastq.gz)
-  * Read 1: Cell barcode part 1 (length 8)
-  * Read 2: Cell barcode part 2 + UMI (length 14)
-  * Read 3: Gene read (length 61)
-  * Read 4: Library barcode (length 8) *(optional)*
 * File 1: cell barcode, part 1 *(default length: 8bp)*
 * File 2: cell barcode + UMI, part 1 *(default length: >= 14bp)*
 * File 3: gene read
@@ -123,7 +119,17 @@ Example command:
 ```
 
 #### 10x
-[Cell Ranger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger) is recommended tool for demultiplexing of 10x data. However, [dropEst](##dropEst) can be ran on the demultiplexed .bam file to obtain data in the format, optimized for the subsequent analysis.
+* File 1: library tag *(default length: 8bp)*
+* File 2: cell barcode + UMI, part 1 *(default length: 16+10=26bp)*
+* File 3: gene read
+
+Example config file is located at "*dropEst/configs/10x.xml*".  
+Example command:
+```bash
+./droptag -c dropEst/configs/10x.xml [-S] lib_tag_reads.fastq barcode_reads.fastq gene_reads.fastq
+```
+
+While dropTag provides way to demultiplex 10x data, [Cell Ranger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger) is still recommended tool for this. [dropEst](##dropEst) phase can be ran on the Cell Ranger demultiplexed .bam file to obtain data in the format, optimized for the subsequent analysis.
 
 ### Command line arguments for dropTag
 *  -c, --config filename: xml file with droptag parameters  
@@ -167,6 +173,17 @@ Example command:
 ```bash
 dropest [options] [-m] -g ./hg38/genes.gtf -c ./config.xml ./alignment.*/accepted_hits.bam
 ```
+
+### Usage of tagged bam files (e.g. 10x, Drop-seq) as input
+Some protocols provide pipelines, which create .bam files with information about CB, UMI and gene.
+To use these files as input, specify "*-f*" option. Example:
+```bash
+dropest [options] -f [-g ./genes.gtf] -c ./config.xml ./pipeline_res_*.bam
+```
+
+If "*-g*" option is provided, genes are parsed from the gtf, and information about genes from the bam file is ignored.
+
+To specify corresponding .bam tag names, use "*Estimation/BamTags*" section in the config (see *configs/config_desc.xml*).  
 
 ### Command line arguments for dropEst
 *  -b, --bam-output: print tagged bam files  
