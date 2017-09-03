@@ -17,22 +17,11 @@ namespace TagsSearch
 	{
 		for (const auto &filename : filenames)
 		{
-			std::shared_ptr<std::ifstream> infile = std::make_shared<std::ifstream>();
-			infile->open(filename, std::ios_base::in | std::ios_base::binary);
-			this->in_files.push_back(infile);
-			if (!this->in_files.back())
-				throw std::runtime_error("Can't open fastq file '" + filename + "'");
-
-			this->in_fstreams.push_back(std::make_shared<boost::iostreams::filtering_istream>());
-			if (boost::ends_with(filename, ".gz") || boost::ends_with(filename, ".gzip"))
-			{
-				this->in_fstreams.back()->push(boost::iostreams::gzip_decompressor());
-			}
-			this->in_fstreams.back()->push(*(this->in_files.back()));
+			this->line_providers.push_back(std::make_shared<Tools::LineProvider>(filename, 8192));
 		}
 
 		std::string out_file_name = this->get_out_filename();
-		this->out_file.open(out_file_name.c_str(), std::ios_base::out | std::ios_base::binary);
+		this->out_file.open(out_file_name.c_str(), std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
 		if (!this->out_file.is_open())
 			throw std::runtime_error("Can't open out file: '" + out_file_name + "'");
 
@@ -64,7 +53,7 @@ namespace TagsSearch
 
 		this->out_zip.pop();
 		this->out_file.close();
-		this->out_file.open(out_file_name.c_str(), std::ios_base::out | std::ios_base::binary);
+		this->out_file.open(out_file_name.c_str(), std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
 		if (!this->out_file.is_open())
 			throw std::runtime_error("Can't open file: '" + out_file_name + "'");
 
@@ -82,7 +71,8 @@ namespace TagsSearch
 			result = true;
 		}
 
-		if (!(this->out_zip << text << std::flush))
+		bool out_res = (this->out_zip << text).good();
+		if (!out_res)
 			throw std::runtime_error("Can't write to file! Text:\n'" + text + "'");
 
 		this->current_file_reads_written++;
@@ -98,20 +88,20 @@ namespace TagsSearch
 	FilesProcessor::FastQRecord FilesProcessor::get_fastq_record(size_t index)
 	{
 		FastQRecord record;
-		auto &fs = *this->in_fstreams.at(index);
-		if (!std::getline(fs, record.id).good())
+		auto &provider = *this->line_providers.at(index);
+		if (!provider.get_line(record.id))
 			return record;
 
 		if (record.id.at(0) != '@')
 			throw std::runtime_error("File '" + this->filenames[index] + "', read '" + record.id + "': fastq malformed!");
 
-		if (!std::getline(fs, record.sequence).good())
+		if (!provider.get_line(record.sequence))
 			throw std::runtime_error("File '" + this->filenames[index] + "', read '" + record.id + "': fastq ended prematurely!");
 
-		if (!std::getline(fs, record.description).good())
+		if (!provider.get_line(record.description))
 			throw std::runtime_error("File '" + this->filenames[index] + "', read '" + record.id + "': fastq ended prematurely!");
 
-		if (!std::getline(fs, record.quality).good())
+		if (!provider.get_line(record.quality))
 			throw std::runtime_error("File '" + this->filenames[index] + "', read '" + record.id + "': fastq ended prematurely!");
 
 		if (record.sequence.length() != record.quality.length())

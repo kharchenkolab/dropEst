@@ -199,6 +199,7 @@ void save_stats(const string &out_filename, shared_ptr<TagsFinderBase> tags_find
 
 int main(int argc, char **argv)
 {
+	std::ios_base::sync_with_stdio(false);
 	std::string command_line;
 	for (int i = 0; i < argc; ++i)
 	{

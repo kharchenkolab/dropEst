@@ -28,7 +28,7 @@ find_package (R REQUIRED)
 set(INCLUDE_DIRS ${Boost_INCLUDE_DIR} ${PROJECT_SOURCE_DIR} ${ZLIB_INCLUDE_DIRS} ${BAMTOOLS_INCLUDE_DIRS} ${R_INCLUDE_DIRS})
 include_directories(${INCLUDE_DIRS})
 
-set(BASE_LIBRARIES ${R_LIBRARIES} ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+set(BASE_LIBRARIES ${R_LIBRARIES} ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${ZLIB_LIBRARIES})
 
 FILE(GLOB DropToolsSources Tools/*.cpp)
 add_library(DropTools ${DropToolsSources})
@@ -44,7 +44,7 @@ target_link_libraries(Estimation DropTools)
 
 
 set(LIBRARIES DropTools ${BASE_LIBRARIES})
-set(EST_LIBRARIES ${EST_LIBRARIES} ${BAMTOOLS_LIBRARIES} ${ZLIB_LIBRARIES} ${LIBRARIES})
+set(EST_LIBRARIES ${EST_LIBRARIES} ${BAMTOOLS_LIBRARIES} ${LIBRARIES})
 
 add_executable(droptag droptag.cpp)
 target_link_libraries(droptag TagsSearch ${LIBRARIES})

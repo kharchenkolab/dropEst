@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <limits>
 #include <sstream>
+#include <cstdio>
 
 namespace TagsSearch
 {
@@ -42,7 +43,9 @@ namespace TagsSearch
 
 			++parsed_reads;
 
-			std::string read_prefix = "@" + file_uid + std::to_string(total_reads_read);
+			char total_reads_str[50];
+			sprintf(total_reads_str, "%ld", total_reads_read);
+			std::string read_prefix = "@" + file_uid + std::string(total_reads_str);
 			if (save_reads_names)
 			{
 				this->_files_processor->write_read_params(read_prefix, params);

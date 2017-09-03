@@ -6,6 +6,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
+#include <Tools/LineProvider.h>
 
 #include "Tools/ReadParameters.h"
 
@@ -26,8 +27,7 @@ namespace TagsSearch
 		};
 	private:
 		const std::vector<std::string> filenames;
-		std::vector<std::shared_ptr<std::ifstream>> in_files;
-		std::vector<std::shared_ptr<boost::iostreams::filtering_istream>> in_fstreams;
+		std::vector<std::shared_ptr<Tools::LineProvider>> line_providers;
 
 		std::ofstream out_file;
 		std::ofstream out_reads_file;
