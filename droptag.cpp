@@ -44,7 +44,8 @@ void save_stats(const string &out_filename, shared_ptr<TagsFinderBase> tags_find
 
 static void usage()
 {
-	cerr << SCRIPT_NAME << " -- generate tagged fastq files for alignment\n\n";
+	cerr << SCRIPT_NAME << " -- generate tagged fastq files for alignment\n";
+	cerr << "Version: " << VERSION << "\n\n";
 	cerr << "SYNOPSIS\n";
 	cerr << "\t" << SCRIPT_NAME << " [options] "
 	     << "-c config.xml barcode_reads.fastq [barcode_umi_reads.fastq] gene_reads.fastq [library_tags.fastq]\n";
@@ -220,6 +221,7 @@ int main(int argc, char **argv)
 	Tools::init_log(!params.quiet, false, params.log_prefix + "tag_main.log", params.log_prefix + "tag_debug.log");
 
 	L_TRACE << command_line;
+	L_TRACE << "Version: " << VERSION << ".";
 
 	boost::property_tree::ptree pt;
 	read_xml(params.config_file_name, pt);

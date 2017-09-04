@@ -82,7 +82,7 @@ namespace TagsSearch
 			result = true;
 		}
 
-		if (!(this->out_zip << text << std::flush))
+		if (!(this->out_zip << text))
 			throw std::runtime_error("Can't write to file! Text:\n'" + text + "'");
 
 		this->current_file_reads_written++;
