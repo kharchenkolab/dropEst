@@ -20,6 +20,7 @@ Pipeline for estimating molecular count matrices for droplet-based single-cell R
 	- [Alignment](#alignment)
 	- [dropEst](#dropest)
 		- [Usage of tagged bam files (e.g. 10x, Drop-seq) as input](#usage-of-tagged-bam-files-eg-10x-drop-seq-as-input)
+		- [Usage of pseudoaligners](#usage-of-pseudoaligners)
 		- [Command line arguments for dropEst](#command-line-arguments-for-dropest)
 		- [Output](#output)
 	- [dropReport](#dropreport)
