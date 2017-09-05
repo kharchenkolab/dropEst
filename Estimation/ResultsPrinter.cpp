@@ -253,7 +253,7 @@ namespace Estimation
 			double reads_per_umi = 0.0;
 			for (auto const &gene_rec : cell.genes())
 			{
-				for (auto const &umi_rec : gene_rec.second)
+				for (auto const &umi_rec : gene_rec.second.umis())
 				{
 					reads_per_umi += umi_rec.second.read_count;
 				}
@@ -357,19 +357,7 @@ namespace Estimation
 				}
 
 				size_t row_num = gene_it.first->second;
-				size_t cell_value = 0;
-
-				if (this->reads_output)
-				{
-					for (auto const &umi : gene.second)
-					{
-						cell_value += umi.second.read_count;
-					}
-				}
-				else
-				{
-					cell_value = gene.second.size();
-				}
+				size_t cell_value = gene.second.number_of_umis(this->reads_output);
 
 				triplets.push_back(eigen_triplet_t(row_num, column_num, cell_value));
 			}

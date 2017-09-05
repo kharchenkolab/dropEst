@@ -509,7 +509,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		BOOST_CHECK_NO_THROW(container.cell(0).at("Gene2").at("TTTTTT"));
 		BOOST_CHECK_NO_THROW(container.cell(0).at("Gene2").at("ACCCCT"));
 
-		for (auto const &umi :container.cell(0).at("Gene2"))
+		for (auto const &umi :container.cell(0).at("Gene2").umis())
 		{
 			BOOST_CHECK_EQUAL(umi.first.find('N'), std::string::npos);
 		}
@@ -548,7 +548,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		container.set_initialized();
 
 		this->umi_merge_strat->merge(container);
-		for (auto const &umi :container.cell(0).at("ENSG00000100941"))
+		for (auto const &umi :container.cell(0).at("ENSG00000100941").umis())
 		{
 			BOOST_CHECK_EQUAL(umi.first.find('N'), std::string::npos);
 		}

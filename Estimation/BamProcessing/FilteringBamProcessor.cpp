@@ -59,11 +59,11 @@ namespace Estimation
 				return;
 
 			auto const &genes = _container.cell(_container.cell_ids_by_cb().at(cb_iter->second)).genes();
-			auto gene_map_iter = genes.find(gene);
-			if (gene_map_iter == genes.end())
+			auto gene_iter = genes.find(gene);
+			if (gene_iter == genes.end())
 				return;
 
-			if (gene_map_iter->second.find(read_params.umi()) == gene_map_iter->second.end())
+			if (gene_iter->second.umis().find(read_params.umi()) == gene_iter->second.umis().end())
 				return;
 
 			this->written_reads++;

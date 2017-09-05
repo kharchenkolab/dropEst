@@ -14,12 +14,8 @@ namespace Estimation
 
 	void Cell::add_umi(const std::string &gene, const std::string &umi, const UMI::Mark &umi_mark)
 	{
-		auto insert_it = this->_genes[gene].emplace(umi, 0);
-		auto & new_umi = insert_it.first->second;
-		new_umi.read_count++;
-		new_umi.mark.add(umi_mark);
-
-		if (insert_it.second)
+		bool is_new = this->_genes[gene].add_umi(umi, umi_mark);
+		if (is_new)
 		{
 			this->_umis_number++;
 		}
@@ -39,17 +35,7 @@ namespace Estimation
 	{
 		for (auto const &gene: source._genes)
 		{
-			auto &target_gene = this->_genes[gene.first];
-			for (auto const &merged_umi: gene.second)
-			{
-				auto insert_it = target_gene.insert(merged_umi);
-				if (insert_it.second)
-				{
-					this->_umis_number++;
-					continue;
-				}
-				insert_it.first->second.merge(merged_umi.second);
-			}
+			this->_umis_number += this->_genes[gene.first].merge(gene.second);
 		}
 	}
 
@@ -61,8 +47,8 @@ namespace Estimation
 			if (target.second == target.first)
 				continue;
 
-			gene_umis[target.second].merge(gene_umis.at(target.first));
-			gene_umis.erase(target.first);
+			gene_umis.merge(target.first, target.second);
+			this->_umis_number--;
 		}
 	}
 
@@ -76,21 +62,7 @@ namespace Estimation
 		s_ul_hash_t umis_per_gene;
 		for (auto const &gene : this->_genes)
 		{
-			size_t umis_num = 0;
-			for (auto const &umi : gene.second)
-			{
-				if (!umi.second.mark.match(this->_query_marks))
-					continue;
-
-				if (return_reads)
-				{
-					umis_num += umi.second.read_count;
-				}
-				else
-				{
-					umis_num++;
-				}
-			}
+			size_t umis_num = gene.second.number_of_requested_umis(this->_query_marks, return_reads);
 
 			if (umis_num == 0)
 				continue;
@@ -106,15 +78,7 @@ namespace Estimation
 		ss_ul_hash_t reads_per_umi_per_gene;
 		for (auto const &gene : this->_genes)
 		{
-			s_ul_hash_t reads_per_umi;
-			for (auto const &umi : gene.second)
-			{
-				if (!umi.second.mark.match(this->_query_marks))
-					continue;
-
-				reads_per_umi.emplace(umi.first, umi.second.read_count);
-			}
-
+			s_ul_hash_t reads_per_umi(gene.second.requested_reads_per_umi(this->_query_marks));
 			if (reads_per_umi.empty())
 				continue;
 
@@ -170,24 +134,17 @@ namespace Estimation
 		this->_requested_umis_num = 0;
 		for (auto const &gene : this->_genes)
 		{
-			bool has_umis = false;
-			for (auto const &umi : gene.second)
-			{
-				if (umi.second.mark.match(this->_query_marks))
-				{
-					has_umis = true;
-					this->_requested_umis_num++;
-				}
-			}
+			size_t cur_num = gene.second.number_of_requested_umis(this->_query_marks, false);
 
-			if (has_umis)
+			this->_requested_umis_num += cur_num;
+			if (cur_num > 0)
 			{
 				this->_requested_genes_num++;
 			}
 		}
 	}
 
-	const Cell::umi_map_t& Cell::at(const std::string &gene) const
+	const Gene& Cell::at(const std::string &gene) const
 	{
 		return this->_genes.at(gene);
 	}

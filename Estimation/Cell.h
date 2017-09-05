@@ -5,15 +5,14 @@
 #include <unordered_map>
 #include <vector>
 
-#include "UMI.h"
+#include "Gene.h"
 
 namespace Estimation
 {
 	class Cell
 	{
 	public:
-		typedef std::map<std::string, UMI> umi_map_t;
-		typedef std::map<std::string, umi_map_t> genes_t;
+		typedef std::map<std::string, Gene> genes_t;
 		typedef std::unordered_map<std::string, std::string> s_s_hash_t;
 		typedef std::unordered_map<std::string, size_t> s_ul_hash_t;
 		typedef std::unordered_map<std::string, s_ul_hash_t> ss_ul_hash_t;
@@ -21,7 +20,7 @@ namespace Estimation
 	private:
 		const std::string _barcode;
 		const size_t _min_genes_to_be_real;
-		const std::vector<UMI::Mark> _query_marks;
+		const UMI::Mark::query_t _query_marks;
 
 
 		bool _is_merged;
@@ -53,7 +52,7 @@ namespace Estimation
 		ss_ul_hash_t requested_reads_per_umi_per_gene() const;
 
 		size_t size() const;
-		const umi_map_t& at(const std::string &gene) const;
+		const Gene& at(const std::string &gene) const;
 
 		Cell(const std::string &barcode, size_t min_genes_to_be_real, const std::vector<UMI::Mark> &query_marks);
 	};

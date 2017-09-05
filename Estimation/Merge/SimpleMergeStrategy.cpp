@@ -22,9 +22,8 @@ namespace Merge
 		for (auto const &gene: container.cell(base_cell_ind).genes())
 		{
 			const std::string &gene_name = gene.first;
-			auto const &umis = gene.second;
 
-			for (auto const &umi_count: umis)
+			for (auto const &umi_count: gene.second.umis())
 			{
 				std::string umig = umi_count.first + gene_name;
 				const auto &umig_cells = this->_umig_cell_ids.at(umig);
@@ -97,7 +96,7 @@ namespace Merge
 		{
 			for (auto const &gene : container.cell(genes_count.index).genes())
 			{
-				for (auto const &umi : gene.second)
+				for (auto const &umi : gene.second.umis())
 				{
 					auto res = this->_umig_cell_ids.emplace(std::make_pair(umi.first + gene.first, sul_set_t()));
 					res.first->second.emplace(genes_count.index);

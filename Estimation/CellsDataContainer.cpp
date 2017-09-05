@@ -199,7 +199,7 @@ namespace Estimation
 		{
 			for (auto const &gene : this->_cells[cell.index].genes())
 			{
-				for (auto const &umi : gene.second)
+				for (auto const &umi : gene.second.umis())
 				{
 					umis_dist[umi.first]++;
 				}

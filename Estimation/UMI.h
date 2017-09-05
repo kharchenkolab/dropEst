@@ -19,8 +19,12 @@ namespace Estimation
 				HAS_EXONS = 2,
 				HAS_INTRONS = 4
 			};
+
+			typedef std::vector<Mark> query_t;
+
 		private:
 			char _mark;
+
 		public:
 			static const std::string DEFAULT_CODE;
 

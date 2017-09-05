@@ -33,7 +33,7 @@ void MergeUMIsStrategySimple::merge(CellsDataContainer &container) const
 		for (auto const &gene : cell.genes())
 		{
 			s_hash_t bad_umis;
-			for (auto const &umi : gene.second)
+			for (auto const &umi : gene.second.umis())
 			{
 				if (this->is_umi_real(umi.first))
 					continue;
@@ -44,7 +44,7 @@ void MergeUMIsStrategySimple::merge(CellsDataContainer &container) const
 			if (bad_umis.empty())
 				continue;
 
-			CellsDataContainer::s_s_hash_t merge_targets = this->find_targets(gene.second, bad_umis);
+			CellsDataContainer::s_s_hash_t merge_targets = this->find_targets(gene.second.umis(), bad_umis);
 
 			total_cell_merged++;
 			total_umi_merged += merge_targets.size();
@@ -63,7 +63,7 @@ bool MergeUMIsStrategySimple::is_umi_real(const std::string &umi) const
 	return umi.find('N') == std::string::npos;
 }
 
-CellsDataContainer::s_s_hash_t MergeUMIsStrategySimple::find_targets(const Cell::umi_map_t &all_umis,
+CellsDataContainer::s_s_hash_t MergeUMIsStrategySimple::find_targets(const Gene::umis_t &all_umis,
                                                                      const s_hash_t &bad_umis) const
 {
 	s_vec_t umis_without_pairs;
@@ -90,7 +90,8 @@ CellsDataContainer::s_s_hash_t MergeUMIsStrategySimple::find_targets(const Cell:
 		if (best_target == "" || min_ed > this->_max_merge_distance)
 		{
 			umis_without_pairs.push_back(bad_umi);
-		} else
+		}
+		else
 		{
 			merge_targets[bad_umi] = best_target;
 		}
