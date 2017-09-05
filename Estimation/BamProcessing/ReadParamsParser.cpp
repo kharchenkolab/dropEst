@@ -8,8 +8,9 @@ namespace Estimation
 {
 namespace BamProcessing
 {
-	ReadParamsParser::ReadParamsParser(const std::string &genes_filename, const BamTags &tags)
+	ReadParamsParser::ReadParamsParser(const std::string &genes_filename, const BamTags &tags, bool gene_in_chromosome_name)
 		: tags(tags)
+		, _gene_in_chromosome_name(gene_in_chromosome_name)
 	{
 		if (genes_filename.length() != 0)
 		{
@@ -33,10 +34,21 @@ namespace BamProcessing
 	}
 
 	UMI::Mark ReadParamsParser::get_gene(const std::string &chr_name, BamTools::BamAlignment alignment,
-	                                                         std::string &gene) const
+	                                     std::string &gene) const
 	{
 		UMI::Mark mark;
 		gene = "";
+
+		if (this->_gene_in_chromosome_name)
+		{
+			gene = chr_name;
+			if (!chr_name.empty())
+			{
+				mark.add(UMI::Mark::HAS_EXONS);
+			}
+
+			return mark;
+		}
 
 		if (!this->_genes_container.is_empty())
 			return this->get_gene_from_reference(chr_name, alignment, gene);
@@ -55,8 +67,8 @@ namespace BamProcessing
 	}
 
 	UMI::Mark ReadParamsParser::get_gene_from_reference(const std::string &chr_name,
-	                                                                    const BamTools::BamAlignment &alignment,
-	                                                                    std::string &gene) const
+	                                                    const BamTools::BamAlignment &alignment,
+	                                                    std::string &gene) const
 	{
 		UMI::Mark mark;
 		// TODO: parse CIGAR
@@ -116,7 +128,7 @@ namespace BamProcessing
 	}
 
 	bool ReadParamsParser::find_exon(Tools::RefGenesContainer::query_results_t query_results,
-	                                  Tools::RefGenesContainer::QueryResult &exon_result) const
+	                                 Tools::RefGenesContainer::QueryResult &exon_result) const
 	{
 		for (auto const &query_res : query_results)
 		{

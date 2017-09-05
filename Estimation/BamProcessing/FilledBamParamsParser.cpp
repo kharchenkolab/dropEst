@@ -33,8 +33,8 @@ namespace BamProcessing
 		return true;
 	}
 
-	FilledBamParamsParser::FilledBamParamsParser(const std::string &gtf_path, const BamTags &tags)
-		: ReadParamsParser(gtf_path, tags)
+	FilledBamParamsParser::FilledBamParamsParser(const std::string &gtf_path, const BamTags &tags, bool gene_in_chromosome_name)
+		: ReadParamsParser(gtf_path, tags, gene_in_chromosome_name)
 	{}
 }
 }

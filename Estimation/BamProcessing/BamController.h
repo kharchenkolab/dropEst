@@ -16,6 +16,7 @@ namespace TestEstimator
 {
 	struct testGeneMatchLevelUmiExclusion;
 	struct testGeneMatchLevelUmiExclusion2;
+	struct testPseudoAlignersGenes;
 }
 
 namespace Estimation
@@ -27,10 +28,12 @@ namespace Estimation
 		{
 			friend struct TestEstimator::testGeneMatchLevelUmiExclusion;
 			friend struct TestEstimator::testGeneMatchLevelUmiExclusion2;
+			friend struct TestEstimator::testPseudoAlignersGenes;
 
 		private:
 			const BamTags _tags;
 			const bool _filled_bam;
+			const bool _gene_in_chromosome_name;
 			const std::string _read_param_filenames;
 			const std::string _gtf_path;
 
@@ -56,7 +59,7 @@ namespace Estimation
 			                              const CellsDataContainer &container) const;
 
 			BamController(const BamTags &tags, bool filled_bam, const std::string &read_param_filenames,
-			              const std::string &gtf_path);
+			              const std::string &gtf_path, bool gene_in_chromosome_name);
 		};
 	}
 }

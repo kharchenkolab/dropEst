@@ -27,6 +27,7 @@ struct Params
 	bool filtered_bam_output = false;
 	bool merge_tags = false;
 	bool merge_tags_precise = false;
+	bool pseudoaligner = false;
 	bool reads_output = false;
 	bool quiet = false;
 	bool write_matrix = false;
@@ -85,6 +86,7 @@ static void usage()
 	cerr << "\t-M, --merge-barcodes-precise : use precise merge strategy (can be slow), recommended to use when the list of real barcodes is not available\n";
 	cerr << "\t-o, --output-file filename : output file name\n";
 //	cerr << "\t-r, --reads-params filename: file or files with serialized params from tags search step. If there are several files then it should be in quotes and splitted by space" << endl;
+	cerr << "\t-P, --pseudoaligner: use chromosome name as a source of gene id\n";
 	cerr << "\t-R, --reads-output: print count matrix for reads and don't use UMI statistics\n";
 	cerr << "\t-q, --quiet : disable logs\n";
 	cerr << "\t-w, --write-mtx : write out matrix in MatrixMarket format\n";
@@ -112,12 +114,13 @@ static Params parse_cmd_params(int argc, char **argv)
 			{"not-filtered",	no_argument, 	   0, 'n'},
 			{"output-file",     required_argument, 0, 'o'},
 			{"reads-params",     required_argument, 0, 'r'},
+			{"pseudoaligner",   no_argument, 0, 'P'},
 			{"reads-output",     no_argument, 		0, 'R'},
 			{"quiet",         no_argument,       0, 'q'},
 			{"write-mtx",     no_argument,       0, 'w'},
 			{0, 0,                                 0, 0}
 	};
-	while ((c = getopt_long(argc, argv, "bc:C:fFg:G:hl:L:mMno:r:Rqw", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "bc:C:fFg:G:hl:L:mMno:r:PRqw", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -163,6 +166,9 @@ static Params parse_cmd_params(int argc, char **argv)
 				break;
 			case 'r' :
 				params.read_params_names_str = string(optarg);
+				break;
+			case 'P' :
+				params.pseudoaligner = true;
 				break;
 			case 'R' :
 				params.reads_output = true;
@@ -254,6 +260,8 @@ int main(int argc, char **argv)
 
 	L_TRACE << command_line;
 	vector<string> files;
+
+	Tools::init_r();
 	while (optind < argc)
 	{
 		files.push_back(string(argv[optind++]));
@@ -272,7 +280,8 @@ int main(int argc, char **argv)
 		}
 
 		BamProcessing::BamTags t(estimation_config);
-		BamProcessing::BamController bam_controller(t, params.filled_bam, params.read_params_names_str, params.genes_filename);
+		BamProcessing::BamController bam_controller(t, params.filled_bam, params.read_params_names_str,
+		                                            params.genes_filename, params.pseudoaligner);
 		CellsDataContainer container = get_cells_container(files, params, estimation_config, bam_controller);
 
 		if (params.filtered_bam_output)

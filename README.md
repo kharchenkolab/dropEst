@@ -185,6 +185,13 @@ If "*-g*" option is provided, genes are parsed from the gtf, and information abo
 
 To specify corresponding .bam tag names, use "*Estimation/BamTags*" section in the config (see *configs/config_desc.xml*).  
 
+### Usage of pseudoaligners
+Pseudoaligners, such as Kallisto store gene / transcript names in the field of chromosome name. To parse such files, 
+use "*-P*" option. Example:
+ ```bash
+ dropest [options] -P -c ./config.xml ./kallisto_res_*.bam
+ ```
+
 ### Command line arguments for dropEst
 *  -b, --bam-output: print tagged bam files  
 *  -c, --config filename: xml file with estimation parameters  
@@ -203,7 +210,7 @@ To specify corresponding .bam tag names, use "*Estimation/BamTags*" section in t
 
 ### Output
 <!-- TODO: add that output has data of two types: all cells and filtered cells -->
-Result of this phase is .rds file with the next fields:
+Result of this phase is cell.counts.rds file with the next fields:
 * **cm** (sparse matrix): count matrix in sparse format
 * **reads_per_chr_per_cell** (list of data.frame): number of reads per cell (row) for each chromosome (column):
   * **Exon** (data.frame): exonic reads

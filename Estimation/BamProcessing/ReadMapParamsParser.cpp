@@ -10,8 +10,9 @@ namespace Estimation
 namespace BamProcessing
 {
 	ReadMapParamsParser::ReadMapParamsParser(const std::string &gtf_path, bool save_read_names,
-											 const std::string &read_param_filenames, const BamTags &tags)
-		: ReadParamsParser(gtf_path, tags)
+											 const std::string &read_param_filenames, const BamTags &tags,
+											 bool gene_in_chromosome_name)
+		: ReadParamsParser(gtf_path, tags, gene_in_chromosome_name)
 	{
 		this->init(read_param_filenames, save_read_names);
 	}

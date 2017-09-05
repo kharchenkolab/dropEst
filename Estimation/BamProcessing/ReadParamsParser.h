@@ -21,12 +21,13 @@ namespace Estimation
 		{
 		private:
 			Tools::RefGenesContainer _genes_container;
+			bool _gene_in_chromosome_name;
 
 		protected:
 			const BamTags tags;
 
 		public:
-			ReadParamsParser(const std::string &genes_filename, const BamTags &tags);
+			ReadParamsParser(const std::string &genes_filename, const BamTags &tags, bool gene_in_chromosome_name);
 
 			virtual bool get_read_params(const BamTools::BamAlignment &alignment, Tools::ReadParameters &read_params);
 			UMI::Mark get_gene(const std::string &chr_name, BamTools::BamAlignment alignment,

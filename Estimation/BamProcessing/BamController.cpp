@@ -13,9 +13,10 @@ namespace Estimation
 namespace BamProcessing
 {
 	BamController::BamController(const BamTags &tags, bool filled_bam, const std::string &read_param_filenames,
-	                             const std::string &gtf_path)
+	                             const std::string &gtf_path, bool gene_in_chromosome_name)
 		: _tags(tags)
 		, _filled_bam(filled_bam)
+		, _gene_in_chromosome_name(gene_in_chromosome_name)
 		, _read_param_filenames(read_param_filenames)
 		, _gtf_path(gtf_path)
 	{}
@@ -110,12 +111,13 @@ namespace BamProcessing
 	std::shared_ptr<ReadParamsParser> BamController::get_parser(bool save_read_names) const
 	{
 		if (this->_filled_bam)
-			return std::make_shared<FilledBamParamsParser>(this->_gtf_path, this->_tags);
+			return std::make_shared<FilledBamParamsParser>(this->_gtf_path, this->_tags, this->_gene_in_chromosome_name);
 
 		if (this->_read_param_filenames != "")
-			return std::make_shared<ReadMapParamsParser>(this->_gtf_path, save_read_names, this->_read_param_filenames, this->_tags);
+			return std::make_shared<ReadMapParamsParser>(this->_gtf_path, save_read_names, this->_read_param_filenames,
+			                                             this->_tags, this->_gene_in_chromosome_name);
 
-		return std::make_shared<ReadParamsParser>(this->_gtf_path, this->_tags);
+		return std::make_shared<ReadParamsParser>(this->_gtf_path, this->_tags, this->_gene_in_chromosome_name);
 	}
 
 	void BamController::process_alignment(std::shared_ptr<ReadParamsParser> parser,

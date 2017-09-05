@@ -18,7 +18,8 @@ namespace Estimation
 
 		public:
 			ReadMapParamsParser(const std::string &gtf_path, bool save_read_names,
-								const std::string &read_param_filenames, const BamTags &tags);
+			                    const std::string &read_param_filenames, const BamTags &tags,
+			                    bool gene_in_chromosome_name);
 			virtual ~ReadMapParamsParser();
 
 			virtual bool get_read_params(const BamTools::BamAlignment &alignment, Tools::ReadParameters &read_params) override;

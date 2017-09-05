@@ -60,7 +60,11 @@ namespace Tools
 	{
 		RInside *r = RInside::instancePtr();
 		if (r == nullptr)
-			return new RInside(0, 0);
+		{
+			r = new RInside(0, 0);
+		}
+
+		r->parseEvalQ("library(Matrix)");
 
 		return r;
 	}

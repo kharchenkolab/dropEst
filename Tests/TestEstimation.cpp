@@ -25,7 +25,8 @@ using Mark = UMI::Mark;
 struct Fixture
 {
 	Fixture()
-		: test_bam_controller(BamProcessing::BamTags(), false, "", PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz")
+		: test_bam_controller(BamProcessing::BamTags(), false, "",
+		                      PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", false)
 	{
 		auto barcodes_parser = std::shared_ptr<Merge::BarcodesParsing::BarcodesParser>(
 				new Merge::BarcodesParsing::InDropBarcodesParser(PROJ_DATA_PATH + std::string("/barcodes/test_est")));
@@ -298,7 +299,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		align.Position = 34610;
 		align.Length = 10;
 		align.CigarData.push_back(BamTools::CigarOp('M', 10));
-		ReadParamsParser parser(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", BamTags());
+		ReadParamsParser parser(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", BamTags(), false);
 
 		std::string gene;
 		Mark umi_mark = parser.get_gene("chrX", align, gene);
@@ -556,7 +557,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	BOOST_FIXTURE_TEST_CASE(testGetGeneWithIntrons, Fixture)
 	{
 		using namespace BamProcessing;
-		auto parser = ReadParamsParser(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", BamTags());
+		auto parser = ReadParamsParser(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", BamTags(), false);
 
 		BamTools::BamAlignment align;
 		align.Name = "152228477!TGAGTTCTGTTACTGCATC#ATGGGC";
@@ -584,5 +585,18 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		BOOST_CHECK(mark.check(Mark::HAS_INTRONS));
 		BOOST_CHECK(!mark.check(Mark::HAS_NOT_ANNOTATED));
 		BOOST_CHECK_EQUAL(gene, "WASH7P");
+	}
+
+	BOOST_FIXTURE_TEST_CASE(testPseudoAlignersGenes, Fixture)
+	{
+		BamProcessing::BamController controller(BamProcessing::BamTags(), false, "",
+												PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", true);
+		auto parser = controller.get_parser(false);
+
+		BamTools::BamAlignment align;
+		std::string chrom_in = "Gene1", gene_out;
+		parser->get_gene(chrom_in, align, gene_out);
+
+		BOOST_CHECK_EQUAL(gene_out, chrom_in);
 	}
 BOOST_AUTO_TEST_SUITE_END()

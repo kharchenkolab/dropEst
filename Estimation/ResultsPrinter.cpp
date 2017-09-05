@@ -190,8 +190,7 @@ namespace Estimation
 			Tools::trace_time("Compiling raw count matrix");
 		}
 
-		RInside *R = Tools::init_r();
-		R->parseEvalQ("library(Matrix)");
+		Tools::init_r();
 
 		s_vec_t gene_names, cell_names;
 		SEXP cm;
