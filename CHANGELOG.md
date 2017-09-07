@@ -1,9 +1,10 @@
 # Changelog
 
-## [Upcoming]
+## [0.6.5] - 2017-09-07
 ### Changed
-* Optimized memory usage for dropEst
-* Using of stable sort for cells selection (by number of genes)
+* Optimized memory usage and performance of dropEst
+* Sorting for cells selection (by number of genes) is stable now
+* Fixed bug with merge_targets in low-quality cells estimation
 
 ## [0.6.1] - 2017-09-05
 ### Added
