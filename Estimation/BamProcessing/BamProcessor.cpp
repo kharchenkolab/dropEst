@@ -21,27 +21,10 @@ namespace Estimation
 		{
 			if (gene == "")
 			{
-				this->_container.stats().inc(Stats::INTERGENIC_READS_PER_CHR_PER_CELL, cell_barcode, chr_name);
 				this->total_intergenic_reads++;
-				return;
 			}
 
-			this->_container.stats().inc(Stats::TOTAL_READS_PER_CB, cell_barcode);
-
-			size_t cell_id = this->_container.add_record(cell_barcode, umi, gene, umi_mark);
-			if (this->_container.cell(cell_id).at(gene).at(umi).read_count == 1)
-			{
-				this->_container.stats().inc(Stats::GENE_UMIS_PER_CHR_PER_CELL, cell_barcode, chr_name);
-				this->_container.stats().inc(Stats::TOTAL_UMIS_PER_CB, cell_barcode);
-			}
-
-			if (umi_mark.check(UMI::Mark::HAS_EXONS)) {
-				this->_container.stats().inc(Stats::EXON_READS_PER_CHR_PER_CELL, cell_barcode, chr_name);
-			}
-
-			if (umi_mark.check(UMI::Mark::HAS_INTRONS)) {
-				this->_container.stats().inc(Stats::INTRON_READS_PER_CHR_PER_CELL, cell_barcode, chr_name);
-			}
+			this->_container.add_record(cell_barcode, umi, gene, chr_name, umi_mark);
 		}
 
 		void BamProcessor::trace_state(const std::string &trace_prefix) const

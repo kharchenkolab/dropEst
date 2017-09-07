@@ -23,7 +23,7 @@ namespace Estimation
 			friend struct TestEstimatorMergeProbs::testPoissonMergeTime;
 
 		private:
-			typedef Estimation::CellsDataContainer::counts_t ul_list_t;
+			typedef Estimation::CellsDataContainer::ids_t ul_list_t;
 			typedef unsigned bs_umi_t;
 
 		private:

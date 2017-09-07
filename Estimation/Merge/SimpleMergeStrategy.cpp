@@ -65,11 +65,12 @@ namespace Merge
 //			container.stats().set(Stats::MERGE_PROB_BY_CELL, container.cell_barcode(base_cell_ind),
 //								  container.cell_barcode(cell_ind), cb_fraction);
 
-			if (cb_fraction - top_cb_fraction > EPS || (std::abs(cb_fraction - top_cb_fraction) < EPS &&
-					container.cell(cell_ind).size() > top_cb_genes_count))
+			if (cb_fraction - top_cb_fraction > SimpleMergeStrategy::EPS ||
+					(std::abs(cb_fraction - top_cb_fraction) < SimpleMergeStrategy::EPS &&
+							container.cell(cell_ind).size() > top_cb_genes_count))
 			{
-				int ed = Tools::edit_distance(container.cell((size_t)base_cell_ind).barcode().c_str(),
-											  container.cell(cell_ind).barcode().c_str());
+				int ed = Tools::edit_distance(container.cell((size_t)base_cell_ind).barcode_c(),
+											  container.cell(cell_ind).barcode_c());
 
 				if (ed >= this->_max_merge_edit_distance)
 					continue;
@@ -92,14 +93,14 @@ namespace Merge
 	void SimpleMergeStrategy::init(const CellsDataContainer &container)
 	{
 		MergeStrategyAbstract::init(container);
-		for (auto const &genes_count : container.cells_gene_counts_sorted())
+		for (auto const &cell_id : container.filtered_cells())
 		{
-			for (auto const &gene : container.cell(genes_count.index).genes())
+			for (auto const &gene : container.cell(cell_id).genes())
 			{
 				for (auto const &umi : gene.second.umis())
 				{
 					auto res = this->_umig_cell_ids.emplace(std::make_pair(umi.first + gene.first, sul_set_t()));
-					res.first->second.emplace(genes_count.index);
+					res.first->second.emplace(cell_id);
 				}
 			}
 		}

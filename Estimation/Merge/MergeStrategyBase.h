@@ -22,8 +22,8 @@ namespace Merge
 
 	protected:
 		typedef boost::unordered_map<size_t, size_t> u_u_hash_t;
-		typedef boost::unordered_set<size_t> i_set_t;
-		typedef boost::unordered_map<size_t, i_set_t> ISIHM;
+		typedef boost::unordered_set<size_t> id_set_t;
+		typedef boost::unordered_map<size_t, id_set_t> id_id_set_map_t;
 
 	protected:
 		const double _min_merge_fraction;
@@ -31,11 +31,11 @@ namespace Merge
 
 	private:
 		void reassign(size_t cell_id, size_t target_cell_id, ul_list_t &cb_reassign_targets,
-					  ISIHM &cb_reassigned_to_it) const;
+					  id_id_set_map_t &cb_reassigned_to_it) const;
 
 	protected:
 		void merge_force(Estimation::CellsDataContainer &container, size_t src_cell_id, size_t target_cell_ind,
-						 ul_list_t &cb_reassign_targets, ISIHM &cb_reassigned_to_it) const;
+						 ul_list_t &cb_reassign_targets, id_id_set_map_t &cb_reassigned_to_it) const;
 
 		virtual ul_list_t merge_inited(Estimation::CellsDataContainer &container) const override;
 		virtual long get_merge_target(const Estimation::CellsDataContainer &container, size_t base_cell_ind) const = 0;

@@ -2,178 +2,84 @@
 
 namespace Estimation
 {
+	Stats::id_set_t Stats::_presented_chromosomes[Stats::CHROMOSOME_STAT_SIZE];
+	Stats::str_map_t Stats::_chromosome_inds;
+	std::vector<std::string> Stats::_chromosome_names;
+
 	Stats::Stats()
-	{}
-
-	void Stats::inc(Stats::CellStatType counter, const std::string &name)
 	{
-		this->_cell_counters[counter][name]++;
-	}
-
-
-	void Stats::get(Stats::CellStatType counter, Stats::str_list_t &names, Stats::int_list_t &counts) const
-	{
-		const s_cnt_t &s_counter = this->_cell_counters[counter];
-		for (s_cnt_t::const_iterator it = s_counter.begin(); it != s_counter.end(); ++it)
+		for (int i = 0; i < CellStatType::CELL_STAT_SIZE; ++i)
 		{
-			names.push_back(it->first);
-			counts.push_back(it->second);
+			this->_stat_data[i] = 0;
 		}
 	}
 
-	Stats::int_list_t Stats::get(Stats::CellStatType counter) const
+	void Stats::inc(Stats::CellStatType type)
 	{
-		const s_cnt_t &s_counter = this->_cell_counters[counter];
-		int_list_t result;
-		for (s_cnt_t::const_iterator it = s_counter.begin(); it != s_counter.end(); ++it)
+		this->_stat_data[type]++;
+	}
+
+	void Stats::inc(CellChrStatType stat, const std::string &subtype)
+	{
+		auto chrom_it = Stats::_chromosome_inds.emplace(subtype, Stats::_chromosome_inds.size());
+		if (chrom_it.second)
 		{
-			result.push_back(it->second);
+			Stats::_chromosome_names.push_back(subtype);
 		}
 
-		return result;
+		Stats::_presented_chromosomes[stat].insert(chrom_it.first->second);
+		this->_chromosome_stat_data[stat][chrom_it.first->second]++;
 	}
 
-	const Stats::s_cnt_t& Stats::get_raw(Stats::CellStatType stat) const
+	void Stats::merge(const Stats &source)
 	{
-		return this->_cell_counters[stat];
-	}
-
-	const Stats::s_cnt_t Stats::get_filtered(Stats::CellStatType stat, const Stats::str_list_t &filter_cells) const
-	{
-		s_cnt_t counter;
-		for (auto const &cell : filter_cells)
+		for (size_t i = 0; i < CellStatType::CELL_STAT_SIZE; ++i)
 		{
-			auto iter = this->_cell_counters[stat].find(cell);
-			if (iter == this->_cell_counters[stat].end())
-				continue;
-
-			counter.insert(*iter);
+			this->_stat_data[i] += source._stat_data[i];
 		}
-		return counter;
-	}
 
-	void Stats::inc(CellStrStatType stat, const std::string &cell_barcode, const std::string &subtype)
-	{
-		this->_str_cell_counters[stat][cell_barcode][subtype]++;
-		this->_str_cell_subtypes[stat].emplace(subtype);
-	}
-
-	void Stats::set(StrStrStatType stat, const std::string &base_type, const std::string &subtype, int value)
-	{
-		this->_str_str_counters[stat][base_type][subtype] = value;
-	}
-
-	void Stats::get(CellStrStatType stat, str_list_t &types, str_list_t &subtypes, int_list_t &counts) const
-	{
-		std::copy(this->_str_cell_subtypes[stat].begin(), this->_str_cell_subtypes[stat].end(), std::back_inserter(subtypes));
-		for (auto const &val : this->_str_cell_counters[stat])
+		for (size_t i = 0; i < CellChrStatType::CHROMOSOME_STAT_SIZE; ++i)
 		{
-			types.push_back(val.first);
-			this->fill_by_types(val.second, subtypes, counts);
-		}
-	}
-
-	void Stats::get_filtered(CellStrStatType stat, const str_list_t &filter_barcodes, str_list_t &cell_barcodes,
-							 str_list_t &subtypes, int_list_t &counts) const
-	{
-		std::copy(this->_str_cell_subtypes[stat].begin(), this->_str_cell_subtypes[stat].end(), std::back_inserter(subtypes));
-		for (auto const &barcode : filter_barcodes)
-		{
-			if (this->get(stat, barcode, subtypes, counts))
+			for (auto const &count: source._chromosome_stat_data[i])
 			{
-				cell_barcodes.push_back(barcode);
+				this->_chromosome_stat_data[i][count.first] += count.second;
 			}
 		}
 	}
 
-	void Stats::fill_by_types(const s_cnt_t &counter, const str_list_t &types, int_list_t &counts) const
+	Stats::stat_t Stats::get(Stats::CellStatType type) const
 	{
-		for (auto const &name : types)
-		{
-			s_cnt_t::const_iterator count = counter.find(name);
-			counts.push_back(count == counter.end() ? 0 : count->second);
-		}
+		return this->_stat_data[type];
 	}
 
-	void Stats::merge(const ids_t &reassigned, const cells_list_t &cells)
+	bool Stats::get(CellChrStatType stat, stat_list_t &counts) const
 	{
-		for (auto &cur_stat : this->_str_cell_counters)
-		{
-			for (size_t ind = 0; ind < reassigned.size(); ++ind)
-			{
-				if (reassigned[ind] == ind)
-					continue;
-
-				const std::string &cur_name = cells.at(ind).barcode();
-				const std::string &target_name = cells.at(reassigned[ind]).barcode();
-				ss_cnt_t::const_iterator cell_from_it = cur_stat.find(cur_name);
-				if (cell_from_it == cur_stat.end())
-					continue;
-
-				s_cnt_t &cell_to = cur_stat[target_name];
-				for (auto const &count: cell_from_it->second)
-				{
-					cell_to[count.first] += count.second;
-				}
-
-				cur_stat.erase(cell_from_it);
-			}
-		}
-
-		for (auto &cur_stat : this->_cell_counters)
-		{
-			for (size_t ind = 0; ind < reassigned.size(); ++ind)
-			{
-				if (reassigned[ind] == ind)
-					continue;
-
-				const std::string &cur_name = cells.at(ind).barcode();
-				const std::string &target_name = cells.at(reassigned[ind]).barcode();
-				auto const cell_from_it = cur_stat.find(cur_name);
-				if (cell_from_it == cur_stat.end())
-					continue;
-
-				cur_stat[target_name] += cell_from_it->second;
-				cur_stat.erase(cell_from_it);
-			}
-		}
-	}
-
-	bool Stats::get(CellStrStatType stat, const std::string &cell_barcode, const str_list_t &subtypes,
-					int_list_t &counts) const
-	{
-		auto const &cur_stat = this->_str_cell_counters[stat];
-		ss_cnt_t::const_iterator counter_it = cur_stat.find(cell_barcode);
-		if (counter_it == cur_stat.end())
+		auto const &cur_stat = this->_chromosome_stat_data[stat];
+		if (cur_stat.empty())
 			return false;
 
-		this->fill_by_types(counter_it->second, subtypes, counts);
+		for (auto const &id : Stats::_presented_chromosomes[stat])
+		{
+			auto count_it = cur_stat.find(id);
+			counts.push_back(count_it == cur_stat.end() ? 0 : count_it->second);
+		}
+
 		return true;
 	}
 
-	const Stats::ss_cnt_t &Stats::get_raw(CellStrStatType stat) const
+	Stats::str_list_t Stats::presented_chromosomes(Stats::CellChrStatType type)
 	{
-		return this->_str_cell_counters[stat];
+		str_list_t res;
+		for (auto &chr_id : Stats::_presented_chromosomes[type])
+		{
+			res.push_back(Stats::_chromosome_names[chr_id]);
+		}
+
+		return res;
 	}
 
-	const Stats::ss_cnt_t &Stats::get_raw(StrStrStatType stat) const
+	void Stats::dec(Stats::CellStatType type)
 	{
-		return this->_str_str_counters[stat];
-	}
-
-	void Stats::set(StrStrFloatType stat, const std::string &base_type, const std::string &subtype, double value)
-	{
-		this->_str_str_stats[stat][base_type][subtype] = value;
-	}
-
-	const Stats::ss_float_t &Stats::get_raw(StrStrFloatType stat) const
-	{
-		return this->_str_str_stats[stat];
-
-	}
-
-	void Stats::dec(Stats::CellStrStatType stat, const std::string &cell_barcode, const std::string &subtype)
-	{
-		this->_str_cell_counters[stat].at(cell_barcode).at(subtype)--;
+		this->_stat_data[type]--;
 	}
 }

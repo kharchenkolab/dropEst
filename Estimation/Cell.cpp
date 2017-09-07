@@ -1,23 +1,27 @@
 #include "Cell.h"
 
+#include <cstring>
+
 namespace Estimation
 {
 	Cell::Cell(const std::string &barcode, size_t min_genes_to_be_real, const std::vector<UMI::Mark> &query_marks)
-			: _barcode(barcode)
+			: _barcode(std::shared_ptr<char>(new char[barcode.length() + 1]))
 			, _min_genes_to_be_real(min_genes_to_be_real)
 			, _query_marks(query_marks)
 			, _is_merged(false)
 			, _is_excluded(false)
-			, _umis_number(0)
 			, _requested_genes_num(0)
-	{}
+			, _requested_umis_num(0)
+	{
+		strcpy(this->_barcode.get(), barcode.c_str());
+	}
 
 	void Cell::add_umi(const std::string &gene, const std::string &umi, const UMI::Mark &umi_mark)
 	{
 		bool is_new = this->_genes[gene].add_umi(umi, umi_mark);
 		if (is_new)
 		{
-			this->_umis_number++;
+			this->_stats.inc(Stats::TOTAL_UMIS_PER_CB);
 		}
 	}
 
@@ -35,8 +39,10 @@ namespace Estimation
 	{
 		for (auto const &gene: source._genes)
 		{
-			this->_umis_number += this->_genes[gene.first].merge(gene.second);
+			this->_genes[gene.first].merge(gene.second);
 		}
+
+		this->_stats.merge(source.stats());
 	}
 
 	void Cell::merge_umis(const std::string &gene, const s_s_hash_t &merge_targets)
@@ -48,7 +54,7 @@ namespace Estimation
 				continue;
 
 			gene_umis.merge(target.first, target.second);
-			this->_umis_number--;
+			this->_stats.dec(Stats::TOTAL_UMIS_PER_CB);
 		}
 	}
 
@@ -98,14 +104,19 @@ namespace Estimation
 		return this->_is_excluded;
 	}
 
-	const std::string &Cell::barcode() const
+	std::string Cell::barcode() const
 	{
-		return this->_barcode;
+		return std::string(this->_barcode.get());
+	}
+
+	const char* Cell::barcode_c() const
+	{
+		return this->_barcode.get();
 	}
 
 	size_t Cell::umis_number() const
 	{
-		return this->_umis_number;
+		return this->stats().get(Stats::TOTAL_UMIS_PER_CB);
 	}
 
 	size_t Cell::requested_genes_num() const
@@ -135,17 +146,26 @@ namespace Estimation
 		for (auto const &gene : this->_genes)
 		{
 			size_t cur_num = gene.second.number_of_requested_umis(this->_query_marks, false);
+			if (cur_num == 0)
+				continue;
 
 			this->_requested_umis_num += cur_num;
-			if (cur_num > 0)
-			{
-				this->_requested_genes_num++;
-			}
+			this->_requested_genes_num++;
 		}
 	}
 
 	const Gene& Cell::at(const std::string &gene) const
 	{
 		return this->_genes.at(gene);
+	}
+
+	const Stats &Cell::stats() const
+	{
+		return this->_stats;
+	}
+
+	Stats &Cell::stats()
+	{
+		return this->_stats;
 	}
 }

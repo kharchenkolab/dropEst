@@ -8,6 +8,9 @@
 
 #include <api/BamMultiReader.h>
 
+#include <numeric>
+#include <boost/bind.hpp>
+
 using namespace std;
 
 namespace Estimation
@@ -39,7 +42,6 @@ namespace Estimation
 			throw runtime_error("You must initialize container");
 
 		this->_merge_targets = this->_merge_strategy->merge(*this);
-		this->stats().merge(this->_merge_targets, this->_cells);
 
 		this->_umi_merge_strategy->merge(*this);
 		size_t filtered_cells_num = this->update_cell_sizes(this->_merge_strategy->min_genes_after_merge(), this->_max_cells_num);
@@ -49,32 +51,27 @@ namespace Estimation
 		L_TRACE << filtered_cells_num << " CBs with more than " << this->_merge_strategy->min_genes_after_merge()
 		        << " genes, which have UMIs of the requested type.";
 
-		L_TRACE << this->get_cb_count_top_verbose(this->_filtered_gene_counts_sorted);
-
-		this->_filtered_cells.clear();
-		for (auto const &val : this->cells_gene_counts_sorted())
-		{
-			this->_filtered_cells.push_back(val.index);
-		}
+		L_TRACE << this->get_cb_count_top_verbose();
 	}
 
-	size_t CellsDataContainer::add_record(const string &cell_barcode, const string &umi, const string &gene,
-	                                      const UMI::Mark &umi_mark)
+	void CellsDataContainer::add_record(const string &cell_barcode, const string &umi, const string &gene,
+	                                    const std::string &chr_name, const UMI::Mark &umi_mark)
 	{
 		if (this->_is_initialized)
 			throw runtime_error("Container is already initialized");
 
-		if (umi_mark.check(UMI::Mark::HAS_EXONS))
+		auto res = this->_cell_ids_by_cb.emplace(cell_barcode, this->_cell_ids_by_cb.size());
+		if (res.second)
 		{
-			++this->_has_exon_reads;
+			this->_cells.push_back(Cell(cell_barcode, this->_merge_strategy->min_genes_before_merge(), this->_query_marks));
 		}
-		if (umi_mark.check(UMI::Mark::HAS_INTRONS))
+
+		size_t cell_id = res.first->second;
+
+		if (gene.empty())
 		{
-			++this->_has_intron_reads;
-		}
-		if (umi_mark.check(UMI::Mark::HAS_NOT_ANNOTATED))
-		{
-			++this->_has_not_annotated_reads;
+			this->_cells[cell_id].stats().inc(Stats::INTERGENIC_READS_PER_CHR_PER_CELL, chr_name);
+			return;
 		}
 
 		if (umi_mark == UMI::Mark::NONE)
@@ -82,15 +79,8 @@ namespace Estimation
 			L_WARN << "Empty mark for CB '" + cell_barcode + "', UMI '" + umi + "', gene '" + gene + "'";
 		}
 
-		auto res = this->_cell_ids_by_cb.emplace(cell_barcode, this->_cell_ids_by_cb.size());
-		if (res.second)
-		{ // new cb
-			this->_cells.push_back(Cell(cell_barcode, this->_merge_strategy->min_genes_before_merge(), this->_query_marks));
-		}
-		size_t cell_id = res.first->second;
 		this->_cells[cell_id].add_umi(gene, umi, umi_mark);
-
-		return cell_id;
+		this->update_cell_stats(cell_id, umi_mark, chr_name);
 	}
 
 	void CellsDataContainer::merge_cells(size_t source_cell_ind, size_t target_cell_ind)
@@ -116,19 +106,20 @@ namespace Estimation
 			this->_number_of_real_cells++;
 		}
 
-		return this->get_filtered_gene_counts(requested_genes_threshold, cell_threshold, this->_filtered_gene_counts_sorted);
+		return this->update_filtered_gene_counts(requested_genes_threshold, cell_threshold);
 	}
 
-	string CellsDataContainer::get_cb_count_top_verbose(const i_counter_t &cells_genes_counts) const
+	string CellsDataContainer::get_cb_count_top_verbose() const
 	{
 		stringstream ss;
-		if (cells_genes_counts.size() > 0)
+		if (this->_filtered_cells.size() > 0)
 		{
 			ss << "top CBs:\n";
-			long low_border = cells_genes_counts.size() - min(cells_genes_counts.size(), CellsDataContainer::TOP_PRINT_SIZE - 1);
-			for (long i = cells_genes_counts.size() - 1; i >= low_border; --i)
+			long low_border = this->_filtered_cells.size() - min(this->_filtered_cells.size(), CellsDataContainer::TOP_PRINT_SIZE - 1);
+			for (long i = this->_filtered_cells.size() - 1; i >= low_border; --i)
 			{
-				ss << cells_genes_counts[i].value << "\t" << this->_cells[cells_genes_counts[i].index].barcode() << "\n";
+				auto const &cur_cell = this->_cells[this->_filtered_cells[i]];
+				ss << cur_cell.requested_genes_num() << "\t" << cur_cell.barcode() << "\n";
 			}
 		}
 		else
@@ -139,19 +130,14 @@ namespace Estimation
 		return ss.str();
 	}
 
-	Stats& CellsDataContainer::stats() const
-	{
-		return this->_stats;
-	}
-
 	const Cell &CellsDataContainer::cell(size_t index) const
 	{
 		return this->_cells.at(index);
 	}
 
-	const CellsDataContainer::i_counter_t &CellsDataContainer::cells_gene_counts_sorted() const
+	Cell &CellsDataContainer::cell(size_t index)
 	{
-		return this->_filtered_gene_counts_sorted;
+		return this->_cells.at(index);
 	}
 
 	const CellsDataContainer::ids_t &CellsDataContainer::filtered_cells() const
@@ -166,25 +152,11 @@ namespace Estimation
 
 		this->update_cell_sizes(0, -1);
 
-		L_TRACE << "\n" << this->_filtered_gene_counts_sorted.size() << " CBs with more than "
+		L_TRACE << "\n" << this->_filtered_cells.size() << " CBs with more than "
 		        << this->_merge_strategy->min_genes_before_merge() << " genes";
-		L_TRACE << this->get_cb_count_top_verbose(this->_filtered_gene_counts_sorted);
+		L_TRACE << this->get_cb_count_top_verbose();
 
 		this->_is_initialized = true;
-	}
-
-	CellsDataContainer::names_t CellsDataContainer::excluded_cells() const
-	{
-		names_t ec;
-		for (auto const &cell : this->_cells)
-		{
-			if (cell.is_excluded())
-			{
-				ec.push_back(cell.barcode());
-			}
-		}
-
-		return ec;
 	}
 
 	const CellsDataContainer::s_ul_hash_t& CellsDataContainer::cell_ids_by_cb() const
@@ -195,9 +167,9 @@ namespace Estimation
 	CellsDataContainer::s_ul_hash_t CellsDataContainer::umis_distribution() const
 	{
 		s_ul_hash_t umis_dist;
-		for (auto const &cell : this->_filtered_gene_counts_sorted)
+		for (size_t cell_id : this->_filtered_cells)
 		{
-			for (auto const &gene : this->_cells[cell.index].genes())
+			for (auto const &gene : this->_cells[cell_id].genes())
 			{
 				for (auto const &umi : gene.second.umis())
 				{
@@ -255,10 +227,9 @@ namespace Estimation
 		return this->_cells.size();
 	}
 
-	size_t CellsDataContainer::get_filtered_gene_counts(size_t requested_genes_threshold, int cell_threshold,
-	                                                    i_counter_t &filtered_gene_counts_sorted) const
+	size_t CellsDataContainer::update_filtered_gene_counts(size_t requested_genes_threshold, int cell_threshold)
 	{
-		filtered_gene_counts_sorted.clear();
+		this->_filtered_cells.clear();
 		for (size_t i = 0; i < this->_cells.size(); i++)
 		{
 			if (!this->_cells[i].is_real())
@@ -267,20 +238,88 @@ namespace Estimation
 			size_t genes_count = this->_cells[i].requested_genes_num();
 			if (genes_count >= requested_genes_threshold)
 			{
-				filtered_gene_counts_sorted.push_back(IndexedValue(i, genes_count));
+				this->_filtered_cells.push_back(i);
 			}
 		}
 
-		sort(filtered_gene_counts_sorted.begin(), filtered_gene_counts_sorted.end(), IndexedValue::value_less);
+		sort(this->_filtered_cells.begin(), this->_filtered_cells.end(), boost::bind(&CellsDataContainer::compare_cells, this, _1, _2));
 
-		size_t filtered_cells_num = filtered_gene_counts_sorted.size();
+		size_t filtered_cells_num = this->_filtered_cells.size();
 
-		if (cell_threshold > 0 && cell_threshold < filtered_gene_counts_sorted.size())
+		if (cell_threshold > 0 && cell_threshold < this->_filtered_cells.size())
 		{
-			filtered_gene_counts_sorted.erase(filtered_gene_counts_sorted.begin(),
-			                                  filtered_gene_counts_sorted.end() - unsigned(cell_threshold));
+			this->_filtered_cells.erase(this->_filtered_cells.begin(),
+			                            this->_filtered_cells.end() - unsigned(cell_threshold));
 		}
 
 		return filtered_cells_num;
+	}
+
+	CellsDataContainer::s_i_hash_t CellsDataContainer::get_stat_by_real_cells(Stats::CellStatType type) const
+	{
+		s_i_hash_t res;
+		for (auto const &cell : this->_cells)
+		{
+			if (!cell.is_real())
+				continue;
+
+			res[cell.barcode()] = cell.stats().get(type);
+		}
+
+		return res;
+	}
+
+	void CellsDataContainer::get_stat_by_real_cells(Stats::CellChrStatType stat, names_t &cell_barcodes,
+	                                                names_t &chromosome_names, counts_t &counts) const
+	{
+		for (auto const &cell : this->_cells)
+		{
+			if (!cell.is_real())
+				continue;
+
+			if (cell.stats().get(stat, counts))
+			{
+				cell_barcodes.push_back(cell.barcode());
+			}
+		}
+
+		chromosome_names = Stats::presented_chromosomes(stat);
+	}
+
+	void CellsDataContainer::update_cell_stats(size_t cell_id, const UMI::Mark &mark, const std::string &chromosome_name)
+	{
+		auto &cell = this->_cells[cell_id];
+		cell.stats().inc(Stats::TOTAL_READS_PER_CB);
+		if (mark.check(UMI::Mark::HAS_EXONS))
+		{
+			cell.stats().inc(Stats::EXON_READS_PER_CHR_PER_CELL, chromosome_name);
+			++this->_has_exon_reads;
+		}
+		if (mark.check(UMI::Mark::HAS_INTRONS))
+		{
+			cell.stats().inc(Stats::INTRON_READS_PER_CHR_PER_CELL, chromosome_name);
+			++this->_has_intron_reads;
+		}
+		if (mark.check(UMI::Mark::HAS_NOT_ANNOTATED))
+		{
+			++this->_has_not_annotated_reads;
+		}
+	}
+
+	bool CellsDataContainer::compare_cells(size_t cell1_id, size_t cell2_id) const
+	{
+		auto const &cell1 = this->_cells[cell1_id];
+		auto const &cell2 = this->_cells[cell2_id];
+
+		if (cell1.requested_genes_num() != cell2.requested_genes_num())
+			return cell1.requested_genes_num() < cell2.requested_genes_num();
+
+		if (cell1.requested_umis_num() != cell2.requested_umis_num())
+			return cell1.requested_umis_num() < cell2.requested_umis_num();
+
+		if (cell1.umis_number() != cell2.umis_number())
+			return cell1.umis_number() < cell2.umis_number();
+
+		return cell1.barcode() < cell2.barcode();
 	}
 }

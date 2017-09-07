@@ -31,14 +31,11 @@ namespace Estimation
 		                          const s_vec_t &row_names, const s_vec_t &col_names);
 
 		Rcpp::List get_saturation_analysis_info(const CellsDataContainer &container) const;
-		Rcpp::DataFrame get_reads_per_chr_per_cell_info(Stats::CellStrStatType stat_type,
-		                                                const CellsDataContainer &container,
-		                                                const s_vec_t &cell_names) const;
-		Rcpp::List get_reads_per_chr_per_cell_info(const CellsDataContainer &container, const s_vec_t &cell_names) const;
-		s_vec_t get_filtered_cell_names(const CellsDataContainer &container) const;
-		s_vec_t get_real_cell_names(const CellsDataContainer &container) const;
+		Rcpp::DataFrame get_reads_per_chr_per_cell_info(Stats::CellChrStatType stat_type,
+		                                                const CellsDataContainer &container) const;
+		Rcpp::List get_reads_per_chr_per_cell_info(const CellsDataContainer &container) const;
 		SEXP get_count_matrix(const CellsDataContainer &container, bool filtered) const;
-		void trace_gene_counts(const CellsDataContainer &genes_container) const;
+		void trace_gene_counts(const CellsDataContainer &container) const;
 		Rcpp::NumericVector get_mean_reads_per_umi(const CellsDataContainer &container) const;
 		Rcpp::List get_reads_per_umi_per_cell(const CellsDataContainer &container) const;
 		Rcpp::List get_merge_targets(const CellsDataContainer &container) const;

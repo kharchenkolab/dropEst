@@ -11,16 +11,16 @@ namespace Merge
 {
 MergeStrategyAbstract::ul_list_t MergeStrategyBase::merge_inited(CellsDataContainer &container) const
 {
-	ISIHM cb_reassigned_to_it;
+	id_id_set_map_t cb_reassigned_to_it;
 	ul_list_t cb_reassign_targets(container.total_cells_number());
 	std::iota(cb_reassign_targets.begin(), cb_reassign_targets.end(), 0);
 
-	auto const& genes_per_cell_nums = container.cells_gene_counts_sorted();
-	std::vector<long> target_cell_inds(genes_per_cell_nums.size());
+	auto const& filtered_cells = container.filtered_cells();
+	std::vector<long> target_cell_inds(filtered_cells.size());
 
-	for (size_t genes_count_id = 0; genes_count_id < genes_per_cell_nums.size(); ++genes_count_id)
+	for (size_t genes_count_id = 0; genes_count_id < filtered_cells.size(); ++genes_count_id)
 	{
-		target_cell_inds[genes_count_id] = this->get_merge_target(container, genes_per_cell_nums[genes_count_id].index);
+		target_cell_inds[genes_count_id] = this->get_merge_target(container, filtered_cells[genes_count_id]);
 		if (genes_count_id % this->get_log_period() == 0 && genes_count_id > 0)
 		{
 			L_TRACE << "Total " << genes_count_id << " tags processed";
@@ -28,9 +28,9 @@ MergeStrategyAbstract::ul_list_t MergeStrategyBase::merge_inited(CellsDataContai
 	}
 
 	size_t merges_count = 0, excluded_cells_num = 0;
-	for (size_t genes_count_id = 0; genes_count_id < genes_per_cell_nums.size(); ++genes_count_id)
+	for (size_t genes_count_id = 0; genes_count_id < filtered_cells.size(); ++genes_count_id)
 	{
-		size_t base_cell_ind = genes_per_cell_nums[genes_count_id].index;
+		size_t base_cell_ind = filtered_cells[genes_count_id];
 		long target_cell_ind = target_cell_inds[genes_count_id];
 		if (target_cell_ind < 0)
 		{
@@ -63,7 +63,7 @@ MergeStrategyAbstract::ul_list_t MergeStrategyBase::merge_inited(CellsDataContai
 	}
 
 	void MergeStrategyBase::reassign(size_t cell_id, size_t target_cell_id, ul_list_t &cb_reassign_targets,
-											ISIHM &cb_reassigned_to_it) const
+	                                 id_id_set_map_t &cb_reassigned_to_it) const
 {
 	cb_reassign_targets[cell_id] = target_cell_id; // set reassignment mapping
 	cb_reassigned_to_it[target_cell_id].insert(cell_id); // reassign current cell
@@ -83,7 +83,8 @@ MergeStrategyAbstract::ul_list_t MergeStrategyBase::merge_inited(CellsDataContai
 }
 
 void MergeStrategyBase::merge_force(Estimation::CellsDataContainer &container, size_t src_cell_id,
-									    size_t target_cell_ind, ul_list_t &cb_reassign_targets, ISIHM &cb_reassigned_to_it) const
+                                    size_t target_cell_ind, ul_list_t &cb_reassign_targets,
+                                    id_id_set_map_t &cb_reassigned_to_it) const
 {
 	container.merge_cells(src_cell_id, target_cell_ind);
 	this->reassign(src_cell_id, target_cell_ind, cb_reassign_targets, cb_reassigned_to_it);

@@ -1,11 +1,13 @@
 #pragma once
 
 #include <map>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 #include "Gene.h"
+#include "Stats.h"
 
 namespace Estimation
 {
@@ -18,24 +20,24 @@ namespace Estimation
 		typedef std::unordered_map<std::string, s_ul_hash_t> ss_ul_hash_t;
 
 	private:
-		const std::string _barcode;
+		std::shared_ptr<char> _barcode;
 		const size_t _min_genes_to_be_real;
 		const UMI::Mark::query_t _query_marks;
 
-
 		bool _is_merged;
 		bool _is_excluded;
-		size_t _umis_number;
 		size_t _requested_genes_num;
 		size_t _requested_umis_num;
 
 		genes_t _genes;
+		Stats _stats;
 
 	public:
 		bool is_merged() const;
 		bool is_excluded() const;
 		bool is_real() const;
-		const std::string& barcode() const;
+		std::string barcode() const;
+		const char* barcode_c() const;
 		size_t umis_number() const;
 		size_t requested_genes_num() const;
 		size_t requested_umis_num() const;
@@ -47,6 +49,8 @@ namespace Estimation
 		void merge_umis(const std::string &gene, const s_s_hash_t &merge_targets);
 		void update_requested_size();
 
+		const Stats &stats() const;
+		Stats &stats();
 		const genes_t& genes() const;
 		s_ul_hash_t requested_umis_per_gene(bool return_reads) const;
 		ss_ul_hash_t requested_reads_per_umi_per_gene() const;

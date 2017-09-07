@@ -17,21 +17,16 @@ namespace Estimation
 		return insert_it.second;
 	}
 
-	size_t Gene::merge(const Gene &source)
+	void Gene::merge(const Gene &source)
 	{
-		size_t new_umi_number = 0;
 		for (auto const &merged_umi: source._umis)
 		{
 			auto insert_it = this->_umis.insert(merged_umi);
 			if (insert_it.second)
-			{
-				new_umi_number++;
 				continue;
-			}
+
 			insert_it.first->second.merge(merged_umi.second);
 		}
-
-		return new_umi_number;
 	}
 
 	void Gene::merge(const std::string &source_umi, const std::string &target_umi)

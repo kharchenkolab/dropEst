@@ -24,28 +24,25 @@ namespace Estimation
 		this->trace_gene_counts(container);
 
 		L_TRACE << "Compiling diagnostic stats: ";
-		auto real_cell_names = this->get_real_cell_names(container);
-		auto reads_per_chr_per_cell = this->get_reads_per_chr_per_cell_info(container, real_cell_names); // Real cells, all UMIs.
+		auto reads_per_chr_per_cell = this->get_reads_per_chr_per_cell_info(container); // Real cells, all UMIs.
 		auto saturation_info = this->get_saturation_analysis_info(container); // Filtered cells, query UMIs.
 		auto mean_reads_per_umi = this->get_mean_reads_per_umi(container); // Real cells, all UMIs.
 		auto reads_per_umi_per_cell = this->get_reads_per_umi_per_cell(container); // Filtered cells, query UMIs.
 		auto merge_targets = this->get_merge_targets(container); // All cells.
-		IntegerVector aligned_reads_per_cb = wrap(container.stats().get_filtered(Stats::TOTAL_READS_PER_CB, real_cell_names)); // Real cells, all UMIs
-		IntegerVector aligned_umis_per_cb = wrap(container.stats().get_filtered(Stats::TOTAL_UMIS_PER_CB, real_cell_names)); // Real cells, all UMIs
+		IntegerVector aligned_reads_per_cb = wrap(container.get_stat_by_real_cells(Stats::TOTAL_READS_PER_CB)); // Real cells, all UMIs
+		IntegerVector aligned_umis_per_cb = wrap(container.get_stat_by_real_cells(Stats::TOTAL_UMIS_PER_CB)); // Real cells, all UMIs
 		auto requested_umis_per_cb = this->get_requested_umis_per_cb(container); // Real cells, query UMIs
 		auto requested_reads_per_cb = this->get_requested_umis_per_cb(container, true); // Real cells, query UMIs
 		L_TRACE << "Completed.\n";
 
-		auto count_matrix_filt = this->get_count_matrix(container, true);
-		auto count_matrix_raw = this->get_count_matrix(container, false);
 		(*R)["d"] = List::create(
-				_["cm"] = count_matrix_filt,
-				_["cm_raw"] = count_matrix_raw,
+				_["cm"] = this->get_count_matrix(container, true),
+				_["cm_raw"] = this->get_count_matrix(container, false),
 				_["reads_per_chr_per_cells"] = reads_per_chr_per_cell,
 				_["reads_per_umi_per_cell"] = reads_per_umi_per_cell,
 				_["mean_reads_per_umi"] = mean_reads_per_umi,
 				_["saturation_info"] = saturation_info,
-				_["merge_targets"] = merge_targets,
+				_["merge_targets"] = merge_targets, // TODO: optimize it
 				_["aligned_reads_per_cell"] = aligned_reads_per_cb,
 				_["aligned_umis_per_cell"] = aligned_umis_per_cb,
 				_["requested_umis_per_cb"] = requested_umis_per_cb,
@@ -102,11 +99,12 @@ namespace Estimation
 
 		for (size_t cell_id = 0; cell_id < container.total_cells_number(); ++cell_id)
 		{
-			if (!container.cell(cell_id).is_real())
+			auto const &cell = container.cell(cell_id);
+			if (!cell.is_real())
 				continue;
 
-			const auto &cb = container.cell(cell_id).barcode();
-			for (auto const& gene : container.cell(cell_id).requested_reads_per_umi_per_gene())
+			const auto &cb = cell.barcode();
+			for (auto const& gene : cell.requested_reads_per_umi_per_gene())
 			{
 				for (auto const &reads_per_umi : gene.second)
 				{
@@ -123,60 +121,31 @@ namespace Estimation
 		);
 	}
 
-	DataFrame ResultsPrinter::get_reads_per_chr_per_cell_info(Stats::CellStrStatType stat_type,
-	                                                          const CellsDataContainer &container,
-	                                                          const s_vec_t &cell_names) const
+	DataFrame ResultsPrinter::get_reads_per_chr_per_cell_info(Stats::CellChrStatType stat_type,
+	                                                          const CellsDataContainer &container) const
 	{
 		s_vec_t chr_cell_names, chr_names;
 		i_vec_t reads_per_chr_per_cell;
-		container.stats().get_filtered(stat_type, cell_names, chr_cell_names, chr_names, reads_per_chr_per_cell);
+		container.get_stat_by_real_cells(stat_type, chr_cell_names, chr_names, reads_per_chr_per_cell);
 
 		return ResultsPrinter::create_matrix(chr_names, chr_cell_names, reads_per_chr_per_cell);
 	}
 
-	List ResultsPrinter::get_reads_per_chr_per_cell_info(const CellsDataContainer &container,
-	                                                     const ResultsPrinter::s_vec_t &cell_names) const
+	List ResultsPrinter::get_reads_per_chr_per_cell_info(const CellsDataContainer &container) const
 	{
 		L_TRACE << "Reads per chromosome per cell;";
 		L_TRACE << "Fill exon results";
-		auto exon = this->get_reads_per_chr_per_cell_info(Stats::EXON_READS_PER_CHR_PER_CELL, container, cell_names);
+		auto exon = this->get_reads_per_chr_per_cell_info(Stats::EXON_READS_PER_CHR_PER_CELL, container);
 
 		L_TRACE << "Fill intron results";
-		auto intron = this->get_reads_per_chr_per_cell_info(Stats::INTRON_READS_PER_CHR_PER_CELL, container, cell_names);
+		auto intron = this->get_reads_per_chr_per_cell_info(Stats::INTRON_READS_PER_CHR_PER_CELL, container);
 
 		L_TRACE << "Fill intergenic results";
-		auto intergenic = this->get_reads_per_chr_per_cell_info(Stats::INTERGENIC_READS_PER_CHR_PER_CELL, container,
-		                                                  cell_names);
+		auto intergenic = this->get_reads_per_chr_per_cell_info(Stats::INTERGENIC_READS_PER_CHR_PER_CELL, container);
 
 		return List::create(_["Exon"] = exon,
 		                    _["Intron"] = intron,
 		                    _["Intergenic"] = intergenic);
-	}
-
-	ResultsPrinter::s_vec_t ResultsPrinter::get_filtered_cell_names(const CellsDataContainer &container) const
-	{
-		s_vec_t cell_names;
-		cell_names.reserve(container.filtered_cells().size());
-		for (auto const &cell_id : container.filtered_cells())
-		{
-			cell_names.push_back(container.cell(cell_id).barcode());
-		}
-		return cell_names;
-	}
-
-	ResultsPrinter::s_vec_t ResultsPrinter::get_real_cell_names(const CellsDataContainer &container) const
-	{
-		s_vec_t cell_names;
-		cell_names.reserve(container.real_cells_number());
-		for (size_t cell_id = 0; cell_id < container.total_cells_number(); ++cell_id)
-		{
-			if (!container.cell(cell_id).is_real())
-				continue;
-
-			cell_names.push_back(container.cell(cell_id).barcode());
-		}
-
-		return cell_names;
 	}
 
 	SEXP ResultsPrinter::get_count_matrix(const CellsDataContainer &container, bool filtered) const
@@ -203,17 +172,16 @@ namespace Estimation
 			cm = this->get_count_matrix_raw(container);
 		}
 
-
 		Tools::trace_time("Done");
 		return cm;
 	}
 
-	void ResultsPrinter::trace_gene_counts(const CellsDataContainer &genes_container) const
+	void ResultsPrinter::trace_gene_counts(const CellsDataContainer &container) const
 	{
 		std::unordered_map<std::string, unsigned long> gene_counts_map;
-		for (size_t cell_id : genes_container.filtered_cells())
+		for (size_t cell_id : container.filtered_cells())
 		{
-			for (auto const &gm : genes_container.cell(cell_id).genes())
+			for (auto const &gm : container.cell(cell_id).genes())
 			{
 				gene_counts_map[gm.first] += gm.second.size();
 			}
@@ -344,11 +312,12 @@ namespace Estimation
 		size_t column_num = 0;
 		for (size_t cell_id = 0; cell_id < container.total_cells_number(); cell_id++)
 		{
-			if (!container.cell(cell_id).is_real())
+			auto const &cell = container.cell(cell_id);
+			if (!cell.is_real())
 				continue;
 
-			cell_names.push_back(container.cell(cell_id).barcode());
-			for (auto const &gene : container.cell(cell_id).genes())
+			cell_names.push_back(cell.barcode());
+			for (auto const &gene : cell.genes())
 			{
 				auto gene_it = gene_ids.emplace(gene.first, gene_ids.size());
 				if (gene_it.second)

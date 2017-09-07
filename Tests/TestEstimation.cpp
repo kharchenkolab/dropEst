@@ -73,9 +73,8 @@ struct Fixture
 
 BOOST_AUTO_TEST_SUITE(TestEstimator)
 
-	BOOST_FIXTURE_TEST_CASE(testR, Fixture)
-	{
-
+//	BOOST_FIXTURE_TEST_CASE(testR, Fixture)
+//	{
 //		using namespace Rcpp;
 //		boost::unordered_map<std::string, int> map;
 //		map["first"] = 1;
@@ -86,7 +85,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 //		RInside R(0, 0);
 //		R["saved_vec"] = res;
 //		R.parseEvalQ("saveRDS(saved_vec, 'test_rds.rds')");
-	}
+//	}
 
 	BOOST_FIXTURE_TEST_CASE(testBarcodesFile, Fixture)
 	{
@@ -265,7 +264,15 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		BOOST_CHECK(this->container_full->cell(5).is_merged());
 		BOOST_CHECK(!this->container_full->cell(6).is_merged());
 
-		BOOST_CHECK_EQUAL(this->container_full->excluded_cells().size(), 1);
+		size_t excluded_num = 0;
+		for (size_t i = 0; i < this->container_full->total_cells_number(); ++i)
+		{
+			if (this->container_full->cell(i).is_excluded())
+			{
+				excluded_num++;
+			}
+		}
+		BOOST_CHECK_EQUAL(excluded_num, 1);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testSplitBarcode, Fixture)
@@ -336,8 +343,8 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 		BOOST_CHECK_EQUAL(container.cell(0).at("Gene4").at("ACCCCT").read_count, 1);
 
-		container.add_record("AAATTAGGTCCA", "TTTTTT", "Gene3", Mark::HAS_NOT_ANNOTATED);
-		container.add_record("AAATTAGGTCCA", "ACCCCT", "Gene4", Mark::HAS_NOT_ANNOTATED);
+		container.add_record("AAATTAGGTCCA", "TTTTTT", "Gene3", "chr1", Mark::HAS_NOT_ANNOTATED);
+		container.add_record("AAATTAGGTCCA", "ACCCCT", "Gene4", "chr1", Mark::HAS_NOT_ANNOTATED);
 		BOOST_CHECK(container.cell(0).at("Gene3").at("TTTTTT").mark.check(Mark::HAS_NOT_ANNOTATED));
 		BOOST_CHECK(container.cell(0).at("Gene4").at("ACCCCT").mark.check(Mark::HAS_NOT_ANNOTATED));
 
