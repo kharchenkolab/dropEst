@@ -13,8 +13,8 @@ namespace Estimation
 		RealBarcodesMergeStrategy::RealBarcodesMergeStrategy(barcodes_parser_ptr barcodes_parser,
 		                                                     size_t min_genes_before_merge, size_t min_genes_after_merge,
 		                                                     unsigned max_merge_edit_distance, double min_merge_fraction)
-				: MergeStrategyBase(min_genes_before_merge, min_genes_after_merge, max_merge_edit_distance, min_merge_fraction)
-				, _barcodes_parser(barcodes_parser)
+			: MergeStrategyBase(min_genes_before_merge, min_genes_after_merge, max_merge_edit_distance, min_merge_fraction)
+			, _barcodes_parser(barcodes_parser)
 		{
 			this->_barcodes_parser->init();
 		}
@@ -87,12 +87,19 @@ namespace Estimation
 				std::string cur_real_cb = this->_barcodes_parser->get_barcode(cb_parts.barcode_part_inds);
 //				container.stats().set(Stats::MERGE_EDIT_DISTANCE_BY_CELL, base_cb, cur_real_cb, cb_parts.edit_distance);
 
-				auto const current_cell_it = container.cell_ids_by_cb().find(cur_real_cb);
-				if (current_cell_it != container.cell_ids_by_cb().end() &&
-						container.cell(current_cell_it->second).size() >= this->min_genes_before_merge() &&
-						container.cell(current_cell_it->second).umis_number() >= container.cell(base_cell_ind).umis_number()) // Should pass equal sizes because it should pass current cell
+				long curr_cell_id = -1;
+				try
 				{
-					neighbour_cbs.push_back(current_cell_it->second);
+					curr_cell_id = container.cell_id_by_cb(cur_real_cb);
+				}
+				catch (std::out_of_range ex)
+				{}
+
+				if (curr_cell_id >= 0 &&
+					container.cell(size_t(curr_cell_id)).size() >= this->min_genes_before_merge() &&
+				    container.cell(size_t(curr_cell_id)).umis_number() >= container.cell(base_cell_ind).umis_number()) // Should pass equal sizes because it should pass current cell
+				{
+					neighbour_cbs.push_back(size_t(curr_cell_id));
 				}
 
 				max_dist = std::max(max_dist, cb_parts.edit_distance); // If there are no cells on specified distance

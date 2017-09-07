@@ -266,8 +266,12 @@ namespace Estimation
 		std::unordered_map<std::string, std::string> merge_targets;
 		for (size_t cell_from_id = 0; cell_from_id < container.total_cells_number(); ++cell_from_id)
 		{
+			size_t cell_to_id = container.merge_targets()[cell_from_id];
+			if (cell_from_id == cell_to_id)
+				continue;
+
 			auto const &barcode_from = container.cell(cell_from_id).barcode();
-			auto const &barcode_to = container.cell(container.merge_targets()[cell_from_id]).barcode();
+			auto const &barcode_to = container.cell(cell_to_id).barcode();
 			merge_targets[barcode_from] = barcode_to;
 		}
 

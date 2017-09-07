@@ -160,9 +160,9 @@ namespace Estimation
 		this->_is_initialized = true;
 	}
 
-	const CellsDataContainer::s_ul_hash_t& CellsDataContainer::cell_ids_by_cb() const
+	size_t CellsDataContainer::cell_id_by_cb(const std::string &barcode) const
 	{
-		return this->_cell_ids_by_cb;
+		return this->_cell_ids_by_cb.at(barcode);
 	}
 
 	CellsDataContainer::s_ul_hash_t CellsDataContainer::umis_distribution() const

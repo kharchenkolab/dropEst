@@ -152,21 +152,17 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	BOOST_FIXTURE_TEST_CASE(testUmigsIntersection, Fixture)
 	{
 		using namespace Merge;
-		auto cell_ids_by_cb = this->container_full->cell_ids_by_cb();
 		long is1 = RealBarcodesMergeStrategy::get_umigs_intersect_size(
-				this->container_full->cell(cell_ids_by_cb["AAATTAGGTCCA"]),
-		                                                               this->container_full->cell(
-				                                                               cell_ids_by_cb["CCCTTAGGTCCA"]));
+				this->container_full->cell(this->container_full->cell_id_by_cb("AAATTAGGTCCA")),
+				this->container_full->cell(this->container_full->cell_id_by_cb("CCCTTAGGTCCA")));
 
 		long is2 = RealBarcodesMergeStrategy::get_umigs_intersect_size(
-				this->container_full->cell(cell_ids_by_cb["AAATTAGGTCCC"]),
-		                                                               this->container_full->cell(
-				                                                               cell_ids_by_cb["AAATTAGGTCCG"]));
+				this->container_full->cell(this->container_full->cell_id_by_cb("AAATTAGGTCCC")),
+				this->container_full->cell(this->container_full->cell_id_by_cb("AAATTAGGTCCG")));
 
 		long is3 = RealBarcodesMergeStrategy::get_umigs_intersect_size(
-				this->container_full->cell(cell_ids_by_cb["AAATTAGGTCCA"]),
-		                                                               this->container_full->cell(
-				                                                               cell_ids_by_cb["AAATTAGGTCCC"]));
+				this->container_full->cell(this->container_full->cell_id_by_cb("AAATTAGGTCCA")),
+				this->container_full->cell(this->container_full->cell_id_by_cb("AAATTAGGTCCC")));
 
 		BOOST_CHECK_EQUAL(is1, 2);
 		BOOST_CHECK_EQUAL(is2, 1);
@@ -203,14 +199,14 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 	BOOST_FIXTURE_TEST_CASE(testRealNeighboursCbs, Fixture)
 	{
-		CellsDataContainer::ids_t ids = this->real_cb_strat->get_real_neighbour_cbs(*this->container_full, this->container_full->cell_ids_by_cb().at("CAATTAGGTCCG"));
+		CellsDataContainer::ids_t ids = this->real_cb_strat->get_real_neighbour_cbs(*this->container_full, this->container_full->cell_id_by_cb("CAATTAGGTCCG"));
 
 		BOOST_REQUIRE_EQUAL(ids.size(), 2);
 
 		BOOST_CHECK_EQUAL(this->container_full->cell(ids[0]).barcode(), "AAATTAGGTCCA");
 		BOOST_CHECK_EQUAL(this->container_full->cell(ids[1]).barcode(), "AAATTAGGTCCC");
 
-		ids = this->real_cb_strat->get_real_neighbour_cbs(*this->container_full, this->container_full->cell_ids_by_cb().at("AAATTAGGTCCC"));
+		ids = this->real_cb_strat->get_real_neighbour_cbs(*this->container_full, this->container_full->cell_id_by_cb("AAATTAGGTCCC"));
 
 		BOOST_CHECK_EQUAL(ids.size(), 1);
 

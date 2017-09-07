@@ -58,7 +58,7 @@ namespace Estimation
 			if (cb_iter == this->merge_cbs.end())
 				return;
 
-			auto const &genes = this->_container.cell(this->_container.cell_ids_by_cb().at(cb_iter->second)).genes();
+			auto const &genes = this->_container.cell(this->_container.cell_id_by_cb(cb_iter->second)).genes();
 			auto gene_iter = genes.find(this->_container.gene_indexer().get_index(gene));
 			if (gene_iter == genes.end())
 				return;

@@ -118,7 +118,7 @@ PrepareLqCellsDataPipeline <- function(data, total.reads.per.cell=NULL, mitochon
   intergenic.reads.per.cell[intergenic.cbs] <- apply(data$reads_per_chr_per_cells$Intergenic[intergenic.cbs,], 1, sum)
 
   if (!is.null(total.reads.per.cell)) {
-    merge.targets <- data$merge.targets[data$merge.targets != names(data$merge.targets)]
+    merge.targets <- data$merge_targets[data$merge_targets != names(data$merge_targets)]
     total.reads.per.cell[merge.targets] <- total.reads.per.cell[merge.targets] + total.reads.per.cell[names(merge.targets)]
   }
 

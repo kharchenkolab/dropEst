@@ -91,7 +91,7 @@ namespace Estimation
 		void set_initialized();
 
 		size_t total_cells_number() const;
-		const s_ul_hash_t& cell_ids_by_cb() const;
+		size_t cell_id_by_cb(const std::string &barcode) const;
 		const ids_t& filtered_cells() const;
 		const ids_t& merge_targets() const;
 		const std::vector<UMI::Mark>& gene_match_level() const;
