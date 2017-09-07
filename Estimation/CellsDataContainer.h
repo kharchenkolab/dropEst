@@ -5,6 +5,7 @@
 #include "Tools/IndexedValue.h"
 #include <Tools/GtfRecord.h>
 #include "UMI.h"
+#include "StringIndexer.h"
 
 #include <string>
 
@@ -57,7 +58,6 @@ namespace Estimation
 		ids_t _filtered_cells; // Sorted ascending by the number of genes
 		ids_t _merge_targets;
 
-//		i_counter_t _filtered_gene_counts_sorted;
 		bool _is_initialized;
 		const std::vector<UMI::Mark> _query_marks;
 
@@ -65,6 +65,9 @@ namespace Estimation
 		size_t _has_intron_reads;
 		size_t _has_not_annotated_reads;
 		size_t _number_of_real_cells;
+
+		StringIndexer _umi_indexer;
+		StringIndexer _gene_indexer;
 
 	private:
 		std::string get_cb_count_top_verbose() const;
@@ -83,7 +86,7 @@ namespace Estimation
 		void merge_and_filter();
 		void merge_cells(size_t source_cell_ind, size_t target_cell_ind);
 
-		void merge_umis(size_t cell_id, const std::string &gene, const s_s_hash_t &merge_targets);
+		void merge_umis(size_t cell_id, StringIndexer::index_t gene, const s_s_hash_t &merge_targets);
 
 		void set_initialized();
 
@@ -108,6 +111,8 @@ namespace Estimation
 		size_t real_cells_number() const;
 
 		std::string merge_type() const;
+		const StringIndexer& gene_indexer() const;
+		const StringIndexer& umi_indexer() const;
 
 		s_ul_hash_t umis_distribution() const;
 	};

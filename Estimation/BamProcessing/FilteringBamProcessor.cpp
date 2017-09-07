@@ -58,12 +58,12 @@ namespace Estimation
 			if (cb_iter == this->merge_cbs.end())
 				return;
 
-			auto const &genes = _container.cell(_container.cell_ids_by_cb().at(cb_iter->second)).genes();
-			auto gene_iter = genes.find(gene);
+			auto const &genes = this->_container.cell(this->_container.cell_ids_by_cb().at(cb_iter->second)).genes();
+			auto gene_iter = genes.find(this->_container.gene_indexer().get_index(gene));
 			if (gene_iter == genes.end())
 				return;
 
-			if (gene_iter->second.umis().find(read_params.umi()) == gene_iter->second.umis().end())
+			if (gene_iter->second.has(read_params.umi()))
 				return;
 
 			this->written_reads++;

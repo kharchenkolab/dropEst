@@ -445,7 +445,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		merge_targets["AAATTN"] = "GGGGGG";
 		merge_targets["ACCCCT"] = "ACCCCT";
 
-		container.merge_umis(0, "Gene1", merge_targets);
+		container.merge_umis(0, container.gene_indexer().get_index("Gene1"), merge_targets);
 
 		BOOST_REQUIRE_EQUAL(container.cell(0).at("Gene1").size(), 3);
 		BOOST_CHECK_EQUAL(container.cell(0).at("Gene1").at("CCCCCT").read_count, 2);
@@ -518,7 +518,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 		for (auto const &umi :container.cell(0).at("Gene2").umis())
 		{
-			BOOST_CHECK_EQUAL(umi.first.find('N'), std::string::npos);
+			BOOST_CHECK_EQUAL(container.umi_indexer().get_value(umi.first).find('N'), std::string::npos);
 		}
 	}
 
@@ -557,7 +557,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		this->umi_merge_strat->merge(container);
 		for (auto const &umi :container.cell(0).at("ENSG00000100941").umis())
 		{
-			BOOST_CHECK_EQUAL(umi.first.find('N'), std::string::npos);
+			BOOST_CHECK_EQUAL(container.umi_indexer().get_value(umi.first).find('N'), std::string::npos);
 		}
 	}
 

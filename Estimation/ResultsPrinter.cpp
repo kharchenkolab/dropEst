@@ -16,7 +16,7 @@ namespace Estimation
 	{
 		if (container.filtered_cells().empty())
 		{
-			L_WARN << "WARNING: filtered cells is empty. Probably, filtration threshold is too strict"
+			L_WARN << "WARNING: filtered cells are empty. Probably, filtration threshold is too strict"
 			       << " or you forgot to run 'merge_and_filter'";
 		}
 		RInside *R = Tools::init_r();
@@ -183,7 +183,7 @@ namespace Estimation
 		{
 			for (auto const &gm : container.cell(cell_id).genes())
 			{
-				gene_counts_map[gm.first] += gm.second.size();
+				gene_counts_map[container.gene_indexer().get_value(gm.first)] += gm.second.size();
 			}
 		}
 
@@ -319,10 +319,10 @@ namespace Estimation
 			cell_names.push_back(cell.barcode());
 			for (auto const &gene : cell.genes())
 			{
-				auto gene_it = gene_ids.emplace(gene.first, gene_ids.size());
+				auto gene_it = gene_ids.emplace(container.gene_indexer().get_value(gene.first), gene_ids.size());
 				if (gene_it.second)
 				{
-					gene_names.push_back(gene.first);
+					gene_names.push_back(container.gene_indexer().get_value(gene.first));
 				}
 
 				size_t row_num = gene_it.first->second;

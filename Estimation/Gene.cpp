@@ -4,12 +4,12 @@ namespace Estimation
 {
 	const UMI &Estimation::Gene::at(const std::string &umi) const
 	{
-		return this->_umis.at(umi);
+		return this->_umis.at(this->_umi_indexer->get_index(umi));
 	}
 
 	bool Gene::add_umi(const std::string &umi, const UMI::Mark &umi_mark)
 	{
-		auto insert_it = this->_umis.emplace(umi, 0);
+		auto insert_it = this->_umis.emplace(this->_umi_indexer->add(umi), 0);
 		auto &new_umi = insert_it.first->second;
 		new_umi.read_count++;
 		new_umi.mark.add(umi_mark);
@@ -34,11 +34,11 @@ namespace Estimation
 		if (source_umi == target_umi)
 			return;
 
-		auto source_umi_it = this->_umis.find(source_umi);
-		auto target_umi_it = this->_umis.emplace(target_umi, source_umi_it->second);
+		auto source_umi_it = this->_umis.find(this->_umi_indexer->get_index(source_umi));
+		auto target_umi_it = this->_umis.emplace(this->_umi_indexer->add(target_umi), source_umi_it->second);
 		if (!target_umi_it.second)
 		{
-			target_umi_it.first->second.merge(this->_umis.at(source_umi));
+			target_umi_it.first->second.merge(this->_umis.at(this->_umi_indexer->get_index(source_umi)));
 		}
 		this->_umis.erase(source_umi_it);
 	}
@@ -86,7 +86,7 @@ namespace Estimation
 			if (!umi.second.mark.match(query))
 				continue;
 
-			reads_per_umi.emplace(umi.first, umi.second.read_count);
+			reads_per_umi.emplace(this->_umi_indexer->get_value(umi.first), umi.second.read_count);
 		}
 
 		return reads_per_umi;
@@ -104,6 +104,10 @@ namespace Estimation
 
 	bool Gene::has(const std::string &umi) const
 	{
-		return this->_umis.find(umi) != this->_umis.end();
+		return this->_umis.find(this->_umi_indexer->get_index(umi)) != this->_umis.end();
 	}
+
+	Gene::Gene(StringIndexer *umi_indexer)
+			: _umi_indexer(umi_indexer)
+	{}
 }

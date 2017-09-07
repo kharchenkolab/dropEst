@@ -31,7 +31,8 @@ namespace Estimation
 				static const std::string nucleotides;
 
 			private:
-				CellsDataContainer::s_s_hash_t find_targets(const Gene::umis_t &all_umis, const s_hash_t &bad_umis) const;
+				CellsDataContainer::s_s_hash_t find_targets(const StringIndexer &umi_indexer,
+				                                            const Gene::umis_t &all_umis, const s_hash_t &bad_umis) const;
 				void remove_similar_wrong_umis(s_vec_t &wrong_umis) const;
 				CellsDataContainer::s_s_hash_t fill_wrong_umis(s_vec_t &wrong_umis) const;
 

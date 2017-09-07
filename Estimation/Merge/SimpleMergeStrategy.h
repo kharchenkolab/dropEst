@@ -12,11 +12,11 @@ namespace Merge
 	{
 	private:
 		typedef boost::unordered_set<size_t> sul_set_t;
-		typedef boost::unordered_map<std::string, sul_set_t> sul_l_map_t;
+		typedef boost::unordered_map<std::pair<StringIndexer::index_t, StringIndexer::index_t>, sul_set_t> umig_map_t;
 		static const double EPS;
 
 	private:
-		sul_l_map_t _umig_cell_ids;
+		umig_map_t _umig_cell_ids;
 
 	protected:
 		u_u_hash_t get_cells_with_common_umigs(const CellsDataContainer &container, size_t base_cell_ind) const;

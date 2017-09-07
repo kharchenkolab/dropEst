@@ -21,11 +21,9 @@ namespace Merge
 		u_u_hash_t common_umigs_per_cell;
 		for (auto const &gene: container.cell(base_cell_ind).genes())
 		{
-			const std::string &gene_name = gene.first;
-
 			for (auto const &umi_count: gene.second.umis())
 			{
-				std::string umig = umi_count.first + gene_name;
+				auto umig = std::make_pair(umi_count.first, gene.first);
 				const auto &umig_cells = this->_umig_cell_ids.at(umig);
 				for (size_t cell_with_same_umig_id : umig_cells)
 				{
@@ -99,7 +97,8 @@ namespace Merge
 			{
 				for (auto const &umi : gene.second.umis())
 				{
-					auto res = this->_umig_cell_ids.emplace(std::make_pair(umi.first + gene.first, sul_set_t()));
+					auto umig = std::make_pair(umi.first, gene.first);
+					auto res = this->_umig_cell_ids.emplace(std::make_pair(umig, sul_set_t()));
 					res.first->second.emplace(cell_id);
 				}
 			}

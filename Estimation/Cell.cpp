@@ -4,21 +4,25 @@
 
 namespace Estimation
 {
-	Cell::Cell(const std::string &barcode, size_t min_genes_to_be_real, const std::vector<UMI::Mark> &query_marks)
-			: _barcode(std::shared_ptr<char>(new char[barcode.length() + 1]))
-			, _min_genes_to_be_real(min_genes_to_be_real)
-			, _query_marks(query_marks)
-			, _is_merged(false)
-			, _is_excluded(false)
-			, _requested_genes_num(0)
-			, _requested_umis_num(0)
+	Cell::Cell(const std::string &barcode, size_t min_genes_to_be_real, const std::vector<UMI::Mark> &query_marks,
+	           StringIndexer *gene_indexer, StringIndexer *umi_indexer)
+		: _barcode(std::shared_ptr<char>(new char[barcode.length() + 1]))
+		, _min_genes_to_be_real(min_genes_to_be_real)
+		, _query_marks(query_marks)
+		, _is_merged(false)
+		, _is_excluded(false)
+		, _requested_genes_num(0)
+		, _requested_umis_num(0)
+		, _gene_indexer(gene_indexer)
+		, _umi_indexer(umi_indexer)
 	{
 		strcpy(this->_barcode.get(), barcode.c_str());
 	}
 
 	void Cell::add_umi(const std::string &gene, const std::string &umi, const UMI::Mark &umi_mark)
 	{
-		bool is_new = this->_genes[gene].add_umi(umi, umi_mark);
+		auto gene_it = this->_genes.emplace(this->_gene_indexer->add(gene), this->_umi_indexer);
+		bool is_new = gene_it.first->second.add_umi(umi, umi_mark);
 		if (is_new)
 		{
 			this->_stats.inc(Stats::TOTAL_UMIS_PER_CB);
@@ -39,13 +43,14 @@ namespace Estimation
 	{
 		for (auto const &gene: source._genes)
 		{
-			this->_genes[gene.first].merge(gene.second);
+			auto gene_it = this->_genes.emplace(gene.first, this->_umi_indexer);
+			gene_it.first->second.merge(gene.second);
 		}
 
 		this->_stats.merge(source.stats());
 	}
 
-	void Cell::merge_umis(const std::string &gene, const s_s_hash_t &merge_targets)
+	void Cell::merge_umis(StringIndexer::index_t gene, const s_s_hash_t &merge_targets)
 	{
 		auto &gene_umis = this->_genes.at(gene);
 		for (auto const &target: merge_targets)
@@ -73,7 +78,7 @@ namespace Estimation
 			if (umis_num == 0)
 				continue;
 
-			umis_per_gene.emplace(gene.first, umis_num);
+			umis_per_gene.emplace(this->_gene_indexer->get_value(gene.first), umis_num);
 		}
 
 		return umis_per_gene;
@@ -88,7 +93,7 @@ namespace Estimation
 			if (reads_per_umi.empty())
 				continue;
 
-			reads_per_umi_per_gene.emplace(gene.first, reads_per_umi);
+			reads_per_umi_per_gene.emplace(this->_gene_indexer->get_value(gene.first), reads_per_umi);
 		}
 
 		return reads_per_umi_per_gene;
@@ -156,7 +161,7 @@ namespace Estimation
 
 	const Gene& Cell::at(const std::string &gene) const
 	{
-		return this->_genes.at(gene);
+		return this->_genes.at(this->_gene_indexer->get_index(gene));
 	}
 
 	const Stats &Cell::stats() const

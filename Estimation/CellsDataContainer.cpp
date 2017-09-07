@@ -63,7 +63,8 @@ namespace Estimation
 		auto res = this->_cell_ids_by_cb.emplace(cell_barcode, this->_cell_ids_by_cb.size());
 		if (res.second)
 		{
-			this->_cells.push_back(Cell(cell_barcode, this->_merge_strategy->min_genes_before_merge(), this->_query_marks));
+			this->_cells.push_back(Cell(cell_barcode, this->_merge_strategy->min_genes_before_merge(),
+			                            this->_query_marks, &this->_gene_indexer, &this->_umi_indexer));
 		}
 
 		size_t cell_id = res.first->second;
@@ -173,7 +174,7 @@ namespace Estimation
 			{
 				for (auto const &umi : gene.second.umis())
 				{
-					umis_dist[umi.first]++;
+					umis_dist[this->_umi_indexer.get_value(umi.first)]++;
 				}
 			}
 		}
@@ -191,7 +192,7 @@ namespace Estimation
 		return this->_merge_targets;
 	}
 
-	void CellsDataContainer::merge_umis(size_t cell_id, const std::string &gene,
+	void CellsDataContainer::merge_umis(size_t cell_id, StringIndexer::index_t gene,
 	                                    const CellsDataContainer::s_s_hash_t &merge_targets)
 	{
 		this->_cells.at(cell_id).merge_umis(gene, merge_targets);
@@ -321,5 +322,15 @@ namespace Estimation
 			return cell1.umis_number() < cell2.umis_number();
 
 		return cell1.barcode() < cell2.barcode();
+	}
+
+	const StringIndexer &CellsDataContainer::gene_indexer() const
+	{
+		return this->_gene_indexer;
+	}
+
+	const StringIndexer &CellsDataContainer::umi_indexer() const
+	{
+		return this->_umi_indexer;
 	}
 }

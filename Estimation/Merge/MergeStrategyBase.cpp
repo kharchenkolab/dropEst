@@ -100,38 +100,36 @@ MergeStrategyBase::MergeStrategyBase(size_t min_genes_before_merge, size_t min_g
 
 size_t MergeStrategyBase::get_umigs_intersect_size(const Cell &cell1, const Cell &cell2)
 {
-	std::map<std::string, Gene>::const_iterator gene1_it = cell1.genes().begin(); //Not unordered!!!
-	std::map<std::string, Gene>::const_iterator gene2_it = cell2.genes().begin();
+	std::map<StringIndexer::index_t, Gene>::const_iterator gene1_it = cell1.genes().begin(); //Not unordered!!!
+	std::map<StringIndexer::index_t, Gene>::const_iterator gene2_it = cell2.genes().begin();
 
 	size_t intersect_size = 0;
 	while (gene1_it != cell1.genes().end() && gene2_it != cell2.genes().end())
 	{
-		int comp_res = gene1_it->first.compare(gene2_it->first);
-		if (comp_res < 0)
+		if (gene1_it->first < gene2_it->first)
 		{
 			gene1_it++;
 			continue;
 		}
 
-		if (comp_res > 0)
+		if (gene1_it->first > gene2_it->first)
 		{
 			gene2_it++;
 			continue;
 		}
 
-		auto umi1_it = gene1_it->second.umis().begin();
-		auto umi2_it = gene2_it->second.umis().begin();
+		std::map<StringIndexer::index_t, UMI>::const_iterator umi1_it = gene1_it->second.umis().begin();
+		std::map<StringIndexer::index_t, UMI>::const_iterator umi2_it = gene2_it->second.umis().begin();
 
 		while (umi1_it != gene1_it->second.umis().end() && umi2_it != gene2_it->second.umis().end())
 		{
-			comp_res = umi1_it->first.compare(umi2_it->first);
-			if (comp_res < 0)
+			if (umi1_it->first < umi2_it->first)
 			{
 				++umi1_it;
 				continue;
 			}
 
-			if (comp_res > 0)
+			if (umi1_it->first > umi2_it->first)
 			{
 				++umi2_it;
 				continue;

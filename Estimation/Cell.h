@@ -8,13 +8,14 @@
 
 #include "Gene.h"
 #include "Stats.h"
+#include "StringIndexer.h"
 
 namespace Estimation
 {
 	class Cell
 	{
 	public:
-		typedef std::map<std::string, Gene> genes_t;
+		typedef std::map<StringIndexer::index_t, Gene> genes_t;
 		typedef std::unordered_map<std::string, std::string> s_s_hash_t;
 		typedef std::unordered_map<std::string, size_t> s_ul_hash_t;
 		typedef std::unordered_map<std::string, s_ul_hash_t> ss_ul_hash_t;
@@ -32,6 +33,9 @@ namespace Estimation
 		genes_t _genes;
 		Stats _stats;
 
+		StringIndexer *_gene_indexer;
+		StringIndexer *_umi_indexer;
+
 	public:
 		bool is_merged() const;
 		bool is_excluded() const;
@@ -46,7 +50,7 @@ namespace Estimation
 		void set_merged();
 		void set_excluded();
 		void merge(const Cell &source);
-		void merge_umis(const std::string &gene, const s_s_hash_t &merge_targets);
+		void merge_umis(StringIndexer::index_t gene, const s_s_hash_t &merge_targets);
 		void update_requested_size();
 
 		const Stats &stats() const;
@@ -58,6 +62,7 @@ namespace Estimation
 		size_t size() const;
 		const Gene& at(const std::string &gene) const;
 
-		Cell(const std::string &barcode, size_t min_genes_to_be_real, const std::vector<UMI::Mark> &query_marks);
+		Cell(const std::string &barcode, size_t min_genes_to_be_real, const std::vector<UMI::Mark> &query_marks,
+		     StringIndexer *gene_indexer, StringIndexer *umi_indexer);
 	};
 }

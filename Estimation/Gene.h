@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include "UMI.h"
+#include "StringIndexer.h"
 
 namespace Estimation
 {
@@ -14,12 +15,15 @@ namespace Estimation
 		typedef std::unordered_map<std::string, size_t> s_ul_hash_t;
 
 	public:
-		typedef std::map<std::string, UMI> umis_t;
+		typedef std::map<StringIndexer::index_t, UMI> umis_t;
 
 	private:
 		umis_t _umis;
+		StringIndexer *_umi_indexer;
 
 	public:
+		Gene(StringIndexer *umi_indexer);
+
 		const UMI& at(const std::string& umi) const;
 		const umis_t& umis() const;
 		size_t size() const;

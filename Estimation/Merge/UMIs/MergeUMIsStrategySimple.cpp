@@ -35,16 +35,17 @@ void MergeUMIsStrategySimple::merge(CellsDataContainer &container) const
 			s_hash_t bad_umis;
 			for (auto const &umi : gene.second.umis())
 			{
-				if (this->is_umi_real(umi.first))
+				auto umi_seq = container.umi_indexer().get_value(umi.first);
+				if (this->is_umi_real(umi_seq))
 					continue;
 
-				bad_umis.insert(umi.first);
+				bad_umis.insert(umi_seq);
 			}
 
 			if (bad_umis.empty())
 				continue;
 
-			CellsDataContainer::s_s_hash_t merge_targets = this->find_targets(gene.second.umis(), bad_umis);
+			auto merge_targets = this->find_targets(container.umi_indexer(), gene.second.umis(), bad_umis);
 
 			total_cell_merged++;
 			total_umi_merged += merge_targets.size();
@@ -63,7 +64,8 @@ bool MergeUMIsStrategySimple::is_umi_real(const std::string &umi) const
 	return umi.find('N') == std::string::npos;
 }
 
-CellsDataContainer::s_s_hash_t MergeUMIsStrategySimple::find_targets(const Gene::umis_t &all_umis,
+CellsDataContainer::s_s_hash_t MergeUMIsStrategySimple::find_targets(const StringIndexer &umi_indexer,
+                                                                     const Gene::umis_t &all_umis,
                                                                      const s_hash_t &bad_umis) const
 {
 	s_vec_t umis_without_pairs;
@@ -75,14 +77,15 @@ CellsDataContainer::s_s_hash_t MergeUMIsStrategySimple::find_targets(const Gene:
 		long best_target_size = 0;
 		for (auto const &target_umi : all_umis)
 		{
-			if (bad_umis.find(target_umi.first) != bad_umis.end())
+			auto target_umi_seq = umi_indexer.get_value(target_umi.first);
+			if (bad_umis.find(target_umi_seq) != bad_umis.end())
 				continue;
 
-			unsigned ed = Tools::hamming_distance(target_umi.first, bad_umi);
+			unsigned ed = Tools::hamming_distance(target_umi_seq, bad_umi);
 			if (ed < min_ed || (ed == min_ed && target_umi.second.read_count > best_target_size))
 			{
 				min_ed = ed;
-				best_target = target_umi.first;
+				best_target = target_umi_seq;
 				best_target_size = target_umi.second.read_count;
 			}
 		}
