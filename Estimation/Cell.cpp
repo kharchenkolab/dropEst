@@ -6,7 +6,7 @@ namespace Estimation
 {
 	Cell::Cell(const std::string &barcode, size_t min_genes_to_be_real, const std::vector<UMI::Mark> &query_marks,
 	           StringIndexer *gene_indexer, StringIndexer *umi_indexer)
-		: _barcode(std::shared_ptr<char>(new char[barcode.length() + 1]))
+		: _barcode(std::unique_ptr<char[]>(new char[barcode.length() + 1], std::default_delete<char[]>()))
 		, _min_genes_to_be_real(min_genes_to_be_real)
 		, _query_marks(query_marks)
 		, _is_merged(false)

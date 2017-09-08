@@ -74,6 +74,8 @@ namespace Estimation
 		size_t update_cell_sizes(size_t requested_genes_threshold, int cell_threshold);
 		void update_cell_stats(size_t cell_id, const UMI::Mark &mark, const std::string &chromosome_name);
 
+		bool compare_cells(size_t cell1_id, size_t cell2_id) const;
+
 	public:
 		CellsDataContainer(std::shared_ptr<Merge::MergeStrategyAbstract> merge_strategy,
 		                   std::shared_ptr<Merge::UMIs::MergeUMIsStrategySimple> umi_merge_strategy,
@@ -99,8 +101,6 @@ namespace Estimation
 		s_i_hash_t get_stat_by_real_cells(Stats::CellStatType type) const;
 		void get_stat_by_real_cells(Stats::CellChrStatType stat, names_t &cell_barcodes, names_t &chromosome_names,
 		                            counts_t &counts) const;
-
-		bool compare_cells(size_t cell1_id, size_t cell2_id) const;
 
 		const Cell &cell(size_t index) const;
 		Cell &cell(size_t index);

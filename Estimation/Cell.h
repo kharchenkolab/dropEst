@@ -21,7 +21,7 @@ namespace Estimation
 		typedef std::unordered_map<std::string, s_ul_hash_t> ss_ul_hash_t;
 
 	private:
-		std::shared_ptr<char> _barcode;
+		std::unique_ptr<char[]> _barcode;
 		const size_t _min_genes_to_be_real;
 		const UMI::Mark::query_t _query_marks;
 
@@ -46,13 +46,6 @@ namespace Estimation
 		size_t requested_genes_num() const;
 		size_t requested_umis_num() const;
 
-		void add_umi(const std::string &gene, const std::string &umi, const UMI::Mark &umi_mark);
-		void set_merged();
-		void set_excluded();
-		void merge(const Cell &source);
-		void merge_umis(StringIndexer::index_t gene, const s_s_hash_t &merge_targets);
-		void update_requested_size();
-
 		const Stats &stats() const;
 		Stats &stats();
 		const genes_t& genes() const;
@@ -61,6 +54,13 @@ namespace Estimation
 
 		size_t size() const;
 		const Gene& at(const std::string &gene) const;
+
+		void add_umi(const std::string &gene, const std::string &umi, const UMI::Mark &umi_mark);
+		void set_merged();
+		void set_excluded();
+		void merge(const Cell &source);
+		void merge_umis(StringIndexer::index_t gene, const s_s_hash_t &merge_targets);
+		void update_requested_size();
 
 		Cell(const std::string &barcode, size_t min_genes_to_be_real, const std::vector<UMI::Mark> &query_marks,
 		     StringIndexer *gene_indexer, StringIndexer *umi_indexer);

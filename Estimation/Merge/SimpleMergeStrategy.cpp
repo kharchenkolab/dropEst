@@ -67,8 +67,8 @@ namespace Merge
 					(std::abs(cb_fraction - top_cb_fraction) < SimpleMergeStrategy::EPS &&
 							container.cell(cell_ind).size() > top_cb_genes_count))
 			{
-				int ed = Tools::edit_distance(container.cell((size_t)base_cell_ind).barcode().c_str(),
-											  container.cell(cell_ind).barcode().c_str());
+				int ed = Tools::edit_distance(container.cell(base_cell_ind).barcode_c(),
+											  container.cell(cell_ind).barcode_c());
 
 				if (ed >= this->_max_merge_edit_distance)
 					continue;
