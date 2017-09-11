@@ -27,10 +27,13 @@ namespace TagsSearch
 		long total_reads_read = 1, parsed_reads = 0;
 		std::string file_uid = std::to_string(rand()) + char(rand() % 25 + 'A');
 
-		Tools::ReadParameters params;
-		FilesProcessor::FastQRecord r2_record;
-		while (this->parse_fastq_record(r2_record, params))
+		while (true)
 		{
+			Tools::ReadParameters params;
+			FilesProcessor::FastQRecord r2_record;
+			if (!this->parse_fastq_record(r2_record, params))
+				break;
+
 			if (total_reads_read % 1000000 == 0)
 			{
 				L_TRACE << "Total " << total_reads_read << " read (" << parsed_reads << " parsed)";

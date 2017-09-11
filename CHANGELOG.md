@@ -1,5 +1,8 @@
 # Changelog
 
+## [Upcoming]
+* Fixed bug, which led to erroneous parsing of incorrect read (e.g. reads without spacer for Indrop V1)
+
 ## [0.6.5] - 2017-09-07
 ### Changed
 * Optimized memory usage and performance of dropEst
