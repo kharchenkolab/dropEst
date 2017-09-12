@@ -4,7 +4,7 @@ project(dropEst)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMake")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -DBOOST_LOG_DYN_LINK -std=c++11 -Wno-attributes -Wno-deprecated -Wno-deprecated-declarations -fopenmp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -DBOOST_LOG_DYN_LINK -std=c++11 -Wno-attributes -Wno-deprecated -Wno-deprecated-declarations")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -ggdb -gdwarf-2 -g3")
 
 if (NOT "${CMAKE_BUILD_TYPE}" STREQUAL Debug)

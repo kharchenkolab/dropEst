@@ -3,6 +3,10 @@
 #include <vector>
 #include <algorithm>
 #include <getopt.h>
+#include <atomic>
+#include <thread>
+#include <future>
+#include <chrono>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -17,11 +21,7 @@
 #include "TagsSearch/IndropV3TagsFinder.h"
 #include <TagsSearch/TextWriter.h>
 #include "Tools/Logs.h"
-#include <Tools/OmpConcurrentQueue.h>
-
-#ifdef _OPENMP
-	#include <omp.h>
-#endif
+#include <Tools/ConcurrentQueue.h>
 
 using namespace std;
 using namespace TagsSearch;
@@ -211,7 +211,7 @@ void save_stats(const string &out_filename, shared_ptr<TagsFinderBase> tags_find
 	R->parseEvalQ("saveRDS(d, '" + out_filename + "')");
 }
 
-bool read_bunch(Tools::OmpConcurrentQueue<std::string> &records, shared_ptr<TagsFinderBase> finder,
+bool read_bunch(Tools::ConcurrentQueue<std::string> &records, shared_ptr<TagsFinderBase> finder,
                 size_t number_of_iterations = 10000, size_t records_bunch_size = 5000)
 {
 	bool ended = false;
@@ -248,7 +248,7 @@ bool read_bunch(Tools::OmpConcurrentQueue<std::string> &records, shared_ptr<Tags
 	return ended;
 }
 
-void write_all(Tools::OmpConcurrentQueue<std::string> &gzipped, TextWriter &writer)
+void write_all(Tools::ConcurrentQueue<std::string> &gzipped, TextWriter &writer)
 {
 	std::string to_write, cur_text;
 	while (gzipped.pop(cur_text))
@@ -261,9 +261,13 @@ void write_all(Tools::OmpConcurrentQueue<std::string> &gzipped, TextWriter &writ
 	}
 }
 
-void gzip_all(Tools::OmpConcurrentQueue<std::string> &input, Tools::OmpConcurrentQueue<std::string> &output, bool bound_out_size)
+void gzip_all(Tools::ConcurrentQueue<std::string> &input, Tools::ConcurrentQueue<std::string> &output, bool bound_out_size)
 {
-	while (!bound_out_size || !output.full()) // .full shouldn't block the queue. It's just a suggested size.
+	if (input.empty())
+	{
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	}
+	while (!bound_out_size || !output.full())
 	{
 		std::string records_bunch;
 
@@ -274,53 +278,62 @@ void gzip_all(Tools::OmpConcurrentQueue<std::string> &input, Tools::OmpConcurren
 	}
 }
 
+void run_thread(int thread_number, shared_ptr<TagsFinderBase> finder, Tools::ConcurrentQueue<std::string> &records,
+                Tools::ConcurrentQueue<std::string> &gzipped, TextWriter &writer, std::atomic<bool> &work_ended)
+{
+	while (true)
+	{
+		if (work_ended && records.empty() && gzipped.empty())
+			break;
+
+		// Part 1. Single thread.
+		if (thread_number == 0 && !work_ended)
+		{
+			if (read_bunch(records, finder))
+			{
+				L_TRACE << finder->results_to_string();
+				Tools::trace_time("Reading compleated");
+				L_TRACE << "Writing the rest lines";
+				work_ended = true;
+			}
+		}
+
+		// Part 2. Multithread.
+		gzip_all(records, gzipped, !work_ended);
+
+		// Part 3. Single thread.
+		if (thread_number == 0)
+		{
+			write_all(gzipped, writer);
+		}
+	}
+}
+
 void run_parallel(const Params &params, const boost::property_tree::ptree &pt)
 {
+	using std::ref;
 	shared_ptr<TagsFinderBase> finder = get_tags_finder(params, pt);
 
 	Tools::trace_time("Run");
 
-	bool work_ended = false;
-	Tools::OmpConcurrentQueue<std::string> records(100000), gzipped(100000);
+	std::atomic<bool> work_ended(false);
+	Tools::ConcurrentQueue<std::string> records(100000), gzipped(100000);
 	size_t max_file_size = pt
 			.get_child(PROCESSING_CONFIG_PATH, boost::property_tree::ptree())
 			.get<size_t>("reads_per_out_file", std::numeric_limits<size_t>::max());
 
 	TextWriter writer(params.base_name, "fastq.gz", max_file_size);
 
-	#pragma omp parallel shared(finder, records, gzipped, writer, work_ended)
-	while (true)
+	std::vector<std::thread> tasks;
+	for (int thread_num = 0; thread_num < params.num_of_threads; ++thread_num)
 	{
-		bool cur_ended;
-		#pragma omp atomic read
-		cur_ended = work_ended;
+		tasks.push_back(std::thread(run_thread, thread_num, ref(finder), ref(records), ref(gzipped), ref(writer),
+		                            ref(work_ended)));
+	}
 
-		if (cur_ended && records.empty() && gzipped.empty())
-			break;
-
-		// Part 1. Single thread.
-		#pragma omp master
-		if (!cur_ended)
-		{
-			cur_ended = read_bunch(records, finder);
-			if (cur_ended)
-			{
-				L_TRACE << finder->results_to_string();
-				Tools::trace_time("Reading compleated");
-				L_TRACE << "Writing the rest lines";
-				#pragma omp atomic write
-				work_ended = true;
-			}
-		}
-
-		#pragma omp atomic read
-		cur_ended = work_ended;
-
-		// Part 2. Multithread.
-		gzip_all(records, gzipped, !cur_ended);
-
-		#pragma omp master
-		write_all(gzipped, writer);
+	for (auto &task : tasks)
+	{
+		task.join();
 	}
 
 	Tools::trace_time("All done");
@@ -340,11 +353,6 @@ int main(int argc, char **argv)
 	}
 
 	Params params = parse_cmd_params(argc, argv);
-
-#ifdef _OPENMP
-	omp_set_num_threads(params.num_of_threads);
-#endif
-
 	if (params.cant_parse)
 		return 1;
 
