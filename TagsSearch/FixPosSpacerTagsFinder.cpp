@@ -7,16 +7,18 @@
 
 namespace TagsSearch
 {
-	FixPosSpacerTagsFinder::FixPosSpacerTagsFinder(std::shared_ptr<FilesProcessor> files_processor,
+	FixPosSpacerTagsFinder::FixPosSpacerTagsFinder(const std::string &barcode_fastq_name, const std::string &gene_fastq_name,
 												   const boost::property_tree::ptree &barcodes_config,
-												   const boost::property_tree::ptree &trimming_config)
-		: TagsFinderBase(files_processor, trimming_config)
+												   const boost::property_tree::ptree &trimming_config, bool save_stats)
+		: TagsFinderBase(trimming_config, save_stats)
 		, _mask_parts(FixPosSpacerTagsFinder::parse_mask(barcodes_config.get<std::string>("barcode_mask", ""),
 														 barcodes_config.get<std::string>("spacer_edit_dists", "")))
 		, _trim_tail_length(std::min(barcodes_config.get<size_t>("r1_rc_length"),
 									 std::accumulate(this->_mask_parts.begin(), this->_mask_parts.end(), (size_t)0,
 													 [](size_t sum, const MaskPart & m) { return sum + m.length;})))
-		, outcomes(std::count_if(this->_mask_parts.begin(), this->_mask_parts.end(), [](const MaskPart & m){ return (m.type == MaskPart::SPACER);}))
+		, _outcomes(std::count_if(this->_mask_parts.begin(), this->_mask_parts.end(), [](const MaskPart & m){ return (m.type == MaskPart::SPACER);}))
+		, _barcode_reader(barcode_fastq_name)
+		, _gene_reader(gene_fastq_name)
 	{}
 
 	FixPosSpacerTagsFinder::MaskPart::MaskPart(const std::string &spacer, size_t length, Type type, size_t min_edit_distance)
@@ -96,17 +98,17 @@ namespace TagsSearch
 		return next_pos;
 	}
 
-	bool FixPosSpacerTagsFinder::parse_fastq_record(FilesProcessor::FastQRecord &record, Tools::ReadParameters &read_params)
+	bool FixPosSpacerTagsFinder::parse_fastq_record(FastQReader::FastQRecord &gene_record, Tools::ReadParameters &read_params)
 	{
-		auto f1_rec = this->_files_processor->get_fastq_record(0);
-		if (f1_rec.id.empty())
+		auto barcodes_record = this->_barcode_reader.get_next_record();
+		if (barcodes_record.id.empty())
 			return false;
 
-		record = this->_files_processor->get_fastq_record(1);
-		if (record.id.empty())
-			throw std::runtime_error("File '" + this->_files_processor->filename(1) + "', read '" + record.id + "': fastq ended prematurely!");
+		gene_record = this->_gene_reader.get_next_record();
+		if (gene_record.id.empty())
+			throw std::runtime_error("File '" + this->_gene_reader.filename() + "', read '" + gene_record.id + "': fastq ended prematurely!");
 
-		size_t seq_end = this->parse(f1_rec.sequence, f1_rec.quality, read_params);
+		size_t seq_end = this->parse(barcodes_record.sequence, barcodes_record.quality, read_params);
 		if (seq_end == std::string::npos)
 		{
 			read_params = Tools::ReadParameters();
@@ -115,8 +117,8 @@ namespace TagsSearch
 
 		if (this->_trim_tail_length != 0)
 		{
-			auto tail = f1_rec.sequence.substr(seq_end - this->_trim_tail_length, this->_trim_tail_length);
-			this->trim(tail, record.sequence, record.quality);
+			auto tail = barcodes_record.sequence.substr(seq_end - this->_trim_tail_length, this->_trim_tail_length);
+			this->trim(tail, gene_record.sequence, gene_record.quality);
 		}
 
 		return true;
@@ -130,7 +132,7 @@ namespace TagsSearch
 		{
 			if (cur_pos + mask_part.length > r1_seq.length())
 			{
-				this->outcomes.inc(MultiSpacerOutcomesCounter::SHORT_SEQ);
+				this->_outcomes.inc(MultiSpacerOutcomesCounter::SHORT_SEQ);
 				return std::string::npos;
 			}
 
@@ -144,7 +146,7 @@ namespace TagsSearch
 					if (Tools::edit_distance(mask_part.spacer.c_str(), r1_seq.substr(cur_pos, mask_part.length).c_str(),
 					                         mask_part.min_edit_distance) > mask_part.min_edit_distance)
 					{
-						this->outcomes.inc_no_spacer(spacer_ind);
+						this->_outcomes.inc_no_spacer(spacer_ind);
 						return std::string::npos;
 					}
 					++spacer_ind;
@@ -159,13 +161,13 @@ namespace TagsSearch
 			cur_pos += mask_part.length;
 		}
 
-		this->outcomes.inc(MultiSpacerOutcomesCounter::OK);
+		this->_outcomes.inc(MultiSpacerOutcomesCounter::OK);
 		read_params = Tools::ReadParameters(cb, umi, cb_quality, umi_quality);
 		return cur_pos;
 	}
 
 	std::string FixPosSpacerTagsFinder::get_additional_stat(long total_reads_read) const
 	{
-		return outcomes.print(total_reads_read);
+		return this->_outcomes.print(total_reads_read);
 	}
 }

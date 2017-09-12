@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Counters/TrimsCounter.h"
-#include "FilesProcessor.h"
+#include "FastQReader.h"
 #include "SpacerFinder.h"
 #include "Tools/UtilFunctions.h"
 
@@ -22,8 +22,6 @@ namespace Tools
 
 namespace TagsSearch
 {
-	class FilesProcessor;
-
 	class TagsFinderBase
 	{
 		friend struct TestTagsSearch::test1;
@@ -34,29 +32,39 @@ namespace TagsSearch
 		typedef std::string::size_type len_t;
 
 	private:
+		const bool _save_stats;
+		const std::string _file_uid;
+
 		s_counter_t _num_reads_per_cb;
+		long _total_reads_read;
+		long _parsed_reads;
+		bool _file_ended;
 
 	protected:
-		const size_t max_reads;
-		const unsigned min_read_len;
+		const size_t _max_reads;
+		const unsigned _min_read_len;
 		const std::string poly_a;
 		const Tools::ReverseComplement rc;
 
-		const std::shared_ptr<FilesProcessor> _files_processor;
 		TrimsCounter _trims_counter;
 
+	public:
+		long long read_time, parse_time, construct_time;
+
 	private:
-		std::string results_to_string(long total_reads_read) const;
+		static std::string get_file_uid(long random_seed);
 
 	protected:
 		void trim(const std::string &barcodes_tail, std::string &sequence, std::string &quality);
-		virtual bool parse_fastq_record(FilesProcessor::FastQRecord &record, Tools::ReadParameters &read_params) = 0;
+		virtual bool parse_fastq_record(FastQReader::FastQRecord &record, Tools::ReadParameters &read_params) = 0;
 		virtual std::string get_additional_stat(long total_reads_read) const = 0;
 
 	public:
-		TagsFinderBase(std::shared_ptr<FilesProcessor> files_processor, const boost::property_tree::ptree &processing_config);
+		TagsFinderBase(const boost::property_tree::ptree &processing_config, bool save_stats);
 
-		virtual void run(bool save_reads_names, bool save_stats);
+		virtual bool get_next_record(FastQReader::FastQRecord& record);
 		const s_counter_t& num_reads_per_cb() const;
+		bool file_ended() const;
+		std::string results_to_string() const;
 	};
 }

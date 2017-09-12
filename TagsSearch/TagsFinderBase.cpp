@@ -3,79 +3,58 @@
 #include "Tools/Logs.h"
 #include "Tools/ReadParameters.h"
 
-#include <fstream>
-#include <iomanip>
-#include <limits>
-#include <sstream>
-
 namespace TagsSearch
 {
-	TagsFinderBase::TagsFinderBase(std::shared_ptr<FilesProcessor> files_processor, const boost::property_tree::ptree &processing_config)
-		: max_reads(processing_config.get<size_t>("reads_per_out_file", std::numeric_limits<size_t>::max()))
-		, min_read_len(processing_config.get<unsigned>("min_align_length", 10))
+	TagsFinderBase::TagsFinderBase(const boost::property_tree::ptree &processing_config, bool save_stats)
+		: _save_stats(save_stats)
+		, _file_uid(TagsFinderBase::get_file_uid(42)) // TODO: return time(nullptr)
+		, _total_reads_read(0)
+		, _parsed_reads(0)
+		, _file_ended(false)
+		, _max_reads(processing_config.get<size_t>("reads_per_out_file", std::numeric_limits<size_t>::max()))
+		, _min_read_len(processing_config.get<unsigned>("min_align_length", 10))
 		, poly_a(processing_config.get<std::string>("poly_a_tail", "AAAAAAAA"))
-		, _files_processor(files_processor)
 		, _trims_counter()
+	{}
+
+	bool TagsFinderBase::get_next_record(FastQReader::FastQRecord& record)
 	{
-		srand(time(nullptr));
-	}
+		if (this->_file_ended)
+			return false;
 
-	void TagsFinderBase::run(bool save_reads_names, bool save_stats)
-	{
-		L_TRACE << "reading reads ";
-
-		long total_reads_read = 1, parsed_reads = 0;
-		std::string file_uid = std::to_string(rand()) + char(rand() % 25 + 'A');
-
-		while (true)
+		Tools::ReadParameters params;
+		if (!this->parse_fastq_record(record, params))
 		{
-			Tools::ReadParameters params;
-			FilesProcessor::FastQRecord r2_record;
-			if (!this->parse_fastq_record(r2_record, params))
-				break;
-
-			if (total_reads_read % 1000000 == 0)
-			{
-				L_TRACE << "Total " << total_reads_read << " read (" << parsed_reads << " parsed)";
-			}
-
-			++total_reads_read;
-			if (params.is_empty() || r2_record.sequence.length() < this->min_read_len)
-				continue;
-
-			++parsed_reads;
-
-			std::string read_prefix = "@" + file_uid + std::to_string(total_reads_read);
-			if (save_reads_names)
-			{
-				this->_files_processor->write_read_params(read_prefix, params);
-			}
-
-			if (save_stats)
-			{
-				this->_num_reads_per_cb[params.cell_barcode()]++;
-			}
-
-			std::string text = params.encoded_id(read_prefix) + "\n" + r2_record.sequence + "\n" +
-					r2_record.description + "\n" + r2_record.quality + "\n";
-
-			bool new_file = this->_files_processor->write(text, this->max_reads);
-			if (new_file)
-			{
-				L_TRACE << "|";
-			}
+			this->_file_ended = true;
+			return false;
 		}
 
-		--total_reads_read;
+		if (++this->_total_reads_read % 1000000 == 0)
+		{
+			L_TRACE << "Total " << this->_total_reads_read << " read (" << this->_parsed_reads << " parsed)";
+		}
 
-		L_TRACE << this->results_to_string(total_reads_read);
+		if (params.is_empty() || record.sequence.length() < this->_min_read_len)
+			return false;
+
+		++this->_parsed_reads;
+
+		std::string read_prefix = "@" + this->_file_uid + std::to_string(this->_total_reads_read + 1); // TODO: remove "+1"
+		record.id = params.encoded_id(read_prefix); // TODO: add save_read_names parameter // record.id = read_prefix;
+
+		if (this->_save_stats)
+		{
+			this->_num_reads_per_cb[params.cell_barcode()]++;
+		}
+
+		return true;
 	}
 
-	std::string TagsFinderBase::results_to_string(long total_reads_read) const
+	std::string TagsFinderBase::results_to_string() const
 	{
 		std::stringstream ss;
-		ss << " (" << total_reads_read << " reads)\n"
-		   << this->get_additional_stat(total_reads_read) << "\n"
+		ss << " (" << this->_total_reads_read << " reads)\n"
+		   << this->get_additional_stat(this->_total_reads_read) << "\n"
 		   << this->_trims_counter.print();
 
 		return ss.str();
@@ -138,5 +117,21 @@ namespace TagsSearch
 	const TagsFinderBase::s_counter_t& TagsFinderBase::num_reads_per_cb() const
 	{
 		return this->_num_reads_per_cb;
+	}
+
+	bool TagsFinderBase::file_ended() const
+	{
+		return this->_file_ended;
+	}
+
+	std::string TagsFinderBase::get_file_uid(long random_seed)
+	{
+		if (random_seed < 0)
+		{
+			random_seed = time(nullptr);
+		}
+
+		srand(unsigned(random_seed));
+		return std::to_string(rand()) + char(rand() % 25 + 'A');
 	}
 }

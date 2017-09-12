@@ -39,7 +39,10 @@ namespace TagsSearch
 		const std::vector<MaskPart> _mask_parts;
 		const size_t _trim_tail_length;
 
-		MultiSpacerOutcomesCounter outcomes;
+		MultiSpacerOutcomesCounter _outcomes;
+
+		FastQReader _barcode_reader;
+		FastQReader _gene_reader;
 
 	private:
 		size_t parse(const std::string &r1_seq, const std::string &r1_quality, Tools::ReadParameters &read_params);
@@ -48,11 +51,12 @@ namespace TagsSearch
 		static size_t parse_barcode_mask(const std::string &mask, size_t cur_pos, MaskPart &mask_part);
 
 	protected:
-		virtual bool parse_fastq_record(FilesProcessor::FastQRecord &record, Tools::ReadParameters &read_params) override;
+		virtual bool parse_fastq_record(FastQReader::FastQRecord &gene_record, Tools::ReadParameters &read_params) override;
 		virtual std::string get_additional_stat(long total_reads_read) const override;
 
 	public:
-		FixPosSpacerTagsFinder(std::shared_ptr<FilesProcessor> files_processor,
-						 const boost::property_tree::ptree &barcodes_config, const boost::property_tree::ptree &trimming_config);
+		FixPosSpacerTagsFinder(const std::string &barcode_fastq_name, const std::string &gene_fastq_name,
+		                       const boost::property_tree::ptree &barcodes_config,
+		                       const boost::property_tree::ptree &trimming_config, bool save_stats);
 	};
 }

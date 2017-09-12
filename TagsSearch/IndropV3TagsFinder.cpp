@@ -2,45 +2,49 @@
 
 namespace TagsSearch
 {
-	IndropV3TagsFinder::IndropV3TagsFinder(const std::shared_ptr<FilesProcessor> &files_processor,
-												 const boost::property_tree::ptree &barcodes_config,
-												 const boost::property_tree::ptree &processing_config)
-			: TagsFinderBase(files_processor, processing_config)
-			, barcode1_length(barcodes_config.get<size_t>("barcode1_length"))
-			, barcode2_length(barcodes_config.get<size_t>("barcode2_length"))
-			, umi_length(barcodes_config.get<size_t>("umi_length"))
-			, trim_tail_length(std::min(barcodes_config.get<size_t>("r1_rc_length"), barcode2_length + umi_length))
+	IndropV3TagsFinder::IndropV3TagsFinder(const std::string &barcode1_fastq_name, const std::string &barcode2_fastq_name,
+	                                       const std::string &gene_fastq_name,
+	                                       const boost::property_tree::ptree &barcodes_config,
+	                                       const boost::property_tree::ptree &processing_config, bool save_stats)
+		: TagsFinderBase(processing_config, save_stats)
+		, barcode1_length(barcodes_config.get<size_t>("barcode1_length"))
+		, barcode2_length(barcodes_config.get<size_t>("barcode2_length"))
+		, umi_length(barcodes_config.get<size_t>("umi_length"))
+		, trim_tail_length(std::min(barcodes_config.get<size_t>("r1_rc_length"), barcode2_length + umi_length))
+		, _barcode1_reader(barcode1_fastq_name)
+		, _barcode2_reader(barcode2_fastq_name)
+		, _gene_reader(gene_fastq_name)
 	{}
 
-	bool IndropV3TagsFinder::parse_fastq_record(FilesProcessor::FastQRecord &record, Tools::ReadParameters &read_params)
+	bool IndropV3TagsFinder::parse_fastq_record(FastQReader::FastQRecord &record, Tools::ReadParameters &read_params)
 	{
-		auto cb1_rec = this->_files_processor->get_fastq_record(0);
+		auto cb1_rec = this->_barcode1_reader.get_next_record();
 		if (cb1_rec.id.empty())
 			return false;
 
-		auto cb2_rec = this->_files_processor->get_fastq_record(1);
+		auto cb2_rec = this->_barcode2_reader.get_next_record();
 		if (cb2_rec.id.empty())
-			throw std::runtime_error("File '" + this->_files_processor->filename(1) + "', read '" + cb2_rec.id + "': fastq ended prematurely!");
+			throw std::runtime_error("File '" + this->_barcode2_reader.filename() + "', read '" + cb2_rec.id + "': fastq ended prematurely!");
 
-		record = this->_files_processor->get_fastq_record(2);
+		record = this->_gene_reader.get_next_record();
 		if (record.id.empty())
-			throw std::runtime_error("File '" + this->_files_processor->filename(2) + "', read '" + record.id + "': fastq ended prematurely!");
+			throw std::runtime_error("File '" + this->_gene_reader.filename() + "', read '" + record.id + "': fastq ended prematurely!");
 
 		if (cb1_rec.sequence.length() < this->barcode1_length)
 		{
-			this->counter.inc(TwoBarcodesCounter::SHORT_READ1);
+			this->_counter.inc(TwoBarcodesCounter::SHORT_READ1);
 			read_params = Tools::ReadParameters();
 			return true;
 		}
 
 		if (cb2_rec.sequence.length() < this->barcode2_length + this->umi_length)
 		{
-			this->counter.inc(TwoBarcodesCounter::SHORT_READ2);
+			this->_counter.inc(TwoBarcodesCounter::SHORT_READ2);
 			read_params = Tools::ReadParameters();
 			return true;
 		}
 
-		this->counter.inc(TwoBarcodesCounter::OK);
+		this->_counter.inc(TwoBarcodesCounter::OK);
 		std::string cb = this->parse_cb(cb1_rec.sequence, cb2_rec.sequence);
 		std::string umi = this->parse_umi(cb2_rec.sequence);
 		std::string cb_quality = this->parse_cb(cb1_rec.quality, cb2_rec.quality);
@@ -70,6 +74,13 @@ namespace TagsSearch
 
 	std::string IndropV3TagsFinder::get_additional_stat(long total_reads_read) const
 	{
-		return this->counter.print(total_reads_read);
+		return this->_counter.print(total_reads_read);
+	}
+
+	void IndropV3TagsFinder::skip_records_row()
+	{
+		this->_barcode1_reader.get_next_record();
+		this->_barcode2_reader.get_next_record();
+		this->_gene_reader.get_next_record();
 	}
 }

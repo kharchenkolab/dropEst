@@ -5,7 +5,7 @@
 
 #include "TagsSearch/FixPosSpacerTagsFinder.h"
 #include "TagsSearch/SpacerFinder.h"
-#include "TagsSearch/SpacerTagsFinder.h"
+#include "TagsSearch/IndropV1TagsFinder.h"
 #include "TagsSearch/TagsFinderBase.h"
 #include "Tools/Logs.h"
 #include "Tools/ReadParameters.h"
@@ -54,12 +54,12 @@ struct Fixture
 		read_xml(config, pt2);
 
 		this->spacer_finder = SpacerFinder(pt.get_child("config.SpacerSearch"));
-		this->tags_finder = std::make_shared<SpacerTagsFinder>(nullptr, pt.get_child("config.SpacerSearch"), pt.get_child("config.TailTrimming"));
-		this->mask_tags_finder = std::make_shared<FixPosSpacerTagsFinder>(nullptr, pt2.get_child("SpacerSearch"), pt.get_child("config.TailTrimming"));
+		this->tags_finder = std::make_shared<IndropV1TagsFinder>("", "", pt.get_child("config.SpacerSearch"), pt.get_child("config.TailTrimming"), false);
+		this->mask_tags_finder = std::make_shared<FixPosSpacerTagsFinder>("", "", pt2.get_child("SpacerSearch"), pt.get_child("config.TailTrimming"), false);
 	}
 
 	SpacerFinder spacer_finder;
-	std::shared_ptr<SpacerTagsFinder> tags_finder;
+	std::shared_ptr<IndropV1TagsFinder> tags_finder;
 	std::shared_ptr<FixPosSpacerTagsFinder> mask_tags_finder;
 };
 
@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_SUITE(TestTagsSearch)
 		std::string r2_line2 = "TTGTTTCGCCCGGTTTTCTGTTTTCAGTAAAGTCTCGTTACGCCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 		std::string r2_line3 = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
 
-		auto spacer_pos = tags_finder->spacer_finder.find_spacer(r1_line2);
+		auto spacer_pos = tags_finder->_spacer_finder.find_spacer(r1_line2);
 		std::string barcodes_tail = this->spacer_finder.parse_r1_rc(r1_line2, spacer_pos.second);
 		tags_finder->trim(barcodes_tail, r2_line2, r2_line3);
 
@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_SUITE(TestTagsSearch)
 	BOOST_FIXTURE_TEST_CASE(test2, Fixture)
 	{
 		std::string r1_seq = "TAGTTTCGGAGTGTTTGCTTGTGACGCCTTACCTTGCCCGCGACTTTTTTTTTTT";
-		auto spacer_pos = tags_finder->spacer_finder.find_spacer(r1_seq);
+		auto spacer_pos = tags_finder->_spacer_finder.find_spacer(r1_seq);
 		Tools::ReadParameters res = tags_finder->parse(r1_seq, r1_seq, spacer_pos);
 		BOOST_CHECK_EQUAL(res.is_empty(), false);
 		BOOST_CHECK_EQUAL(res.cell_barcode(), "TAGTTTCGACCTTGCC");
@@ -94,7 +94,7 @@ BOOST_AUTO_TEST_SUITE(TestTagsSearch)
 	BOOST_FIXTURE_TEST_CASE(test3, Fixture)
 	{
 		std::string r1_seq = "TGACCATTACTGAGTGATTGCTTGTGACGCCTTAAGCGTACAGATTATTTT";
-		auto spacer_pos = tags_finder->spacer_finder.find_spacer(r1_seq);
+		auto spacer_pos = tags_finder->_spacer_finder.find_spacer(r1_seq);
 		Tools::ReadParameters res = tags_finder->parse(r1_seq, r1_seq, spacer_pos);
 		BOOST_CHECK_EQUAL(res.is_empty(), false);
 	}

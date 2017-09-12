@@ -19,8 +19,7 @@ namespace Tools
 
 	ReadParameters::ReadParameters(const std::string &cell_barcode, const std::string &umi,
 	                               const std::string &cell_barcode_quality, const std::string &umi_quality)
-		: _read_name("")
-		, _is_empty(false)
+		: _is_empty(false)
 		, _cell_barcode(cell_barcode)
 		, _umi(umi)
 		, _cell_barcode_quality(cell_barcode_quality)

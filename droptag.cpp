@@ -12,11 +12,16 @@
 #include <Tools/UtilFunctions.h>
 
 #include "TagsSearch/FixPosSpacerTagsFinder.h"
-#include "TagsSearch/SpacerTagsFinder.h"
+#include "TagsSearch/IndropV1TagsFinder.h"
 #include "TagsSearch/TagsFinderBase.h"
 #include "TagsSearch/IndropV3TagsFinder.h"
-
+#include <TagsSearch/TextWriter.h>
 #include "Tools/Logs.h"
+#include <Tools/OmpConcurrentQueue.h>
+
+#ifdef _OPENMP
+	#include <omp.h>
+#endif
 
 using namespace std;
 using namespace TagsSearch;
@@ -33,6 +38,7 @@ struct Params
 	bool save_reads_names = false;
 	bool quiet = false;
 	bool save_stats = false;
+	int num_of_threads = 1;
 	string base_name = "";
 	string config_file_name = "";
 	string log_prefix = "";
@@ -54,6 +60,7 @@ static void usage()
 	cerr << "\t-h, --help: show this info\n";
 	cerr << "\t-l, --log-prefix prefix: logs prefix\n";
 	cerr << "\t-n, --name name: alternative output base name\n";
+	cerr << "\t-p, --parallel number: number of threads\n";
 //	cerr << "\t-s, --save-reads-names : serialize reads parameters to save names\n";
 	cerr << "\t-S, --save-stats : save stats to rds file\n";
 	cerr << "\t-t, --lib-tag library tag : (for IndropV3 with library tag only)\n";
@@ -74,8 +81,6 @@ static void check_files_existence(const Params &params)
 
 shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const boost::property_tree::ptree &pt)
 {
-	auto files_processor = make_shared<FilesProcessor>(params.read_files, params.base_name, params.save_reads_names);
-
 	auto const &processing_config = pt.get_child(PROCESSING_CONFIG_PATH, boost::property_tree::ptree());
 
 	if (params.read_files.size() == 4)
@@ -83,24 +88,28 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const boost::pr
 		if (params.lib_tag == "")
 			throw std::runtime_error("For IndropV3 with library tag, tag (-t option) should be specified");
 
-		return shared_ptr<TagsFinderBase>(new IndropV3LibsTagsFinder(files_processor, params.lib_tag,
-	                                                                 pt.get_child(BARCODES_CONFIG_PATH),
-		                                                             processing_config));
+		return shared_ptr<TagsFinderBase>(
+				new IndropV3LibsTagsFinder(params.read_files[0], params.read_files[1], params.read_files[2],
+				                           params.read_files[3], params.lib_tag, pt.get_child(BARCODES_CONFIG_PATH),
+				                           processing_config, params.save_stats));
 	}
 
 	if (params.read_files.size() == 3)
-		return shared_ptr<TagsFinderBase>(new IndropV3TagsFinder(files_processor, pt.get_child(BARCODES_CONFIG_PATH),
-		                                                         processing_config));
+		return shared_ptr<TagsFinderBase>(
+				new IndropV3TagsFinder(params.read_files[0], params.read_files[1], params.read_files[2],
+				                       pt.get_child(BARCODES_CONFIG_PATH), processing_config, params.save_stats));
 
 	if (params.read_files.size() != 2)
 		throw std::runtime_error("Unexpected number of read files: " + std::to_string(params.read_files.size()));
 
 	if (pt.get<std::string>("config.TagsSearch.SpacerSearch.barcode_mask", "") != "")
-		return shared_ptr<TagsFinderBase>(new FixPosSpacerTagsFinder(files_processor, pt.get_child(SPACER_CONFIG_PATH),
-		                                                             processing_config));
+		return shared_ptr<TagsFinderBase>(
+				new FixPosSpacerTagsFinder(params.read_files[0], params.read_files[1], pt.get_child(SPACER_CONFIG_PATH),
+				                           processing_config, params.save_stats));
 
-	return shared_ptr<TagsFinderBase>(new SpacerTagsFinder(files_processor, pt.get_child(SPACER_CONFIG_PATH),
-	                                                       processing_config));
+	return shared_ptr<TagsFinderBase>(
+			new IndropV1TagsFinder(params.read_files[0], params.read_files[1], pt.get_child(SPACER_CONFIG_PATH),
+			                       processing_config, params.save_stats));
 }
 
 
@@ -113,6 +122,7 @@ Params parse_cmd_params(int argc, char **argv)
 			{"help", no_argument, 0, 'h'},
 			{"log-prefix", required_argument, 0, 'l'},
 			{"name",       required_argument, 0, 'n'},
+			{"parallel",   required_argument, 0, 'p'},
 			{"save-reads-names",    no_argument,       0, 's'},
 			{"save-stats",    required_argument,       0, 'S'},
 			{"lib-tag",    required_argument, 0, 't'},
@@ -121,7 +131,7 @@ Params parse_cmd_params(int argc, char **argv)
 	};
 
 	Params params;
-	while ((c = getopt_long(argc, argv, "c:hl:n:St:q", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "c:hl:n:p:St:q", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -136,6 +146,9 @@ Params parse_cmd_params(int argc, char **argv)
 				exit(0);
 			case 'n' :
 				params.base_name = string(optarg);
+				break;
+			case 'p' :
+				params.num_of_threads = atoi(optarg);
 				break;
 			case 's' :
 				params.save_reads_names = true;
@@ -198,6 +211,125 @@ void save_stats(const string &out_filename, shared_ptr<TagsFinderBase> tags_find
 	R->parseEvalQ("saveRDS(d, '" + out_filename + "')");
 }
 
+bool read_bunch(Tools::OmpConcurrentQueue<std::string> &records, shared_ptr<TagsFinderBase> finder,
+                size_t number_of_iterations = 10000, size_t records_bunch_size = 5000)
+{
+	bool ended = false;
+	for (size_t i = 0; i < number_of_iterations; ++i)
+	{
+		if (ended)
+			break;
+
+		std::string records_bunch;
+		for (size_t record_id = 0; record_id < records_bunch_size; ++record_id)
+		{
+			FastQReader::FastQRecord record;
+			if (finder->file_ended())
+			{
+				ended = true;
+				break;
+			}
+
+			if (!finder->get_next_record(record))
+			{
+				record_id--;
+				continue;
+			}
+
+			records_bunch += record.to_string();
+		}
+
+		if (!records_bunch.empty())
+		{
+			records.push(records_bunch);
+		}
+	}
+
+	return ended;
+}
+
+void write_all(Tools::OmpConcurrentQueue<std::string> &gzipped, TextWriter &writer)
+{
+	std::string to_write, cur_text;
+	while (gzipped.pop(cur_text))
+	{
+		to_write += cur_text;
+	}
+	if (!to_write.empty())
+	{
+		writer.write(to_write);
+	}
+}
+
+void gzip_all(Tools::OmpConcurrentQueue<std::string> &input, Tools::OmpConcurrentQueue<std::string> &output, bool bound_out_size)
+{
+	while (!bound_out_size || !output.full()) // .full shouldn't block the queue. It's just a suggested size.
+	{
+		std::string records_bunch;
+
+		if (!input.pop(records_bunch))
+			break;
+
+		output.push(TextWriter::gzip(records_bunch));
+	}
+}
+
+void run_parallel(const Params &params, const boost::property_tree::ptree &pt)
+{
+	shared_ptr<TagsFinderBase> finder = get_tags_finder(params, pt);
+
+	Tools::trace_time("Run");
+
+	bool work_ended = false;
+	Tools::OmpConcurrentQueue<std::string> records(100000), gzipped(100000);
+	size_t max_file_size = pt
+			.get_child(PROCESSING_CONFIG_PATH, boost::property_tree::ptree())
+			.get<size_t>("reads_per_out_file", std::numeric_limits<size_t>::max());
+
+	TextWriter writer(params.base_name, "fastq.gz", max_file_size);
+
+	#pragma omp parallel shared(finder, records, gzipped, writer, work_ended)
+	while (true)
+	{
+		bool cur_ended;
+		#pragma omp atomic read
+		cur_ended = work_ended;
+
+		if (cur_ended && records.empty() && gzipped.empty())
+			break;
+
+		// Part 1. Single thread.
+		#pragma omp master
+		if (!cur_ended)
+		{
+			cur_ended = read_bunch(records, finder);
+			if (cur_ended)
+			{
+				L_TRACE << finder->results_to_string();
+				Tools::trace_time("Reading compleated");
+				L_TRACE << "Writing the rest lines";
+				#pragma omp atomic write
+				work_ended = true;
+			}
+		}
+
+		#pragma omp atomic read
+		cur_ended = work_ended;
+
+		// Part 2. Multithread.
+		gzip_all(records, gzipped, !cur_ended);
+
+		#pragma omp master
+		write_all(gzipped, writer);
+	}
+
+	Tools::trace_time("All done");
+	if (params.save_stats)
+	{
+		save_stats(params.base_name + ".rds", finder);
+	}
+}
+
 int main(int argc, char **argv)
 {
 	std::string command_line;
@@ -208,6 +340,10 @@ int main(int argc, char **argv)
 	}
 
 	Params params = parse_cmd_params(argc, argv);
+
+#ifdef _OPENMP
+	omp_set_num_threads(params.num_of_threads);
+#endif
 
 	if (params.cant_parse)
 		return 1;
@@ -228,15 +364,7 @@ int main(int argc, char **argv)
 
 	try
 	{
-		shared_ptr<TagsFinderBase> finder = get_tags_finder(params, pt);
-
-		Tools::trace_time("Run");
-		finder->run(params.save_reads_names, params.save_stats);
-		Tools::trace_time("All done");
-		if (params.save_stats)
-		{
-			save_stats(params.base_name + ".rds", finder);
-		}
+		run_parallel(params, pt);
 	}
 	catch (std::runtime_error &err)
 	{

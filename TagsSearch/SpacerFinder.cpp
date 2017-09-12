@@ -99,7 +99,7 @@ namespace TagsSearch
 		string barcode = seq.substr(spacer_end, this->barcode_length);
 		if (barcode.length() != this->barcode_length)
 		{
-			L_ERR << "Barcode is shorter then it should be (" << this->barcode_length << "): " << barcode;
+			L_ERR << "Barcode is too short (required length: " << this->barcode_length << "): '" << barcode << "'";
 		}
 
 		return seq.substr(0, spacer_start) + barcode;
@@ -110,7 +110,7 @@ namespace TagsSearch
 		string res = seq.substr(spacer_end + this->barcode_length, this->umi_length);
 		if (res.length() != this->umi_length)
 		{
-			L_ERR << "UMI is shorter then it should be (" << this->umi_length << "): " << res;
+			L_ERR << "UMI is too short (required length: " << this->umi_length << "): '" << res << "'";
 		}
 
 		return res;
