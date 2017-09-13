@@ -9,6 +9,8 @@ namespace TagsSearch
 {
 	FastQReader::FastQReader(const std::string &filename)
 		: _filename(filename)
+		, _file_ended(false)
+		, _records(10000)
 	{
 		if (filename.empty())
 			return;
@@ -29,28 +31,27 @@ namespace TagsSearch
 //		this->out_reads_zip << read_params.encoded_params(id_prefix) << "\n";
 //	}
 
-	FastQReader::FastQRecord FastQReader::get_next_record()
+	bool FastQReader::get_next_record_unsafe(FastQRecord &record)
 	{
-		FastQRecord record;
-		if (!std::getline(this->_in_fstream, record.id).good())
-			return record;
+		if (!this->get_next_line_unsafe(record.id))
+			return false;
 
 		if (record.id.at(0) != '@')
 			throw std::runtime_error("File '" + this->_filename + "', read '" + record.id + "': fastq malformed!");
 
-		if (!std::getline(this->_in_fstream, record.sequence).good())
+		if (!this->get_next_line_unsafe(record.sequence))
 			throw std::runtime_error("File '" + this->_filename + "', read '" + record.id + "': fastq ended prematurely!");
 
-		if (!std::getline(this->_in_fstream, record.description).good())
+		if (!this->get_next_line_unsafe(record.description))
 			throw std::runtime_error("File '" + this->_filename + "', read '" + record.id + "': fastq ended prematurely!");
 
-		if (!std::getline(this->_in_fstream, record.quality).good())
+		if (!this->get_next_line_unsafe(record.quality))
 			throw std::runtime_error("File '" + this->_filename + "', read '" + record.id + "': fastq ended prematurely!");
 
 		if (record.sequence.length() != record.quality.length())
 			throw std::runtime_error("File '" + this->_filename + "', read '" + record.id + "': different lengths of the sequence and the quality string!");
 
-		return record;
+		return true;
 	}
 
 	const std::string &FastQReader::filename() const
@@ -58,8 +59,50 @@ namespace TagsSearch
 		return this->_filename;
 	}
 
+	bool FastQReader::get_next_line_unsafe(std::string &line)
+	{
+		bool success = std::getline(this->_in_fstream, line).good();
+		this->_file_ended = !success;
+		return success;
+	}
+
+	void FastQReader::try_read_records_to_cash()
+	{
+		if (this->_file_ended)
+			return;
+
+		std::unique_lock<mutex_t> lock(this->_read_mutex, std::try_to_lock);
+		if (!lock)
+			return;
+
+		while (!this->_records.full())
+		{
+			FastQRecord record;
+			if (!this->get_next_record_unsafe(record))
+				break;
+
+			this->_records.push(record);
+		}
+	}
+
+	bool FastQReader::get_next_record(FastQReader::FastQRecord &record)
+	{
+		while (true)
+		{
+			if (this->_records.pop(record))
+				break;
+
+			if (this->_file_ended && this->_records.empty())
+				return false;
+
+			this->try_read_records_to_cash();
+		}
+
+		return true;
+	}
+
 	FastQReader::FastQRecord::FastQRecord(const std::string &id, const std::string &sequence,
-											 const std::string &description, const std::string &quality)
+	                                      const std::string &description, const std::string &quality)
 		: id(id)
 		, sequence(sequence)
 		, description(description)

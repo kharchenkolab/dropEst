@@ -7,19 +7,17 @@
 
 namespace TagsSearch
 {
-	FixPosSpacerTagsFinder::FixPosSpacerTagsFinder(const std::string &barcode_fastq_name, const std::string &gene_fastq_name,
+	FixPosSpacerTagsFinder::FixPosSpacerTagsFinder(const std::vector<std::string> &fastq_filenames,
 												   const boost::property_tree::ptree &barcodes_config,
 												   const boost::property_tree::ptree &trimming_config,
 												   TextWriter &&writer, bool save_stats)
-		: TagsFinderBase(trimming_config, std::move(writer), save_stats)
+		: TagsFinderBase(fastq_filenames, trimming_config, std::move(writer), save_stats)
 		, _mask_parts(FixPosSpacerTagsFinder::parse_mask(barcodes_config.get<std::string>("barcode_mask", ""),
 														 barcodes_config.get<std::string>("spacer_edit_dists", "")))
 		, _trim_tail_length(std::min(barcodes_config.get<size_t>("r1_rc_length"),
 									 std::accumulate(this->_mask_parts.begin(), this->_mask_parts.end(), (size_t)0,
 													 [](size_t sum, const MaskPart & m) { return sum + m.length;})))
 		, _outcomes(std::count_if(this->_mask_parts.begin(), this->_mask_parts.end(), [](const MaskPart & m){ return (m.type == MaskPart::SPACER);}))
-		, _barcode_reader(barcode_fastq_name)
-		, _gene_reader(gene_fastq_name)
 	{}
 
 	FixPosSpacerTagsFinder::MaskPart::MaskPart(const std::string &spacer, size_t length, Type type, size_t min_edit_distance)
@@ -101,13 +99,12 @@ namespace TagsSearch
 
 	bool FixPosSpacerTagsFinder::parse_fastq_record(FastQReader::FastQRecord &gene_record, Tools::ReadParameters &read_params)
 	{
-		auto barcodes_record = this->_barcode_reader.get_next_record();
-		if (barcodes_record.id.empty())
+		FastQReader::FastQRecord barcodes_record;
+		if (!this->fastq_reader(0).get_next_record(barcodes_record))
 			return false;
 
-		gene_record = this->_gene_reader.get_next_record();
-		if (gene_record.id.empty())
-			throw std::runtime_error("File '" + this->_gene_reader.filename() + "', read '" + gene_record.id + "': fastq ended prematurely!");
+		if (!this->fastq_reader(1).get_next_record(gene_record))
+			throw std::runtime_error("File '" + this->fastq_reader(1).filename() + "', read '" + barcodes_record.id + "': fastq ended prematurely!");
 
 		size_t seq_end = this->parse(barcodes_record.sequence, barcodes_record.quality, read_params);
 		if (seq_end == std::string::npos)

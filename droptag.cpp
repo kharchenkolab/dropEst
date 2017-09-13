@@ -3,16 +3,11 @@
 #include <vector>
 #include <algorithm>
 #include <getopt.h>
-#include <atomic>
-#include <thread>
-#include <future>
-#include <chrono>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/filesystem/path.hpp>
 #include <TagsSearch/IndropV3LibsTagsFinder.h>
-#include <RInside.h>
 #include <Tools/UtilFunctions.h>
 
 #include "TagsSearch/FixPosSpacerTagsFinder.h"
@@ -21,7 +16,6 @@
 #include "TagsSearch/IndropV3TagsFinder.h"
 #include <TagsSearch/TextWriter.h>
 #include "Tools/Logs.h"
-#include <Tools/ConcurrentQueue.h>
 
 using namespace std;
 using namespace TagsSearch;
@@ -92,27 +86,26 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const boost::pr
 			throw std::runtime_error("For IndropV3 with library tag, tag (-t option) should be specified");
 
 		return shared_ptr<TagsFinderBase>(
-				new IndropV3LibsTagsFinder(params.read_files[0], params.read_files[1], params.read_files[2],
-				                           params.read_files[3], params.lib_tag, pt.get_child(BARCODES_CONFIG_PATH),
+				new IndropV3LibsTagsFinder(params.read_files, params.lib_tag, pt.get_child(BARCODES_CONFIG_PATH),
 				                           processing_config, std::move(writer), params.save_stats));
 	}
 
 	if (params.read_files.size() == 3)
 		return shared_ptr<TagsFinderBase>(
-				new IndropV3TagsFinder(params.read_files[0], params.read_files[1], params.read_files[2],
-				                       pt.get_child(BARCODES_CONFIG_PATH), processing_config, std::move(writer), params.save_stats));
+				new IndropV3TagsFinder(params.read_files, pt.get_child(BARCODES_CONFIG_PATH), processing_config,
+				                       std::move(writer), params.save_stats));
 
 	if (params.read_files.size() != 2)
 		throw std::runtime_error("Unexpected number of read files: " + std::to_string(params.read_files.size()));
 
 	if (pt.get<std::string>("config.TagsSearch.SpacerSearch.barcode_mask", "") != "")
 		return shared_ptr<TagsFinderBase>(
-				new FixPosSpacerTagsFinder(params.read_files[0], params.read_files[1], pt.get_child(SPACER_CONFIG_PATH),
-				                           processing_config, std::move(writer), params.save_stats));
+				new FixPosSpacerTagsFinder(params.read_files, pt.get_child(SPACER_CONFIG_PATH), processing_config,
+				                           std::move(writer), params.save_stats));
 
 	return shared_ptr<TagsFinderBase>(
-			new IndropV1TagsFinder(params.read_files[0], params.read_files[1], pt.get_child(SPACER_CONFIG_PATH),
-			                       processing_config, std::move(writer), params.save_stats));
+			new IndropV1TagsFinder(params.read_files, pt.get_child(SPACER_CONFIG_PATH), processing_config,
+			                       std::move(writer), params.save_stats));
 }
 
 

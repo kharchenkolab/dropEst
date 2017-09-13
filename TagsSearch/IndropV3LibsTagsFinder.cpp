@@ -4,25 +4,28 @@
 namespace TagsSearch
 {
 
-	IndropV3LibsTagsFinder::IndropV3LibsTagsFinder(const std::string &barcode1_fastq_name, const std::string &barcode2_fastq_name,
-	                                               const std::string &gene_fastq_name, const std::string &library_fastq_name,
+	IndropV3LibsTagsFinder::IndropV3LibsTagsFinder(const std::vector<std::string> &fastq_filenames,
 	                                               const std::string &library_tag,
 		                                           const boost::property_tree::ptree &barcodes_config,
 		                                           const boost::property_tree::ptree &config, TextWriter &&writer,
 		                                           bool save_stats)
-		: IndropV3TagsFinder(barcode1_fastq_name, barcode2_fastq_name, gene_fastq_name, barcodes_config, config,
-		                     std::move(writer), save_stats)
+		: IndropV3TagsFinder(fastq_filenames, barcodes_config, config, std::move(writer), save_stats)
 		, library_tag(library_tag)
 		, max_lib_tag_ed(barcodes_config.get<unsigned>("max_libtag_ed", 2))
-		, _lib_tag_reader(library_fastq_name)
 	{}
 
 	bool IndropV3LibsTagsFinder::parse_fastq_record(FastQReader::FastQRecord &record, Tools::ReadParameters &read_params)
 	{
-		auto lib_record = this->_lib_tag_reader.get_next_record();
+		FastQReader::FastQRecord lib_record;
+		if (!this->fastq_reader(3).get_next_record(lib_record))
+			return false;
+
 		if (Tools::edit_distance(lib_record.sequence.c_str(), this->library_tag.c_str(), false) > this->max_lib_tag_ed)
 		{
-			this->skip_records_row();
+			for (size_t file_id = 0; file_id < 3; ++file_id)
+			{
+				this->fastq_reader(file_id).get_next_record(lib_record);
+			}
 			read_params = Tools::ReadParameters();
 			return true;
 		}

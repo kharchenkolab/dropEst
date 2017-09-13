@@ -41,9 +41,6 @@ namespace TagsSearch
 
 		MultiSpacerOutcomesCounter _outcomes;
 
-		FastQReader _barcode_reader;
-		FastQReader _gene_reader;
-
 	private:
 		size_t parse(const std::string &r1_seq, const std::string &r1_quality, Tools::ReadParameters &read_params);
 
@@ -55,7 +52,7 @@ namespace TagsSearch
 		virtual std::string get_additional_stat(long total_reads_read) const override;
 
 	public:
-		FixPosSpacerTagsFinder(const std::string &barcode_fastq_name, const std::string &gene_fastq_name,
+		FixPosSpacerTagsFinder(const std::vector<std::string> &fastq_filenames,
 		                       const boost::property_tree::ptree &barcodes_config,
 		                       const boost::property_tree::ptree &trimming_config, TextWriter &&writer,
 		                       bool save_stats);

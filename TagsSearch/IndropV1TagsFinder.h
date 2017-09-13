@@ -19,8 +19,6 @@ namespace TagsSearch
 		friend struct TestTagsSearch::test3;
 	private:
 		SpacerFinder _spacer_finder;
-		FastQReader _barcode_reader;
-		FastQReader _gene_reader;
 
 	protected:
 		virtual Tools::ReadParameters parse(const std::string &r1_seq, const std::string &r1_quality,
@@ -30,7 +28,7 @@ namespace TagsSearch
 		virtual std::string get_additional_stat(long total_reads_read) const override;
 
 	public:
-		IndropV1TagsFinder(const std::string &barcode_fastq_name, const std::string &gene_fastq_name,
+		IndropV1TagsFinder(const std::vector<std::string> &fastq_filenames,
 		                   const boost::property_tree::ptree &spacer_config, const boost::property_tree::ptree &config,
 		                   TextWriter &&writer, bool save_stats);
 	};

@@ -4,22 +4,33 @@
 #include "Tools/ReadParameters.h"
 
 #include <thread>
+#include <chrono>
+#define chr std::chrono
 
 namespace TagsSearch
 {
-	TagsFinderBase::TagsFinderBase(const boost::property_tree::ptree &processing_config, TextWriter &&writer, bool save_stats)
+	TagsFinderBase::TagsFinderBase(const std::vector<std::string> &fastq_filenames,
+	                               const boost::property_tree::ptree &processing_config, TextWriter &&writer,
+	                               bool save_stats)
 		: _save_stats(save_stats)
 		, _file_uid(TagsFinderBase::get_file_uid(42)) // TODO: return time(nullptr)
 		, _total_reads_read(0)
 		, _parsed_reads(0)
 		, _file_ended(false)
+		, _read_in_progress(false)
+		, _write_in_progress(false)
 		, _records(10000)
 		, _gzipped(10000)
 		, _min_read_len(processing_config.get<unsigned>("min_align_length", 10))
 		, poly_a(processing_config.get<std::string>("poly_a_tail", "AAAAAAAA"))
 		, _trims_counter()
 		, _writer(std::move(writer))
-	{}
+	{
+		for (auto &&filename : fastq_filenames)
+		{
+			this->_fastq_readers.emplace_back(std::make_shared<FastQReader>(filename));
+		}
+	}
 
 	bool TagsFinderBase::get_next_record(FastQReader::FastQRecord& record)
 	{
@@ -123,11 +134,6 @@ namespace TagsSearch
 		return this->_num_reads_per_cb;
 	}
 
-	bool TagsFinderBase::file_ended() const
-	{
-		return this->_file_ended;
-	}
-
 	std::string TagsFinderBase::get_file_uid(long random_seed)
 	{
 		if (random_seed < 0)
@@ -171,11 +177,6 @@ namespace TagsSearch
 
 	void TagsFinderBase::gzip_all()
 	{
-		if (this->_records.empty())
-		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		}
-
 		while (this->_file_ended || !this->_gzipped.full())
 		{
 			std::string records_bunch;
@@ -189,7 +190,9 @@ namespace TagsSearch
 
 	void TagsFinderBase::write_all()
 	{
-		// TODO: add lock
+		if (this->_write_in_progress.exchange(true))
+			return;
+
 		std::string to_write, cur_text;
 		while (this->_gzipped.pop(cur_text))
 		{
@@ -199,35 +202,42 @@ namespace TagsSearch
 		{
 			this->_writer.write(to_write);
 		}
+
+		this->_write_in_progress = false;
 	}
 
-	void TagsFinderBase::run_thread(int thread_number)
+	void TagsFinderBase::run_thread()
 	{
 		while (true)
 		{
 			if (this->_file_ended && this->_records.empty() && this->_gzipped.empty())
 				break;
 
+			// Part 0. Multithreaded.
+			for (auto &reader : this->_fastq_readers)
+			{
+				reader->try_read_records_to_cash();
+			}
+
 			// Part 1. Single thread.
-			if (thread_number == 0 && !this->_file_ended)
+			if (!this->_file_ended && !this->_read_in_progress.exchange(true))
 			{
 				this->read_bunch();
 				if (this->_file_ended)
 				{
 					L_TRACE << this->results_to_string();
-					Tools::trace_time("Reading compleated");
+					Tools::trace_time("Reading completed");
 					L_TRACE << "Writing the rest lines";
 				}
+
+				this->_read_in_progress = false;
 			}
 
-			// Part 2. Multithread.
+			// Part 2. Multithreaded.
 			this->gzip_all();
 
 			// Part 3. Single thread.
-			if (thread_number == 0)
-			{
-				this->write_all();
-			}
+			this->write_all();
 		}
 	}
 
@@ -236,12 +246,17 @@ namespace TagsSearch
 		std::vector<std::thread> tasks;
 		for (int thread_num = 0; thread_num < number_of_threads; ++thread_num)
 		{
-			tasks.push_back(std::thread([this, thread_num]{this->run_thread(thread_num);}));
+			tasks.push_back(std::thread([this]{this->run_thread();}));
 		}
 
 		for (auto &task : tasks)
 		{
 			task.join();
 		}
+	}
+
+	FastQReader &TagsFinderBase::fastq_reader(size_t index)
+	{
+		return *this->_fastq_readers.at(index);
 	}
 }

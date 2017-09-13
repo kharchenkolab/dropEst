@@ -6,37 +6,31 @@
 #include <atomic>
 
 #include "Logs.h"
+#include "Tools/readerwriterqueue.h"
 
 namespace Tools
 {
 	template <typename T>
-	class ConcurrentQueue
+	class ScSpConcurrentQueue
 	{
 	private:
-		typedef std::lock_guard<std::mutex> lock_t;
-
-	private:
-		std::queue<T> _queue;
-		std::mutex _lock;
+		moodycamel::ReaderWriterQueue<T> _queue;
 
 		std::atomic<size_t> _size;
 		const size_t _max_size;
 
 	public:
-		ConcurrentQueue(size_t max_size)
-			: _size(0)
+		ScSpConcurrentQueue(size_t max_size)
+			: _queue()
+			, _size(0)
 			, _max_size(max_size)
 		{}
 
 		bool pop(T& item)
 		{
-			lock_t l(this->_lock);
-
-			if (this->_size == 0)
+			if (!this->_queue.try_dequeue(item))
 				return false;
 
-			item = this->_queue.front();
-			this->_queue.pop();
 			this->_size--;
 
 			return true;
@@ -44,17 +38,13 @@ namespace Tools
 
 		void push(const T& item)
 		{
-			lock_t l(this->_lock);
-
-			this->_queue.push(item);
+			this->_queue.enqueue(item);
 			this->_size++;
 		}
 
 		void push(T&& item)
 		{
-			lock_t l(this->_lock);
-
-			this->_queue.push(std::move(item));
+			this->_queue.enqueue(std::move(item));
 			this->_size++;
 		}
 

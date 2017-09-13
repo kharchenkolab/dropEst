@@ -4,7 +4,8 @@
 #include "FastQReader.h"
 #include "SpacerFinder.h"
 #include "Tools/UtilFunctions.h"
-#include <Tools/ConcurrentQueue.h>
+#include <Tools/ScSpConcurrentQueue.h>
+#include <Tools/BlockingConcurrentQueue.h>
 #include "TextWriter.h"
 
 #include <string>
@@ -27,6 +28,10 @@ namespace TagsSearch
 	class TagsFinderBase
 	{
 		friend struct TestTagsSearch::test1;
+
+	private:
+		typedef std::mutex mutex_t;
+
 	public:
 		typedef std::unordered_map<std::string, int> s_counter_t;
 
@@ -41,10 +46,14 @@ namespace TagsSearch
 		std::atomic<long> _parsed_reads;
 		std::atomic<bool> _file_ended;
 
-		Tools::ConcurrentQueue<std::string> _records;
-		Tools::ConcurrentQueue<std::string> _gzipped;
+		std::atomic<bool> _read_in_progress;
+		std::atomic<bool> _write_in_progress;
+
+		Tools::BlockingConcurrentQueue<std::string> _records;
+		Tools::BlockingConcurrentQueue<std::string> _gzipped;
 
 		TextWriter _writer;
+		std::vector<std::shared_ptr<FastQReader>> _fastq_readers;
 		s_counter_t _num_reads_per_cb;
 
 	protected:
@@ -62,19 +71,20 @@ namespace TagsSearch
 		void read_bunch(size_t number_of_iterations = 10000, size_t records_bunch_size = 5000);
 		void gzip_all();
 		void write_all();
-		void run_thread(int thread_number);
+		void run_thread();
 
 	protected:
-		void trim(const std::string &barcodes_tail, std::string &sequence, std::string &quality);
 		virtual bool parse_fastq_record(FastQReader::FastQRecord &record, Tools::ReadParameters &read_params) = 0;
+		void trim(const std::string &barcodes_tail, std::string &sequence, std::string &quality);
 		virtual std::string get_additional_stat(long total_reads_read) const = 0;
+		FastQReader& fastq_reader(size_t index);
 
 	public:
-		TagsFinderBase(const boost::property_tree::ptree &processing_config, TextWriter &&writer, bool save_stats);
+		TagsFinderBase(const std::vector<std::string> &fastq_filenames,
+		               const boost::property_tree::ptree &processing_config, TextWriter &&writer, bool save_stats);
 
 		void run(int number_of_threads);
 		const s_counter_t& num_reads_per_cb() const;
-		bool file_ended() const;
 		std::string results_to_string() const;
 	};
 }
