@@ -12,7 +12,7 @@ namespace TagsSearch
 	                               const std::shared_ptr<TextWriter> &writer,
 	                               bool save_stats)
 		: _save_stats(save_stats)
-		, _file_uid(TagsFinderBase::get_file_uid(42)) // TODO: return time(nullptr)
+		, _file_uid(TagsFinderBase::get_file_uid())
 		, _total_reads_read(0)
 		, _parsed_reads(0)
 		, _file_ended(false)
@@ -53,7 +53,7 @@ namespace TagsSearch
 
 		++this->_parsed_reads;
 
-		std::string read_prefix = "@" + this->_file_uid + std::to_string(this->_total_reads_read + 1); // TODO: remove "+1"
+		std::string read_prefix = "@" + this->_file_uid + std::to_string(this->_total_reads_read);
 		record.id = params.encoded_id(read_prefix); // TODO: add save_read_names parameter // record.id = read_prefix;
 
 		if (this->_save_stats)

@@ -61,7 +61,7 @@ namespace TagsSearch
 		TrimsCounter _trims_counter;
 
 	private:
-		static std::string get_file_uid(long random_seed);
+		static std::string get_file_uid(long random_seed = -1);
 
 		bool get_next_record(FastQReader::FastQRecord& record);
 
