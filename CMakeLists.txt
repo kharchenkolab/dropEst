@@ -13,7 +13,7 @@ endif (NOT "${CMAKE_BUILD_TYPE}" STREQUAL Debug)
 
 add_definitions(-DPROJ_DATA_PATH=\"${PROJECT_SOURCE_DIR}/data\")
 add_definitions(-DPROJ_BIN_PATH=\"${CMAKE_CURRENT_BINARY_DIR}\")
-add_definitions(-DVERSION=\"0.6.5\")
+add_definitions(-DVERSION=\"0.6.7\")
 
 # set(BOOST_ROOT "/home/vp76/local/")
 find_package(Boost 1.54.0 COMPONENTS unit_test_framework thread system log iostreams filesystem REQUIRED)

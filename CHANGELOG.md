@@ -1,6 +1,6 @@
 # Changelog
 
-## [Upcoming]
+## [0.6.7] - 2017-09-13
 ### Changed
 * Fixed bug, which led to erroneous parsing of incorrect read (e.g. reads without spacer for Indrop V1)
 
