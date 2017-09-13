@@ -32,7 +32,7 @@ namespace TagsSearch
 	public:
 		IndropV1TagsFinder(const std::string &barcode_fastq_name, const std::string &gene_fastq_name,
 		                   const boost::property_tree::ptree &spacer_config, const boost::property_tree::ptree &config,
-		                   bool save_stats);
+		                   TextWriter &&writer, bool save_stats);
 	};
 }
 

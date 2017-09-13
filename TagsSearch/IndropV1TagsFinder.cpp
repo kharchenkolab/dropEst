@@ -6,8 +6,9 @@ namespace TagsSearch
 {
 	IndropV1TagsFinder::IndropV1TagsFinder(const std::string &barcode_fastq_name, const std::string &gene_fastq_name,
 	                                       const boost::property_tree::ptree &spacer_config,
-	                                       const boost::property_tree::ptree &config, bool save_stats)
-		: TagsFinderBase(config, save_stats)
+	                                       const boost::property_tree::ptree &config, TextWriter &&writer,
+	                                       bool save_stats)
+		: TagsFinderBase(config, std::move(writer), save_stats)
 		, _spacer_finder(spacer_config)
 		, _barcode_reader(barcode_fastq_name)
 		, _gene_reader(gene_fastq_name)

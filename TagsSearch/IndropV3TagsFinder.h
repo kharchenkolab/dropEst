@@ -33,7 +33,8 @@ namespace TagsSearch
 	public:
 		IndropV3TagsFinder(const std::string &barcode1_fastq_name, const std::string &barcode2_fastq_name,
 		                   const std::string &gene_fastq_name, const boost::property_tree::ptree &barcodes_config,
-		                   const boost::property_tree::ptree &processing_config, bool save_stats);
+		                   const boost::property_tree::ptree &processing_config, TextWriter &&writer,
+		                   bool save_stats);
 
 		std::string parse_umi(const std::string &cb2_seq) const;
 	};

@@ -3,18 +3,22 @@
 #include "Tools/Logs.h"
 #include "Tools/ReadParameters.h"
 
+#include <thread>
+
 namespace TagsSearch
 {
-	TagsFinderBase::TagsFinderBase(const boost::property_tree::ptree &processing_config, bool save_stats)
+	TagsFinderBase::TagsFinderBase(const boost::property_tree::ptree &processing_config, TextWriter &&writer, bool save_stats)
 		: _save_stats(save_stats)
 		, _file_uid(TagsFinderBase::get_file_uid(42)) // TODO: return time(nullptr)
 		, _total_reads_read(0)
 		, _parsed_reads(0)
 		, _file_ended(false)
-		, _max_reads(processing_config.get<size_t>("reads_per_out_file", std::numeric_limits<size_t>::max()))
+		, _records(10000)
+		, _gzipped(10000)
 		, _min_read_len(processing_config.get<unsigned>("min_align_length", 10))
 		, poly_a(processing_config.get<std::string>("poly_a_tail", "AAAAAAAA"))
 		, _trims_counter()
+		, _writer(std::move(writer))
 	{}
 
 	bool TagsFinderBase::get_next_record(FastQReader::FastQRecord& record)
@@ -133,5 +137,111 @@ namespace TagsSearch
 
 		srand(unsigned(random_seed));
 		return std::to_string(rand()) + char(rand() % 25 + 'A');
+	}
+
+	void TagsFinderBase::read_bunch(size_t number_of_iterations, size_t records_bunch_size)
+	{
+		for (size_t i = 0; i < number_of_iterations; ++i)
+		{
+			if (this->_file_ended)
+				break;
+
+			std::string records_bunch;
+			for (size_t record_id = 0; record_id < records_bunch_size; ++record_id)
+			{
+				FastQReader::FastQRecord record;
+				if (this->_file_ended)
+					break;
+
+				if (!this->get_next_record(record))
+				{
+					record_id--;
+					continue;
+				}
+
+				records_bunch += record.to_string();
+			}
+
+			if (!records_bunch.empty())
+			{
+				this->_records.push(records_bunch);
+			}
+		}
+	}
+
+	void TagsFinderBase::gzip_all()
+	{
+		if (this->_records.empty())
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		}
+
+		while (this->_file_ended || !this->_gzipped.full())
+		{
+			std::string records_bunch;
+
+			if (!this->_records.pop(records_bunch))
+				break;
+
+			this->_gzipped.push(TextWriter::gzip(records_bunch));
+		}
+	}
+
+	void TagsFinderBase::write_all()
+	{
+		// TODO: add lock
+		std::string to_write, cur_text;
+		while (this->_gzipped.pop(cur_text))
+		{
+			to_write += cur_text;
+		}
+		if (!to_write.empty())
+		{
+			this->_writer.write(to_write);
+		}
+	}
+
+	void TagsFinderBase::run_thread(int thread_number)
+	{
+		while (true)
+		{
+			if (this->_file_ended && this->_records.empty() && this->_gzipped.empty())
+				break;
+
+			// Part 1. Single thread.
+			if (thread_number == 0 && !this->_file_ended)
+			{
+				this->read_bunch();
+				if (this->_file_ended)
+				{
+					L_TRACE << this->results_to_string();
+					Tools::trace_time("Reading compleated");
+					L_TRACE << "Writing the rest lines";
+				}
+			}
+
+			// Part 2. Multithread.
+			this->gzip_all();
+
+			// Part 3. Single thread.
+			if (thread_number == 0)
+			{
+				this->write_all();
+			}
+		}
+	}
+
+	void TagsFinderBase::run(int number_of_threads)
+	{
+		std::vector<std::thread> tasks;
+		for (int thread_num = 0; thread_num < number_of_threads; ++thread_num)
+		{
+			tasks.push_back(std::thread([this, thread_num]{this->run_thread(thread_num);}));
+		}
+
+		for (auto &task : tasks)
+		{
+			task.join();
+		}
 	}
 }

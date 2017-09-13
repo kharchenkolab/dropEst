@@ -4,6 +4,8 @@
 #include "FastQReader.h"
 #include "SpacerFinder.h"
 #include "Tools/UtilFunctions.h"
+#include <Tools/ConcurrentQueue.h>
+#include "TextWriter.h"
 
 #include <string>
 
@@ -35,24 +37,32 @@ namespace TagsSearch
 		const bool _save_stats;
 		const std::string _file_uid;
 
+		std::atomic<long> _total_reads_read;
+		std::atomic<long> _parsed_reads;
+		std::atomic<bool> _file_ended;
+
+		Tools::ConcurrentQueue<std::string> _records;
+		Tools::ConcurrentQueue<std::string> _gzipped;
+
+		TextWriter _writer;
 		s_counter_t _num_reads_per_cb;
-		long _total_reads_read;
-		long _parsed_reads;
-		bool _file_ended;
 
 	protected:
-		const size_t _max_reads;
 		const unsigned _min_read_len;
 		const std::string poly_a;
 		const Tools::ReverseComplement rc;
 
 		TrimsCounter _trims_counter;
 
-	public:
-		long long read_time, parse_time, construct_time;
-
 	private:
 		static std::string get_file_uid(long random_seed);
+
+		bool get_next_record(FastQReader::FastQRecord& record);
+
+		void read_bunch(size_t number_of_iterations = 10000, size_t records_bunch_size = 5000);
+		void gzip_all();
+		void write_all();
+		void run_thread(int thread_number);
 
 	protected:
 		void trim(const std::string &barcodes_tail, std::string &sequence, std::string &quality);
@@ -60,9 +70,9 @@ namespace TagsSearch
 		virtual std::string get_additional_stat(long total_reads_read) const = 0;
 
 	public:
-		TagsFinderBase(const boost::property_tree::ptree &processing_config, bool save_stats);
+		TagsFinderBase(const boost::property_tree::ptree &processing_config, TextWriter &&writer, bool save_stats);
 
-		virtual bool get_next_record(FastQReader::FastQRecord& record);
+		void run(int number_of_threads);
 		const s_counter_t& num_reads_per_cb() const;
 		bool file_ended() const;
 		std::string results_to_string() const;

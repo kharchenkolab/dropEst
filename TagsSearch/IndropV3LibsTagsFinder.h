@@ -19,6 +19,6 @@ namespace TagsSearch
 		IndropV3LibsTagsFinder(const std::string &barcode1_fastq_name, const std::string &barcode2_fastq_name,
 		                       const std::string &gene_fastq_name, const std::string &library_fastq_name,
 		                       const std::string &library_tag, const boost::property_tree::ptree &barcodes_config,
-		                       const boost::property_tree::ptree &config, bool save_stats);
+		                       const boost::property_tree::ptree &config, TextWriter &&writer, bool save_stats);
 	};
 }

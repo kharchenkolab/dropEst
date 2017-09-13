@@ -9,8 +9,9 @@ namespace TagsSearch
 {
 	FixPosSpacerTagsFinder::FixPosSpacerTagsFinder(const std::string &barcode_fastq_name, const std::string &gene_fastq_name,
 												   const boost::property_tree::ptree &barcodes_config,
-												   const boost::property_tree::ptree &trimming_config, bool save_stats)
-		: TagsFinderBase(trimming_config, save_stats)
+												   const boost::property_tree::ptree &trimming_config,
+												   TextWriter &&writer, bool save_stats)
+		: TagsFinderBase(trimming_config, std::move(writer), save_stats)
 		, _mask_parts(FixPosSpacerTagsFinder::parse_mask(barcodes_config.get<std::string>("barcode_mask", ""),
 														 barcodes_config.get<std::string>("spacer_edit_dists", "")))
 		, _trim_tail_length(std::min(barcodes_config.get<size_t>("r1_rc_length"),

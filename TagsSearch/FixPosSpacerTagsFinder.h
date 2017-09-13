@@ -57,6 +57,7 @@ namespace TagsSearch
 	public:
 		FixPosSpacerTagsFinder(const std::string &barcode_fastq_name, const std::string &gene_fastq_name,
 		                       const boost::property_tree::ptree &barcodes_config,
-		                       const boost::property_tree::ptree &trimming_config, bool save_stats);
+		                       const boost::property_tree::ptree &trimming_config, TextWriter &&writer,
+		                       bool save_stats);
 	};
 }

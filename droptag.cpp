@@ -83,6 +83,9 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const boost::pr
 {
 	auto const &processing_config = pt.get_child(PROCESSING_CONFIG_PATH, boost::property_tree::ptree());
 
+	size_t max_file_size = processing_config.get<size_t>("reads_per_out_file", std::numeric_limits<size_t>::max());
+	TextWriter writer(params.base_name, "fastq.gz", max_file_size);
+
 	if (params.read_files.size() == 4)
 	{
 		if (params.lib_tag == "")
@@ -91,13 +94,13 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const boost::pr
 		return shared_ptr<TagsFinderBase>(
 				new IndropV3LibsTagsFinder(params.read_files[0], params.read_files[1], params.read_files[2],
 				                           params.read_files[3], params.lib_tag, pt.get_child(BARCODES_CONFIG_PATH),
-				                           processing_config, params.save_stats));
+				                           processing_config, std::move(writer), params.save_stats));
 	}
 
 	if (params.read_files.size() == 3)
 		return shared_ptr<TagsFinderBase>(
 				new IndropV3TagsFinder(params.read_files[0], params.read_files[1], params.read_files[2],
-				                       pt.get_child(BARCODES_CONFIG_PATH), processing_config, params.save_stats));
+				                       pt.get_child(BARCODES_CONFIG_PATH), processing_config, std::move(writer), params.save_stats));
 
 	if (params.read_files.size() != 2)
 		throw std::runtime_error("Unexpected number of read files: " + std::to_string(params.read_files.size()));
@@ -105,11 +108,11 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const boost::pr
 	if (pt.get<std::string>("config.TagsSearch.SpacerSearch.barcode_mask", "") != "")
 		return shared_ptr<TagsFinderBase>(
 				new FixPosSpacerTagsFinder(params.read_files[0], params.read_files[1], pt.get_child(SPACER_CONFIG_PATH),
-				                           processing_config, params.save_stats));
+				                           processing_config, std::move(writer), params.save_stats));
 
 	return shared_ptr<TagsFinderBase>(
 			new IndropV1TagsFinder(params.read_files[0], params.read_files[1], pt.get_child(SPACER_CONFIG_PATH),
-			                       processing_config, params.save_stats));
+			                       processing_config, std::move(writer), params.save_stats));
 }
 
 
@@ -211,138 +214,6 @@ void save_stats(const string &out_filename, shared_ptr<TagsFinderBase> tags_find
 	R->parseEvalQ("saveRDS(d, '" + out_filename + "')");
 }
 
-bool read_bunch(Tools::ConcurrentQueue<std::string> &records, shared_ptr<TagsFinderBase> finder,
-                size_t number_of_iterations = 10000, size_t records_bunch_size = 5000)
-{
-	bool ended = false;
-	for (size_t i = 0; i < number_of_iterations; ++i)
-	{
-		if (ended)
-			break;
-
-		std::string records_bunch;
-		for (size_t record_id = 0; record_id < records_bunch_size; ++record_id)
-		{
-			FastQReader::FastQRecord record;
-			if (finder->file_ended())
-			{
-				ended = true;
-				break;
-			}
-
-			if (!finder->get_next_record(record))
-			{
-				record_id--;
-				continue;
-			}
-
-			records_bunch += record.to_string();
-		}
-
-		if (!records_bunch.empty())
-		{
-			records.push(records_bunch);
-		}
-	}
-
-	return ended;
-}
-
-void write_all(Tools::ConcurrentQueue<std::string> &gzipped, TextWriter &writer)
-{
-	std::string to_write, cur_text;
-	while (gzipped.pop(cur_text))
-	{
-		to_write += cur_text;
-	}
-	if (!to_write.empty())
-	{
-		writer.write(to_write);
-	}
-}
-
-void gzip_all(Tools::ConcurrentQueue<std::string> &input, Tools::ConcurrentQueue<std::string> &output, bool bound_out_size)
-{
-	if (input.empty())
-	{
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	}
-	while (!bound_out_size || !output.full())
-	{
-		std::string records_bunch;
-
-		if (!input.pop(records_bunch))
-			break;
-
-		output.push(TextWriter::gzip(records_bunch));
-	}
-}
-
-void run_thread(int thread_number, shared_ptr<TagsFinderBase> finder, Tools::ConcurrentQueue<std::string> &records,
-                Tools::ConcurrentQueue<std::string> &gzipped, TextWriter &writer, std::atomic<bool> &work_ended)
-{
-	while (true)
-	{
-		if (work_ended && records.empty() && gzipped.empty())
-			break;
-
-		// Part 1. Single thread.
-		if (thread_number == 0 && !work_ended)
-		{
-			if (read_bunch(records, finder))
-			{
-				L_TRACE << finder->results_to_string();
-				Tools::trace_time("Reading compleated");
-				L_TRACE << "Writing the rest lines";
-				work_ended = true;
-			}
-		}
-
-		// Part 2. Multithread.
-		gzip_all(records, gzipped, !work_ended);
-
-		// Part 3. Single thread.
-		if (thread_number == 0)
-		{
-			write_all(gzipped, writer);
-		}
-	}
-}
-
-void run_parallel(const Params &params, const boost::property_tree::ptree &pt)
-{
-	using std::ref;
-	shared_ptr<TagsFinderBase> finder = get_tags_finder(params, pt);
-
-	Tools::trace_time("Run");
-
-	std::atomic<bool> work_ended(false);
-	Tools::ConcurrentQueue<std::string> records(100000), gzipped(100000);
-	size_t max_file_size = pt
-			.get_child(PROCESSING_CONFIG_PATH, boost::property_tree::ptree())
-			.get<size_t>("reads_per_out_file", std::numeric_limits<size_t>::max());
-
-	TextWriter writer(params.base_name, "fastq.gz", max_file_size);
-
-	std::vector<std::thread> tasks;
-	for (int thread_num = 0; thread_num < params.num_of_threads; ++thread_num)
-	{
-		tasks.push_back(std::thread(run_thread, thread_num, ref(finder), ref(records), ref(gzipped), ref(writer),
-		                            ref(work_ended)));
-	}
-
-	for (auto &task : tasks)
-	{
-		task.join();
-	}
-
-	Tools::trace_time("All done");
-	if (params.save_stats)
-	{
-		save_stats(params.base_name + ".rds", finder);
-	}
-}
-
 int main(int argc, char **argv)
 {
 	std::string command_line;
@@ -372,7 +243,17 @@ int main(int argc, char **argv)
 
 	try
 	{
-		run_parallel(params, pt);
+		shared_ptr<TagsFinderBase> finder = get_tags_finder(params, pt);
+
+		Tools::trace_time("Run");
+
+		finder->run(params.num_of_threads);
+
+		Tools::trace_time("All done");
+		if (params.save_stats)
+		{
+			save_stats(params.base_name + ".rds", finder);
+		}
 	}
 	catch (std::runtime_error &err)
 	{
