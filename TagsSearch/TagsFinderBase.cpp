@@ -4,13 +4,12 @@
 #include "Tools/ReadParameters.h"
 
 #include <thread>
-#include <chrono>
-#define chr std::chrono
 
 namespace TagsSearch
 {
 	TagsFinderBase::TagsFinderBase(const std::vector<std::string> &fastq_filenames,
-	                               const boost::property_tree::ptree &processing_config, TextWriter &&writer,
+	                               const boost::property_tree::ptree &processing_config,
+	                               const std::shared_ptr<TextWriter> &writer,
 	                               bool save_stats)
 		: _save_stats(save_stats)
 		, _file_uid(TagsFinderBase::get_file_uid(42)) // TODO: return time(nullptr)
@@ -24,7 +23,7 @@ namespace TagsSearch
 		, _min_read_len(processing_config.get<unsigned>("min_align_length", 10))
 		, poly_a(processing_config.get<std::string>("poly_a_tail", "AAAAAAAA"))
 		, _trims_counter()
-		, _writer(std::move(writer))
+		, _writer(writer)
 	{
 		for (auto &&filename : fastq_filenames)
 		{
@@ -200,7 +199,7 @@ namespace TagsSearch
 		}
 		if (!to_write.empty())
 		{
-			this->_writer.write(to_write);
+			this->_writer->write(to_write);
 		}
 
 		this->_write_in_progress = false;

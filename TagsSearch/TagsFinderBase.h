@@ -29,9 +29,6 @@ namespace TagsSearch
 	{
 		friend struct TestTagsSearch::test1;
 
-	private:
-		typedef std::mutex mutex_t;
-
 	public:
 		typedef std::unordered_map<std::string, int> s_counter_t;
 
@@ -52,7 +49,7 @@ namespace TagsSearch
 		Tools::BlockingConcurrentQueue<std::string> _records;
 		Tools::BlockingConcurrentQueue<std::string> _gzipped;
 
-		TextWriter _writer;
+		const std::shared_ptr<TextWriter> _writer;
 		std::vector<std::shared_ptr<FastQReader>> _fastq_readers;
 		s_counter_t _num_reads_per_cb;
 
@@ -81,7 +78,8 @@ namespace TagsSearch
 
 	public:
 		TagsFinderBase(const std::vector<std::string> &fastq_filenames,
-		               const boost::property_tree::ptree &processing_config, TextWriter &&writer, bool save_stats);
+		               const boost::property_tree::ptree &processing_config, const std::shared_ptr<TextWriter> &writer,
+		               bool save_stats);
 
 		void run(int number_of_threads);
 		const s_counter_t& num_reads_per_cb() const;

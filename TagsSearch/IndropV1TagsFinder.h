@@ -30,7 +30,7 @@ namespace TagsSearch
 	public:
 		IndropV1TagsFinder(const std::vector<std::string> &fastq_filenames,
 		                   const boost::property_tree::ptree &spacer_config, const boost::property_tree::ptree &config,
-		                   TextWriter &&writer, bool save_stats);
+		                   const std::shared_ptr<TextWriter> &writer, bool save_stats);
 	};
 }
 

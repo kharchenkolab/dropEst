@@ -7,9 +7,10 @@ namespace TagsSearch
 	IndropV3LibsTagsFinder::IndropV3LibsTagsFinder(const std::vector<std::string> &fastq_filenames,
 	                                               const std::string &library_tag,
 		                                           const boost::property_tree::ptree &barcodes_config,
-		                                           const boost::property_tree::ptree &config, TextWriter &&writer,
+		                                           const boost::property_tree::ptree &config,
+		                                           const std::shared_ptr<TextWriter> &writer,
 		                                           bool save_stats)
-		: IndropV3TagsFinder(fastq_filenames, barcodes_config, config, std::move(writer), save_stats)
+		: IndropV3TagsFinder(fastq_filenames, barcodes_config, config, writer, save_stats)
 		, library_tag(library_tag)
 		, max_lib_tag_ed(barcodes_config.get<unsigned>("max_libtag_ed", 2))
 	{}

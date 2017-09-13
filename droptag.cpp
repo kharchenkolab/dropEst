@@ -78,7 +78,7 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const boost::pr
 	auto const &processing_config = pt.get_child(PROCESSING_CONFIG_PATH, boost::property_tree::ptree());
 
 	size_t max_file_size = processing_config.get<size_t>("reads_per_out_file", std::numeric_limits<size_t>::max());
-	TextWriter writer(params.base_name, "fastq.gz", max_file_size);
+	auto writer = std::make_shared<TextWriter>(params.base_name, "fastq.gz", max_file_size);
 
 	if (params.read_files.size() == 4)
 	{
@@ -87,13 +87,13 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const boost::pr
 
 		return shared_ptr<TagsFinderBase>(
 				new IndropV3LibsTagsFinder(params.read_files, params.lib_tag, pt.get_child(BARCODES_CONFIG_PATH),
-				                           processing_config, std::move(writer), params.save_stats));
+				                           processing_config, writer, params.save_stats));
 	}
 
 	if (params.read_files.size() == 3)
 		return shared_ptr<TagsFinderBase>(
 				new IndropV3TagsFinder(params.read_files, pt.get_child(BARCODES_CONFIG_PATH), processing_config,
-				                       std::move(writer), params.save_stats));
+				                       writer, params.save_stats));
 
 	if (params.read_files.size() != 2)
 		throw std::runtime_error("Unexpected number of read files: " + std::to_string(params.read_files.size()));
@@ -101,11 +101,11 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const boost::pr
 	if (pt.get<std::string>("config.TagsSearch.SpacerSearch.barcode_mask", "") != "")
 		return shared_ptr<TagsFinderBase>(
 				new FixPosSpacerTagsFinder(params.read_files, pt.get_child(SPACER_CONFIG_PATH), processing_config,
-				                           std::move(writer), params.save_stats));
+				                           writer, params.save_stats));
 
 	return shared_ptr<TagsFinderBase>(
 			new IndropV1TagsFinder(params.read_files, pt.get_child(SPACER_CONFIG_PATH), processing_config,
-			                       std::move(writer), params.save_stats));
+			                       writer, params.save_stats));
 }
 
 
