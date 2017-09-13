@@ -6,7 +6,6 @@
 #include "TagsSearch/FixPosSpacerTagsFinder.h"
 #include "TagsSearch/SpacerFinder.h"
 #include "TagsSearch/IndropV1TagsFinder.h"
-#include "TagsSearch/TagsFinderBase.h"
 #include "Tools/Logs.h"
 #include "Tools/ReadParameters.h"
 
@@ -54,8 +53,10 @@ struct Fixture
 		read_xml(config, pt2);
 
 		this->spacer_finder = SpacerFinder(pt.get_child("config.SpacerSearch"));
-		this->tags_finder = std::make_shared<IndropV1TagsFinder>("", "", pt.get_child("config.SpacerSearch"), pt.get_child("config.TailTrimming"), false);
-		this->mask_tags_finder = std::make_shared<FixPosSpacerTagsFinder>("", "", pt2.get_child("SpacerSearch"), pt.get_child("config.TailTrimming"), false);
+		this->tags_finder = std::make_shared<IndropV1TagsFinder>(std::vector<std::string>(), pt.get_child("config.SpacerSearch"),
+		                                                         pt.get_child("config.TailTrimming"), nullptr, false);
+		this->mask_tags_finder = std::make_shared<FixPosSpacerTagsFinder>(std::vector<std::string>(), pt2.get_child("SpacerSearch"),
+		                                                                  pt.get_child("config.TailTrimming"), nullptr, false);
 	}
 
 	SpacerFinder spacer_finder;
