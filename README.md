@@ -13,7 +13,7 @@ Pipeline for estimating molecular count matrices for droplet-based single-cell R
 		- [Troubleshooting](#troubleshooting)
 	- [dropTag](#droptag)
 		- [Protocols](#protocols)
-			- [inDrop v1 & v2](#indrop-v1-v2)
+			- [inDrop v1 & v2](#indrop-v1--v2)
 			- [inDrop v3](#indrop-v3)
 			- [10x](#10x)
 		- [Command line arguments for dropTag](#command-line-arguments-for-droptag)
@@ -134,11 +134,12 @@ While dropTag provides way to demultiplex 10x data, [Cell Ranger](https://suppor
 
 ### Command line arguments for dropTag
 *  -c, --config filename: xml file with droptag parameters  
-*  -l, --log-prefix prefix: logs prefix  
-*  -n, --name name: alternative output base name  
+*  -l, --log-prefix prefix: logs prefix
+*  -n, --name name: alternative output base name
+*  -p, --parallel number: number of threads
 *  -S, --save-stats : save stats to rds file. This data is used on the dropReport phase.
-*  -t, --lib-tag library tag : (for IndropV3 with library tag only)  
-*  -q, --quiet : disable logs  
+*  -t, --lib-tag library tag : (for IndropV3 with library tag only)
+*  -q, --quiet : disable logs
 
 Please, use `./droptag -h` for additional help.
 
