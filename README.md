@@ -136,7 +136,7 @@ While dropTag provides way to demultiplex 10x data, [Cell Ranger](https://suppor
 *  -c, --config filename: xml file with droptag parameters  
 *  -l, --log-prefix prefix: logs prefix
 *  -n, --name name: alternative output base name
-*  -p, --parallel number: number of threads
+*  -p, --parallel number: number of threads (usage of more than 6 threads should lead to significant speed up)
 *  -S, --save-stats : save stats to rds file. This data is used on the dropReport phase.
 *  -t, --lib-tag library tag : (for IndropV3 with library tag only)
 *  -q, --quiet : disable logs
