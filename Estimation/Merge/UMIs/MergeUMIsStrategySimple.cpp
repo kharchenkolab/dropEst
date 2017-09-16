@@ -82,11 +82,11 @@ CellsDataContainer::s_s_hash_t MergeUMIsStrategySimple::find_targets(const Strin
 				continue;
 
 			unsigned ed = Tools::hamming_distance(target_umi_seq, bad_umi);
-			if (ed < min_ed || (ed == min_ed && target_umi.second.read_count > best_target_size))
+			if (ed < min_ed || (ed == min_ed && target_umi.second.read_count() > best_target_size))
 			{
 				min_ed = ed;
 				best_target = target_umi_seq;
-				best_target_size = target_umi.second.read_count;
+				best_target_size = target_umi.second.read_count();
 			}
 		}
 

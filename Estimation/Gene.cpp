@@ -10,9 +10,7 @@ namespace Estimation
 	bool Gene::add_umi(const std::string &umi, const UMI::Mark &umi_mark)
 	{
 		auto insert_it = this->_umis.emplace(this->_umi_indexer->add(umi), 0);
-		auto &new_umi = insert_it.first->second;
-		new_umi.read_count++;
-		new_umi.mark.add(umi_mark);
+		insert_it.first->second.add_read(umi_mark);
 
 		return insert_it.second;
 	}
@@ -48,12 +46,12 @@ namespace Estimation
 		size_t requested_umis_num = 0;
 		for (auto const &umi : this->_umis)
 		{
-			if (!umi.second.mark.match(query))
+			if (!umi.second.mark().match(query))
 				continue;
 
 			if (return_reads)
 			{
-				requested_umis_num += umi.second.read_count;
+				requested_umis_num += umi.second.read_count();
 			}
 			else
 			{
@@ -72,7 +70,7 @@ namespace Estimation
 		size_t reads_num = 0;
 		for (auto const &umi : this->_umis)
 		{
-			reads_num += umi.second.read_count;
+			reads_num += umi.second.read_count();
 		}
 
 		return reads_num;
@@ -83,10 +81,10 @@ namespace Estimation
 		s_ul_hash_t reads_per_umi;
 		for (auto const &umi : this->_umis)
 		{
-			if (!umi.second.mark.match(query))
+			if (!umi.second.mark().match(query))
 				continue;
 
-			reads_per_umi.emplace(this->_umi_indexer->get_value(umi.first), umi.second.read_count);
+			reads_per_umi.emplace(this->_umi_indexer->get_value(umi.first), umi.second.read_count());
 		}
 
 		return reads_per_umi;

@@ -42,12 +42,17 @@ namespace Estimation
 			static std::vector<Mark> get_by_code(const std::string &code);
 		};
 
-	public:
-		size_t read_count;
-		Mark mark;
+	private:
+		size_t _read_count;
+		Mark _mark;
 
 	public:
 		UMI(size_t read_count = 0);
+
+		size_t read_count() const;
+		const Mark& mark() const;
+
 		void merge(const UMI& umi);
+		void add_read(Mark mark);
 	};
 }

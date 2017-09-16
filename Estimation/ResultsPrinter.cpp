@@ -223,7 +223,7 @@ namespace Estimation
 			{
 				for (auto const &umi_rec : gene_rec.second.umis())
 				{
-					reads_per_umi += umi_rec.second.read_count;
+					reads_per_umi += umi_rec.second.read_count();
 				}
 
 				umis_num += gene_rec.second.size();
