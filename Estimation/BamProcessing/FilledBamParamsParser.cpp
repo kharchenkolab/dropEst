@@ -22,7 +22,7 @@ namespace BamProcessing
 
 		try
 		{
-			read_params = Tools::ReadParameters(alignment.Name, barcode, umi);
+			read_params = Tools::ReadParameters(barcode, umi);
 		}
 		catch (std::runtime_error &error)
 		{

@@ -63,8 +63,7 @@ namespace Estimation
 			if (!this->print_bam)
 				return;
 
-			this->save_alignment(alignment, read_params.read_name_safe(), gene,
-								 read_params.cell_barcode(), read_params.umi());
+			this->save_alignment(alignment, read_params, gene);
 		}
 
 		const CellsDataContainer &BamProcessor::container() const

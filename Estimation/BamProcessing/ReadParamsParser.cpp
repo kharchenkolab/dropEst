@@ -22,7 +22,7 @@ namespace BamProcessing
 	{
 		try
 		{
-			read_params = Tools::ReadParameters(alignment.Name);
+			read_params = Tools::ReadParameters::parse_encoded_id(alignment.Name);
 		}
 		catch (std::runtime_error &error)
 		{

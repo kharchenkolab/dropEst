@@ -1,6 +1,8 @@
-#include <Tools/Logs.h>
 #include "BamProcessorAbstract.h"
+
 #include "BamController.h"
+#include <Tools/Logs.h>
+#include <Tools/ReadParameters.h>
 
 namespace Estimation
 {
@@ -48,17 +50,17 @@ namespace BamProcessing
 		return this->_cant_parse_reads_num;
 	}
 
-	void BamProcessorAbstract::save_alignment(BamTools::BamAlignment alignment, const std::string &name,
-											  const std::string &gene, const std::string &barcode, const std::string &umi)
+	void BamProcessorAbstract::save_alignment(BamTools::BamAlignment alignment, const Tools::ReadParameters &params,
+	                                          const std::string &gene)
 	{
-		alignment.Name = name;
 		if (gene != "")
 		{
 			alignment.AddTag(this->_tags.gene, "Z", gene);
 		}
 
-		alignment.AddTag(this->_tags.cb, "Z", barcode);
-		alignment.AddTag(this->_tags.umi, "Z", umi);
+		// TODO: add quality tags
+		alignment.AddTag(this->_tags.cb, "Z", params.cell_barcode());
+		alignment.AddTag(this->_tags.umi, "Z", params.umi());
 		this->_writer.SaveAlignment(alignment);
 	}
 

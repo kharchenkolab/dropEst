@@ -53,43 +53,35 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 
 	BOOST_FIXTURE_TEST_CASE(testReadParams, Fixture)
 	{
-		ReadParameters rp("@111!ATTTGC#ATATC");
-		BOOST_CHECK_EQUAL(rp.read_name(), "@111");
-		BOOST_CHECK_EQUAL(rp.read_name_safe(), "@111");
+		ReadParameters rp(ReadParameters::parse_encoded_id("@111!ATTTGC#ATATC"));
 		BOOST_CHECK_EQUAL(rp.cell_barcode(), "ATTTGC");
 		BOOST_CHECK_EQUAL(rp.umi(), "ATATC");
 
-		rp = ReadParameters("111!ATTTG#ATAT");
-		BOOST_CHECK_EQUAL(rp.read_name(), "111");
-		BOOST_CHECK_EQUAL(rp.read_name_safe(), "111");
+		rp = ReadParameters::parse_encoded_id("111!ATTTG#ATAT");
 		BOOST_CHECK_EQUAL(rp.cell_barcode(), "ATTTG");
 		BOOST_CHECK_EQUAL(rp.umi(), "ATAT");
 
-		rp = ReadParameters("!ATTTGC#ATATC");
-		BOOST_CHECK_EQUAL(rp.read_name(), "");
-		BOOST_CHECK_EQUAL(rp.read_name_safe(), "!ATTTGC#ATATC");
+		rp = ReadParameters::parse_encoded_id("!ATTTGC#ATATC");
 		BOOST_CHECK_EQUAL(rp.cell_barcode(), "ATTTGC");
 		BOOST_CHECK_EQUAL(rp.umi(), "ATATC");
 
-		rp = ReadParameters("trash!ATTTG#ATAT");
-		BOOST_CHECK_EQUAL(rp.read_name(), "trash");
-		BOOST_CHECK_EQUAL(rp.read_name_safe(), "trash");
+		rp = ReadParameters::parse_encoded_id("trash!ATTTG#ATAT");
 		BOOST_CHECK_EQUAL(rp.cell_barcode(), "ATTTG");
 		BOOST_CHECK_EQUAL(rp.umi(), "ATAT");
 
-		ReadParameters rp2 = ReadParameters(rp.to_monolithic_string());
-		BOOST_CHECK_EQUAL(rp2.read_name(), rp.read_name());
-		BOOST_CHECK_EQUAL(rp2.read_name_safe(), rp2.read_name());
+		rp = ReadParameters("AAATTTTATA", "TTGG", "QUALCB", "CCC");
+		auto rp_info = ReadParameters::parse_from_string(rp.to_string("ID"));
+		BOOST_CHECK_EQUAL(rp_info.first, "ID");
+		BOOST_CHECK_EQUAL(rp_info.second.cell_barcode(), rp.cell_barcode());
+		BOOST_CHECK_EQUAL(rp_info.second.umi(), rp.umi());
+		BOOST_CHECK_EQUAL(rp_info.second.cell_barcode_quality(), rp.cell_barcode_quality());
+		BOOST_CHECK_EQUAL(rp_info.second.umi_quality(), rp.umi_quality());
+
+		auto rp2 = ReadParameters::parse_encoded_id(rp.encoded_id("1111"));
 		BOOST_CHECK_EQUAL(rp2.cell_barcode(), rp.cell_barcode());
 		BOOST_CHECK_EQUAL(rp2.umi(), rp.umi());
 
-		rp2 = ReadParameters(rp.to_monolithic_string("1111"));
-		BOOST_CHECK_EQUAL(rp2.read_name(), "1111");
-		BOOST_CHECK_EQUAL(rp2.read_name_safe(), rp2.read_name());
-		BOOST_CHECK_EQUAL(rp2.cell_barcode(), rp.cell_barcode());
-		BOOST_CHECK_EQUAL(rp2.umi(), rp.umi());
-
-		BOOST_CHECK_THROW(ReadParameters("ATTTG#ATAT"), std::runtime_error);
+		BOOST_CHECK_THROW(ReadParameters::parse_encoded_id("ATTTG#ATAT"), std::runtime_error);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testGeneMerge, Fixture)
