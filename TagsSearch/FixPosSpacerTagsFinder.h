@@ -55,7 +55,7 @@ namespace TagsSearch
 		FixPosSpacerTagsFinder(const std::vector<std::string> &fastq_filenames,
 		                       const boost::property_tree::ptree &barcodes_config,
 		                       const boost::property_tree::ptree &trimming_config,
-		                       const std::shared_ptr<TextWriter> &writer,
-		                       bool save_stats);
+		                       const std::shared_ptr<ConcurrentGzWriter> &writer,
+		                       bool save_stats, bool save_read_params);
 	};
 }

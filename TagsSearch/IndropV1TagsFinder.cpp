@@ -7,9 +7,9 @@ namespace TagsSearch
 	IndropV1TagsFinder::IndropV1TagsFinder(const std::vector<std::string> &fastq_filenames,
 	                                       const boost::property_tree::ptree &spacer_config,
 	                                       const boost::property_tree::ptree &config,
-	                                       const std::shared_ptr<TextWriter> &writer,
-	                                       bool save_stats)
-		: TagsFinderBase(fastq_filenames, config, writer, save_stats)
+	                                       const std::shared_ptr<ConcurrentGzWriter> &writer,
+	                                       bool save_stats, bool save_read_params)
+		: TagsFinderBase(fastq_filenames, config, writer, save_stats, save_read_params)
 		, _spacer_finder(spacer_config)
 	{}
 
