@@ -9,6 +9,7 @@
 
 namespace Estimation
 {
+	class ReadInfo;
 	class Gene
 	{
 	private:
@@ -33,7 +34,7 @@ namespace Estimation
 		size_t number_of_umis(bool return_reads) const;
 		s_ul_hash_t requested_reads_per_umi(const UMI::Mark::query_t &query) const;
 
-		bool add_umi(const std::string &umi, const UMI::Mark &umi_mark);
+		bool add_umi(const ReadInfo &read_info);
 		void merge(const Gene& source);
 		void merge(const std::string& source_umi, const std::string& target_umi);
 	};

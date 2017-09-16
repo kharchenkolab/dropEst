@@ -8,8 +8,6 @@ namespace Merge
 {
 	const double SimpleMergeStrategy::EPS = 0.00001;
 
-	using Tools::IndexedValue;
-
 	SimpleMergeStrategy::SimpleMergeStrategy(size_t min_genes_before_merge, size_t min_genes_after_merge,
 	                                         unsigned max_merge_edit_distance, double min_merge_fraction)
 			: MergeStrategyBase(min_genes_before_merge, min_genes_after_merge, max_merge_edit_distance, min_merge_fraction)

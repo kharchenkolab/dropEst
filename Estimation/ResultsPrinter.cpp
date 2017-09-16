@@ -39,10 +39,10 @@ namespace Estimation
 				_["cm"] = this->get_count_matrix(container, true),
 				_["cm_raw"] = this->get_count_matrix(container, false),
 				_["reads_per_chr_per_cells"] = reads_per_chr_per_cell,
-				_["reads_per_umi_per_cell"] = reads_per_umi_per_cell,
+				_["reads_per_umi_per_cell"] = reads_per_umi_per_cell, // TODO: use better data structure. For instance, list of pairs (cb, gene), which contains structure (umi_id, #reads, quality).
 				_["mean_reads_per_umi"] = mean_reads_per_umi,
 				_["saturation_info"] = saturation_info,
-				_["merge_targets"] = merge_targets, // TODO: optimize it
+				_["merge_targets"] = merge_targets,
 				_["aligned_reads_per_cell"] = aligned_reads_per_cb,
 				_["aligned_umis_per_cell"] = aligned_umis_per_cb,
 				_["requested_umis_per_cb"] = requested_umis_per_cb,
@@ -241,23 +241,45 @@ namespace Estimation
 	List ResultsPrinter::get_reads_per_umi_per_cell(const CellsDataContainer &container) const
 	{
 		L_TRACE << "Reads per UMI per gene;";
-		using std::unordered_map;
-		using std::string;
-		unordered_map<string, unordered_map<string, unordered_map<string, unsigned>>> reads_per_umi_per_cell;
-		for (auto cell_id : container.filtered_cells())
+
+		List reads_per_umi_per_cell(container.filtered_cells().size());
+		std::vector<std::string> cell_names(container.filtered_cells().size());
+		int cell_id = 0;
+		for (auto container_cell_id : container.filtered_cells())
 		{
-			auto &cell_reads_p_umigs = reads_per_umi_per_cell[container.cell(cell_id).barcode()];
-			for (auto const &gene_rpus : container.cell(cell_id).requested_reads_per_umi_per_gene())
+			auto const &current_cell = container.cell(container_cell_id);
+			auto requester_reads_per_umi = current_cell.requested_reads_per_umi_per_gene();
+
+			List cell_reads_p_umigs(requester_reads_per_umi.size());
+			std::vector<std::string> gene_names(requester_reads_per_umi.size());
+
+			int gene_id = 0;
+			for (auto const &gene_rpus : requester_reads_per_umi)
 			{
-				auto &out_gene_umis = cell_reads_p_umigs[gene_rpus.first];
+				List out_gene_umis(gene_rpus.second.size());
+				std::vector<std::string> umi_names(gene_rpus.second.size());
+
+				int umi_id = 0;
 				for (auto const &umi_reads : gene_rpus.second)
 				{
-					out_gene_umis[umi_reads.first] = (unsigned) umi_reads.second;
+					auto mean_quality = current_cell.at(gene_rpus.first).at(umi_reads.first).mean_quality();
+					out_gene_umis[umi_id] = List::create(_["quality"] = mean_quality,
+					                                     _["reads_num"] = (unsigned) umi_reads.second);
+					umi_names[umi_id++] = umi_reads.first;
 				}
+
+				out_gene_umis.attr("names") = wrap(umi_names);
+				cell_reads_p_umigs[gene_id] = out_gene_umis;
+				gene_names[gene_id++] = gene_rpus.first;
 			}
+
+			cell_reads_p_umigs.attr("names") = wrap(gene_names);
+			reads_per_umi_per_cell[cell_id] = cell_reads_p_umigs;
+			cell_names[cell_id++] = current_cell.barcode();
 		}
 
-		return wrap(reads_per_umi_per_cell);
+		reads_per_umi_per_cell.attr("names") = wrap(cell_names);
+		return reads_per_umi_per_cell;
 	}
 
 	List ResultsPrinter::get_merge_targets(const CellsDataContainer &container) const

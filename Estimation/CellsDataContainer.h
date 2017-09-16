@@ -2,10 +2,10 @@
 
 #include "Cell.h"
 #include "Stats.h"
-#include "Tools/IndexedValue.h"
 #include <Tools/GtfRecord.h>
 #include "UMI.h"
 #include "StringIndexer.h"
+#include "ReadInfo.h"
 
 #include <string>
 
@@ -41,7 +41,6 @@ namespace Estimation
 		typedef std::unordered_map<std::string, size_t> s_ul_hash_t;
 		typedef std::unordered_map<std::string, int> s_i_hash_t; // not long because of RCpp
 
-		typedef std::vector<Tools::IndexedValue> i_counter_t;
 		typedef std::vector<size_t> ids_t;
 		typedef std::vector<int> counts_t;
 		typedef std::vector<std::string> names_t;
@@ -81,8 +80,7 @@ namespace Estimation
 		                   std::shared_ptr<Merge::UMIs::MergeUMIsStrategySimple> umi_merge_strategy,
 		                   const std::vector<UMI::Mark> &gene_match_levels, int max_cells_num = -1);
 
-		void add_record(const std::string &cell_barcode, const std::string &umi, const std::string &gene,
-		                const std::string &chr_name = "", const UMI::Mark &umi_mark = UMI::Mark::HAS_EXONS);
+		void add_record(const ReadInfo &read_info);
 		void exclude_cell(size_t index);
 
 		void merge_and_filter();

@@ -54,7 +54,8 @@ namespace Tools
 
 		parsed.push_back(params_string.substr(start_pos));
 
-		return std::make_pair(parsed[0], ReadParameters(parsed[1], parsed[2], parsed[3], parsed[4]));
+		return std::make_pair((parsed[0][0] == '@' ? parsed[0].substr(1) : parsed[0]),
+		                      ReadParameters(parsed[1], parsed[2], parsed[3], parsed[4]));
 	}
 
 	const std::string& ReadParameters::cell_barcode() const

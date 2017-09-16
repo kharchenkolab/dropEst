@@ -19,6 +19,12 @@
 
 using namespace Estimation;
 
+static ReadInfo read_info(const std::string &cell_barcode, const std::string &umi, const std::string &gene,
+                          const std::string &chr_name = "", const UMI::Mark& mark = UMI::Mark::HAS_EXONS)
+{
+	return ReadInfo(Tools::ReadParameters(cell_barcode, umi, "", umi), gene, chr_name, mark);
+}
+
 struct Fixture
 {
 	Fixture()
@@ -45,34 +51,34 @@ struct Fixture
 		                                                            Mark::get_by_code(Mark::DEFAULT_CODE), -1);
 
 		Tools::init_test_logs(boost::log::trivial::info);
-		this->container_full->add_record("AAATTAGGTCCA", "AAACCT", "Gene1");
-		this->container_full->add_record("AAATTAGGTCCA", "CCCCCT", "Gene2");
-		this->container_full->add_record("AAATTAGGTCCA", "ACCCCT", "Gene3");
+		this->container_full->add_record(read_info("AAATTAGGTCCA", "AAACCT", "Gene1"));
+		this->container_full->add_record(read_info("AAATTAGGTCCA", "CCCCCT", "Gene2"));
+		this->container_full->add_record(read_info("AAATTAGGTCCA", "ACCCCT", "Gene3"));
 
-		this->container_full->add_record("AAATTAGGTCCC", "CAACCT", "Gene1");
+		this->container_full->add_record(read_info("AAATTAGGTCCC", "CAACCT", "Gene1"));
 
-		this->container_full->add_record("AAATTAGGTCCG", "CAACCT", "Gene1");
+		this->container_full->add_record(read_info("AAATTAGGTCCG", "CAACCT", "Gene1"));
 
-		this->container_full->add_record("AAATTAGGTCGG", "AAACCT", "Gene1");
-		this->container_full->add_record("AAATTAGGTCGG", "CCCCCT", "Gene2");
+		this->container_full->add_record(read_info("AAATTAGGTCGG", "AAACCT", "Gene1"));
+		this->container_full->add_record(read_info("AAATTAGGTCGG", "CCCCCT", "Gene2"));
 
-		this->container_full->add_record("CCCTTAGGTCCA", "CCATTC", "Gene3");
-		this->container_full->add_record("CCCTTAGGTCCA", "CCCCCT", "Gene2");
-		this->container_full->add_record("CCCTTAGGTCCA", "ACCCCT", "Gene3");
+		this->container_full->add_record(read_info("CCCTTAGGTCCA", "CCATTC", "Gene3"));
+		this->container_full->add_record(read_info("CCCTTAGGTCCA", "CCCCCT", "Gene2"));
+		this->container_full->add_record(read_info("CCCTTAGGTCCA", "ACCCCT", "Gene3"));
 
-		this->container_full->add_record("CAATTAGGTCCG", "CAACCT", "Gene1");
-		this->container_full->add_record("CAATTAGGTCCG", "AAACCT", "Gene1");
-		this->container_full->add_record("CAATTAGGTCCG", "CCCCCT", "Gene2");
-		this->container_full->add_record("CAATTAGGTCCG", "TTTTTT", "Gene2");
-		this->container_full->add_record("CAATTAGGTCCG", "TTCTTT", "Gene2");
+		this->container_full->add_record(read_info("CAATTAGGTCCG", "CAACCT", "Gene1"));
+		this->container_full->add_record(read_info("CAATTAGGTCCG", "AAACCT", "Gene1"));
+		this->container_full->add_record(read_info("CAATTAGGTCCG", "CCCCCT", "Gene2"));
+		this->container_full->add_record(read_info("CAATTAGGTCCG", "TTTTTT", "Gene2"));
+		this->container_full->add_record(read_info("CAATTAGGTCCG", "TTCTTT", "Gene2"));
 
-		this->container_full->add_record("CCCCCCCCCCCC", "CAACCT", "Gene1");
-		this->container_full->add_record("CCCCCCCCCCCC", "AAACCT", "Gene1");
-		this->container_full->add_record("CCCCCCCCCCCC", "CCCCCT", "Gene2");
-		this->container_full->add_record("CCCCCCCCCCCC", "TTTTTT", "Gene2");
-		this->container_full->add_record("CCCCCCCCCCCC", "TTCTTT", "Gene2");
+		this->container_full->add_record(read_info("CCCCCCCCCCCC", "CAACCT", "Gene1"));
+		this->container_full->add_record(read_info("CCCCCCCCCCCC", "AAACCT", "Gene1"));
+		this->container_full->add_record(read_info("CCCCCCCCCCCC", "CCCCCT", "Gene2"));
+		this->container_full->add_record(read_info("CCCCCCCCCCCC", "TTTTTT", "Gene2"));
+		this->container_full->add_record(read_info("CCCCCCCCCCCC", "TTCTTT", "Gene2"));
 
-		this->container_full->add_record("TAATTAGGTCCA", "AAAAAA", "Gene4");
+		this->container_full->add_record(read_info("TAATTAGGTCCA", "AAAAAA", "Gene4"));
 		this->container_full->set_initialized();
 	}
 

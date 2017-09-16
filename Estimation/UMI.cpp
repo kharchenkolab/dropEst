@@ -1,12 +1,15 @@
 #include "UMI.h"
 
+#include "ReadInfo.h"
+
 #include <stdexcept>
 
 namespace Estimation
 {
-	UMI::UMI(size_t read_count)
+	UMI::UMI(size_t quality_length, size_t read_count)
 		: _read_count(read_count)
 		, _mark()
+		, _sum_quality(quality_length, 0)
 	{}
 
 	void UMI::merge(const UMI &umi)
@@ -15,10 +18,19 @@ namespace Estimation
 		this->_mark.add(umi._mark);
 	}
 
-	void UMI::add_read(UMI::Mark mark)
+	void UMI::add_read(const ReadInfo &read_info)
 	{
 		this->_read_count++;
-		this->_mark.add(mark);
+		this->_mark.add(read_info.umi_mark);
+
+		if (read_info.params.umi_quality().length() != this->_sum_quality.size())
+			throw std::runtime_error("Wrong quality length: " + std::to_string(read_info.params.umi_quality().length()) +
+					                         ", expected: " + std::to_string(this->_sum_quality.size()));
+
+		for (size_t i = 0; i < this->_sum_quality.size(); ++i)
+		{
+			this->_sum_quality[i] += read_info.params.umi_quality()[i];
+		}
 	}
 
 	size_t UMI::read_count() const
@@ -29,6 +41,17 @@ namespace Estimation
 	const UMI::Mark &UMI::mark() const
 	{
 		return this->_mark;
+	}
+
+	std::vector<double> UMI::mean_quality() const
+	{
+		std::vector<double> res(this->_sum_quality.size());
+		for (int i = 0; i < res.size(); ++i)
+		{
+			res[i] = (this->_sum_quality[i] - ReadInfo::quality_offset) / this->_read_count;
+		}
+
+		return res;
 	}
 
 	UMI::Mark::Mark(MarkType type)

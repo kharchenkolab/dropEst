@@ -1,5 +1,14 @@
 # Changelog
 
+## [Upcoming]
+### Changed
+* Now, information about reads is kept in separate file instead (*.reads.gz), which should be passed to dropEst.
+* New format of *reads_per_umi_per_cell* in cell.counts.rds.
+
+### Added
+* UMI correction algorithm now uses UMI quality (only Illumina 1.3 or later formats are supported)
+
+
 ## [0.6.7] - 2017-09-13
 ### Changed
 * Fixed bug, which led to erroneous parsing of incorrect read (e.g. reads without spacer for Indrop V1)

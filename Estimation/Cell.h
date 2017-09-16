@@ -12,6 +12,7 @@
 
 namespace Estimation
 {
+	class ReadInfo;
 	class Cell
 	{
 	public:
@@ -55,7 +56,7 @@ namespace Estimation
 		size_t size() const;
 		const Gene& at(const std::string &gene) const;
 
-		void add_umi(const std::string &gene, const std::string &umi, const UMI::Mark &umi_mark);
+		void add_umi(const ReadInfo &read_info);
 		void set_merged();
 		void set_excluded();
 		void merge(const Cell &source);

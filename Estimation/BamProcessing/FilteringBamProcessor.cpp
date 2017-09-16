@@ -43,9 +43,7 @@ namespace Estimation
 					<< " ("<< (100.0 * this->written_reads / this->total_reads_num()) <<"%) written";
 		}
 
-		void FilteringBamProcessor::save_read(const std::string &cell_barcode, const std::string &chr_name,
-											  const std::string &umi, const std::string &gene,
-											  const UMI::Mark &umi_mark)
+		void FilteringBamProcessor::save_read(const ReadInfo &read_info)
 		{}
 
 		void FilteringBamProcessor::write_alignment(BamTools::BamAlignment alignment, const std::string &gene,

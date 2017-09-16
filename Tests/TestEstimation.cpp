@@ -17,10 +17,17 @@
 #include <Estimation/Merge/UMIs/MergeUMIsStrategySimple.h>
 
 #include <Tools/Logs.h>
+#include <Tools/IndexedValue.h>
 #include <Tools/UtilFunctions.h>
 
 using namespace Estimation;
 using Mark = UMI::Mark;
+
+static ReadInfo read_info(const std::string &cell_barcode, const std::string &umi, const std::string &gene,
+                          const std::string &chr_name = "", const Mark& mark = Mark::HAS_EXONS)
+{
+	return ReadInfo(Tools::ReadParameters(cell_barcode, umi, "", umi), gene, chr_name, mark);
+}
 
 struct Fixture
 {
@@ -38,29 +45,29 @@ struct Fixture
 		this->container_full = std::make_shared<CellsDataContainer>(this->real_cb_strat, this->umi_merge_strat, this->any_mark);
 
 		Tools::init_test_logs(boost::log::trivial::error);
-		this->container_full->add_record("AAATTAGGTCCA", "AAACCT", "Gene1"); //0, real
-		this->container_full->add_record("AAATTAGGTCCA", "CCCCCT", "Gene2");
-		this->container_full->add_record("AAATTAGGTCCA", "ACCCCT", "Gene3");
-		this->container_full->add_record("AAATTAGGTCCA", "ACCCCT", "Gene4");
+		this->container_full->add_record(read_info("AAATTAGGTCCA", "AAACCT", "Gene1")); //0, real
+		this->container_full->add_record(read_info("AAATTAGGTCCA", "CCCCCT", "Gene2"));
+		this->container_full->add_record(read_info("AAATTAGGTCCA", "ACCCCT", "Gene3"));
+		this->container_full->add_record(read_info("AAATTAGGTCCA", "ACCCCT", "Gene4"));
 
-		this->container_full->add_record("AAATTAGGTCCC", "CAACCT", "Gene1"); //1, real
-		this->container_full->add_record("AAATTAGGTCCC", "CAACCT", "Gene10");
-		this->container_full->add_record("AAATTAGGTCCC", "CAACCT", "Gene20");
+		this->container_full->add_record(read_info("AAATTAGGTCCC", "CAACCT", "Gene1")); //1, real
+		this->container_full->add_record(read_info("AAATTAGGTCCC", "CAACCT", "Gene10"));
+		this->container_full->add_record(read_info("AAATTAGGTCCC", "CAACCT", "Gene20"));
 
-		this->container_full->add_record("AAATTAGGTCCG", "CAACCT", "Gene1"); //2, false
+		this->container_full->add_record(read_info("AAATTAGGTCCG", "CAACCT", "Gene1")); //2, false
 
-		this->container_full->add_record("AAATTAGGTCGG", "AAACCT", "Gene1"); //3, false
-		this->container_full->add_record("AAATTAGGTCGG", "CCCCCT", "Gene2");
+		this->container_full->add_record(read_info("AAATTAGGTCGG", "AAACCT", "Gene1")); //3, false
+		this->container_full->add_record(read_info("AAATTAGGTCGG", "CCCCCT", "Gene2"));
 
-		this->container_full->add_record("CCCTTAGGTCCA", "CCATTC", "Gene3"); //4, false
-		this->container_full->add_record("CCCTTAGGTCCA", "CCCCCT", "Gene2");
-		this->container_full->add_record("CCCTTAGGTCCA", "ACCCCT", "Gene3");
+		this->container_full->add_record(read_info("CCCTTAGGTCCA", "CCATTC", "Gene3")); //4, false
+		this->container_full->add_record(read_info("CCCTTAGGTCCA", "CCCCCT", "Gene2"));
+		this->container_full->add_record(read_info("CCCTTAGGTCCA", "ACCCCT", "Gene3"));
 
-		this->container_full->add_record("CAATTAGGTCCG", "CAACCT", "Gene1"); //5, false
-		this->container_full->add_record("CAATTAGGTCCG", "AAACCT", "Gene1");
-		this->container_full->add_record("CAATTAGGTCCG", "CCCCCT", "Gene2");
+		this->container_full->add_record(read_info("CAATTAGGTCCG", "CAACCT", "Gene1")); //5, false
+		this->container_full->add_record(read_info("CAATTAGGTCCG", "AAACCT", "Gene1"));
+		this->container_full->add_record(read_info("CAATTAGGTCCG", "CCCCCT", "Gene2"));
 
-		this->container_full->add_record("AAAAAAAAAAAA", "CCCCCT", "Gene2"); //6, false, excluded
+		this->container_full->add_record(read_info("AAAAAAAAAAAA", "CCCCCT", "Gene2")); //6, false, excluded
 		this->container_full->set_initialized();
 	}
 
@@ -332,15 +339,15 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	BOOST_FIXTURE_TEST_CASE(testUmiExclusion, Fixture)
 	{
 		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, Mark::get_by_code("e"));
-		container.add_record("AAATTAGGTCCA", "AAACCT", "Gene1");
-		container.add_record("AAATTAGGTCCA", "CCCCCT", "Gene2");
-		container.add_record("AAATTAGGTCCA", "ACCCCT", "Gene3");
-		container.add_record("AAATTAGGTCCA", "ACCCCT", "Gene4");
+		container.add_record(read_info("AAATTAGGTCCA", "AAACCT", "Gene1"));
+		container.add_record(read_info("AAATTAGGTCCA", "CCCCCT", "Gene2"));
+		container.add_record(read_info("AAATTAGGTCCA", "ACCCCT", "Gene3"));
+		container.add_record(read_info("AAATTAGGTCCA", "ACCCCT", "Gene4"));
 
 		BOOST_CHECK_EQUAL(container.cell(0).at("Gene4").at("ACCCCT").read_count(), 1);
 
-		container.add_record("AAATTAGGTCCA", "TTTTTT", "Gene3", "chr1", Mark::HAS_NOT_ANNOTATED);
-		container.add_record("AAATTAGGTCCA", "ACCCCT", "Gene4", "chr1", Mark::HAS_NOT_ANNOTATED);
+		container.add_record(read_info("AAATTAGGTCCA", "TTTTTT", "Gene3", "chr1", Mark::HAS_NOT_ANNOTATED));
+		container.add_record(read_info("AAATTAGGTCCA", "ACCCCT", "Gene4", "chr1", Mark::HAS_NOT_ANNOTATED));
 		BOOST_CHECK(container.cell(0).at("Gene3").at("TTTTTT").mark().check(Mark::HAS_NOT_ANNOTATED));
 		BOOST_CHECK(container.cell(0).at("Gene4").at("ACCCCT").mark().check(Mark::HAS_NOT_ANNOTATED));
 
@@ -431,10 +438,10 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	{
 		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, this->any_mark);
 
-		container.add_record("AAATTAGGTCCA", "AAACCT", "Gene1");
-		container.add_record("AAATTAGGTCCA", "CCCCCT", "Gene1");
-		container.add_record("AAATTAGGTCCA", "AAATTN", "Gene1");
-		container.add_record("AAATTAGGTCCA", "ACCCCT", "Gene1");
+		container.add_record(read_info("AAATTAGGTCCA", "AAACCT", "Gene1"));
+		container.add_record(read_info("AAATTAGGTCCA", "CCCCCT", "Gene1"));
+		container.add_record(read_info("AAATTAGGTCCA", "AAATTN", "Gene1"));
+		container.add_record(read_info("AAATTAGGTCCA", "ACCCCT", "Gene1"));
 
 		CellsDataContainer::s_s_hash_t merge_targets;
 		merge_targets["AAACCT"] = "CCCCCT";
@@ -485,18 +492,18 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	{
 		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, this->any_mark);
 
-		container.add_record("AAATTAGGTCCA", "AAACCT", "Gene1");
-		container.add_record("AAATTAGGTCCA", "AAACCT", "Gene1");
-		container.add_record("AAATTAGGTCCA", "AAACCG", "Gene1");
-		container.add_record("AAATTAGGTCCA", "AAACCN", "Gene1");
-		container.add_record("AAATTAGGTCCA", "CCCCCT", "Gene1");
-		container.add_record("AAATTAGGTCCA", "ACCCCT", "Gene1");
+		container.add_record(read_info("AAATTAGGTCCA", "AAACCT", "Gene1"));
+		container.add_record(read_info("AAATTAGGTCCA", "AAACCT", "Gene1"));
+		container.add_record(read_info("AAATTAGGTCCA", "AAACCG", "Gene1"));
+		container.add_record(read_info("AAATTAGGTCCA", "AAACCN", "Gene1"));
+		container.add_record(read_info("AAATTAGGTCCA", "CCCCCT", "Gene1"));
+		container.add_record(read_info("AAATTAGGTCCA", "ACCCCT", "Gene1"));
 
-		container.add_record("AAATTAGGTCCA", "TTTTTT", "Gene2");
-		container.add_record("AAATTAGGTCCA", "TTTNNG", "Gene2");
-		container.add_record("AAATTAGGTCCA", "TTGNNG", "Gene2");
-		container.add_record("AAATTAGGTCCA", "ACCCCT", "Gene2");
-		container.add_record("AAATTAGGTCCA", "NNNNNN", "Gene2");
+		container.add_record(read_info("AAATTAGGTCCA", "TTTTTT", "Gene2"));
+		container.add_record(read_info("AAATTAGGTCCA", "TTTNNG", "Gene2"));
+		container.add_record(read_info("AAATTAGGTCCA", "TTGNNG", "Gene2"));
+		container.add_record(read_info("AAATTAGGTCCA", "ACCCCT", "Gene2"));
+		container.add_record(read_info("AAATTAGGTCCA", "NNNNNN", "Gene2"));
 
 		container.set_initialized();
 
@@ -522,29 +529,29 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	{
 		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, this->any_mark);
 
-		container.add_record("GTCCCATGTCTCAT-3", "TAAATTACAT", "ENSG00000100941");
-		container.add_record("GTCCCATGTCTCAT-3", "ATCGACNNNN", "ENSG00000100941");
-		container.add_record("GTCCCATGTCTCAT-3", "ATTAAAGTCG", "ENSG00000100941");
+		container.add_record(read_info("GTCCCATGTCTCAT-3", "TAAATTACAT", "ENSG00000100941"));
+		container.add_record(read_info("GTCCCATGTCTCAT-3", "ATCGACNNNN", "ENSG00000100941"));
+		container.add_record(read_info("GTCCCATGTCTCAT-3", "ATTAAAGTCG", "ENSG00000100941"));
 
 		for (int i = 0; i < 12; ++i)
 		{
-			container.add_record("GTCCCATGTCTCAT-3", "CCCAACAGCT", "ENSG00000100941");
+			container.add_record(read_info("GTCCCATGTCTCAT-3", "CCCAACAGCT", "ENSG00000100941"));
 		}
 
-		container.add_record("GTCCCATGTCTCAT-3", "ATCGACATTC", "ENSG00000100941");
+		container.add_record(read_info("GTCCCATGTCTCAT-3", "ATCGACATTC", "ENSG00000100941"));
 		for (int i = 0; i < 4; ++i)
 		{
-			container.add_record("GTCCCATGTCTCAT-3", "ATTCAAGTCG", "ENSG00000100941");
+			container.add_record(read_info("GTCCCATGTCTCAT-3", "ATTCAAGTCG", "ENSG00000100941"));
 		}
 
 		for (int i = 0; i < 14; ++i)
 		{
-			container.add_record("GTCCCATGTCTCAT-3", "CACGAAACGA", "ENSG00000100941");
+			container.add_record(read_info("GTCCCATGTCTCAT-3", "CACGAAACGA", "ENSG00000100941"));
 		}
 
 		for (int i = 0; i < 10; ++i)
 		{
-			container.add_record("GTCCCATGTCTCAT-3", "TCCGTTACAG", "ENSG00000100941");
+			container.add_record(read_info("GTCCCATGTCTCAT-3", "TCCGTTACAG", "ENSG00000100941"));
 		}
 
 

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Estimation/CellsDataContainer.h>
-#include "Tools/IndexedValue.h"
 
 namespace Estimation
 {

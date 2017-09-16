@@ -6,6 +6,7 @@
 
 namespace Estimation
 {
+	class ReadInfo;
 	class UMI
 	{
 	public:
@@ -42,17 +43,21 @@ namespace Estimation
 			static std::vector<Mark> get_by_code(const std::string &code);
 		};
 
+		typedef std::vector<unsigned> quality_t;
+
 	private:
 		size_t _read_count;
 		Mark _mark;
+		quality_t _sum_quality;
 
 	public:
-		UMI(size_t read_count = 0);
+		UMI(size_t quality_length = 0, size_t read_count = 0);
 
 		size_t read_count() const;
 		const Mark& mark() const;
+		std::vector<double> mean_quality() const;
 
 		void merge(const UMI& umi);
-		void add_read(Mark mark);
+		void add_read(const ReadInfo &read_info);
 	};
 }

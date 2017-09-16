@@ -96,11 +96,6 @@ namespace BamProcessing
 
 		L_TRACE << "All read parameters were loaded";
 	}
-
-	ReadMapParamsParser::~ReadMapParamsParser()
-	{
-		this->_reads_params.clear();
-	}
 }
 }
 

@@ -16,15 +16,14 @@ namespace Estimation
 			, _total_intergenic_reads(0)
 		{}
 
-		void BamProcessor::save_read(const std::string& cell_barcode, const std::string& chr_name, const std::string& umi,
-		                             const std::string& gene, const UMI::Mark &umi_mark)
+		void BamProcessor::save_read(const ReadInfo &read_info)
 		{
-			if (gene == "")
+			if (read_info.gene == "")
 			{
 				this->_total_intergenic_reads++;
 			}
 
-			this->_container.add_record(cell_barcode, umi, gene, chr_name, umi_mark);
+			this->_container.add_record(read_info);
 		}
 
 		void BamProcessor::trace_state(const std::string &trace_prefix) const
