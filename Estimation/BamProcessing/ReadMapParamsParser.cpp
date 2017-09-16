@@ -9,12 +9,11 @@ namespace Estimation
 {
 namespace BamProcessing
 {
-	ReadMapParamsParser::ReadMapParamsParser(const std::string &gtf_path, bool save_read_names,
-											 const std::string &read_param_filenames, const BamTags &tags,
-											 bool gene_in_chromosome_name)
+	ReadMapParamsParser::ReadMapParamsParser(const std::string &gtf_path, const std::string &read_param_filenames,
+	                                         const BamTags &tags, bool gene_in_chromosome_name)
 		: ReadParamsParser(gtf_path, tags, gene_in_chromosome_name)
 	{
-		this->init(read_param_filenames, save_read_names);
+		this->init(read_param_filenames);
 	}
 
 	bool ReadMapParamsParser::get_read_params(const BamTools::BamAlignment &alignment,
@@ -46,7 +45,7 @@ namespace BamProcessing
 		return true;
 	}
 
-	void ReadMapParamsParser::init(const std::string &read_param_filenames, bool save_read_name)
+	void ReadMapParamsParser::init(const std::string &read_param_filenames)
 	{
 		std::vector<std::string> param_filenames;
 		boost::split(param_filenames, read_param_filenames, boost::is_any_of(" \t"));
@@ -71,13 +70,6 @@ namespace BamProcessing
 				if (total_reads_count % 1000000 == 0)
 				{
 					L_TRACE << "Total " << total_reads_count << " reads record processed";
-				}
-
-				size_t space_index = row.find_first_of(" \t");
-				if (space_index == std::string::npos)
-				{
-					L_ERR << "Can't parse row with reads params: '" << row << "'";
-					continue;
 				}
 
 				try

@@ -28,7 +28,7 @@ namespace BamProcessing
 		Tools::trace_time("Start parse bams");
 
 		auto processor = std::shared_ptr<BamProcessorAbstract>(new BamProcessor(container, this->_tags, print_result_bams));
-		BamController::process_bam_files(bam_files, print_result_bams, processor);
+		BamController::process_bam_files(bam_files, processor);
 
 		Tools::trace_time("Bams parsed");
 	}
@@ -40,15 +40,15 @@ namespace BamProcessing
 		Tools::trace_time("Start write filtered bam");
 
 		auto processor = std::shared_ptr<BamProcessorAbstract>(new FilteringBamProcessor(this->_tags, container));
-		BamController::process_bam_files(bam_files, true, processor);
+		BamController::process_bam_files(bam_files, processor);
 
 		Tools::trace_time("Filtered bam written");
 	}
 
-	void BamController::process_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams,
-										  std::shared_ptr<BamProcessorAbstract> processor) const
+	void BamController::process_bam_files(const std::vector<std::string> &bam_files,
+	                                      std::shared_ptr<BamProcessorAbstract> processor) const
 	{
-		std::shared_ptr<ReadParamsParser> parser = this->get_parser(print_result_bams);
+		std::shared_ptr<ReadParamsParser> parser = this->get_parser();
 
 		for (auto const &match_level : processor->container().gene_match_level())
 		{
@@ -108,13 +108,13 @@ namespace BamProcessing
 		reader.Close();
 	}
 
-	std::shared_ptr<ReadParamsParser> BamController::get_parser(bool save_read_names) const
+	std::shared_ptr<ReadParamsParser> BamController::get_parser() const
 	{
 		if (this->_filled_bam)
 			return std::make_shared<FilledBamParamsParser>(this->_gtf_path, this->_tags, this->_gene_in_chromosome_name);
 
 		if (this->_read_param_filenames != "")
-			return std::make_shared<ReadMapParamsParser>(this->_gtf_path, save_read_names, this->_read_param_filenames,
+			return std::make_shared<ReadMapParamsParser>(this->_gtf_path, this->_read_param_filenames,
 			                                             this->_tags, this->_gene_in_chromosome_name);
 
 		return std::make_shared<ReadParamsParser>(this->_gtf_path, this->_tags, this->_gene_in_chromosome_name);

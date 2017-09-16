@@ -41,10 +41,10 @@ namespace Estimation
 			void parse_bam_file(const std::string &bam_name, std::shared_ptr<BamProcessorAbstract> &processor,
 									   std::shared_ptr<ReadParamsParser> &parser, bool trace) const;
 
-			std::shared_ptr<ReadParamsParser> get_parser(bool save_read_names) const;
+			std::shared_ptr<ReadParamsParser> get_parser() const;
 
-			void process_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams,
-										  std::shared_ptr<BamProcessorAbstract> processor) const;
+			void process_bam_files(const std::vector<std::string> &bam_files,
+			                       std::shared_ptr<BamProcessorAbstract> processor) const;
 
 			void process_alignment(std::shared_ptr<ReadParamsParser> parser,
 			                       std::shared_ptr<BamProcessorAbstract> processor,

@@ -359,7 +359,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	{
 		using namespace BamProcessing;
 		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, Mark::get_by_code("e"));
-		auto parser = this->test_bam_controller.get_parser(false);
+		auto parser = this->test_bam_controller.get_parser();
 		std::shared_ptr<BamProcessorAbstract> processor(new BamProcessor(container, BamTags(), false));
 		std::unordered_set<std::string> unexpected_chromosomes;
 
@@ -395,7 +395,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	{
 		using namespace BamProcessing;
 		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, Mark::get_by_code("eE"));
-		auto parser = this->test_bam_controller.get_parser(false);
+		auto parser = this->test_bam_controller.get_parser();
 		std::shared_ptr<BamProcessorAbstract> processor(new BamProcessor(container, BamTags(), false));
 		std::unordered_set<std::string> unexpected_chromosomes;
 
@@ -594,7 +594,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	{
 		BamProcessing::BamController controller(BamProcessing::BamTags(), false, "",
 												PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", true);
-		auto parser = controller.get_parser(false);
+		auto parser = controller.get_parser();
 
 		BamTools::BamAlignment align;
 		std::string chrom_in = "Gene1", gene_out;
