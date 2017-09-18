@@ -11,6 +11,7 @@ namespace BamProcessing
 	BamProcessorAbstract::BamProcessorAbstract(const BamTags &tags_info)
 		: _total_reads_num(0)
 		, _cant_parse_reads_num(0)
+		, _low_quality_reads_num(0)
 		, _tags(tags_info)
 	{}
 
@@ -50,6 +51,11 @@ namespace BamProcessing
 		return this->_cant_parse_reads_num;
 	}
 
+	size_t BamProcessorAbstract::low_quality_reads_num() const
+	{
+		return this->_low_quality_reads_num;
+	}
+
 	void BamProcessorAbstract::save_alignment(BamTools::BamAlignment alignment, const Tools::ReadParameters &params,
 	                                          const std::string &gene)
 	{
@@ -59,7 +65,7 @@ namespace BamProcessing
 		}
 
 		// TODO: add quality tags
-		alignment.AddTag(this->_tags.cb, "Z", params.cell_barcode());
+		alignment.AddTag(this->_tags.cell_barcode, "Z", params.cell_barcode());
 		alignment.AddTag(this->_tags.umi, "Z", params.umi());
 		this->_writer.SaveAlignment(alignment);
 	}
@@ -67,6 +73,11 @@ namespace BamProcessing
 	void BamProcessorAbstract::inc_cant_parse_num()
 	{
 		++this->_cant_parse_reads_num;
+	}
+
+	void BamProcessorAbstract::inc_low_quality_num()
+	{
+		++this->_low_quality_reads_num;
 	}
 }
 }

@@ -45,10 +45,12 @@
             <max_real_merge_prob>1e-7</max_real_merge_prob>  <!-- Optional. Threshold for the merge procedure in the case when one real barcode is tested to be merged wit the other. Default: 1e-7.-->
         </PreciseMerge>
 
-        <BamTags> <!-- Optional. Tags, which are used to parse .bam file (-f option) or to print tagged .bam file (-b or -F options). Default values corresponds to 10x protocol. -->
+        <BamTags> <!-- Optional. Tags, which are used to parse .bam file (-f option) or to print tagged .bam file (-b or -F options). Default values correspond to 10x protocol. -->
             <cb>CB</cb> <!-- Cell barcode. Default: CB. -->
             <umi>UB</umi> <!-- UMI. Default: UB. -->
-            <gene>GX</gene> <!-- Gene and print index. Default: GX. -->
+            <gene>GX</gene> <!-- Gene id. Default: GX. -->
+            <cb_quality>CQ</cb_quality> <!-- Cell barcode quality. Default: CQ. -->
+            <umi_quality>UQ</umi_quality> <!-- UMI quality. Default: UQ. -->
         </BamTags>
     </Estimation>
 </config>

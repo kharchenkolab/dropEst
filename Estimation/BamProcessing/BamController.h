@@ -39,7 +39,7 @@ namespace Estimation
 
 		private:
 			void parse_bam_file(const std::string &bam_name, std::shared_ptr<BamProcessorAbstract> &processor,
-									   std::shared_ptr<ReadParamsParser> &parser, bool trace) const;
+			                    std::shared_ptr<ReadParamsParser> &parser, bool trace) const;
 
 			std::shared_ptr<ReadParamsParser> get_parser() const;
 

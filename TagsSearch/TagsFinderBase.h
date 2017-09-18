@@ -82,7 +82,5 @@ namespace TagsSearch
 		void run(int number_of_threads);
 		const s_counter_t& num_reads_per_cb() const;
 		std::string results_to_string() const;
-
-		bool check_quality(const Tools::ReadParameters &parameters);
 	};
 }

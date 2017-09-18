@@ -58,7 +58,7 @@ namespace TagsSearch
 
 		++this->_parsed_reads;
 
-		if (!this->check_quality(params))
+		if (!params.check_quality(this->_quality_threshold))
 		{
 			this->_low_quality_reads++;
 			return false;
@@ -260,22 +260,5 @@ namespace TagsSearch
 	FastQReader &TagsFinderBase::fastq_reader(size_t index)
 	{
 		return *this->_fastq_readers.at(index);
-	}
-
-	bool TagsFinderBase::check_quality(const Tools::ReadParameters &parameters)
-	{
-		for (char qual : parameters.cell_barcode_quality())
-		{
-			if (qual < this->_quality_threshold + Tools::ReadParameters::quality_offset)
-				return false;
-		}
-
-		for (char qual : parameters.umi_quality())
-		{
-			if (qual < this->_quality_threshold + Tools::ReadParameters::quality_offset)
-				return false;
-		}
-
-		return true;
 	}
 }

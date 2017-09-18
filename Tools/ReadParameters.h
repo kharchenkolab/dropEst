@@ -35,6 +35,8 @@ namespace Tools
 		const std::string& cell_barcode_quality() const;
 		const std::string& umi_quality() const;
 
+		bool check_quality(int min_quality) const;
+
 		bool is_empty() const;
 	};
 
