@@ -38,9 +38,11 @@ namespace TagsSearch
 	private:
 		const bool _save_stats;
 		const bool _save_read_params;
+		const int _quality_threshold;
 		const std::string _file_uid;
 
 		std::atomic<long> _total_reads_read;
+		std::atomic<long> _low_quality_reads;
 		std::atomic<long> _parsed_reads;
 		std::atomic<bool> _file_ended;
 
@@ -80,5 +82,7 @@ namespace TagsSearch
 		void run(int number_of_threads);
 		const s_counter_t& num_reads_per_cb() const;
 		std::string results_to_string() const;
+
+		bool check_quality(const Tools::ReadParameters &parameters);
 	};
 }
