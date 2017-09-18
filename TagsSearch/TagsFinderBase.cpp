@@ -13,7 +13,7 @@ namespace TagsSearch
 	                               bool save_stats, bool save_read_params)
 		: _save_stats(save_stats)
 		, _save_read_params(save_read_params)
-		, _quality_threshold(10) // TODO: to xml
+		, _quality_threshold(processing_config.get<int>("min_barcode_quality", 0))
 		, _file_uid(TagsFinderBase::get_file_uid())
 		, _total_reads_read(0)
 		, _low_quality_reads(0)
