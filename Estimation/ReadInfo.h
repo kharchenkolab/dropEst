@@ -9,8 +9,6 @@ namespace Estimation
 	class ReadInfo
 	{
 	public:
-		static const char quality_offset = 64;
-
 		const Tools::ReadParameters params;
 		const std::string gene;
 		const std::string chromosome_name;

@@ -6,7 +6,7 @@
 * New format of *reads_per_umi_per_cell* in cell.counts.rds.
 
 ### Added
-* UMI correction algorithm now uses UMI quality (only Illumina 1.3 or later formats are supported)
+* UMI correction algorithm now uses UMI quality (only Illumina 1.8 or later formats are supported)
 
 
 ## [0.6.7] - 2017-09-13
