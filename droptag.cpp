@@ -77,8 +77,8 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const boost::pr
 {
 	auto const &processing_config = pt.get_child(PROCESSING_CONFIG_PATH, boost::property_tree::ptree());
 
-	size_t max_file_size = processing_config.get<size_t>("reads_per_out_file", std::numeric_limits<size_t>::max());
-	auto writer = std::make_shared<ConcurrentGzWriter>(params.base_name, "fastq.gz", max_file_size);
+	size_t max_records_per_file = processing_config.get<size_t>("reads_per_out_file", 0);
+	auto writer = std::make_shared<ConcurrentGzWriter>(params.base_name, "fastq.gz", max_records_per_file);
 
 	if (params.read_files.size() == 4)
 	{

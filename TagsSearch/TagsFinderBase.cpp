@@ -45,7 +45,7 @@ namespace TagsSearch
 			return false;
 		}
 
-		if (++this->_total_reads_read % 1000000 == 0)
+		if (++this->_total_reads_read % 5000000 == 0)
 		{
 			L_TRACE << "Total " << this->_total_reads_read << " read (" << this->_parsed_reads << " parsed)";
 		}
@@ -155,7 +155,8 @@ namespace TagsSearch
 				break;
 
 			std::string records_bunch, params_bunch;
-			for (size_t record_id = 0; record_id < records_bunch_size; ++record_id)
+			size_t record_id;
+			for (record_id = 0; record_id < records_bunch_size; ++record_id)
 			{
 				if (this->_file_ended)
 					break;
@@ -174,11 +175,11 @@ namespace TagsSearch
 
 			if (!records_bunch.empty())
 			{
-				this->_fastq_writer->enqueue_line(records_bunch);
+				this->_fastq_writer->enqueue_lines(records_bunch, record_id);
 
 				if (this->_save_read_params)
 				{
-					this->_params_writer->enqueue_line(params_bunch);
+					this->_params_writer->enqueue_lines(params_bunch, record_id);
 				}
 			}
 		}
