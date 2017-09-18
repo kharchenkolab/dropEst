@@ -13,12 +13,13 @@ namespace Estimation
 namespace BamProcessing
 {
 	BamController::BamController(const BamTags &tags, bool filled_bam, const std::string &read_param_filenames,
-	                             const std::string &gtf_path, bool gene_in_chromosome_name)
+	                             const std::string &gtf_path, bool gene_in_chromosome_name, int min_barcode_quality)
 		: _tags(tags)
 		, _filled_bam(filled_bam)
 		, _gene_in_chromosome_name(gene_in_chromosome_name)
 		, _read_param_filenames(read_param_filenames)
 		, _gtf_path(gtf_path)
+		, _min_barcode_quality(min_barcode_quality)
 	{}
 
 	void BamController::parse_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams,
@@ -132,7 +133,7 @@ namespace BamProcessing
 			return;
 		}
 
-		if (!read_params.check_quality(10)) // TODO: to xml
+		if (!read_params.check_quality(this->_min_barcode_quality))
 		{
 			processor->inc_low_quality_num();
 			return;
