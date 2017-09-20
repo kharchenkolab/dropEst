@@ -34,6 +34,11 @@ namespace Estimation
 				cant_parse_msg << "can't parse " << (100.0*this->cant_parse_reads_num() / this->total_reads_num()) <<"% reads; ";
 			}
 
+			if (this->low_quality_reads_num() > 0)
+			{
+				cant_parse_msg << "low-quality reads: " << (100.0*this->low_quality_reads_num() / this->total_reads_num()) <<"%; ";
+			}
+
 			L_TRACE << trace_prefix << ": " << this->total_reads_num() << " total reads; " << std::setprecision(3)
 					<< (100.0*this->_total_intergenic_reads / this->total_reads_num()) <<"% intergenic; "
 					<< (100.0*this->container().has_exon_reads_num() / this->total_reads_num()) <<"% touch exon; "

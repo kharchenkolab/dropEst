@@ -24,6 +24,7 @@ namespace Estimation
 		private:
 			size_t _total_reads_num;
 			size_t _cant_parse_reads_num;
+			size_t _low_quality_reads_num;
 
 			const BamTags _tags;
 
@@ -38,10 +39,12 @@ namespace Estimation
 			BamProcessorAbstract(const BamTags &tags_info);
 			virtual ~BamProcessorAbstract();
 
-			size_t cant_parse_reads_num() const;
 			size_t total_reads_num() const;
+			size_t cant_parse_reads_num() const;
+			size_t low_quality_reads_num() const;
 			void inc_reads();
 			void inc_cant_parse_num();
+			void inc_low_quality_num();
 			virtual void update_bam(const std::string& bam_file, const BamTools::BamReader &reader);
 
 			virtual void trace_state(const std::string& trace_prefix) const = 0;

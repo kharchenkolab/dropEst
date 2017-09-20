@@ -17,7 +17,7 @@ namespace Tools
 		bool _is_empty;
 
 	public:
-		static const char quality_offset = 33;
+		static const char quality_offset = 33; // TODO: to xml
 
 	public:
 		ReadParameters();
@@ -34,6 +34,8 @@ namespace Tools
 		const std::string& umi() const;
 		const std::string& cell_barcode_quality() const;
 		const std::string& umi_quality() const;
+
+		bool check_quality(int min_quality) const;
 
 		bool is_empty() const;
 	};

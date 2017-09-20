@@ -6,8 +6,9 @@
 * New format of *reads_per_umi_per_cell* in cell.counts.rds.
 
 ### Added
+* Filtration of reads by barcode quality ("*TagsSearch/Processing/min_barcode_quality*" and 
+"*Estimation/Other/min_barcode_quality*" fields in the config)
 * UMI correction algorithm now uses UMI quality (only Illumina 1.8 or later formats are supported)
-
 
 ## [0.6.7] - 2017-09-13
 ### Changed

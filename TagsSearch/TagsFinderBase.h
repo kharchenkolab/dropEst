@@ -38,9 +38,11 @@ namespace TagsSearch
 	private:
 		const bool _save_stats;
 		const bool _save_read_params;
+		const int _quality_threshold;
 		const std::string _file_uid;
 
 		std::atomic<long> _total_reads_read;
+		std::atomic<long> _low_quality_reads;
 		std::atomic<long> _parsed_reads;
 		std::atomic<bool> _file_ended;
 

@@ -33,7 +33,7 @@ struct Fixture
 {
 	Fixture()
 		: test_bam_controller(BamProcessing::BamTags(), false, "",
-		                      PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", false)
+		                      PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", false, 0)
 	{
 		auto barcodes_parser = std::shared_ptr<Merge::BarcodesParsing::BarcodesParser>(
 				new Merge::BarcodesParsing::InDropBarcodesParser(PROJ_DATA_PATH + std::string("/barcodes/test_est")));
@@ -600,7 +600,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	BOOST_FIXTURE_TEST_CASE(testPseudoAlignersGenes, Fixture)
 	{
 		BamProcessing::BamController controller(BamProcessing::BamTags(), false, "",
-												PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", true);
+												PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", true, 0);
 		auto parser = controller.get_parser();
 
 		BamTools::BamAlignment align;

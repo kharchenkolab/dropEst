@@ -13,8 +13,10 @@ namespace TagsSearch
 	                               bool save_stats, bool save_read_params)
 		: _save_stats(save_stats)
 		, _save_read_params(save_read_params)
+		, _quality_threshold(processing_config.get<int>("min_barcode_quality", 0))
 		, _file_uid(TagsFinderBase::get_file_uid())
 		, _total_reads_read(0)
+		, _low_quality_reads(0)
 		, _parsed_reads(0)
 		, _file_ended(false)
 		, _reading_in_progress(false)
@@ -47,13 +49,20 @@ namespace TagsSearch
 
 		if (++this->_total_reads_read % 5000000 == 0)
 		{
-			L_TRACE << "Total " << this->_total_reads_read << " read (" << this->_parsed_reads << " parsed)";
+			L_TRACE << "Total " << this->_total_reads_read << " read (" << this->_parsed_reads << " parsed, "
+			        << (this->_parsed_reads - this->_low_quality_reads) << " high-quality reads)";
 		}
 
 		if (params.is_empty() || record.sequence.length() < this->_min_read_len)
 			return false;
 
 		++this->_parsed_reads;
+
+		if (!params.check_quality(this->_quality_threshold))
+		{
+			this->_low_quality_reads++;
+			return false;
+		}
 
 		std::string read_prefix = "@" + this->_file_uid + std::to_string(this->_total_reads_read);
 

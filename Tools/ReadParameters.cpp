@@ -93,4 +93,24 @@ namespace Tools
 	{
 		return id_prefix + '!' + this->_cell_barcode + '#' + this->_umi;
 	}
+
+	bool ReadParameters::check_quality(int min_quality) const
+	{
+		if (min_quality <= 0)
+			return true;
+
+		for (char qual : this->_cell_barcode_quality)
+		{
+			if (qual < min_quality + Tools::ReadParameters::quality_offset)
+				return false;
+		}
+
+		for (char qual : this->_umi_quality)
+		{
+			if (qual < min_quality + Tools::ReadParameters::quality_offset)
+				return false;
+		}
+
+		return true;
+	}
 }
