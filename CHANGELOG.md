@@ -1,6 +1,6 @@
 # Changelog
 
-## [Upcoming]
+## [0.6.8] - 2017-09-22
 ### Added
 * Filtration of reads by barcode quality ("*TagsSearch/Processing/min_barcode_quality*" and 
 "*Estimation/Other/min_barcode_quality*" fields in the config)
