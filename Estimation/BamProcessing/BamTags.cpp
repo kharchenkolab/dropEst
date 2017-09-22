@@ -12,7 +12,7 @@ namespace Estimation
 			, umi_quality(config.get<std::string>("BamTags.umi_quality", "UQ"))
 			, read_type(config.get<std::string>("BamTags.Type.tag", ""))
 			, intronic_read_value(config.get<std::string>("BamTags.Type.intronic", ""))
-			, exonic_read_value(config.get<std::string>("BamTags.Type.exonic", ""))
+			, intergenic_read_value(config.get<std::string>("BamTags.Type.intergenic", ""))
 		{
 			if (!this->read_type.empty() && this->intronic_read_value.empty())
 				throw std::runtime_error("You have to specify tag values to be able to parse info about read types (see conf_desc.xml \"Estimation/BamTags/Type/\")");

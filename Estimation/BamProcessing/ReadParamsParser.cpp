@@ -60,10 +60,14 @@ namespace BamProcessing
 			return mark;
 		}
 
+		return parse_read_type(alignment, gene);
+	}
+
+	UMI::Mark ReadParamsParser::parse_read_type(const BamTools::BamAlignment &alignment, std::string &gene) const
+	{
+		UMI::Mark mark;
 		std::string read_type;
-		if (this->tags.read_type.empty() ||
-			!alignment.GetTag(this->tags.read_type, read_type) ||
-			read_type == this->tags.exonic_read_value)
+		if (this->tags.read_type.empty() || !alignment.GetTag(this->tags.read_type, read_type))
 		{
 			mark.add(UMI::Mark::HAS_EXONS);
 			return mark;
@@ -72,6 +76,13 @@ namespace BamProcessing
 		if (read_type == this->tags.intronic_read_value)
 		{
 			mark.add(UMI::Mark::HAS_INTRONS);
+			return mark;
+		}
+
+		if (!this->tags.intergenic_read_value.empty() && read_type == this->tags.intergenic_read_value)
+		{
+			gene = "";
+			mark.add(UMI::Mark::HAS_NOT_ANNOTATED);
 			return mark;
 		}
 

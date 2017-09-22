@@ -22,7 +22,7 @@
             <Type>
                 <tag>XF</tag>
                 <intronic>INTRONIC</intronic>
-                <exonic>CODING</exonic>
+                <intergenic>INTERGENIC</intergenic>
             </Type>
         </BamTags>
     </Estimation>

@@ -42,6 +42,8 @@ namespace Estimation
 
 			UMI::Mark get_gene_from_reference(const std::string &chr_name, const BamTools::BamAlignment &alignment,
 			                                  std::string &gene) const;
+
+			UMI::Mark parse_read_type(const BamTools::BamAlignment &alignment, std::string &gene) const;
 		};
 	}
 }
