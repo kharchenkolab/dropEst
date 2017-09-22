@@ -5,14 +5,30 @@
 namespace Estimation
 {
 	UMI::UMI(size_t read_count)
-		: read_count(read_count)
-		, mark()
+		: _read_count(read_count)
+		, _mark()
 	{}
 
 	void UMI::merge(const UMI &umi)
 	{
-		this->read_count += umi.read_count;
-		this->mark.add(umi.mark);
+		this->_read_count += umi._read_count;
+		this->_mark.add(umi._mark);
+	}
+
+	void UMI::add_read(UMI::Mark mark)
+	{
+		this->_read_count++;
+		this->_mark.add(mark);
+	}
+
+	size_t UMI::read_count() const
+	{
+		return this->_read_count;
+	}
+
+	const UMI::Mark &UMI::mark() const
+	{
+		return this->_mark;
 	}
 
 	UMI::Mark::Mark(MarkType type)

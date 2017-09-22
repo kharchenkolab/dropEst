@@ -36,15 +36,16 @@ namespace Estimation
 			const bool _gene_in_chromosome_name;
 			const std::string _read_param_filenames;
 			const std::string _gtf_path;
+			const int _min_barcode_quality;
 
 		private:
 			void parse_bam_file(const std::string &bam_name, std::shared_ptr<BamProcessorAbstract> &processor,
-									   std::shared_ptr<ReadParamsParser> &parser, bool trace) const;
+			                    std::shared_ptr<ReadParamsParser> &parser, bool trace) const;
 
-			std::shared_ptr<ReadParamsParser> get_parser(bool save_read_names) const;
+			std::shared_ptr<ReadParamsParser> get_parser() const;
 
-			void process_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams,
-										  std::shared_ptr<BamProcessorAbstract> processor) const;
+			void process_bam_files(const std::vector<std::string> &bam_files,
+			                       std::shared_ptr<BamProcessorAbstract> processor) const;
 
 			void process_alignment(std::shared_ptr<ReadParamsParser> parser,
 			                       std::shared_ptr<BamProcessorAbstract> processor,
@@ -59,7 +60,7 @@ namespace Estimation
 			                              const CellsDataContainer &container) const;
 
 			BamController(const BamTags &tags, bool filled_bam, const std::string &read_param_filenames,
-			              const std::string &gtf_path, bool gene_in_chromosome_name);
+			              const std::string &gtf_path, bool gene_in_chromosome_name, int min_barcode_quality);
 		};
 	}
 }

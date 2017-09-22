@@ -9,9 +9,6 @@ namespace Tools
 	class ReadParameters
 	{
 	private:
-		[[deprecated("Read names will be removed")]]
-		std::string _read_name;
-
 		std::string _cell_barcode;
 		std::string _umi;
 		std::string _cell_barcode_quality;
@@ -20,28 +17,25 @@ namespace Tools
 		bool _is_empty;
 
 	public:
+		static const char quality_offset = 33; // TODO: to xml
+
+	public:
 		ReadParameters();
-		ReadParameters(const std::string &monolithic_params_string, bool save_read_name=true);
-		ReadParameters(const ReadParameters &source);
-		ReadParameters(const std::string &cell_barcode, const std::string &umi, const std::string &cell_barcode_quality,
-		               const std::string &umi_quality);
+		ReadParameters(const std::string &cell_barcode, const std::string &umi,
+		               const std::string &cell_barcode_quality = "", const std::string &umi_quality = "");
 
-		[[deprecated("Read names will be removed")]]
-		ReadParameters(const std::string &read_name, const std::string &cell_barcode, const std::string &umi);
-		[[deprecated("Read names will be removed. Use encoded_id instead.")]]
-		std::string to_monolithic_string(const std::string &fake_name="") const;
-		[[deprecated("Read names will be removed")]]
-		std::string read_name_safe() const;
-		[[deprecated("Read names will be removed")]]
-		const std::string& read_name() const;
+		static ReadParameters parse_encoded_id(const std::string &encoded_id);
+		static std::pair<std::string, ReadParameters> parse_from_string(const std::string &params_string);
 
+		std::string to_string(const std::string &read_name) const;
 		std::string encoded_id(const std::string &id_prefix) const;
-		std::string encoded_params(const std::string &id_prefix) const;
 
 		const std::string& cell_barcode() const;
 		const std::string& umi() const;
 		const std::string& cell_barcode_quality() const;
 		const std::string& umi_quality() const;
+
+		bool check_quality(int min_quality) const;
 
 		bool is_empty() const;
 	};

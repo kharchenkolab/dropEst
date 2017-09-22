@@ -9,12 +9,11 @@ namespace Estimation
 {
 namespace BamProcessing
 {
-	ReadMapParamsParser::ReadMapParamsParser(const std::string &gtf_path, bool save_read_names,
-											 const std::string &read_param_filenames, const BamTags &tags,
-											 bool gene_in_chromosome_name)
+	ReadMapParamsParser::ReadMapParamsParser(const std::string &gtf_path, const std::string &read_param_filenames,
+	                                         const BamTags &tags, bool gene_in_chromosome_name)
 		: ReadParamsParser(gtf_path, tags, gene_in_chromosome_name)
 	{
-		this->init(read_param_filenames, save_read_names);
+		this->init(read_param_filenames);
 	}
 
 	bool ReadMapParamsParser::get_read_params(const BamTools::BamAlignment &alignment,
@@ -33,25 +32,25 @@ namespace BamProcessing
 
 		if (read_not_found)
 		{
-			L_WARN << "WARNING: can't find read_name in map: " << read_name;
+			L_WARN << "WARNING: can't find read name: " << read_name;
 			return false;
 		}
 
 		if (read_params.is_empty())
 		{
-			L_WARN << "WARNING: empty parameters for read_name: " << read_name;
+			L_WARN << "WARNING: empty parameters for read name: " << read_name;
 			return false;
 		}
 
 		return true;
 	}
 
-	void ReadMapParamsParser::init(const std::string &read_param_filenames, bool save_read_name)
+	void ReadMapParamsParser::init(const std::string &read_param_filenames)
 	{
 		std::vector<std::string> param_filenames;
 		boost::split(param_filenames, read_param_filenames, boost::is_any_of(" \t"));
 		size_t total_reads_count = 0;
-		L_TRACE << "Start loading reads names";
+		L_TRACE << "Start loading read parameters";
 		for (auto const &name : param_filenames)
 		{
 			if (name.empty())
@@ -73,24 +72,18 @@ namespace BamProcessing
 					L_TRACE << "Total " << total_reads_count << " reads record processed";
 				}
 
-				size_t space_index = row.find_first_of(" \t");
-				if (space_index == std::string::npos)
-				{
-					L_ERR << "Can't parse row with reads params: '" << row << "'";
-					continue;
-				}
-				std::string key = row.substr(0, space_index);
-				std::string value = row.substr(space_index + 1);
-				if (this->_reads_params.find(key) != this->_reads_params.end())
-				{
-					L_ERR << "Read name is already in map: " << key << ", old value: '" <<
-						  this->_reads_params[key].to_monolithic_string() << "', new value: " << value;
-					continue;
-				}
-
 				try
 				{
-					this->_reads_params[key] = Tools::ReadParameters(value, save_read_name);
+					auto read_params_info = Tools::ReadParameters::parse_from_string(row);
+					if (this->_reads_params.find(read_params_info.first) != this->_reads_params.end())
+					{
+						L_ERR << "Read name is already in map: " << read_params_info.first << ", old value: '"
+						      << this->_reads_params[read_params_info.first].to_string("").substr(1)
+						      << "', new value: " << read_params_info.second.to_string("").substr(1);
+						continue;
+					}
+
+					this->_reads_params.insert(read_params_info);
 				}
 				catch (std::runtime_error err)
 				{
@@ -100,7 +93,8 @@ namespace BamProcessing
 
 			}
 		}
-		L_TRACE << "All reads names were loaded";
+
+		L_TRACE << "All read parameters were loaded";
 	}
 
 	ReadMapParamsParser::~ReadMapParamsParser()

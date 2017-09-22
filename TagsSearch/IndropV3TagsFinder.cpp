@@ -5,8 +5,8 @@ namespace TagsSearch
 	IndropV3TagsFinder::IndropV3TagsFinder(const std::vector<std::string> &fastq_filenames,
 	                                       const boost::property_tree::ptree &barcodes_config,
 	                                       const boost::property_tree::ptree &processing_config,
-	                                       const std::shared_ptr<TextWriter> &writer, bool save_stats)
-		: TagsFinderBase(fastq_filenames, processing_config, writer, save_stats)
+	                                       const std::shared_ptr<ConcurrentGzWriter> &writer, bool save_stats, bool save_read_params)
+		: TagsFinderBase(fastq_filenames, processing_config, writer, save_stats, save_read_params)
 		, barcode1_length(barcodes_config.get<size_t>("barcode1_length"))
 		, barcode2_length(barcodes_config.get<size_t>("barcode2_length"))
 		, umi_length(barcodes_config.get<size_t>("umi_length"))

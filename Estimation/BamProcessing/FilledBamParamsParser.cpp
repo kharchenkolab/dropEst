@@ -12,17 +12,23 @@ namespace BamProcessing
 	bool FilledBamParamsParser::get_read_params(const BamTools::BamAlignment &alignment,
 											 Tools::ReadParameters &read_params)
 	{
-		std::string barcode;
-		if (!alignment.GetTag(this->tags.cb, barcode))
+		std::string cell_barcode;
+		if (!alignment.GetTag(this->tags.cell_barcode, cell_barcode))
 			return false;
 
 		std::string umi;
 		if (!alignment.GetTag(this->tags.umi, umi))
 			return false;
 
+		std::string cb_quality;
+		alignment.GetTag(this->tags.cb_quality, cb_quality);
+
+		std::string umi_quality;
+		alignment.GetTag(this->tags.umi_quality, umi_quality);
+
 		try
 		{
-			read_params = Tools::ReadParameters(alignment.Name, barcode, umi);
+			read_params = Tools::ReadParameters(cell_barcode, umi, cb_quality, umi_quality);
 		}
 		catch (std::runtime_error &error)
 		{

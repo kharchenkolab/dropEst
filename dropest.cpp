@@ -35,7 +35,7 @@ struct Params
 	string genes_filename = "";
 	string log_prefix = "";
 	string output_name = "";
-	string read_params_names_str = ""; //TODO: deprecated. Should be updated after the implementation of quality parsing.
+	string read_params_filenames = "";
 	std::string gene_match_level = UMI::Mark::DEFAULT_CODE;
 	int max_cells_number = -1;
 	int min_genes_after_merge = -1;
@@ -49,8 +49,8 @@ static void check_files_existence(const Params &params, const vector<string> &ba
 	if (params.genes_filename != "" && !std::ifstream(params.genes_filename))
 		throw std::runtime_error("Can't open genes file '" + params.genes_filename + "'");
 
-	if (params.read_params_names_str != "" && !std::ifstream(params.read_params_names_str))
-		throw std::runtime_error("Can't open reads file '" + params.read_params_names_str + "'");
+	if (params.read_params_filenames != "" && !std::ifstream(params.read_params_filenames))
+		throw std::runtime_error("Can't open reads file '" + params.read_params_filenames + "'");
 
 	for (auto const &file : bam_files)
 	{
@@ -85,7 +85,8 @@ static void usage()
 	cerr << "\t-m, --merge-barcodes : merge linked cell tags" << endl;
 	cerr << "\t-M, --merge-barcodes-precise : use precise merge strategy (can be slow), recommended to use when the list of real barcodes is not available\n";
 	cerr << "\t-o, --output-file filename : output file name\n";
-//	cerr << "\t-r, --reads-params filename: file or files with serialized params from tags search step. If there are several files then it should be in quotes and splitted by space" << endl;
+	cerr << "\t-r, --reads-params filenames: file or files with serialized params from tags search step. If there are several files"
+	     << ", they should be provided in quotes, separated by space: \"file1.reads.gz file2.reads.gz file3.reads.gz\"" << endl;
 	cerr << "\t-P, --pseudoaligner: use chromosome name as a source of gene id\n";
 	cerr << "\t-R, --reads-output: print count matrix for reads and don't use UMI statistics\n";
 	cerr << "\t-q, --quiet : disable logs\n";
@@ -165,7 +166,7 @@ static Params parse_cmd_params(int argc, char **argv)
 				params.output_name = string(optarg);
 				break;
 			case 'r' :
-				params.read_params_names_str = string(optarg);
+				params.read_params_filenames = string(optarg);
 				break;
 			case 'P' :
 				params.pseudoaligner = true;
@@ -198,9 +199,9 @@ static Params parse_cmd_params(int argc, char **argv)
 		params.cant_parse = true;
 	}
 
-	if (params.filled_bam && params.read_params_names_str != "")
+	if (params.filled_bam && params.read_params_filenames != "")
 	{
-		cerr << SCRIPT_NAME << ": only one genes source must be provided (you can't use -r and -f at the same time)" << endl;
+		cerr << SCRIPT_NAME << ": only one genes source must be provided (you can't use both -r and -f at the same time)" << endl;
 		params.cant_parse = true;
 	}
 
@@ -279,9 +280,9 @@ int main(int argc, char **argv)
 			estimation_config = pt.get_child("config.Estimation", boost::property_tree::ptree());
 		}
 
-		BamProcessing::BamTags t(estimation_config);
-		BamProcessing::BamController bam_controller(t, params.filled_bam, params.read_params_names_str,
-		                                            params.genes_filename, params.pseudoaligner);
+		BamProcessing::BamController bam_controller(BamProcessing::BamTags(estimation_config), params.filled_bam,
+		                                            params.read_params_filenames, params.genes_filename,
+		                                            params.pseudoaligner, estimation_config.get<int>("Other.min_barcode_quality", 0));
 		CellsDataContainer container = get_cells_container(files, params, estimation_config, bam_controller);
 
 		if (params.filtered_bam_output)

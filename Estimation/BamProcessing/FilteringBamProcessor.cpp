@@ -66,8 +66,11 @@ namespace Estimation
 			if (gene_iter->second.has(read_params.umi()))
 				return;
 
+			auto read_params_updated = Tools::ReadParameters(cb_iter->second, read_params.umi(),
+			                                                 read_params.cell_barcode_quality(),
+			                                                 read_params.umi_quality());
 			this->written_reads++;
-			this->save_alignment(alignment, read_params.read_name_safe(), gene, cb_iter->second, read_params.umi());
+			this->save_alignment(alignment, read_params_updated, gene);
 		}
 
 		std::string FilteringBamProcessor::get_result_bam_name(const std::string &bam_name) const

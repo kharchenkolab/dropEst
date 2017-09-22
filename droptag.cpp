@@ -14,7 +14,7 @@
 #include "TagsSearch/IndropV1TagsFinder.h"
 #include "TagsSearch/TagsFinderBase.h"
 #include "TagsSearch/IndropV3TagsFinder.h"
-#include <TagsSearch/TextWriter.h>
+#include <TagsSearch/ConcurrentGzWriter.h>
 #include "Tools/Logs.h"
 
 using namespace std;
@@ -55,7 +55,7 @@ static void usage()
 	cerr << "\t-l, --log-prefix prefix: logs prefix\n";
 	cerr << "\t-n, --name name: alternative output base name\n";
 	cerr << "\t-p, --parallel number: number of threads\n";
-//	cerr << "\t-s, --save-reads-names : serialize reads parameters to save names\n";
+	cerr << "\t-s, --save-reads-names : serialize reads parameters to save quality info\n";
 	cerr << "\t-S, --save-stats : save stats to rds file\n";
 	cerr << "\t-t, --lib-tag library tag : (for IndropV3 with library tag only)\n";
 	cerr << "\t-q, --quiet : disable logs\n";
@@ -78,7 +78,7 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const boost::pr
 	auto const &processing_config = pt.get_child(PROCESSING_CONFIG_PATH, boost::property_tree::ptree());
 
 	size_t max_file_size = processing_config.get<size_t>("reads_per_out_file", std::numeric_limits<size_t>::max());
-	auto writer = std::make_shared<TextWriter>(params.base_name, "fastq.gz", max_file_size);
+	auto writer = std::make_shared<ConcurrentGzWriter>(params.base_name, "fastq.gz", max_file_size);
 
 	if (params.read_files.size() == 4)
 	{
@@ -87,13 +87,13 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const boost::pr
 
 		return shared_ptr<TagsFinderBase>(
 				new IndropV3LibsTagsFinder(params.read_files, params.lib_tag, pt.get_child(BARCODES_CONFIG_PATH),
-				                           processing_config, writer, params.save_stats));
+				                           processing_config, writer, params.save_stats, params.save_reads_names));
 	}
 
 	if (params.read_files.size() == 3)
 		return shared_ptr<TagsFinderBase>(
 				new IndropV3TagsFinder(params.read_files, pt.get_child(BARCODES_CONFIG_PATH), processing_config,
-				                       writer, params.save_stats));
+				                       writer, params.save_stats, params.save_reads_names));
 
 	if (params.read_files.size() != 2)
 		throw std::runtime_error("Unexpected number of read files: " + std::to_string(params.read_files.size()));
@@ -101,11 +101,11 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const boost::pr
 	if (pt.get<std::string>("config.TagsSearch.SpacerSearch.barcode_mask", "") != "")
 		return shared_ptr<TagsFinderBase>(
 				new FixPosSpacerTagsFinder(params.read_files, pt.get_child(SPACER_CONFIG_PATH), processing_config,
-				                           writer, params.save_stats));
+				                           writer, params.save_stats, params.save_reads_names));
 
 	return shared_ptr<TagsFinderBase>(
 			new IndropV1TagsFinder(params.read_files, pt.get_child(SPACER_CONFIG_PATH), processing_config,
-			                       writer, params.save_stats));
+			                       writer, params.save_stats, params.save_reads_names));
 }
 
 
@@ -127,7 +127,7 @@ Params parse_cmd_params(int argc, char **argv)
 	};
 
 	Params params;
-	while ((c = getopt_long(argc, argv, "c:hl:n:p:St:q", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "c:hl:n:p:sSt:q", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{

@@ -13,12 +13,13 @@ namespace Estimation
 namespace BamProcessing
 {
 	BamController::BamController(const BamTags &tags, bool filled_bam, const std::string &read_param_filenames,
-	                             const std::string &gtf_path, bool gene_in_chromosome_name)
+	                             const std::string &gtf_path, bool gene_in_chromosome_name, int min_barcode_quality)
 		: _tags(tags)
 		, _filled_bam(filled_bam)
 		, _gene_in_chromosome_name(gene_in_chromosome_name)
 		, _read_param_filenames(read_param_filenames)
 		, _gtf_path(gtf_path)
+		, _min_barcode_quality(min_barcode_quality)
 	{}
 
 	void BamController::parse_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams,
@@ -28,7 +29,7 @@ namespace BamProcessing
 		Tools::trace_time("Start parse bams");
 
 		auto processor = std::shared_ptr<BamProcessorAbstract>(new BamProcessor(container, this->_tags, print_result_bams));
-		BamController::process_bam_files(bam_files, print_result_bams, processor);
+		this->process_bam_files(bam_files, processor);
 
 		Tools::trace_time("Bams parsed");
 	}
@@ -40,15 +41,15 @@ namespace BamProcessing
 		Tools::trace_time("Start write filtered bam");
 
 		auto processor = std::shared_ptr<BamProcessorAbstract>(new FilteringBamProcessor(this->_tags, container));
-		BamController::process_bam_files(bam_files, true, processor);
+		this->process_bam_files(bam_files, processor);
 
 		Tools::trace_time("Filtered bam written");
 	}
 
-	void BamController::process_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams,
-										  std::shared_ptr<BamProcessorAbstract> processor) const
+	void BamController::process_bam_files(const std::vector<std::string> &bam_files,
+	                                      std::shared_ptr<BamProcessorAbstract> processor) const
 	{
-		std::shared_ptr<ReadParamsParser> parser = this->get_parser(print_result_bams);
+		std::shared_ptr<ReadParamsParser> parser = this->get_parser();
 
 		for (auto const &match_level : processor->container().gene_match_level())
 		{
@@ -60,7 +61,7 @@ namespace BamProcessing
 
 		for (size_t i = 0; i < bam_files.size(); ++i)
 		{
-			BamController::parse_bam_file(bam_files[i], processor, parser, bam_files.size() == 1);
+			this->parse_bam_file(bam_files[i], processor, parser, bam_files.size() == 1);
 			processor->trace_state(bam_files[i]);
 		}
 	}
@@ -102,19 +103,19 @@ namespace BamProcessing
 				processor->trace_state(bam_name);
 			}
 
-			BamController::process_alignment(parser, processor, unexpected_chromosomes, chr_name, alignment);
+			this->process_alignment(parser, processor, unexpected_chromosomes, chr_name, alignment);
 		}
 
 		reader.Close();
 	}
 
-	std::shared_ptr<ReadParamsParser> BamController::get_parser(bool save_read_names) const
+	std::shared_ptr<ReadParamsParser> BamController::get_parser() const
 	{
 		if (this->_filled_bam)
 			return std::make_shared<FilledBamParamsParser>(this->_gtf_path, this->_tags, this->_gene_in_chromosome_name);
 
 		if (this->_read_param_filenames != "")
-			return std::make_shared<ReadMapParamsParser>(this->_gtf_path, save_read_names, this->_read_param_filenames,
+			return std::make_shared<ReadMapParamsParser>(this->_gtf_path, this->_read_param_filenames,
 			                                             this->_tags, this->_gene_in_chromosome_name);
 
 		return std::make_shared<ReadParamsParser>(this->_gtf_path, this->_tags, this->_gene_in_chromosome_name);
@@ -129,6 +130,12 @@ namespace BamProcessing
 		if (!parser->get_read_params(alignment, read_params))
 		{
 			processor->inc_cant_parse_num();
+			return;
+		}
+
+		if (!read_params.check_quality(this->_min_barcode_quality))
+		{
+			processor->inc_low_quality_num();
 			return;
 		}
 

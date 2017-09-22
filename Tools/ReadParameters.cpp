@@ -1,22 +1,7 @@
 #include "ReadParameters.h"
 
-#include <sstream>
-#include <iostream>
-#include <string>
-
 namespace Tools
 {
-	ReadParameters::ReadParameters(const std::string &read_name, const std::string &cell_barcode,
-								   const std::string &umi)
-		: _read_name(read_name)
-		, _cell_barcode(cell_barcode)
-		, _umi(umi)
-		, _is_empty(false)
-	{
-		if (cell_barcode.length() == 0 || umi.length() == 0)
-			throw std::runtime_error("Bad reads parameters: '" + cell_barcode + "' '" + umi + "'");
-	}
-
 	ReadParameters::ReadParameters(const std::string &cell_barcode, const std::string &umi,
 	                               const std::string &cell_barcode_quality, const std::string &umi_quality)
 		: _is_empty(false)
@@ -29,51 +14,47 @@ namespace Tools
 			throw std::runtime_error("Bad reads parameters: '" + cell_barcode + "' '" + umi + "'");
 	}
 
-	ReadParameters::ReadParameters(const std::string &monolithic_params_string, bool save_read_name)
-		: _is_empty(false)
-		, _cell_barcode_quality("")
-		, _umi_quality("")
-	{
-		size_t umi_start_pos = monolithic_params_string.rfind('#');
-		if (umi_start_pos == std::string::npos)
-			throw std::runtime_error("ERROR: unable to parse out UMI in: " + monolithic_params_string);
-
-		size_t cell_barcode_start_pos = monolithic_params_string.rfind('!', umi_start_pos);
-		if (cell_barcode_start_pos == std::string::npos)
-			throw std::runtime_error("ERROR: unable to parse out cell tag in: " + monolithic_params_string);
-
-		this->_read_name = save_read_name ? monolithic_params_string.substr(0, cell_barcode_start_pos) : "";
-		this->_cell_barcode = monolithic_params_string.substr(cell_barcode_start_pos + 1, umi_start_pos - cell_barcode_start_pos - 1);
-		this->_umi = monolithic_params_string.substr(umi_start_pos + 1);
-	}
-
 	ReadParameters::ReadParameters()
-		: _read_name("")
-		, _cell_barcode("")
+		: _cell_barcode("")
 		, _umi("")
 		, _cell_barcode_quality("")
 		, _umi_quality("")
 		, _is_empty(true)
 	{}
 
-	ReadParameters::ReadParameters(const ReadParameters &source)
-		: _read_name(source._read_name)
-		, _cell_barcode(source._cell_barcode)
-		, _umi(source._umi)
-		, _is_empty(source._is_empty)
-	{}
-
-	std::string ReadParameters::read_name_safe() const
+	ReadParameters ReadParameters::parse_encoded_id(const std::string &encoded_id)
 	{
-		if (this->read_name() == "")
-			return this->to_monolithic_string();
+		size_t umi_start_pos = encoded_id.rfind('#');
+		if (umi_start_pos == std::string::npos)
+			throw std::runtime_error("ERROR: unable to parse out UMI in: " + encoded_id);
 
-		return this->read_name();
+		size_t cell_barcode_start_pos = encoded_id.rfind('!', umi_start_pos);
+		if (cell_barcode_start_pos == std::string::npos)
+			throw std::runtime_error("ERROR: unable to parse out cell tag in: " + encoded_id);
+
+		auto cell_barcode = encoded_id.substr(cell_barcode_start_pos + 1, umi_start_pos - cell_barcode_start_pos - 1);
+		auto umi = encoded_id.substr(umi_start_pos + 1);
+
+		return ReadParameters(cell_barcode, umi);
 	}
 
-	const std::string& ReadParameters::read_name() const
+	std::pair<std::string, ReadParameters> ReadParameters::parse_from_string(const std::string &params_string)
 	{
-		return this->_read_name;
+		std::vector<std::string> parsed;
+		std::string::size_type start_pos = 0, end_pos = 0;
+		for (int i = 0; i < 4; ++i)
+		{
+			end_pos = params_string.find(' ', start_pos);
+			if (end_pos == std::string::npos)
+				throw std::runtime_error("ERROR: can't parse read parameters from string: '" + params_string + "'");
+
+			parsed.push_back(params_string.substr(start_pos, end_pos - start_pos));
+			start_pos = end_pos + 1;
+		}
+
+		parsed.push_back(params_string.substr(start_pos));
+
+		return std::make_pair(parsed[0], ReadParameters(parsed[1], parsed[2], parsed[3], parsed[4]));
 	}
 
 	const std::string& ReadParameters::cell_barcode() const
@@ -101,22 +82,34 @@ namespace Tools
 		return this->_is_empty;
 	}
 
-	std::string ReadParameters::to_monolithic_string(const std::string &fake_name) const
+	std::string ReadParameters::to_string(const std::string &read_name) const
 	{
-		std::ostringstream text;
-		text << (fake_name.length() == 0 ? this->_read_name : fake_name) << '!' << this->_cell_barcode << '#' << this->_umi;
-		return text.str();
+		return read_name + ' ' + this->_cell_barcode + ' ' + this->_umi + ' ' + this->_cell_barcode_quality + ' ' +
+				this->_umi_quality;
 	}
 
 	std::string ReadParameters::encoded_id(const std::string &id_prefix) const
 	{
-		std::ostringstream text;
-		text << id_prefix << '!' << this->_cell_barcode << '#' << this->_umi;
-		return text.str();
+		return id_prefix + '!' + this->_cell_barcode + '#' + this->_umi;
 	}
 
-	std::string ReadParameters::encoded_params(const std::string &id_prefix) const
+	bool ReadParameters::check_quality(int min_quality) const
 	{
-		return this->encoded_id(id_prefix) + " " + this->cell_barcode_quality() + " " + this->umi_quality();
+		if (min_quality <= 0)
+			return true;
+
+		for (char qual : this->_cell_barcode_quality)
+		{
+			if (qual < min_quality + Tools::ReadParameters::quality_offset)
+				return false;
+		}
+
+		for (char qual : this->_umi_quality)
+		{
+			if (qual < min_quality + Tools::ReadParameters::quality_offset)
+				return false;
+		}
+
+		return true;
 	}
 }

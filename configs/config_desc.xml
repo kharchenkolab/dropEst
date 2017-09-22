@@ -21,10 +21,11 @@
             <r1_rc_length>  8 </r1_rc_length> <!-- Length of the tail of read1, which is used to trim read2-->
         </SpacerSearch>
 
-        <Processing> <!-- Required for all -->
-            <min_align_length>  10 </min_align_length> <!-- Optional. Minimal acceptable length of the read after trimming. Default: 10. -->
-            <reads_per_out_file> 10000000 </reads_per_out_file> <!-- Optional. Number of reads that can be written in one fastq file. Default: infinity. -->
-            <poly_a_tail> AAAAAAAA </poly_a_tail> <!-- Optional. Sequence, which is searched as poly-a tail. Default: AAAAAAAA. -->
+        <Processing> <!-- Optianal. Used for all protocols. -->
+            <min_barcode_quality>0</min_barcode_quality> <!-- All reads, which have lower quality for any position in barcodes (either UMI or CB) will be filtered. Default: 0. -->
+            <min_align_length>  10 </min_align_length> <!-- Minimal acceptable length of the read after trimming. Default: 10. -->
+            <reads_per_out_file> 10000000 </reads_per_out_file> <!-- Number of reads that can be written in one fastq file. Default: infinity. -->
+            <poly_a_tail> AAAAAAAA </poly_a_tail> <!-- Sequence, which is searched as poly-a tail. Default: AAAAAAAA. -->
         </Processing>
     </TagsSearch>
 
@@ -45,10 +46,22 @@
             <max_real_merge_prob>1e-7</max_real_merge_prob>  <!-- Optional. Threshold for the merge procedure in the case when one real barcode is tested to be merged wit the other. Default: 1e-7.-->
         </PreciseMerge>
 
-        <BamTags> <!-- Optional. Tags, which are used to parse .bam file (-f option) or to print tagged .bam file (-b or -F options). Default values corresponds to 10x protocol. -->
+        <BamTags> <!-- Optional. Tags, which are used to parse .bam file (-f option) or to print tagged .bam file (-b or -F options). Default values correspond to 10x protocol. -->
             <cb>CB</cb> <!-- Cell barcode. Default: CB. -->
             <umi>UB</umi> <!-- UMI. Default: UB. -->
-            <gene>GX</gene> <!-- Gene and print index. Default: GX. -->
+            <gene>GX</gene> <!-- Gene id. Default: GX. -->
+            <cb_quality>CQ</cb_quality> <!-- Cell barcode quality. Default: CQ. -->
+            <umi_quality>UQ</umi_quality> <!-- UMI quality. Default: UQ. -->
+            <Type> <!-- Tag, which contain type of read. If not specified, all reads with gene info are considered as exonic -->
+                <tag>XF</tag>
+                <intronic>INTRONIC</intronic> <!-- Value corresponding to intronic reads -->
+                <intergenic>INTERGENIC</intergenic> <!-- Value corresponding to intergenic reads. All reads, which has gene id and intergenic mark are considered as intergenic -->
+                <!-- All reads with other tags, which has gene id are considered as exonic -->
+            </Type>
         </BamTags>
+
+        <Other>
+            <min_barcode_quality>0</min_barcode_quality> <!-- Optional. All reads, which have lower quality for any position in barcodes (either UMI or CB) will be filtered. Default: 0. -->
+        </Other>
     </Estimation>
 </config>

@@ -26,7 +26,7 @@ struct Fixture
 {
 	Fixture()
 		: test_bam_controller(BamProcessing::BamTags(), false, "",
-		                      PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", false)
+		                      PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", false, 0)
 	{
 		auto barcodes_parser = std::shared_ptr<Merge::BarcodesParsing::BarcodesParser>(
 				new Merge::BarcodesParsing::InDropBarcodesParser(PROJ_DATA_PATH + std::string("/barcodes/test_est")));
@@ -242,15 +242,15 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		BOOST_CHECK_EQUAL(cell1.size(), 4);
 
 		BOOST_CHECK_EQUAL(cell0.at("Gene1").size(), 1);
-		BOOST_CHECK_EQUAL(cell0.at("Gene1").at("CAACCT").read_count, 2);
+		BOOST_CHECK_EQUAL(cell0.at("Gene1").at("CAACCT").read_count(), 2);
 
 		BOOST_CHECK_EQUAL(cell1.at("Gene1").size(), 2);
-		BOOST_CHECK_EQUAL(cell1.at("Gene1").at("AAACCT").read_count, 3);
+		BOOST_CHECK_EQUAL(cell1.at("Gene1").at("AAACCT").read_count(), 3);
 		BOOST_CHECK_EQUAL(cell1.at("Gene2").size(), 1);
-		BOOST_CHECK_EQUAL(cell1.at("Gene2").at("CCCCCT").read_count, 4);
+		BOOST_CHECK_EQUAL(cell1.at("Gene2").at("CCCCCT").read_count(), 4);
 		BOOST_CHECK_EQUAL(cell1.at("Gene3").size(), 2);
-		BOOST_CHECK_EQUAL(cell1.at("Gene3").at("ACCCCT").read_count, 2);
-		BOOST_CHECK_EQUAL(cell1.at("Gene3").at("CCATTC").read_count, 1);
+		BOOST_CHECK_EQUAL(cell1.at("Gene3").at("ACCCCT").read_count(), 2);
+		BOOST_CHECK_EQUAL(cell1.at("Gene3").at("CCATTC").read_count(), 1);
 
 		BOOST_CHECK(!this->container_full->cell(0).is_merged());
 		BOOST_CHECK(!this->container_full->cell(1).is_merged());
@@ -337,12 +337,12 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		container.add_record("AAATTAGGTCCA", "ACCCCT", "Gene3");
 		container.add_record("AAATTAGGTCCA", "ACCCCT", "Gene4");
 
-		BOOST_CHECK_EQUAL(container.cell(0).at("Gene4").at("ACCCCT").read_count, 1);
+		BOOST_CHECK_EQUAL(container.cell(0).at("Gene4").at("ACCCCT").read_count(), 1);
 
 		container.add_record("AAATTAGGTCCA", "TTTTTT", "Gene3", "chr1", Mark::HAS_NOT_ANNOTATED);
 		container.add_record("AAATTAGGTCCA", "ACCCCT", "Gene4", "chr1", Mark::HAS_NOT_ANNOTATED);
-		BOOST_CHECK(container.cell(0).at("Gene3").at("TTTTTT").mark.check(Mark::HAS_NOT_ANNOTATED));
-		BOOST_CHECK(container.cell(0).at("Gene4").at("ACCCCT").mark.check(Mark::HAS_NOT_ANNOTATED));
+		BOOST_CHECK(container.cell(0).at("Gene3").at("TTTTTT").mark().check(Mark::HAS_NOT_ANNOTATED));
+		BOOST_CHECK(container.cell(0).at("Gene4").at("ACCCCT").mark().check(Mark::HAS_NOT_ANNOTATED));
 
 		container.set_initialized();
 		container.merge_and_filter();
@@ -352,14 +352,14 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 		BOOST_CHECK_THROW(container.cell(0).requested_reads_per_umi_per_gene().at("Gene4").at("ACCCCT"), std::out_of_range);
 		BOOST_CHECK_THROW(container.cell(0).requested_reads_per_umi_per_gene().at("Gene4"), std::out_of_range);
-		BOOST_CHECK_EQUAL(container.cell(0).at("Gene4").at("ACCCCT").read_count, 2);
+		BOOST_CHECK_EQUAL(container.cell(0).at("Gene4").at("ACCCCT").read_count(), 2);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testGeneMatchLevelUmiExclusion, Fixture)
 	{
 		using namespace BamProcessing;
 		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, Mark::get_by_code("e"));
-		auto parser = this->test_bam_controller.get_parser(false);
+		auto parser = this->test_bam_controller.get_parser();
 		std::shared_ptr<BamProcessorAbstract> processor(new BamProcessor(container, BamTags(), false));
 		std::unordered_set<std::string> unexpected_chromosomes;
 
@@ -370,20 +370,20 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		align.CigarData.push_back(BamTools::CigarOp('M', 10));
 
 		this->test_bam_controller.process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
-		BOOST_CHECK_EQUAL(container.cell(0).at("FAM138A").at("ATGGGC").read_count, 1);
+		BOOST_CHECK_EQUAL(container.cell(0).at("FAM138A").at("ATGGGC").read_count(), 1);
 
 		align.Position = 34600;
 		this->test_bam_controller.process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
-		BOOST_CHECK(container.cell(0).at("FAM138A").at("ATGGGC").mark.check(Mark::HAS_NOT_ANNOTATED));
+		BOOST_CHECK(container.cell(0).at("FAM138A").at("ATGGGC").mark().check(Mark::HAS_NOT_ANNOTATED));
 
 		align.Position = 34610;
 		this->test_bam_controller.process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
-		BOOST_CHECK(container.cell(0).at("FAM138A").at("ATGGGC").mark.check(Mark::HAS_NOT_ANNOTATED));
+		BOOST_CHECK(container.cell(0).at("FAM138A").at("ATGGGC").mark().check(Mark::HAS_NOT_ANNOTATED));
 
 		align.Name = "152228477!TGAGTTCTGTTACTGCATC#ATTTTC";
 		align.Position = 34600;
 		this->test_bam_controller.process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
-		BOOST_CHECK(container.cell(0).at("FAM138A").at("ATTTTC").mark.check(Mark::HAS_NOT_ANNOTATED));
+		BOOST_CHECK(container.cell(0).at("FAM138A").at("ATTTTC").mark().check(Mark::HAS_NOT_ANNOTATED));
 
 		container.set_initialized();
 		container.merge_and_filter();
@@ -395,7 +395,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	{
 		using namespace BamProcessing;
 		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, Mark::get_by_code("eE"));
-		auto parser = this->test_bam_controller.get_parser(false);
+		auto parser = this->test_bam_controller.get_parser();
 		std::shared_ptr<BamProcessorAbstract> processor(new BamProcessor(container, BamTags(), false));
 		std::unordered_set<std::string> unexpected_chromosomes;
 
@@ -406,20 +406,20 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		align.CigarData.push_back(BamTools::CigarOp('M', 10));
 
 		this->test_bam_controller.process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
-		BOOST_CHECK_EQUAL(container.cell(0).at("FAM138A").at("ATGGGC").read_count, 1);
+		BOOST_CHECK_EQUAL(container.cell(0).at("FAM138A").at("ATGGGC").read_count(), 1);
 
 		align.Position = 34600;
 		this->test_bam_controller.process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
-		BOOST_CHECK(container.cell(0).at("FAM138A").at("ATGGGC").mark.check(Mark::HAS_NOT_ANNOTATED));
+		BOOST_CHECK(container.cell(0).at("FAM138A").at("ATGGGC").mark().check(Mark::HAS_NOT_ANNOTATED));
 
 		align.Name = "152228477!TGAGTTCTGTTACTGCATC#ATTTTC";
 		align.Position = 34610;
 		this->test_bam_controller.process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
-		BOOST_CHECK(container.cell(0).at("FAM138A").at("ATTTTC").mark == Mark::HAS_EXONS);
+		BOOST_CHECK(container.cell(0).at("FAM138A").at("ATTTTC").mark()== Mark::HAS_EXONS);
 
 		align.Position = 34600;
 		this->test_bam_controller.process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
-		BOOST_CHECK(container.cell(0).at("FAM138A").at("ATTTTC").mark.check(Mark::HAS_NOT_ANNOTATED));
+		BOOST_CHECK(container.cell(0).at("FAM138A").at("ATTTTC").mark().check(Mark::HAS_NOT_ANNOTATED));
 
 		container.set_initialized();
 		container.merge_and_filter();
@@ -444,9 +444,9 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		container.merge_umis(0, container.gene_indexer().get_index("Gene1"), merge_targets);
 
 		BOOST_REQUIRE_EQUAL(container.cell(0).at("Gene1").size(), 3);
-		BOOST_CHECK_EQUAL(container.cell(0).at("Gene1").at("CCCCCT").read_count, 2);
-		BOOST_CHECK_EQUAL(container.cell(0).at("Gene1").at("GGGGGG").read_count, 1);
-		BOOST_CHECK_EQUAL(container.cell(0).at("Gene1").at("ACCCCT").read_count, 1);
+		BOOST_CHECK_EQUAL(container.cell(0).at("Gene1").at("CCCCCT").read_count(), 2);
+		BOOST_CHECK_EQUAL(container.cell(0).at("Gene1").at("GGGGGG").read_count(), 1);
+		BOOST_CHECK_EQUAL(container.cell(0).at("Gene1").at("ACCCCT").read_count(), 1);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testFillWrongUmis, Fixture)
@@ -504,10 +504,10 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		BOOST_REQUIRE_EQUAL(container.cell(0).at("Gene1").size(), 4);
 		BOOST_REQUIRE_EQUAL(container.cell(0).at("Gene2").size(), 3);
 
-		BOOST_CHECK_EQUAL(container.cell(0).at("Gene1").at("AAACCT").read_count, 3);
-		BOOST_CHECK_EQUAL(container.cell(0).at("Gene1").at("AAACCG").read_count, 1);
-		BOOST_CHECK_EQUAL(container.cell(0).at("Gene1").at("CCCCCT").read_count, 1);
-		BOOST_CHECK_EQUAL(container.cell(0).at("Gene1").at("ACCCCT").read_count, 1);
+		BOOST_CHECK_EQUAL(container.cell(0).at("Gene1").at("AAACCT").read_count(), 3);
+		BOOST_CHECK_EQUAL(container.cell(0).at("Gene1").at("AAACCG").read_count(), 1);
+		BOOST_CHECK_EQUAL(container.cell(0).at("Gene1").at("CCCCCT").read_count(), 1);
+		BOOST_CHECK_EQUAL(container.cell(0).at("Gene1").at("ACCCCT").read_count(), 1);
 
 		BOOST_CHECK_NO_THROW(container.cell(0).at("Gene2").at("TTTTTT"));
 		BOOST_CHECK_NO_THROW(container.cell(0).at("Gene2").at("ACCCCT"));
@@ -593,8 +593,8 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	BOOST_FIXTURE_TEST_CASE(testPseudoAlignersGenes, Fixture)
 	{
 		BamProcessing::BamController controller(BamProcessing::BamTags(), false, "",
-												PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", true);
-		auto parser = controller.get_parser(false);
+												PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", true, 0);
+		auto parser = controller.get_parser();
 
 		BamTools::BamAlignment align;
 		std::string chrom_in = "Gene1", gene_out;
