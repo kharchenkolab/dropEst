@@ -4,6 +4,7 @@
 ### Added
 * Filtration of reads by barcode quality ("*TagsSearch/Processing/min_barcode_quality*" and 
 "*Estimation/Other/min_barcode_quality*" fields in the config)
+* dropEst is now able to parse read type (e.g. exonic/intronic) from .bam file (see *config_desc.xml*)
 
 ## [0.6.7] - 2017-09-13
 ### Changed

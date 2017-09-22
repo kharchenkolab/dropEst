@@ -52,6 +52,11 @@
             <gene>GX</gene> <!-- Gene id. Default: GX. -->
             <cb_quality>CQ</cb_quality> <!-- Cell barcode quality. Default: CQ. -->
             <umi_quality>UQ</umi_quality> <!-- UMI quality. Default: UQ. -->
+            <Type> <!-- Tag, which contain type of read. If not specified, all reads with gene info are considered as exonic -->
+                <tag>XF</tag>
+                <intronic>INTRONIC</intronic> <!-- Value corresponding to intronic reads -->
+                <exonic>CODING</exonic> <!-- Value corresponding to exonic reads -->
+            </Type>
         </BamTags>
 
         <Other>

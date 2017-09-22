@@ -34,7 +34,7 @@ namespace BamProcessing
 	}
 
 	UMI::Mark ReadParamsParser::get_gene(const std::string &chr_name, BamTools::BamAlignment alignment,
-	                                     std::string &gene) const
+	                                     std::string &gene)
 	{
 		UMI::Mark mark;
 		gene = "";
@@ -57,12 +57,30 @@ namespace BamProcessing
 		{
 			gene = "";
 			mark.add(UMI::Mark::HAS_NOT_ANNOTATED);
-		}
-		else
-		{
-			mark.add(UMI::Mark::HAS_EXONS);
+			return mark;
 		}
 
+		std::string read_type;
+		if (this->tags.read_type.empty() ||
+			!alignment.GetTag(this->tags.read_type, read_type) ||
+			read_type == this->tags.exonic_read_value)
+		{
+			mark.add(UMI::Mark::HAS_EXONS);
+			return mark;
+		}
+
+		if (read_type == this->tags.intronic_read_value)
+		{
+			mark.add(UMI::Mark::HAS_INTRONS);
+			return mark;
+		}
+
+		if (this->_unexpected_read_types.emplace(read_type).second)
+		{
+			L_WARN << "Unexpected read type: '" << read_type << "'";
+		}
+
+		mark.add(UMI::Mark::HAS_EXONS);
 		return mark;
 	}
 

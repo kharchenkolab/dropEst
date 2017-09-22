@@ -1,5 +1,6 @@
 #pragma once
 
+#include <unordered_set>
 #include <api/BamAlignment.h>
 
 #include <Estimation/CellsDataContainer.h>
@@ -22,6 +23,7 @@ namespace Estimation
 		private:
 			Tools::RefGenesContainer _genes_container;
 			bool _gene_in_chromosome_name;
+			std::unordered_set<std::string> _unexpected_read_types;
 
 		protected:
 			const BamTags tags;
@@ -31,7 +33,7 @@ namespace Estimation
 
 			virtual bool get_read_params(const BamTools::BamAlignment &alignment, Tools::ReadParameters &read_params);
 			UMI::Mark get_gene(const std::string &chr_name, BamTools::BamAlignment alignment,
-			                                  std::string &gene) const;
+			                                  std::string &gene);
 
 			bool find_exon(Tools::RefGenesContainer::query_results_t query_results,
 			               Tools::RefGenesContainer::QueryResult &exon_result) const;
