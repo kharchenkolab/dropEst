@@ -74,7 +74,7 @@ If `cmake` can't find one of the libraries, or you want to use some specific ver
 * BamTools: BAMTOOLS_ROOT.
 * R: R_ROOT. Can be found by running the `cat(R.home())` in R.
 
-These variables should be set to the path to the installed library. It can be done either by using command line options: `cmake -D R_ROOT="path_to_r"` or by adding the variable declaration to CMakeLists.txt: `set(R_ROOT path_to_r)`.
+These variables should be set to the path to the installed library. It can be done either by using command line options: `cmake -D R_ROOT="path_to_r"` or by adding the variable declaration to the beginning of CMakeLists.txt: `set(R_ROOT path_to_r)`.
 
 
 In case you have some issues with the linker for specific library, please try to build this library manually with the version of compiler, which you're going to use for dropEst build.
@@ -223,11 +223,15 @@ Result of this phase is cell.counts.rds file with the next fields:
 To additionaly print the file with count matrix in MatrixMarket format use "*-w*" option.
 
 ## dropReport
-To run the report you have to install [dropestr](#dropestr-package) R package with all dependencies (`dependencies = T`).
+To run the report you have to install:
+* [dropestr](#dropestr-package) R package with all dependencies (`dependencies = T`).
+* [pandoc](https://pandoc.org/installing.html)
+* R packages:
+    ```R
+    install.packages(c("optparse","rmarkdown"))
+    ```
 
-You need pandoc for the creation of the report.html.
-
-The Report can be called with:
+To run report use:
 ```bash
 ./dropReport.Rsc cell.counts.rds
 ```
@@ -238,7 +242,7 @@ To see full list of options use:
 ```
 
 ### Troubleshooting
-If you get the error *"pandoc version 1.12.3 or higher is required and was not found"*, try to set path in the system variable:  `export RSTUDIO_PANDOC=/path/to/pandoc`.
+If you get the error *"pandoc version 1.12.3 or higher is required and was not found"*, try to set path in the corresponding environment variable:  `export RSTUDIO_PANDOC=/path/to/pandoc`.
 
 ## dropEstR package
 
