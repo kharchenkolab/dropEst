@@ -5,6 +5,7 @@
 * Now, information about reads is kept in separate file instead (*.reads.gz), which should be passed to dropEst
 * New format of *reads_per_umi_per_cell* in cell.counts.rds
 * Optimized cmake
+* **Secondary alignments are filtered now**
 
 ### Added
 * UMI correction algorithm now uses UMI quality (only Illumina 1.8 or later formats are supported)

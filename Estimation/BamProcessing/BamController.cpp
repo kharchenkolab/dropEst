@@ -127,6 +127,9 @@ namespace BamProcessing
 	                                      std::unordered_set<std::string> &unexpected_chromosomes,
 	                                      const std::string &chr_name, const BamTools::BamAlignment &alignment) const
 	{
+		if (!alignment.IsMapped() || !alignment.IsPrimaryAlignment())
+			return;
+
 		Tools::ReadParameters read_params;
 		if (!parser->get_read_params(alignment, read_params))
 		{
