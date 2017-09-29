@@ -19,7 +19,7 @@ namespace BamProcessing
 	bool ReadMapParamsParser::get_read_params(const BamTools::BamAlignment &alignment,
 											  Tools::ReadParameters &read_params)
 	{
-		const std::string &read_name = alignment.Name;
+		const std::string &read_name = alignment.Name.substr(1);
 
 		auto iter = this->_reads_params.find(read_name);
 		bool read_not_found = (iter == this->_reads_params.end());
@@ -67,9 +67,9 @@ namespace BamProcessing
 					continue;
 
 				total_reads_count++;
-				if (total_reads_count % 1000000 == 0)
+				if (total_reads_count % 10000000 == 0)
 				{
-					L_TRACE << "Total " << total_reads_count << " reads record processed";
+					L_TRACE << "Total " << total_reads_count << " read records processed";
 				}
 
 				try
