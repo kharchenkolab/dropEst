@@ -18,6 +18,8 @@ Pipeline for estimating molecular count matrices for droplet-based single-cell R
 			- [10x](#10x)
 		- [Command line arguments for dropTag](#command-line-arguments-for-droptag)
 	- [Alignment](#alignment)
+	    - [Alignment with TopHat](#alignment-with-tophat)
+	    - [Alignment with Kallisto](#alignment-with-kallisto)
 	- [dropEst](#dropest)
 		- [Usage of tagged bam files (e.g. 10x, Drop-seq) as input](#usage-of-tagged-bam-files-eg-10x-drop-seq-as-input)
 		- [Usage of pseudoaligners](#usage-of-pseudoaligners)
@@ -145,7 +147,8 @@ Please, use `./droptag -h` for additional help.
 ## Alignment
 dropTag writes the tagged reads into multiple files. All these files must be aligned to reference, and all bam files with the alignments must be provided as input for the dropEst stage. In the paper we used [TopHat2](https://ccb.jhu.edu/software/tophat/tutorial.shtml) aligner, however any RNA-seq aligners (i.e. [Kallisto](https://pachterlab.github.io/kallisto/) or [STAR](https://github.com/alexdobin/STAR)) can be used.
 
-Alignment with TopHat2:
+### Alignment with TopHat
+
 1. Install [bowtie index](http://bowtie-bio.sourceforge.net/tutorial.shtml#preb) for the sequenced organism.
 2. Download corresponding [gene annotation](http://genome.ucsc.edu/cgi-bin/hgTables) in the gtf format.
 3. Run TopHat2 for each file:
@@ -153,6 +156,14 @@ Alignment with TopHat2:
 tophat2 -p number_of_threads --no-coverage-search -g 1 -G genes.gtf -o output_dir Bowtie2Index/genome reads.fastq.gz
 ```
 4. The result needed for the count estimation is *./output_dir/accepted_hits.bam*.
+
+### Alignment with Kallisto
+
+**Prior to v0.42.4, Kallisto didn't use BAM flags to mark primary/secondary alignments. Only versions $\geq$ 0.42.4 are supported.**
+
+1. Download transcript sequences in .fasta format (i.e. [Ensembl](https://www.ensembl.org/info/data/ftp/index.html) genes).
+2. Build Kallisto index: `kallisto index -i genes.fa.gz`.
+3. Run `kallisto quant --pseudobam --single -i genes.index -o out -l mean_length -s std_length reads.fastq.gz`. Here, *mean_length* is mean read length and *std_length* is standard deviataion of read length. You should specify values, according to the experiment design.
 
 ## dropEst
 

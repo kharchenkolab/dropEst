@@ -3,6 +3,7 @@
 ## [Upcoming]
 ### Changed
 * Optimized cmake
+* **Secondary alignments are filtered now**
 
 ## [0.6.8] - 2017-09-22
 ### Added
