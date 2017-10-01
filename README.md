@@ -41,7 +41,8 @@ Pipeline for estimating molecular count matrices for droplet-based single-cell R
 ## Setup
 ### System requirements
 * Boost >= 1.54
-* BamTools
+* BamTools library
+	* Note that some linux distributions have separate packages for the library and the executable, i.e. on Ubuntu you need `libbamtools-dev`, but not `bamtools`.
 * Zlib
 * R >= 3.2.2 with packages:
   * Rcpp

@@ -21,7 +21,6 @@ Imports:
 Suggests:
   parallel,
   optparse,
-  data.table (>= 1.9.6),
   knitr,
   rmarkdown,
   preseqR (>= 3.1.0)

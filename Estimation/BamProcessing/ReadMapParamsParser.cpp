@@ -19,7 +19,7 @@ namespace BamProcessing
 	bool ReadMapParamsParser::get_read_params(const BamTools::BamAlignment &alignment,
 											  Tools::ReadParameters &read_params)
 	{
-		const std::string &read_name = alignment.Name.substr(1);
+		const std::string &read_name = alignment.Name;
 
 		auto iter = this->_reads_params.find(read_name);
 		bool read_not_found = (iter == this->_reads_params.end());

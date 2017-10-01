@@ -20,20 +20,21 @@ if (requireNamespace("parallel", quietly = TRUE)) {
 }
 
 #' @export
-CorrectUmiSequenceErrors <- function(reads.per.umi.per.cb, umi.probabilities=NULL, collisions.info=NULL,
+CorrectUmiSequenceErrors <- function(reads.per.umi.per.cb.info, umi.probabilities=NULL, collisions.info=NULL,
                                      probability.quants.num=50, adjust.collisions=TRUE, collisions.adj.step=20,
-                                     mc.cores=NULL, first.n=NULL, verbosity.level=0, return.reads.per.umi=FALSE) {
+                                     mc.cores=NULL, verbosity.level=0, return.reads.per.umi=FALSE, distribution.smooth=10) {
+  reads.per.umi.per.cb <- reads.per.umi.per.cb.info$reads_per_umi
   if (verbosity.level > 0) {
     cat("Correcting UMI sequence errors.\n")
   }
-  umis.per.gene <- lapply(reads.per.umi.per.cb, sapply, length)
-  max.umi.per.gene <- max(sapply(umis.per.gene, max))
+  umis.per.gene <- sapply(reads.per.umi.per.cb, length)
+  max.umi.per.gene <- max(umis.per.gene)
 
   if (is.null(umi.probabilities)) {
     if (verbosity.level > 0) {
       cat("Filling UMIs distribution...")
     }
-    umis.distribution <- GetUmisDistribution(reads.per.umi.per.cb)
+    umis.distribution <- GetUmisDistribution(reads.per.umi.per.cb, smooth = distribution.smooth)
     umi.probabilities <- umis.distribution / sum(umis.distribution)
 
     if (verbosity.level > 0) {
@@ -58,7 +59,8 @@ CorrectUmiSequenceErrors <- function(reads.per.umi.per.cb, umi.probabilities=NUL
   if (verbosity.level > 0) {
     cat("Preparing UMI correction info.\n")
   }
-  correction.info <- PrepareUmiCorrectionInfo(umi.probabilities, max.umi.per.gene.adj, reads.per.umi.per.cb, quants.num=probability.quants.num,
+  correction.info <- PrepareUmiCorrectionInfo(umi.probabilities, max.umi.per.gene.adj, reads.per.umi.per.cb,
+                                              quants.num=probability.quants.num,
                                               verbosity.level=if (verbosity.level > 1) verbosity.level else 0)
 
   if (verbosity.level > 0) {
@@ -66,18 +68,16 @@ CorrectUmiSequenceErrors <- function(reads.per.umi.per.cb, umi.probabilities=NUL
     cat("Estimating prior error probabilities...")
   }
 
-  clf <- TrainNBClassifier(umis.per.gene, reads.per.umi.per.cb, correction.info$classifier.info$nucl.probabilities, correction.info$classifier.info$position.probabilities)
+  clf <- TrainNBClassifier(reads.per.umi.per.cb, distribution.smooth,
+                           correction.info$classifier.info$nucl.probabilities,
+                           correction.info$classifier.info$position.probabilities)
   rpu.probs <- GetReadsPerUmiDistribution(reads.per.umi.per.cb)
-
-  if (!is.null(first.n)) {
-    correction.info$rpus.with.inds <- correction.info$rpus.with.inds[1:first.n]
-  }
 
   if (verbosity.level > 0) {
     cat(" Completed.\n")
     cat("Correcting UMI sequence errors...")
   }
-  filt.cells <- plapply(correction.info$rpus.with.inds, lapply, FilterUmisInGene, correction.info$neighbours.per.umi,
+  filt.cells <- plapply(correction.info$rpus.with.inds, FilterUmisInGene, correction.info$neighbours.per.umi,
                         correction.info$dp.matrices, clf$negative, correction.info$neighb.prob.index, umi.probabilities,
                         collisions.info, rpu.probs, mc.cores=mc.cores)
 
@@ -89,22 +89,23 @@ CorrectUmiSequenceErrors <- function(reads.per.umi.per.cb, umi.probabilities=NUL
     return(filt.cells)
   }
 
-  mc.cores.small <- if (is.null(mc.cores)) NULL else min(mc.cores, round(length(filt.cells) / 500) + 1)
+  mc.cores.small <- if (is.null(mc.cores)) NULL else min(mc.cores, round(length(filt.cells) / (500 * 1000)) + 1) # TODO: choose optimal threshold
 
   if (verbosity.level > 0) {
     cat("Adjusting collisions...")
   }
-  filt.umis.per.gene <- plapply(filt.cells, sapply, length, mc.cores=mc.cores.small)
+  filt.umis.per.gene <- sapply(filt.cells, length)
 
   if (adjust.collisions) {
-    filt.umis.per.gene <- plapply(filt.umis.per.gene, sapply, AdjustGeneExpression, collisions.info$adjusted,
-                                  collisions.info$observed, mc.cores=mc.cores.small)
+    filt.umis.per.gene <- unlist(plapply(filt.umis.per.gene, sapply, AdjustGeneExpression, collisions.info$adjusted,
+                                         collisions.info$observed, mc.cores=mc.cores.small))
   }
 
+  reads.per.umi.per.cb.info$umis_per_gene <- filt.umis.per.gene
   if (verbosity.level > 0) {
     cat(" Completed.\n")
   }
-  return(BuildCountMatrix(filt.umis.per.gene))
+  return(BuildCountMatrix(reads.per.umi.per.cb.info))
 }
 
 #' @export
@@ -159,35 +160,35 @@ FillCollisionsAdjustmentInfo <- function(umi.probabilities, max.umi.per.gene, st
   return(list(adjusted=adjusted.sizes, observed=estimated.sizes, is.converged=(max.estimated.size >= max.umi.per.gene)))
 }
 
-TrainNB <- function(train.data, answers, positive.nucl.prior=NULL, positive.pos.prior=NULL) {
-  train.neg <- train.data[answers == 1,]
-  params.neg <- base::colSums(dplyr::select(train.neg, MinRpU, MaxRpU))
-  params.neg <- as.list(params.neg / sum(params.neg))
-
-  params.neg$Nucleotides <- table(train.neg$Nucleotides) / nrow(train.neg)
-  params.neg$Position <- table(train.neg$Position) / nrow(train.neg)
+TrainNB <- function(train.data, answers, distribution.smooth, positive.nucl.prior, positive.pos.prior) {
+  smoothedDistribution <- function(values, smooth, max.value) {
+    freqs <- rep(smooth, max.value)
+    freqs.data <- table(values)
+    data.inds <- as.integer(names(freqs.data)) + 1
+    freqs[data.inds] <- freqs[data.inds] + freqs.data
+    return(freqs / sum(freqs))
+  }
 
   train.pos <- train.data[answers == 0,]
+  train.neg <- train.data[answers == 1,]
+
+  if (nrow(train.pos) == 0)
+    stop('Data has no training samples without errors')
+
+  if (nrow(train.neg) == 0)
+    stop('Data has no training samples with errors')
+
   params.pos <- base::colSums(dplyr::select(train.pos, MinRpU, MaxRpU))
   params.pos <- as.list(params.pos / sum(params.pos))
 
-  if (is.null(positive.nucl.prior)) {
-    params.pos$Nucleotides <- rep(1, length(params.neg$Nucleotides)) / length(params.neg$Nucleotides)
-  }
-  else {
-    params.pos$Nucleotides <- positive.nucl.prior
-  }
+  params.pos$Nucleotides <- positive.nucl.prior
+  params.pos$Position <- positive.pos.prior
 
-  if (is.null(positive.pos.prior)) {
-    params.pos$Position <- rep(1, length(params.neg$Position)) / length(params.neg$Position)
-    names(params.pos$Position) <- names(params.neg$Position)
-  }
-  else {
-    params.pos$Position <- positive.pos.prior
-  }
+  params.neg <- base::colSums(dplyr::select(train.neg, MinRpU, MaxRpU))
+  params.neg <- as.list(params.neg / sum(params.neg))
 
-  names(params.pos$Nucleotides) <- names(params.neg$Nucleotides)
-  names(params.pos$Position) <- names(params.neg$Position)
+  params.neg$Position <- smoothedDistribution(train.neg$Position, distribution.smooth, length(positive.pos.prior))
+  params.neg$Nucleotides <- smoothedDistribution(train.neg$Nucleotides, distribution.smooth, length(positive.nucl.prior))
 
   return(list(positive = params.pos, negative = params.neg))
 }
@@ -212,31 +213,26 @@ GetDPMatrices <- function(neighbour.probs, max.umi.per.gene, max.neighbours, tol
 }
 
 #' @export
-TrainNBClassifier <- function(umis.per.cb, reads.per.umi.per.cb, positive.nucl.prior=NULL, positive.pos.prior=NULL) {
-  bind_rows <- if (requireNamespace("data.table", quietly = TRUE)) data.table::rbindlist else dplyr::bind_rows
+TrainNBClassifier <- function(reads.per.umi.per.cb, distribution.smooth, positive.nucl.prior=NULL, positive.pos.prior=NULL) {
+  train.data <- PrepareClassifierTrainingData(reads.per.umi.per.cb[sapply(reads.per.umi.per.cb, length) == 2])
 
-  train.data <- lapply(names(umis.per.cb), function(name) reads.per.umi.per.cb[[name]][umis.per.cb[[name]] == 2])
-  train.data <- ConcatLists(train.data)
-
-  train.data <- lapply(train.data, function(pair) GetUmisDifference(names(pair)[1], names(pair)[2], pair[1], pair[2], F, -1))
-  train.data <- bind_rows(train.data)
-
-  train.data <- dplyr::filter(train.data, ED == 1 | ED > 3)
+  train.data <- dplyr::filter(train.data, ED == 1 | ED > 3) # TODO: is it a biased estimator? Should we use estimation over all data, but not only over genes with 2 UMIs?
   train.answers <- as.integer(train.data$ED == 1)
   train.data <- dplyr::select(train.data, -ED)
 
-  trainNBWrap <- function(data, answers) TrainNB(data, answers, positive.nucl.prior=positive.nucl.prior, positive.pos.prior=positive.pos.prior)
-  return(trainNBWrap(train.data, train.answers))
+  return(TrainNB(train.data, train.answers, distribution.smooth,
+                 positive.nucl.prior=positive.nucl.prior,
+                 positive.pos.prior=positive.pos.prior))
 }
 
 # Algorithm:
-FilterUmisInGeneOneStep <- function(cur.gene, neighbours.per.umi, dp.matrices, max.neighbours.num,
+FilterUmisInGeneOneStep <- function(cur.reads.per.umi, neighbours.per.umi, dp.matrices, max.neighbours.num,
                                     neighbours.prob.index, predictions, not.filtered.umis, size.adj) {
-  cur.n.p.i <- neighbours.prob.index[names(cur.gene)]
+  cur.n.p.i <- neighbours.prob.index[names(cur.reads.per.umi)]
 
-  nn <- GetAdjacentUmisNum(cur.gene, cur.gene, neighbours.per.umi, total=F, larger=T, smaller=T)
-  smaller.nn <- nn$Smaller[names(cur.gene)]
-  larger.nn <- nn$Larger[names(cur.gene)]
+  nn <- GetAdjacentUmisNum(cur.reads.per.umi, cur.reads.per.umi, neighbours.per.umi, total=F, larger=T, smaller=T)
+  smaller.nn <- nn$Smaller[names(cur.reads.per.umi)]
+  larger.nn <- nn$Larger[names(cur.reads.per.umi)]
 
   neighbour.distrs <- GetSmallerNeighboursDistributionsBySizes(dp.matrices, larger.nn, cur.n.p.i, size.adj,
                                                                max.neighbours.num, smaller_neighbours_num=smaller.nn)
@@ -275,59 +271,50 @@ FilterUmisInGene <- function(cur.gene, neighbours.per.umi, dp.matrices, classifi
   umi.probabilities <- umi.probabilities[cur.gene$indexes + 1]
 
   cur.gene <- cur.gene$rpus
-
-  bind_rows <- if (requireNamespace("data.table", quietly = TRUE)) data.table::rbindlist else dplyr::bind_rows
-
   cur.neighborhood <- SubsetAdjacentUmis(names(cur.gene))
 
-  ## Classifier
-  clf.data <- PrepareClassifierData(cur.gene, cur.neighborhood, umi.probabilities)
-  umi.pairs <- clf.data$umi.pairs
-  if (nrow(umi.pairs) == 0)
+  # Classifier
+  classifier.df <- PrepareClassifierData(cur.gene, cur.neighborhood, umi.probabilities)
+  if (nrow(classifier.df) == 0)
     return(cur.gene)
 
-  classifier.df <- bind_rows(clf.data$differences)
-  clf.data.order <- order(clf.data$umi.pairs$Target)
+  classifier.df <- classifier.df[order(classifier.df$Target),]
 
-  classifier.df <- classifier.df[clf.data.order,]
-  predictions <- clf.data$umi.pairs[clf.data.order,]
-
-  ## Iterations:
+  # Iterations:
   not.filtered.umis <- names(cur.gene)
   total.removed <- 0
 
-  filt.gene <- cur.gene
+  cur.reads.per.umi <- sapply(cur.gene, `[[`, 1)
+  filt.reads.per.umi <- cur.reads.per.umi
   for (step in 1:max.iter) {
-    size.adj <- AdjustGeneExpression(length(filt.gene), collisions.info$adjusted, collisions.info$observed)
-    predictions$MergeProb <- PredictLeftPart(classifier, rpu.probabilities, classifier.df, size.adj)
+    size.adj <- AdjustGeneExpression(length(filt.reads.per.umi), collisions.info$adjusted, collisions.info$observed)
 
-    clf.data.order <- order(predictions$Target, predictions$MergeProb)
-    predictions <- predictions[clf.data.order,]
-    classifier.df <- classifier.df[clf.data.order,]
+    classifier.df$MergeProb <- PredictLeftPart(classifier, rpu.probabilities, classifier.df, size.adj)
+    classifier.df <- classifier.df[order(classifier.df$Target, classifier.df$MergeProb),]
 
-    not.filtered.umis <- FilterUmisInGeneOneStep(filt.gene, neighbours.per.umi, dp.matrices, max.neighbours.num,
-                                                 neighbours.prob.index, predictions, not.filtered.umis, size.adj)
+    not.filtered.umis <- FilterUmisInGeneOneStep(filt.reads.per.umi, neighbours.per.umi, dp.matrices, max.neighbours.num,
+                                                 neighbours.prob.index, classifier.df[c('Base', 'Target', 'MergeProb')],
+                                                 not.filtered.umis, size.adj)
 
-    ### Next iteration
-    filt.index <- FilterPredictions(not.filtered.umis, as.character(predictions$Base), as.character(predictions$Target))
-    predictions <- predictions[filt.index,]
+    # Next iteration
+    filt.index <- FilterPredictions(not.filtered.umis, as.character(classifier.df$Base), as.character(classifier.df$Target))
     classifier.df <- classifier.df[filt.index,]
 
-    current.removed <- length(filt.gene) - length(not.filtered.umis)
+    current.removed <- length(filt.reads.per.umi) - length(not.filtered.umis)
     total.removed <- total.removed + current.removed
-    filt.gene <- filt.gene[not.filtered.umis]
+    filt.reads.per.umi <- filt.reads.per.umi[not.filtered.umis]
 
     if (verbose) {
       cat("Total: ", total.removed, ", current: ", current.removed, "\n")
     }
-    if (current.removed == 0 || nrow(predictions) == 0)
+    if (current.removed == 0 || nrow(classifier.df) == 0)
       break
   }
 
-  if (length(filt.gene) == 0)
-    return(cur.gene[which.max(cur.gene)])
+  if (length(filt.reads.per.umi) == 0)
+    return(cur.gene[which.max(cur.reads.per.umi)])
 
-  return(filt.gene)
+  return(cur.gene[names(filt.reads.per.umi)])
 }
 
 #' @export

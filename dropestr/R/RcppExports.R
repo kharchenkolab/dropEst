@@ -58,8 +58,12 @@ FilterPredictions <- function(not_filtered_umis, base_umis, target_umis) {
     .Call('_dropestr_FilterPredictions', PACKAGE = 'dropestr', not_filtered_umis, base_umis, target_umis)
 }
 
-PrepareClassifierData <- function(reads_per_umi, neighborhood, umi_probabilities = numeric()) {
+PrepareClassifierData <- function(reads_per_umi, neighborhood, umi_probabilities) {
     .Call('_dropestr_PrepareClassifierData', PACKAGE = 'dropestr', reads_per_umi, neighborhood, umi_probabilities)
+}
+
+PrepareClassifierTrainingData <- function(reads_per_umi_pairs) {
+    .Call('_dropestr_PrepareClassifierTrainingData', PACKAGE = 'dropestr', reads_per_umi_pairs)
 }
 
 GetTrimCollisionsNum <- function(rpu_per_cell, trim_length) {
@@ -95,12 +99,8 @@ ValueCounts <- function(values) {
     .Call('_dropestr_ValueCounts', PACKAGE = 'dropestr', values)
 }
 
-GetUmisDifference <- function(umi1, umi2, rpu1, rpu2, force_neighbours, umi_prob) {
-    .Call('_dropestr_GetUmisDifference', PACKAGE = 'dropestr', umi1, umi2, rpu1, rpu2, force_neighbours, umi_prob)
-}
-
-BuildCountMatrix <- function(umis_per_gene) {
-    .Call('_dropestr_BuildCountMatrix', PACKAGE = 'dropestr', umis_per_gene)
+BuildCountMatrix <- function(reads_per_umi_per_cell) {
+    .Call('_dropestr_BuildCountMatrix', PACKAGE = 'dropestr', reads_per_umi_per_cell)
 }
 
 #' Parse UMIgs.

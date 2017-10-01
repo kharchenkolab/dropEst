@@ -1,152 +1,35 @@
 #include "dropestr.h"
+#include "umi_processing.h"
 
 using namespace Rcpp;
 
 s_vec_t GetUmisList(unsigned umi_len);
 
-si_map_t parseVector(const IntegerVector &vec) {
-  si_map_t res;
-  StringVector names = as<StringVector>(vec.names());
-  for (int i = 0; i < vec.size(); ++i) {
-    res.emplace(std::string(names[i]), vec[i]);
-  }
-
-  return res;
-}
-
-sd_map_t parseVector(const NumericVector &vec) {
-  sd_map_t res;
-  StringVector names = as<StringVector>(vec.names());
-  for (int i = 0; i < vec.size(); ++i) {
-    res.emplace(std::string(names[i]), vec[i]);
-  }
-
-  return res;
-}
-
-NumericVector vpow(double base, const NumericVector& exp) {
-  NumericVector res(exp.size());
-  for (int i = 0; i < res.size(); ++i) {
-    res[i] = std::pow(base, exp[i]);
-  }
-  return res;
-}
-
-NumericVector vpow(const NumericVector& base, double exp) {
-  NumericVector res(base.size());
-  for (int i = 0; i < res.size(); ++i) {
-    res[i] = std::pow(base[i], exp);
-  }
-  return res;
-}
-
 // [[Rcpp::export]]
-si_map_t ValueCountsC(const s_vec_t &values) {
-  si_map_t res;
-  for (auto const &value : values) {
-    res[value]++;
-  }
-
-  return res;
-}
-
-//' @export
-// [[Rcpp::export]]
-std::unordered_map<int, int> ValueCounts(const std::vector<int> &values) {
-  std::unordered_map<int, int> res;
-  for (int value : values) {
-    res[value]++;
-  }
-
-  return res;
-}
-
-// [[Rcpp::export]]
-List GetUmisDifference(const std::string &umi1, const std::string &umi2, int rpu1, int rpu2, bool force_neighbours, double umi_prob) {
-  if (umi1.length() != umi2.length())
-    stop("UMIs must have the same length");
-
-  int diff_pos = -1, diff_num = 0;
-  std::string nuc_diff = "NN";
-  for (int i = 0; i < umi1.length(); ++i) {
-    char n1 = umi1[i], n2 = umi2[i];
-    if (n1 == n2)
-      continue;
-
-    diff_num++;
-    if (diff_num != 1)
-      continue;
-
-    diff_pos = i;
-    nuc_diff[0] = std::min(n1, n2);
-    nuc_diff[1] = std::max(n1, n2);
-
-    if (force_neighbours)
-      break;
-  }
-
-  if (diff_num > 1) {
-    diff_pos = runif(1, 0, umi1.length())[0];
-    char n1, n2;
-    do {
-      n1 = NUCLEOTIDES[int(runif(1, 0, NUCLEOTIDES_NUM)[0])];
-      n2 = NUCLEOTIDES[int(runif(1, 0, NUCLEOTIDES_NUM)[0])];
-    }
-    while (n1 == n2);
-
-    nuc_diff[0] = std::min(n1, n2);
-    nuc_diff[1] = std::max(n1, n2);
-  }
-
-  List res = List::create(_["Position"]=diff_pos, _["Nucleotides"]=NUCL_PAIR_INDS.at(nuc_diff), _["ED"]=diff_num,
-                       _["MinRpU"]=std::min(rpu1, rpu2), _["MaxRpU"]=std::max(rpu1, rpu2));
-
-  if (umi_prob > 0) {
-    res["UmiProb"] = umi_prob;
-  }
-
-  return res;
-}
-
-// [[Rcpp::export]]
-SEXP BuildCountMatrix(const List &umis_per_gene) {
-  si_map_t gene_inds;
-  StringVector gene_names;
-
+SEXP BuildCountMatrix(const List &reads_per_umi_per_cell) {
   Progress p(0, false);
-
-  for (auto const &cell : umis_per_gene) {
-    const s_vec_t &genes = as<s_vec_t>(as<StringVector>(as<IntegerVector>(cell).names()));
-    for (auto const &gene : genes) {
-      auto iter = gene_inds.emplace(gene, gene_names.size());
-      if (iter.second) {
-        gene_names.push_back(gene);
-      }
-
-      if (p.check_abort())
-        return IntegerMatrix();
-    }
-  }
-
   using Triplet=Eigen::Triplet<unsigned>;
-  std::vector<Triplet> triplet_list;
-  for (int cell_ind = 0; cell_ind < umis_per_gene.size(); ++cell_ind) {
-    auto const &upg = as<IntegerVector>(umis_per_gene[cell_ind]);
-    const s_vec_t &genes = as<s_vec_t>(as<StringVector>(upg.names()));
 
-    for (int gene_ind = 0; gene_ind < genes.size(); ++gene_ind) {
-      triplet_list.push_back(Triplet(gene_inds.at(genes[gene_ind]), cell_ind, upg[gene_ind]));
-    }
+  auto umis_per_gene = as<IntegerVector>(reads_per_umi_per_cell["umis_per_gene"]);
+  auto cells = as<CharacterVector>(reads_per_umi_per_cell["cells"]);
+  auto genes = as<CharacterVector>(reads_per_umi_per_cell["genes"]);
+  auto cell_indexes = as<IntegerVector>(reads_per_umi_per_cell["cell_indexes"]);
+  auto gene_indexes = as<IntegerVector>(reads_per_umi_per_cell["gene_indexes"]);
 
+  std::vector<Triplet> triplet_list(umis_per_gene.size());
+  for (int i = 0; i < umis_per_gene.size(); ++i)
+  {
     if (p.check_abort())
       return IntegerMatrix();
+
+    triplet_list[i] = Triplet(gene_indexes[i], cell_indexes[i], umis_per_gene[i]);
   }
 
-  Eigen::SparseMatrix<unsigned> mat(gene_names.size(), umis_per_gene.size());
+  Eigen::SparseMatrix<unsigned> mat(genes.size(), cells.size());
   mat.setFromTriplets(triplet_list.begin(), triplet_list.end());
 
   S4 res(wrap(mat));
-  res.slot("Dimnames") = List::create(gene_names, as<StringVector>(umis_per_gene.names()));
+  res.slot("Dimnames") = List::create(genes, cells);
   return res;
 }
 
@@ -221,25 +104,17 @@ List AddIndexesToRpU(const List &reads_per_umi_per_cb, const std::vector<std::st
   }
 
   List res(reads_per_umi_per_cb.size());
-  for (int cell_ind = 0; cell_ind < reads_per_umi_per_cb.size(); ++cell_ind) {
-    auto const &cell_rpu = as<List>(reads_per_umi_per_cb[cell_ind]);
-    List cell_res(cell_rpu.size());
-
-    for (int gene_ind = 0; gene_ind < cell_rpu.size(); ++gene_ind) {
-      auto const &cur_umis = as<s_vec_t>(as<StringVector>(as<IntegerVector>(cell_rpu[gene_ind]).names()));
-      IntegerVector indexes(cur_umis.size());
-      for (int umi_ind = 0; umi_ind < indexes.size(); ++umi_ind) {
-        indexes[umi_ind] = umi_inds.at(cur_umis[umi_ind]);
-      }
-
-      cell_res[gene_ind] = List::create(_["rpus"] = cell_rpu[gene_ind], _["indexes"] = indexes);
+  for (int rpu_ind = 0; rpu_ind < reads_per_umi_per_cb.size(); ++rpu_ind) {
+    auto const &rpus = as<List>(reads_per_umi_per_cb[rpu_ind]);
+    auto const cur_umis = as<s_vec_t>(GeneInfo(rpus).umis);
+    IntegerVector indexes(cur_umis.size());
+    for (int umi_ind = 0; umi_ind < indexes.size(); ++umi_ind) {
+      indexes[umi_ind] = umi_inds.at(cur_umis[umi_ind]);
     }
 
-    cell_res.attr("names") = as<StringVector>(cell_rpu.names());
-    res[cell_ind] = cell_res;
+    res[rpu_ind] = List::create(_["rpus"] = rpus, _["indexes"] = indexes);
   }
 
-  res.attr("names") = as<StringVector>(reads_per_umi_per_cb.names());
   return res;
 }
 
@@ -255,20 +130,18 @@ List AddIndexesToRpU(const List &reads_per_umi_per_cb, const std::vector<std::st
 si_map_t GetUmisDistribution(List umis_per_gene_per_cell, int smooth = 1) {
   si_map_t res;
 
-  for (const List &umis_per_gene : umis_per_gene_per_cell) {
-    for (const IntegerVector &rpus : umis_per_gene) {
-      for (const String &umi : as<StringVector>(rpus.names())) {
-        res[umi]++;
-      }
+  for (const List &rpus: umis_per_gene_per_cell) {
+    for (auto const &umi : as<s_vec_t>(GeneInfo(rpus).umis)) {
+      res[umi]++;
     }
   }
 
   if (res.empty()) {
-    warning("UMIs distribution is empty");
+    warning("UMI distribution is empty");
     return res;
   }
 
-  int umi_length = res.begin()->first.length();
+  unsigned umi_length = res.begin()->first.length();
   for (auto const &umi : GetUmisList(umi_length)) {
     res[umi] += smooth;
   }

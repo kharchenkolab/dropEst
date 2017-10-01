@@ -13,6 +13,7 @@ using s_vec_t = std::vector<std::string>;
 using ss_pair = std::pair<std::string, std::string>;
 using si_map_t = std::unordered_map<std::string, int>;
 using sd_map_t = std::unordered_map<std::string, double>;
+using slst_map_t = std::unordered_map<std::string, Rcpp::List>;
 using ssi_map_t = std::unordered_map<std::string, si_map_t>;
 using umis_per_gene_t = std::unordered_map<std::string, ssi_map_t>;
 
@@ -34,12 +35,12 @@ s_vec_t as_s_vec(T vec) {
   return Rcpp::as<s_vec_t>(Rcpp::as<Rcpp::StringVector>(vec));
 }
 
-si_map_t parseVector(const Rcpp::IntegerVector &vec);
+slst_map_t parseList(const Rcpp::List &lst);
 
+si_map_t parseVector(const Rcpp::IntegerVector &vec);
 sd_map_t parseVector(const Rcpp::NumericVector &vec);
 
 Rcpp::NumericVector vpow(double base, const Rcpp::NumericVector& exp);
-
 Rcpp::NumericVector vpow(const Rcpp::NumericVector& base, double exp);
 
 si_map_t ValueCountsC(const s_vec_t &values);

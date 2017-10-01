@@ -165,15 +165,26 @@ BEGIN_RCPP
 END_RCPP
 }
 // PrepareClassifierData
-List PrepareClassifierData(const IntegerVector& reads_per_umi, const List& neighborhood, const NumericVector& umi_probabilities);
+DataFrame PrepareClassifierData(const List& reads_per_umi, const List& neighborhood, const NumericVector& umi_probabilities);
 RcppExport SEXP _dropestr_PrepareClassifierData(SEXP reads_per_umiSEXP, SEXP neighborhoodSEXP, SEXP umi_probabilitiesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const IntegerVector& >::type reads_per_umi(reads_per_umiSEXP);
+    Rcpp::traits::input_parameter< const List& >::type reads_per_umi(reads_per_umiSEXP);
     Rcpp::traits::input_parameter< const List& >::type neighborhood(neighborhoodSEXP);
     Rcpp::traits::input_parameter< const NumericVector& >::type umi_probabilities(umi_probabilitiesSEXP);
     rcpp_result_gen = Rcpp::wrap(PrepareClassifierData(reads_per_umi, neighborhood, umi_probabilities));
+    return rcpp_result_gen;
+END_RCPP
+}
+// PrepareClassifierTrainingData
+DataFrame PrepareClassifierTrainingData(const List& reads_per_umi_pairs);
+RcppExport SEXP _dropestr_PrepareClassifierTrainingData(SEXP reads_per_umi_pairsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const List& >::type reads_per_umi_pairs(reads_per_umi_pairsSEXP);
+    rcpp_result_gen = Rcpp::wrap(PrepareClassifierTrainingData(reads_per_umi_pairs));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -250,30 +261,14 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// GetUmisDifference
-List GetUmisDifference(const std::string& umi1, const std::string& umi2, int rpu1, int rpu2, bool force_neighbours, double umi_prob);
-RcppExport SEXP _dropestr_GetUmisDifference(SEXP umi1SEXP, SEXP umi2SEXP, SEXP rpu1SEXP, SEXP rpu2SEXP, SEXP force_neighboursSEXP, SEXP umi_probSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type umi1(umi1SEXP);
-    Rcpp::traits::input_parameter< const std::string& >::type umi2(umi2SEXP);
-    Rcpp::traits::input_parameter< int >::type rpu1(rpu1SEXP);
-    Rcpp::traits::input_parameter< int >::type rpu2(rpu2SEXP);
-    Rcpp::traits::input_parameter< bool >::type force_neighbours(force_neighboursSEXP);
-    Rcpp::traits::input_parameter< double >::type umi_prob(umi_probSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetUmisDifference(umi1, umi2, rpu1, rpu2, force_neighbours, umi_prob));
-    return rcpp_result_gen;
-END_RCPP
-}
 // BuildCountMatrix
-SEXP BuildCountMatrix(const List& umis_per_gene);
-RcppExport SEXP _dropestr_BuildCountMatrix(SEXP umis_per_geneSEXP) {
+SEXP BuildCountMatrix(const List& reads_per_umi_per_cell);
+RcppExport SEXP _dropestr_BuildCountMatrix(SEXP reads_per_umi_per_cellSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const List& >::type umis_per_gene(umis_per_geneSEXP);
-    rcpp_result_gen = Rcpp::wrap(BuildCountMatrix(umis_per_gene));
+    Rcpp::traits::input_parameter< const List& >::type reads_per_umi_per_cell(reads_per_umi_per_cellSEXP);
+    rcpp_result_gen = Rcpp::wrap(BuildCountMatrix(reads_per_umi_per_cell));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -375,13 +370,13 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dropestr_ArrangePredictions", (DL_FUNC) &_dropestr_ArrangePredictions, 2},
     {"_dropestr_FilterPredictions", (DL_FUNC) &_dropestr_FilterPredictions, 3},
     {"_dropestr_PrepareClassifierData", (DL_FUNC) &_dropestr_PrepareClassifierData, 3},
+    {"_dropestr_PrepareClassifierTrainingData", (DL_FUNC) &_dropestr_PrepareClassifierTrainingData, 1},
     {"_dropestr_GetTrimCollisionsNum", (DL_FUNC) &_dropestr_GetTrimCollisionsNum, 2},
     {"_dropestr_GetBootstrapUmisMeanNum", (DL_FUNC) &_dropestr_GetBootstrapUmisMeanNum, 4},
     {"_dropestr_AdjustGeneExpressionClassic", (DL_FUNC) &_dropestr_AdjustGeneExpressionClassic, 2},
     {"_dropestr_AdjustGeneExpression", (DL_FUNC) &_dropestr_AdjustGeneExpression, 3},
     {"_dropestr_ValueCountsC", (DL_FUNC) &_dropestr_ValueCountsC, 1},
     {"_dropestr_ValueCounts", (DL_FUNC) &_dropestr_ValueCounts, 1},
-    {"_dropestr_GetUmisDifference", (DL_FUNC) &_dropestr_GetUmisDifference, 6},
     {"_dropestr_BuildCountMatrix", (DL_FUNC) &_dropestr_BuildCountMatrix, 1},
     {"_dropestr_ParseUmisPerGene", (DL_FUNC) &_dropestr_ParseUmisPerGene, 2},
     {"_dropestr_TrimUmis", (DL_FUNC) &_dropestr_TrimUmis, 2},
