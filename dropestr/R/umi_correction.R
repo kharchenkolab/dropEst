@@ -1,5 +1,4 @@
 #' @useDynLib dropestr
-#' @importFrom Rcpp sourceCpp
 NULL
 
 GetMcCores <- function(mc.cores) {
@@ -160,39 +159,6 @@ FillCollisionsAdjustmentInfo <- function(umi.probabilities, max.umi.per.gene, st
   return(list(adjusted=adjusted.sizes, observed=estimated.sizes, is.converged=(max.estimated.size >= max.umi.per.gene)))
 }
 
-TrainNB <- function(train.data, answers, distribution.smooth, positive.nucl.prior, positive.pos.prior) {
-  smoothedDistribution <- function(values, smooth, max.value) {
-    freqs <- rep(smooth, max.value)
-    freqs.data <- table(values)
-    data.inds <- as.integer(names(freqs.data)) + 1
-    freqs[data.inds] <- freqs[data.inds] + freqs.data
-    return(freqs / sum(freqs))
-  }
-
-  train.pos <- train.data[answers == 0,]
-  train.neg <- train.data[answers == 1,]
-
-  if (nrow(train.pos) == 0)
-    stop('Data has no training samples without errors')
-
-  if (nrow(train.neg) == 0)
-    stop('Data has no training samples with errors')
-
-  params.pos <- base::colSums(dplyr::select(train.pos, MinRpU, MaxRpU))
-  params.pos <- as.list(params.pos / sum(params.pos))
-
-  params.pos$Nucleotides <- positive.nucl.prior
-  params.pos$Position <- positive.pos.prior
-
-  params.neg <- base::colSums(dplyr::select(train.neg, MinRpU, MaxRpU))
-  params.neg <- as.list(params.neg / sum(params.neg))
-
-  params.neg$Position <- smoothedDistribution(train.neg$Position, distribution.smooth, length(positive.pos.prior))
-  params.neg$Nucleotides <- smoothedDistribution(train.neg$Nucleotides, distribution.smooth, length(positive.nucl.prior))
-
-  return(list(positive = params.pos, negative = params.neg))
-}
-
 #' @export
 GetUmiProbabilitiesIndex <- function(umi.probs, umi.tolerance) { #TODO: not export
   res <- paste(round(umi.probs / umi.tolerance))
@@ -210,19 +176,6 @@ GetDPMatrices <- function(neighbour.probs, max.umi.per.gene, max.neighbours, tol
   names(dp.matrices) <- GetUmiProbabilitiesIndex(uniq.umi.probs, umi.tolerance)
 
   return(list(dp.matrices=dp.matrices, neighb.prob.index=neighb.prob.index))
-}
-
-#' @export
-TrainNBClassifier <- function(reads.per.umi.per.cb, distribution.smooth, positive.nucl.prior=NULL, positive.pos.prior=NULL) {
-  train.data <- PrepareClassifierTrainingData(reads.per.umi.per.cb[sapply(reads.per.umi.per.cb, length) == 2])
-
-  train.data <- dplyr::filter(train.data, ED == 1 | ED > 3) # TODO: is it a biased estimator? Should we use estimation over all data, but not only over genes with 2 UMIs?
-  train.answers <- as.integer(train.data$ED == 1)
-  train.data <- dplyr::select(train.data, -ED)
-
-  return(TrainNB(train.data, train.answers, distribution.smooth,
-                 positive.nucl.prior=positive.nucl.prior,
-                 positive.pos.prior=positive.pos.prior))
 }
 
 # Algorithm:

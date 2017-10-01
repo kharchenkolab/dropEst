@@ -3,18 +3,19 @@
 
 using namespace Rcpp;
 
-inline void hash_combine(std::size_t& seed) { }
+inline void hash_combine(std::size_t &seed) {}
 
 template <typename T, typename... Rest>
-inline void hash_combine(std::size_t& seed, const T& v, Rest... rest) {
+inline void hash_combine(std::size_t &seed, const T &v, Rest... rest) {
   std::hash<T> hasher;
-  seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+  seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
   hash_combine(seed, rest...);
 }
 
-struct pair_hash {
+struct pair_hash
+{
   template <class T1, class T2>
-  std::size_t operator () (const std::pair<T1,T2> &p) const {
+  std::size_t operator()(const std::pair<T1, T2> &p) const {
     size_t h;
     hash_combine(h, p.first, p.second);
     return h;
@@ -35,10 +36,11 @@ private:
     const int nucleotide_substitution;
     const int difference_position;
     const double umi_prob;
+    const double log_quality_small;
 
     ClassifierRow(const std::string &umi_small, const std::string umi_large, int reads_per_umi_small,
                   int reads_per_umi_large, int edit_distance, int nucleotide_substitution, int difference_position,
-                  double umi_prob)
+                  double umi_prob, double log_quality_small)
       : umi_small(umi_small)
       , umi_large(umi_large)
       , reads_per_umi_small(reads_per_umi_small)
@@ -47,7 +49,7 @@ private:
       , nucleotide_substitution(nucleotide_substitution)
       , difference_position(difference_position)
       , umi_prob(umi_prob)
-    {}
+      , log_quality_small(log_quality_small) {}
   };
 
   using pairs_set = std::unordered_set<std::pair<std::string, std::string>, pair_hash>;
@@ -60,45 +62,54 @@ private:
   pairs_set _presented_umi_pairs;
 
 private:
-    ClassifierRow fill_row(const UmiInfo &umi_small, const UmiInfo &umi_large, double umi_prob) {
-      if (umi_small.umi.length() != umi_large.umi.length())
-        stop("UMIs must have the same length");
+  ClassifierRow fill_row(const UmiInfo &umi_small, const UmiInfo &umi_large, double umi_prob) {
+    if (umi_small.umi.length() != umi_large.umi.length())
+      stop("UMIs must have the same length");
 
-      int diff_pos = -1, diff_num = 0;
-      std::string nuc_diff = "NN";
-      for (int i = 0; i < umi_small.umi.length(); ++i) {
-        char n1 = umi_small.umi[i], n2 = umi_large.umi[i];
-        if (n1 == n2)
-          continue;
+    int diff_pos = -1, diff_num = 0;
+    std::string nuc_diff = "NN";
+    for (int i = 0; i < umi_small.umi.length(); ++i) {
+      char n1 = umi_small.umi[i], n2 = umi_large.umi[i];
+      if (n1 == n2)
+        continue;
 
-        diff_num++;
-        if (diff_num != 1)
-          continue;
+      diff_num++;
+      if (diff_num != 1)
+        continue;
 
-        diff_pos = i;
-        nuc_diff[0] = std::min(n1, n2);
-        nuc_diff[1] = std::max(n1, n2);
+      diff_pos = i;
+      nuc_diff[0] = std::min(n1, n2);
+      nuc_diff[1] = std::max(n1, n2);
 
-        if (this->_force_neighbours)
-          break;
-      }
-
-      if (diff_num > 1) {
-        diff_pos = runif(1, 0, umi_small.umi.length())[0];
-        char n1, n2;
-        do {
-          n1 = NUCLEOTIDES[int(runif(1, 0, NUCLEOTIDES_NUM)[0])];
-          n2 = NUCLEOTIDES[int(runif(1, 0, NUCLEOTIDES_NUM)[0])];
-        }
-        while (n1 == n2);
-
-        nuc_diff[0] = std::min(n1, n2);
-        nuc_diff[1] = std::max(n1, n2);
-      }
-
-      return ClassifierRow(umi_small.umi, umi_large.umi, umi_small.reads_per_umi, umi_large.reads_per_umi, diff_num,
-                           NUCL_PAIR_INDS.at(nuc_diff), diff_pos, umi_prob);
+      if (this->_force_neighbours)
+        break;
     }
+
+    if (diff_num > 1) {
+      diff_pos = runif(1, 0, umi_small.umi.length())[0];
+      char n1, n2;
+      do {
+        n1 = NUCLEOTIDES[int(runif(1, 0, NUCLEOTIDES_NUM)[0])];
+        n2 = NUCLEOTIDES[int(runif(1, 0, NUCLEOTIDES_NUM)[0])];
+      } while (n1 == n2);
+
+      nuc_diff[0] = std::min(n1, n2);
+      nuc_diff[1] = std::max(n1, n2);
+    }
+
+    if (diff_pos == -1) {
+      warning("Equal UMIs were compared");
+    }
+
+    if (diff_num == 1) {
+      double quality_small = diff_pos == -1 ? -1 : umi_small.mean_quality(diff_pos);
+      return ClassifierRow(umi_small.umi, umi_large.umi, umi_small.reads_per_umi, umi_large.reads_per_umi, diff_num,
+                           NUCL_PAIR_INDS.at(nuc_diff), diff_pos, umi_prob, quality_small);
+    }
+
+    return ClassifierRow(umi_small.umi, umi_large.umi, umi_small.reads_per_umi, umi_large.reads_per_umi, diff_num,
+                         NA_INTEGER, NA_INTEGER, umi_prob, NA_REAL);
+  }
 
 public:
   bool add_umis(const UmiInfo &umi1, const UmiInfo &umi2) {
@@ -122,8 +133,7 @@ public:
     , _force_neighbours(force_neighbours)
   {}
 
-  DataFrame to_data_frame() const
-  {
+  DataFrame to_data_frame() const {
     if (this->_data.empty())
       return DataFrame();
 
@@ -135,9 +145,9 @@ public:
     IntegerVector nucleotide_substitution(this->_data.size());
     IntegerVector difference_position(this->_data.size());
     NumericVector umi_prob(this->_data.size());
+    NumericVector mean_log_quality_small(this->_data.size());
 
-    for (size_t i = 0; i < this->_data.size(); ++i)
-    {
+    for (size_t i = 0; i < this->_data.size(); ++i) {
       auto const &umi_info = this->_data[i];
       umi_small[i] = umi_info.umi_small;
       umi_large[i] = umi_info.umi_large;
@@ -147,11 +157,13 @@ public:
       nucleotide_substitution[i] = umi_info.nucleotide_substitution;
       difference_position[i] = umi_info.difference_position;
       umi_prob[i] = umi_info.umi_prob;
+      mean_log_quality_small[i] = umi_info.log_quality_small;
     }
 
     auto res = DataFrame::create(_["Base"] = umi_small, _["Target"] = umi_large, _["Position"] = difference_position,
                                  _["Nucleotides"] = nucleotide_substitution, _["ED"] = edit_distance,
-                                 _["MinRpU"] = reads_per_umi_small, _["MaxRpU"] = reads_per_umi_large);
+                                 _["MinRpU"] = reads_per_umi_small, _["MaxRpU"] = reads_per_umi_large,
+                                 _["Quality"] = mean_log_quality_small);
 
     if (this->_save_probs) {
       res["UmiProb"] = umi_prob;
@@ -162,27 +174,30 @@ public:
 };
 
 // [[Rcpp::export]]
-NumericVector PredictNBC(const List &clf, const List &predict_data) {
-  std::vector<NumericVector> probs(2);
-  for (int i = 0; i < 2; ++i) {
-    auto const &cur_clf = as<List>(clf[i]);
+std::vector<int> Quantize(const std::vector<double> &values, std::vector<double> quant_borders) {
+  const double EPS = 1e-7;
+  std::vector<int> quants(values.size());
 
-    NumericVector nucl_prob = as<NumericVector>(cur_clf["Nucleotides"])[as<IntegerVector>(predict_data["Nucleotides"])];
-    NumericVector position_prob = as<NumericVector>(cur_clf["Position"])[as<IntegerVector>(predict_data["Position"])];
-
-    NumericVector min_rpu_prob = vpow(as<double>(cur_clf["MinRpU"]), as<NumericVector>(predict_data["MinRpU"]));
-    NumericVector max_rpu_prob = vpow(as<double>(cur_clf["MaxRpU"]), as<NumericVector>(predict_data["MaxRpU"]));
-
-    probs[i] = nucl_prob * position_prob * min_rpu_prob * max_rpu_prob;
+  for (int val_id = 0; val_id < values.size(); ++val_id) {
+    const double value = values[val_id];
+    for (int border_id = 0; border_id < quant_borders.size(); ++border_id) {
+      if (value < quant_borders[border_id] + EPS) {
+        quants[val_id] = border_id;
+        break;
+      }
+    }
   }
 
-  return probs[1] / (probs[1] + probs[0]);
+  return quants;
 }
 
 // [[Rcpp::export]]
-NumericVector PredictLeftPart(const List &neg_clf, const std::vector<double> &rpu_prob, const DataFrame &predict_data, int gene_size) {
-  NumericVector nucl_prob = log(as<NumericVector>(as<NumericVector>(neg_clf["Nucleotides"])[as<IntegerVector>(predict_data["Nucleotides"])]));
-  NumericVector position_prob = log(as<NumericVector>(as<NumericVector>(neg_clf["Position"])[as<IntegerVector>(predict_data["Position"])]));
+NumericVector PredictLeftPart(const List &neg_clf, const std::vector<double> &rpu_prob, const DataFrame &predict_data,
+                              int gene_size) {
+  NumericVector nucl_prob = log(
+    as<NumericVector>(as<NumericVector>(neg_clf["Nucleotides"])[as<IntegerVector>(predict_data["Nucleotides"])]));
+  NumericVector position_prob = log(
+    as<NumericVector>(as<NumericVector>(neg_clf["Position"])[as<IntegerVector>(predict_data["Position"])]));
 
   NumericVector min_rpu_prob_neg = std::log(as<double>(neg_clf["MinRpU"])) * as<NumericVector>(predict_data["MinRpU"]);
   NumericVector max_rpu_prob_neg = std::log(as<double>(neg_clf["MaxRpU"])) * as<NumericVector>(predict_data["MaxRpU"]);
@@ -197,7 +212,8 @@ NumericVector PredictLeftPart(const List &neg_clf, const std::vector<double> &rp
 
   NumericVector umi_prob_pos = log(NumericVector(1 - vpow(1 - as<NumericVector>(predict_data["UmiProb"]), gene_size)));
 
-  return exp((nucl_prob + position_prob + min_rpu_prob_neg + max_rpu_prob_neg) - (min_rpu_prob_pos + max_rpu_prob_pos + umi_prob_pos));
+  return exp((nucl_prob + position_prob + min_rpu_prob_neg + max_rpu_prob_neg) -
+             (min_rpu_prob_pos + max_rpu_prob_pos + umi_prob_pos));
 }
 
 // [[Rcpp::export]]
@@ -208,7 +224,7 @@ std::vector<int> ArrangePredictions(const std::vector<int> &target_umi_factors, 
   std::vector<int> res(target_umi_factors.size());
   std::iota(res.begin(), res.end(), 1);
 
-  std::sort(res.begin(), res.end(), [target_umi_factors, probs](int i, int j){
+  std::sort(res.begin(), res.end(), [target_umi_factors, probs](int i, int j) {
     int f1 = target_umi_factors[i - 1], f2 = target_umi_factors[j - 1];
     if (f1 != f2)
       return f1 < f2;
@@ -220,7 +236,8 @@ std::vector<int> ArrangePredictions(const std::vector<int> &target_umi_factors, 
 }
 
 // [[Rcpp::export]]
-std::vector<bool> FilterPredictions(const s_vec_t &not_filtered_umis, const s_vec_t &base_umis, const s_vec_t &target_umis) {
+std::vector<bool>
+FilterPredictions(const s_vec_t &not_filtered_umis, const s_vec_t &base_umis, const s_vec_t &target_umis) {
   s_set_t not_filtered_umis_set(not_filtered_umis.begin(), not_filtered_umis.end());
   std::vector<bool> res(base_umis.size(), false);
   for (int i = 0; i < res.size(); ++i) {
@@ -236,8 +253,11 @@ std::vector<bool> FilterPredictions(const s_vec_t &not_filtered_umis, const s_ve
   return res;
 }
 
+// TODO: remove export
+//' @export
 // [[Rcpp::export]]
-DataFrame PrepareClassifierData(const List &reads_per_umi, const List &neighborhood, const NumericVector &umi_probabilities) {
+DataFrame
+PrepareClassifierData(const List &reads_per_umi, const List &neighborhood, const NumericVector &umi_probabilities) {
   auto rpu_data_map = parseList(reads_per_umi);
   ClassifierData res_data(true, parseVector(umi_probabilities));
   auto const &umis = as<s_vec_t>(neighborhood.names());
@@ -252,13 +272,14 @@ DataFrame PrepareClassifierData(const List &reads_per_umi, const List &neighborh
   return res_data.to_data_frame();
 }
 
+// TODO: remove export
+//' @export
 // [[Rcpp::export]]
 DataFrame PrepareClassifierTrainingData(const List &reads_per_umi_pairs) {
   ClassifierData res_data(false);
   for (const List &rpu_pair : reads_per_umi_pairs) {
     auto umis = as<s_vec_t>(as<StringVector>(rpu_pair.names()));
-	  res_data.add_umis(UmiInfo(umis[0], as<List>(rpu_pair[0])),
-                      UmiInfo(umis[1], as<List>(rpu_pair[1])));
+    res_data.add_umis(UmiInfo(umis[0], as<List>(rpu_pair[0])), UmiInfo(umis[1], as<List>(rpu_pair[1])));
   }
 
   return res_data.to_data_frame();

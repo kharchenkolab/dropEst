@@ -42,8 +42,8 @@ FilterUmisInGeneSimple <- function(reads_per_umi, neighbourhood, mult = 1) {
     .Call('_dropestr_FilterUmisInGeneSimple', PACKAGE = 'dropestr', reads_per_umi, neighbourhood, mult)
 }
 
-PredictNBC <- function(clf, predict_data) {
-    .Call('_dropestr_PredictNBC', PACKAGE = 'dropestr', clf, predict_data)
+Quantize <- function(values, quant_borders) {
+    .Call('_dropestr_Quantize', PACKAGE = 'dropestr', values, quant_borders)
 }
 
 PredictLeftPart <- function(neg_clf, rpu_prob, predict_data, gene_size) {
@@ -58,10 +58,12 @@ FilterPredictions <- function(not_filtered_umis, base_umis, target_umis) {
     .Call('_dropestr_FilterPredictions', PACKAGE = 'dropestr', not_filtered_umis, base_umis, target_umis)
 }
 
+#' @export
 PrepareClassifierData <- function(reads_per_umi, neighborhood, umi_probabilities) {
     .Call('_dropestr_PrepareClassifierData', PACKAGE = 'dropestr', reads_per_umi, neighborhood, umi_probabilities)
 }
 
+#' @export
 PrepareClassifierTrainingData <- function(reads_per_umi_pairs) {
     .Call('_dropestr_PrepareClassifierTrainingData', PACKAGE = 'dropestr', reads_per_umi_pairs)
 }

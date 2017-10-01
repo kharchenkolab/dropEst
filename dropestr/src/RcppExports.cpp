@@ -113,15 +113,15 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// PredictNBC
-NumericVector PredictNBC(const List& clf, const List& predict_data);
-RcppExport SEXP _dropestr_PredictNBC(SEXP clfSEXP, SEXP predict_dataSEXP) {
+// Quantize
+std::vector<int> Quantize(const std::vector<double>& values, std::vector<double> quant_borders);
+RcppExport SEXP _dropestr_Quantize(SEXP valuesSEXP, SEXP quant_bordersSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const List& >::type clf(clfSEXP);
-    Rcpp::traits::input_parameter< const List& >::type predict_data(predict_dataSEXP);
-    rcpp_result_gen = Rcpp::wrap(PredictNBC(clf, predict_data));
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type values(valuesSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type quant_borders(quant_bordersSEXP);
+    rcpp_result_gen = Rcpp::wrap(Quantize(values, quant_borders));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -365,7 +365,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dropestr_GetSmallerNeighboursDistributionsBySizes", (DL_FUNC) &_dropestr_GetSmallerNeighboursDistributionsBySizes, 6},
     {"_dropestr_GetSmallerNeighbourProbabilities", (DL_FUNC) &_dropestr_GetSmallerNeighbourProbabilities, 2},
     {"_dropestr_FilterUmisInGeneSimple", (DL_FUNC) &_dropestr_FilterUmisInGeneSimple, 3},
-    {"_dropestr_PredictNBC", (DL_FUNC) &_dropestr_PredictNBC, 2},
+    {"_dropestr_Quantize", (DL_FUNC) &_dropestr_Quantize, 2},
     {"_dropestr_PredictLeftPart", (DL_FUNC) &_dropestr_PredictLeftPart, 4},
     {"_dropestr_ArrangePredictions", (DL_FUNC) &_dropestr_ArrangePredictions, 2},
     {"_dropestr_FilterPredictions", (DL_FUNC) &_dropestr_FilterPredictions, 3},
