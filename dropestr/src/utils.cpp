@@ -218,3 +218,8 @@ std::unordered_set<int> GetMirrorPairs(const StringVector &pairs, const NumericV
 
   return answers;
 }
+
+// [[Rcpp::export]]
+unsigned NumberOfNucleotidePairs() {
+  return unsigned(NUCL_PAIR_INDS.size());
+}

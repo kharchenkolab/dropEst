@@ -46,8 +46,8 @@ Quantize <- function(values, quant_borders) {
     .Call('_dropestr_Quantize', PACKAGE = 'dropestr', values, quant_borders)
 }
 
-PredictLeftPart <- function(neg_clf, rpu_prob, predict_data, gene_size) {
-    .Call('_dropestr_PredictLeftPart', PACKAGE = 'dropestr', neg_clf, rpu_prob, predict_data, gene_size)
+PredictLeftPart <- function(classifier, predict_data, gene_size) {
+    .Call('_dropestr_PredictLeftPart', PACKAGE = 'dropestr', classifier, predict_data, gene_size)
 }
 
 ArrangePredictions <- function(target_umi_factors, probs) {
@@ -147,5 +147,9 @@ ConcatLists <- function(lists) {
 
 GetMirrorPairs <- function(pairs, probs, tol = 1e-5) {
     .Call('_dropestr_GetMirrorPairs', PACKAGE = 'dropestr', pairs, probs, tol)
+}
+
+NumberOfNucleotidePairs <- function() {
+    .Call('_dropestr_NumberOfNucleotidePairs', PACKAGE = 'dropestr')
 }
 

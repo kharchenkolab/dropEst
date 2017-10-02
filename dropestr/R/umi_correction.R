@@ -67,18 +67,15 @@ CorrectUmiSequenceErrors <- function(reads.per.umi.per.cb.info, umi.probabilitie
     cat("Estimating prior error probabilities...")
   }
 
-  clf <- TrainNBClassifier(reads.per.umi.per.cb, distribution.smooth,
-                           correction.info$classifier.info$nucl.probabilities,
-                           correction.info$classifier.info$position.probabilities)
-  rpu.probs <- GetReadsPerUmiDistribution(reads.per.umi.per.cb)
+  clf <- TrainNBClassifier(reads.per.umi.per.cb, distribution.smooth)
 
   if (verbosity.level > 0) {
     cat(" Completed.\n")
     cat("Correcting UMI sequence errors...")
   }
   filt.cells <- plapply(correction.info$rpus.with.inds, FilterUmisInGene, correction.info$neighbours.per.umi,
-                        correction.info$dp.matrices, clf$negative, correction.info$neighb.prob.index, umi.probabilities,
-                        collisions.info, rpu.probs, mc.cores=mc.cores)
+                        correction.info$dp.matrices, clf, correction.info$neighb.prob.index, umi.probabilities,
+                        collisions.info, mc.cores=mc.cores)
 
   if (verbosity.level > 0) {
     cat(" Completed.\n")
@@ -213,7 +210,7 @@ FilterUmisInGeneOneStep <- function(cur.reads.per.umi, neighbours.per.umi, dp.ma
 
 #' @export
 FilterUmisInGene <- function(cur.gene, neighbours.per.umi, dp.matrices, classifier, neighbours.prob.index,
-                             umi.probabilities, collisions.info, rpu.probabilities, max.iter=100, verbose=FALSE) {
+                             umi.probabilities, collisions.info, max.iter=100, verbose=FALSE) {
   if (length(cur.gene$rpus) == 1)
     return(cur.gene$rpus)
 
@@ -242,7 +239,7 @@ FilterUmisInGene <- function(cur.gene, neighbours.per.umi, dp.matrices, classifi
   for (step in 1:max.iter) {
     size.adj <- AdjustGeneExpression(length(filt.reads.per.umi), collisions.info$adjusted, collisions.info$observed)
 
-    classifier.df$MergeProb <- PredictLeftPart(classifier, rpu.probabilities, classifier.df, size.adj)
+    classifier.df$MergeProb <- PredictLeftPart(classifier, classifier.df, size.adj)
     classifier.df <- classifier.df[order(classifier.df$Target, classifier.df$MergeProb),]
 
     not.filtered.umis <- FilterUmisInGeneOneStep(filt.reads.per.umi, neighbours.per.umi, dp.matrices, max.neighbours.num,
@@ -303,12 +300,10 @@ PrepareUmiCorrectionInfo <- function(umi.probabilities, max.umi.per.gene, reads.
     cat(" Completed.\n\n")
   }
 
-  classifier.info <- neighbours.info[c('nucl.probabilities', 'position.probabilities')]
   return(list(neighbours.per.umi=neighbours.per.umi, neighb.prob.index=neighb.prob.index,
-              rpus.with.inds=rpus.with.inds, classifier.info=classifier.info, dp.matrices=dp.matrices))
+              rpus.with.inds=rpus.with.inds, dp.matrices=dp.matrices))
 }
 
-#' @export
 GetReadsPerUmiDistribution <- function(reads.per.umi.per.cb, smooth=10) {
   rpu.counts <- ValueCounts(unlist(reads.per.umi.per.cb)) #TODO: optimize with data.table? or optimize unlist or rewrite the whole function
 

@@ -50,27 +50,6 @@ List SubsetAdjacentUmis(const s_vec_t &umis) {
   return res;
 }
 
-std::pair<int, int> GetUmisDifference(const std::string &umi1, const std::string &umi2) {
-  if (umi1.length() != umi2.length())
-    stop("UMIs must have the same length");
-
-  int diff_pos = -1;
-  std::string nuc_diff = "NN";
-  for (int i = 0; i < umi1.length(); ++i) {
-    char n1 = umi1[i], n2 = umi2[i];
-    if (n1 == n2)
-      continue;
-
-    diff_pos = i;
-    nuc_diff[0] = std::min(n1, n2);
-    nuc_diff[1] = std::max(n1, n2);
-
-    break;
-  }
-
-  return std::make_pair(diff_pos, NUCL_PAIR_INDS.at(nuc_diff));
-}
-
 //' Fill information about adjacent UMIs, their probabilities and differences for each UMI.
 //'
 //' @param umi_probabilites vector of UMI probabilities.
@@ -85,8 +64,6 @@ List FillAdjacentUmisData(const NumericVector &umi_probabilites, bool adjacent_o
   const sd_map_t umi_probs_map = parseVector(umi_probabilites);
 
   sd_map_t adjacent_probs;
-  NumericVector position_probs(umis.at(0).length(), 0), nucl_probs(NUCL_PAIR_INDS.size(), 0);
-
   Progress progress(umis.size(), show_progress);
   std::unordered_map<std::string, s_vec_t> neighbours;
   for (auto const &cur_umi : umis) {
@@ -107,12 +84,6 @@ List FillAdjacentUmisData(const NumericVector &umi_probabilites, bool adjacent_o
 
         double neighb_umi_prob = umi_probs_map.at(neighb_umi);
         sum_prob += neighb_umi_prob;
-
-        auto umi_difference = GetUmisDifference(cur_umi, neighb_umi);
-
-        double pair_prob = neighb_umi_prob * cur_umi_prob;
-        position_probs[umi_difference.first] += pair_prob;
-        nucl_probs[umi_difference.second] += pair_prob;
       }
     }
 
@@ -129,12 +100,7 @@ List FillAdjacentUmisData(const NumericVector &umi_probabilites, bool adjacent_o
   if (adjacent_only)
     return wrap(neighbours);
 
-  double sum_pair_probs = sum(position_probs);
-  position_probs = position_probs / sum_pair_probs;
-  nucl_probs = nucl_probs / sum_pair_probs;
-
-  return List::create(_["adjacent.umis"] = neighbours, _["probabilities"] = adjacent_probs,
-                      _["nucl.probabilities"] = nucl_probs, _["position.probabilities"] = position_probs);
+  return List::create(_["adjacent.umis"] = neighbours, _["probabilities"] = adjacent_probs);
 }
 
 // [[Rcpp::export]]

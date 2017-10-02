@@ -114,28 +114,27 @@ BEGIN_RCPP
 END_RCPP
 }
 // Quantize
-std::vector<int> Quantize(const std::vector<double>& values, std::vector<double> quant_borders);
+IntegerVector Quantize(const NumericVector& values, const NumericVector& quant_borders);
 RcppExport SEXP _dropestr_Quantize(SEXP valuesSEXP, SEXP quant_bordersSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type values(valuesSEXP);
-    Rcpp::traits::input_parameter< std::vector<double> >::type quant_borders(quant_bordersSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type values(valuesSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type quant_borders(quant_bordersSEXP);
     rcpp_result_gen = Rcpp::wrap(Quantize(values, quant_borders));
     return rcpp_result_gen;
 END_RCPP
 }
 // PredictLeftPart
-NumericVector PredictLeftPart(const List& neg_clf, const std::vector<double>& rpu_prob, const DataFrame& predict_data, int gene_size);
-RcppExport SEXP _dropestr_PredictLeftPart(SEXP neg_clfSEXP, SEXP rpu_probSEXP, SEXP predict_dataSEXP, SEXP gene_sizeSEXP) {
+NumericVector PredictLeftPart(const List& classifier, const DataFrame& predict_data, int gene_size);
+RcppExport SEXP _dropestr_PredictLeftPart(SEXP classifierSEXP, SEXP predict_dataSEXP, SEXP gene_sizeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const List& >::type neg_clf(neg_clfSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type rpu_prob(rpu_probSEXP);
+    Rcpp::traits::input_parameter< const List& >::type classifier(classifierSEXP);
     Rcpp::traits::input_parameter< const DataFrame& >::type predict_data(predict_dataSEXP);
     Rcpp::traits::input_parameter< int >::type gene_size(gene_sizeSEXP);
-    rcpp_result_gen = Rcpp::wrap(PredictLeftPart(neg_clf, rpu_prob, predict_data, gene_size));
+    rcpp_result_gen = Rcpp::wrap(PredictLeftPart(classifier, predict_data, gene_size));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -355,6 +354,16 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// NumberOfNucleotidePairs
+unsigned NumberOfNucleotidePairs();
+RcppExport SEXP _dropestr_NumberOfNucleotidePairs() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(NumberOfNucleotidePairs());
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_dropestr_GetCrossmergedMask", (DL_FUNC) &_dropestr_GetCrossmergedMask, 2},
@@ -366,7 +375,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dropestr_GetSmallerNeighbourProbabilities", (DL_FUNC) &_dropestr_GetSmallerNeighbourProbabilities, 2},
     {"_dropestr_FilterUmisInGeneSimple", (DL_FUNC) &_dropestr_FilterUmisInGeneSimple, 3},
     {"_dropestr_Quantize", (DL_FUNC) &_dropestr_Quantize, 2},
-    {"_dropestr_PredictLeftPart", (DL_FUNC) &_dropestr_PredictLeftPart, 4},
+    {"_dropestr_PredictLeftPart", (DL_FUNC) &_dropestr_PredictLeftPart, 3},
     {"_dropestr_ArrangePredictions", (DL_FUNC) &_dropestr_ArrangePredictions, 2},
     {"_dropestr_FilterPredictions", (DL_FUNC) &_dropestr_FilterPredictions, 3},
     {"_dropestr_PrepareClassifierData", (DL_FUNC) &_dropestr_PrepareClassifierData, 3},
@@ -385,6 +394,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dropestr_GetUmisList", (DL_FUNC) &_dropestr_GetUmisList, 1},
     {"_dropestr_ConcatLists", (DL_FUNC) &_dropestr_ConcatLists, 1},
     {"_dropestr_GetMirrorPairs", (DL_FUNC) &_dropestr_GetMirrorPairs, 3},
+    {"_dropestr_NumberOfNucleotidePairs", (DL_FUNC) &_dropestr_NumberOfNucleotidePairs, 0},
     {NULL, NULL, 0}
 };
 

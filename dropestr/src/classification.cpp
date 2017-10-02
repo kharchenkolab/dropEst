@@ -174,9 +174,9 @@ public:
 };
 
 // [[Rcpp::export]]
-std::vector<int> Quantize(const std::vector<double> &values, std::vector<double> quant_borders) {
+IntegerVector Quantize(const NumericVector &values, const NumericVector &quant_borders) {
   const double EPS = 1e-7;
-  std::vector<int> quants(values.size());
+  IntegerVector quants(values.size());
 
   for (int val_id = 0; val_id < values.size(); ++val_id) {
     const double value = values[val_id];
@@ -192,28 +192,41 @@ std::vector<int> Quantize(const std::vector<double> &values, std::vector<double>
 }
 
 // [[Rcpp::export]]
-NumericVector PredictLeftPart(const List &neg_clf, const std::vector<double> &rpu_prob, const DataFrame &predict_data,
-                              int gene_size) {
-  NumericVector nucl_prob = log(
-    as<NumericVector>(as<NumericVector>(neg_clf["Nucleotides"])[as<IntegerVector>(predict_data["Nucleotides"])]));
-  NumericVector position_prob = log(
-    as<NumericVector>(as<NumericVector>(neg_clf["Position"])[as<IntegerVector>(predict_data["Position"])]));
+NumericVector PredictLeftPart(const List &classifier, const DataFrame &predict_data, int gene_size) {
+  using NV = NumericVector;
+  using IV = IntegerVector;
 
-  NumericVector min_rpu_prob_neg = std::log(as<double>(neg_clf["MinRpU"])) * as<NumericVector>(predict_data["MinRpU"]);
-  NumericVector max_rpu_prob_neg = std::log(as<double>(neg_clf["MaxRpU"])) * as<NumericVector>(predict_data["MaxRpU"]);
+  List error_distributions = as<List>(classifier["Negative"]);
+  List common_distributions = as<List>(classifier["Common"]);
 
-  NumericVector min_rpu_prob_pos(max_rpu_prob_neg.size());
-  NumericVector max_rpu_prob_pos(max_rpu_prob_neg.size());
+  NV nucl_prob_err = log(as<NV>(as<NV>(error_distributions["Nucleotides"])[as<IV>(predict_data["Nucleotides"])]));
+  NV position_prob_err = log(as<NV>(as<NV>(error_distributions["Position"])[as<IV>(predict_data["Position"])]));
 
-  for (int i = 0; i < max_rpu_prob_neg.size(); ++i) {
-    min_rpu_prob_pos[i] = std::log(rpu_prob.at(as<IntegerVector>(predict_data["MinRpU"])[i] - 1));
-    max_rpu_prob_pos[i] = std::log(rpu_prob.at(as<IntegerVector>(predict_data["MaxRpU"])[i] - 1));
+  NV min_rpu_prob_err = std::log(as<double>(error_distributions["MinRpU"])) * as<NV>(predict_data["MinRpU"]);
+  NV max_rpu_prob_err = std::log(as<double>(error_distributions["MaxRpU"])) * as<NV>(predict_data["MaxRpU"]);
+
+  IV quantized_quality = Quantize(as<NV>(predict_data["Quality"]), as<NV>(classifier["QualityQuantBorders"]));
+
+  NV rpu_prob = as<NV>(common_distributions["RpuProbs"]);
+
+  NV min_rpu_prob(max_rpu_prob_err.size());
+  NV max_rpu_prob(max_rpu_prob_err.size());
+  NV quality_prob(max_rpu_prob_err.size());
+  NV quality_prob_err(max_rpu_prob_err.size());
+
+  for (int i = 0; i < max_rpu_prob_err.size(); ++i) {
+    min_rpu_prob[i] = std::log(rpu_prob.at(as<IV>(predict_data["MinRpU"])[i] - 1));
+    max_rpu_prob[i] = std::log(rpu_prob.at(as<IV>(predict_data["MaxRpU"])[i] - 1));
+
+    int current_quality_quant = quantized_quality[i];
+    quality_prob[i] = std::log(as<NV>(common_distributions["Quality"]).at(current_quality_quant));
+    quality_prob_err[i] = std::log(as<NV>(error_distributions["Quality"]).at(current_quality_quant));
   }
 
-  NumericVector umi_prob_pos = log(NumericVector(1 - vpow(1 - as<NumericVector>(predict_data["UmiProb"]), gene_size)));
+  NV umi_prob_pos = log(NV(1 - vpow(1 - as<NV>(predict_data["UmiProb"]), gene_size)));
 
-  return exp((nucl_prob + position_prob + min_rpu_prob_neg + max_rpu_prob_neg) -
-             (min_rpu_prob_pos + max_rpu_prob_pos + umi_prob_pos));
+  return exp((nucl_prob_err + position_prob_err + min_rpu_prob_err + max_rpu_prob_err + quality_prob_err) -
+             (umi_prob_pos + min_rpu_prob + max_rpu_prob + quality_prob));
 }
 
 // [[Rcpp::export]]
