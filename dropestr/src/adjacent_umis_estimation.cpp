@@ -43,48 +43,52 @@ std::vector<bool> ResolveUmisDependencies(const s_vec_t &base_umis, const s_vec_
   if (score.size() != base_umis.size() || score.size() != target_umis.size())
     stop("All vectors must have the same size");
 
-  std::vector<int> merge_targets(score.size());
   std::vector<int> inds(score.size());
   std::iota(inds.begin(), inds.end(), 0);
-  std::iota(merge_targets.begin(), merge_targets.end(), 0);
-
   std::sort(inds.begin(), inds.end(), [score](int i1, int i2){return score[i1] > score[i2];});
 
   si_map_t inds_by_base;
+  s_vec_t base_uniq; // TODO: remove
   for (int i = 0; i < score.size(); ++i) {
-    inds_by_base[base_umis[i]] = i;
+    auto iter = inds_by_base.emplace(base_umis[i], inds_by_base.size());
+    if (iter.second) {
+      base_uniq.push_back(base_umis[i]);
+    }
   }
 
-  for (int base_id : inds) {
-    int trivial_target = inds_by_base.at(base_umis[base_id]); // if several umis with the same base_umi are presented
-    if (merge_targets[base_id] != trivial_target && merge_targets[base_id] != base_id)
+  std::vector<int> merge_targets(inds_by_base.size());
+  std::iota(merge_targets.begin(), merge_targets.end(), 0);
+
+  for (int id : inds) {
+    int base_umi_id = inds_by_base.at(base_umis[id]); // if several umis with the same base_umi are presented
+    if (merge_targets[base_umi_id] != base_umi_id)
       continue;
 
     if (verbose) {
-      std::cout << base_umis[base_id] << "\n";
+      std::cout << base_uniq[base_umi_id] << "\n";
     }
-    auto const &target_umi = target_umis[base_id];
+    auto const &target_umi = target_umis[id];
     auto iter = inds_by_base.find(target_umi);
     int target_id = (iter == inds_by_base.end()) ? -1 : iter->second;
     if (verbose) {
-      std::cout << "\t" << target_umis[base_id] << " (" << target_id << ")\n";
+      std::cout << "\t" << target_umis[id] << " (" << target_id << ")\n";
     }
-    while (target_id != -1 && target_id != trivial_target && target_id != merge_targets[target_id]) {
+    while (target_id != -1 && target_id != base_umi_id && target_id != merge_targets[target_id]) {
       target_id = merge_targets[target_id];
       if (verbose) {
-        std::cout << "\t" << ((target_id != -1) ? base_umis[target_id] : std::to_string(-1)) << " (" << target_id << ")\n";
+        std::cout << "\t" << ((target_id != -1) ? base_uniq[target_id] : std::to_string(-1)) << " (" << target_id << ")\n";
       }
     }
 
-    merge_targets[base_id] = target_id;
+    merge_targets[base_umi_id] = target_id;
   }
 
   std::vector<bool> is_filtered;
   for (int i = 0; i < inds.size(); ++i) {
-    int trivial_target = inds_by_base.at(base_umis[i]);
-    is_filtered.push_back((merge_targets[i] != trivial_target) && (merge_targets[i] != i));
+    int base_umi_id = inds_by_base.at(base_umis[i]);
+    is_filtered.push_back(merge_targets[base_umi_id] != base_umi_id);
     if (verbose) {
-      std::cout << "(" << trivial_target << ", " << merge_targets[i] << ") ";
+      std::cout << "(" << base_umi_id << ", " << merge_targets[base_umi_id] << ") ";
     }
   }
   if (verbose) {
