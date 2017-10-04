@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Rcpp.h"
+#include <vector>
+#include <string>
+#include <unordered_map>
 
 class UmiInfo
 {
@@ -116,9 +119,10 @@ class GeneInfo
 public:
   typedef std::vector<unsigned> reads_per_umi_t;
   typedef std::vector<Rcpp::NumericVector> qualities_t;
+  typedef std::vector<std::string> umis_t;
 
 public:
-  const Rcpp::StringVector umis;
+  const umis_t umis;
   const reads_per_umi_t reads_per_umi;
   const qualities_t qualities;
 
@@ -143,7 +147,7 @@ private:
 
 public:
   GeneInfo(const Rcpp::List &gene_info)
-    : umis(Rcpp::as<Rcpp::StringVector>(gene_info.names()))
+    : umis(Rcpp::as<umis_t>(Rcpp::as<Rcpp::StringVector>(gene_info.names())))
     , reads_per_umi(parse_reads_per_umi(gene_info))
     , qualities(parse_qualities(gene_info)) {}
 };

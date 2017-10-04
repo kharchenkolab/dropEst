@@ -5,8 +5,8 @@ GetCrossmergedMask <- function(base_umis, target_umis) {
     .Call('_dropestr_GetCrossmergedMask', PACKAGE = 'dropestr', base_umis, target_umis)
 }
 
-ResolveUmisDependencies <- function(base_umis, target_umis, score) {
-    .Call('_dropestr_ResolveUmisDependencies', PACKAGE = 'dropestr', base_umis, target_umis, score)
+ResolveUmisDependencies <- function(base_umis, target_umis, score, verbose = FALSE) {
+    .Call('_dropestr_ResolveUmisDependencies', PACKAGE = 'dropestr', base_umis, target_umis, score, verbose)
 }
 
 SubsetAdjacentUmis <- function(umis) {
@@ -42,8 +42,8 @@ GetSmallerNeighbourProbabilities <- function(small_neighs_dist, neighb_per_umi) 
     .Call('_dropestr_GetSmallerNeighbourProbabilities', PACKAGE = 'dropestr', small_neighs_dist, neighb_per_umi)
 }
 
-FilterUmisInGeneSimple <- function(reads_per_umi, neighbourhood, mult = 1) {
-    .Call('_dropestr_FilterUmisInGeneSimple', PACKAGE = 'dropestr', reads_per_umi, neighbourhood, mult)
+FilterUmisInGeneClassic <- function(reads_per_umi, neighbourhood, mult = 1, return_data = FALSE) {
+    .Call('_dropestr_FilterUmisInGeneClassic', PACKAGE = 'dropestr', reads_per_umi, neighbourhood, mult, return_data)
 }
 
 Quantize <- function(values, quant_borders) {

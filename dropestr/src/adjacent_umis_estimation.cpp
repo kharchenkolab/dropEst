@@ -1,4 +1,5 @@
 #include "dropestr.h"
+#include "umi_processing.h"
 
 using namespace Rcpp;
 
@@ -38,7 +39,7 @@ std::vector<bool> GetCrossmergedMask(const s_vec_t &base_umis, const s_vec_t &ta
 }
 
 // [[Rcpp::export]]
-std::vector<bool> ResolveUmisDependencies(const s_vec_t &base_umis, const s_vec_t &target_umis, const std::vector<double> &score) {
+std::vector<bool> ResolveUmisDependencies(const s_vec_t &base_umis, const s_vec_t &target_umis, const std::vector<double> &score, bool verbose=false) { // TODO: remove verbose
   if (score.size() != base_umis.size() || score.size() != target_umis.size())
     stop("All vectors must have the same size");
 
@@ -55,14 +56,24 @@ std::vector<bool> ResolveUmisDependencies(const s_vec_t &base_umis, const s_vec_
   }
 
   for (int base_id : inds) {
-    // std::cout << base_umis[base_id] << "\n";
+    int trivial_target = inds_by_base.at(base_umis[base_id]); // if several umis with the same base_umi are presented
+    if (merge_targets[base_id] != trivial_target && merge_targets[base_id] != base_id)
+      continue;
+
+    if (verbose) {
+      std::cout << base_umis[base_id] << "\n";
+    }
     auto const &target_umi = target_umis[base_id];
     auto iter = inds_by_base.find(target_umi);
     int target_id = (iter == inds_by_base.end()) ? -1 : iter->second;
-    // std::cout << "\t" << base_umis[target_id] << "\n";
-    while (target_id != -1 && target_id != base_id && target_id != merge_targets[target_id]) {
+    if (verbose) {
+      std::cout << "\t" << target_umis[base_id] << " (" << target_id << ")\n";
+    }
+    while (target_id != -1 && target_id != trivial_target && target_id != merge_targets[target_id]) {
       target_id = merge_targets[target_id];
-      // std::cout << "\t" << base_umis[target_id] << "\n";
+      if (verbose) {
+        std::cout << "\t" << ((target_id != -1) ? base_umis[target_id] : std::to_string(-1)) << " (" << target_id << ")\n";
+      }
     }
 
     merge_targets[base_id] = target_id;
@@ -70,7 +81,14 @@ std::vector<bool> ResolveUmisDependencies(const s_vec_t &base_umis, const s_vec_
 
   std::vector<bool> is_filtered;
   for (int i = 0; i < inds.size(); ++i) {
-    is_filtered.push_back(i != merge_targets[i]);
+    int trivial_target = inds_by_base.at(base_umis[i]);
+    is_filtered.push_back((merge_targets[i] != trivial_target) && (merge_targets[i] != i));
+    if (verbose) {
+      std::cout << "(" << trivial_target << ", " << merge_targets[i] << ") ";
+    }
+  }
+  if (verbose) {
+    std::cout << std::endl;
   }
 
   return is_filtered;
@@ -308,60 +326,66 @@ NumericVector GetSmallerNeighbourProbabilities(const NumericMatrix &small_neighs
 }
 
 // [[Rcpp::export]]
-IntegerVector FilterUmisInGeneSimple(const IntegerVector &reads_per_umi, const std::vector<s_vec_t> &neighbourhood, double mult=1) {
+List FilterUmisInGeneClassic(const List &reads_per_umi, const std::vector<s_vec_t> &neighbourhood, double mult=1, bool return_data=false) { // TODO: remove return_data
   if (neighbourhood.size() != reads_per_umi.size())
     stop("Vectors must have equal size");
 
   if (reads_per_umi.size() == 1)
     return reads_per_umi;
 
-  LogicalVector filt_mask(reads_per_umi.size(), true);
-
   Progress p(0, false);
-  auto const &rpu_map = parseVector(reads_per_umi);
-  auto const &umis = as<s_vec_t>(as<StringVector>(reads_per_umi.names()));
-
-  std::vector<int> targets(umis.size(), -1);
-  si_map_t umi_inds;
-  for (int i = 0; i < umis.size(); ++i) {
-    umi_inds[umis[i]] = i;
+  const GeneInfo info(reads_per_umi);
+  si_map_t rpu_map;
+  for (int i = 0; i < info.umis.size(); ++i) {
+    rpu_map.emplace(info.umis[i], info.reads_per_umi[i]);
   }
 
-  for (int i = 0; i < umis.size(); ++i) {
+  si_map_t umi_inds;
+  for (int i = 0; i < info.umis.size(); ++i) {
+    umi_inds[info.umis[i]] = i;
+  }
+
+  std::vector<std::string> base_umis, target_umis;
+  for (int i = 0; i < info.umis.size(); ++i) {
     auto const &neighbours = neighbourhood[i];
     if (neighbours.empty())
       continue;
 
-    int cur_rpu = rpu_map.at(umis[i]);
+    int cur_rpu = rpu_map.at(info.umis[i]);
     int neighb_index = -1;
     for (auto const &neighbour : neighbours) {
       auto neighb_it = rpu_map.find(neighbour);
       if (neighb_it == rpu_map.end() || (neighb_it->second < cur_rpu * mult - EPS)) // rpu_neighb >= cur_rpu
         continue;
 
-      int cur_neighb_index = umi_inds.at(neighb_it->first);
-      if (targets[cur_neighb_index] == i)
-        continue;
-
-      if (neighb_index != -1) {
-        neighb_index = -1;
-        break;
-      }
-
-      filt_mask[i] = false;
-      neighb_index = cur_neighb_index;
-    }
-
-    if (neighb_index != -1) {
-      targets[i] = neighb_index;
+      base_umis.push_back(info.umis[i]);
+      target_umis.push_back(neighb_it->first);
     }
 
     if (p.check_abort())
       break;
   }
 
-  if (any(filt_mask).is_false()) {
-    filt_mask[which_max(reads_per_umi)] = true;
+  // Stable scores
+  std::vector<double> score(target_umis.size());
+  std::iota(score.begin(), score.end(), 0);
+  std::sort(score.begin(), score.end(), [base_umis, target_umis](int i1, int i2) {
+    int cmp_base = base_umis[i1].compare(base_umis[i2]);
+    if (cmp_base == 0)
+      return target_umis[i1] < target_umis[i2];
+
+    return cmp_base < 0;
+  });
+
+  if (return_data)
+    return List::create(_["Base"]=base_umis, _["Target"]=target_umis, _["Score"]=score);
+
+  std::vector<bool> is_base_filt = ResolveUmisDependencies(base_umis, target_umis, score);
+  LogicalVector filt_mask(reads_per_umi.size(), true);
+  for (int i = 0; i < is_base_filt.size(); ++i) {
+    if (is_base_filt[i]) {
+      filt_mask[umi_inds[base_umis[i]]] = false;
+    }
   }
 
   return reads_per_umi[filt_mask];

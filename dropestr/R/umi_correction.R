@@ -62,9 +62,8 @@ PrepareUmiCorrectionInfoWrapper <- function(reads.per.umi.per.cb, umi.probabilit
 }
 
 CorrectUmiSequenceErrorsClassic <- function(reads.per.umi.per.cb, mult, correction.info, mc.cores, verbosity.level = 0) {
-
   filt.genes <- plapply(correction.info$rpus.with.inds, function(gene)
-    FilterUmisInGeneSimple(sapply(gene$rpus, `[[`, 1), correction.info$neighbours.per.umi[gene$indexes + 1], mult=mult), mc.cores=mc.cores)
+    FilterUmisInGeneClassic(gene$rpus, correction.info$neighbours.per.umi[gene$indexes + 1], mult=mult), mc.cores=mc.cores)
 
   if (verbosity.level > 0) {
     cat(" Completed.\n")

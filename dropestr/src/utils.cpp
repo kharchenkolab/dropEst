@@ -58,7 +58,7 @@ List AddIndexesToRpU(const List &reads_per_umi_per_cb, const std::vector<std::st
   List res(reads_per_umi_per_cb.size());
   for (int rpu_ind = 0; rpu_ind < reads_per_umi_per_cb.size(); ++rpu_ind) {
     auto const &rpus = as<List>(reads_per_umi_per_cb[rpu_ind]);
-    auto const cur_umis = as<s_vec_t>(GeneInfo(rpus).umis);
+    auto const cur_umis = GeneInfo(rpus).umis;
     IntegerVector indexes(cur_umis.size());
     for (int umi_ind = 0; umi_ind < indexes.size(); ++umi_ind) {
       indexes[umi_ind] = umi_inds.at(cur_umis[umi_ind]);
@@ -83,7 +83,7 @@ si_map_t GetUmisDistribution(List umis_per_gene_per_cell, int smooth = 1) {
   si_map_t res;
 
   for (const List &rpus: umis_per_gene_per_cell) {
-    for (auto const &umi : as<s_vec_t>(GeneInfo(rpus).umis)) {
+    for (auto const &umi : GeneInfo(rpus).umis) {
       res[umi]++;
     }
   }

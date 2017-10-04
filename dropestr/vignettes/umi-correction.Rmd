@@ -28,7 +28,7 @@ PlotUmisDistribution(reads_per_umi_per_cell$reads_per_umi)
 ## Collisions adjustment:
 ```{r}
 umis_per_gene <- sapply(reads_per_umi_per_cell$reads_per_umi, length)
-max_umi_per_gene <- max(sapply(umis_per_gene, max))
+max_umi_per_gene <- max(umis_per_gene)
 
 collisions_info <- FillCollisionsAdjustmentInfo(umi_probabilities, max_umi_per_gene, step=20, mc.cores=5, verbose=T)
 (max_umi_per_gene_adj <- AdjustGeneExpression(max_umi_per_gene, collisions_info$adjusted, collisions_info$observed))

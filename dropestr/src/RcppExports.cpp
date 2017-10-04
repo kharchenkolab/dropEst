@@ -20,15 +20,16 @@ BEGIN_RCPP
 END_RCPP
 }
 // ResolveUmisDependencies
-std::vector<bool> ResolveUmisDependencies(const s_vec_t& base_umis, const s_vec_t& target_umis, const std::vector<double>& score);
-RcppExport SEXP _dropestr_ResolveUmisDependencies(SEXP base_umisSEXP, SEXP target_umisSEXP, SEXP scoreSEXP) {
+std::vector<bool> ResolveUmisDependencies(const s_vec_t& base_umis, const s_vec_t& target_umis, const std::vector<double>& score, bool verbose);
+RcppExport SEXP _dropestr_ResolveUmisDependencies(SEXP base_umisSEXP, SEXP target_umisSEXP, SEXP scoreSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const s_vec_t& >::type base_umis(base_umisSEXP);
     Rcpp::traits::input_parameter< const s_vec_t& >::type target_umis(target_umisSEXP);
     Rcpp::traits::input_parameter< const std::vector<double>& >::type score(scoreSEXP);
-    rcpp_result_gen = Rcpp::wrap(ResolveUmisDependencies(base_umis, target_umis, score));
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    rcpp_result_gen = Rcpp::wrap(ResolveUmisDependencies(base_umis, target_umis, score, verbose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -113,16 +114,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// FilterUmisInGeneSimple
-IntegerVector FilterUmisInGeneSimple(const IntegerVector& reads_per_umi, const std::vector<s_vec_t>& neighbourhood, double mult);
-RcppExport SEXP _dropestr_FilterUmisInGeneSimple(SEXP reads_per_umiSEXP, SEXP neighbourhoodSEXP, SEXP multSEXP) {
+// FilterUmisInGeneClassic
+List FilterUmisInGeneClassic(const List& reads_per_umi, const std::vector<s_vec_t>& neighbourhood, double mult, bool return_data);
+RcppExport SEXP _dropestr_FilterUmisInGeneClassic(SEXP reads_per_umiSEXP, SEXP neighbourhoodSEXP, SEXP multSEXP, SEXP return_dataSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const IntegerVector& >::type reads_per_umi(reads_per_umiSEXP);
+    Rcpp::traits::input_parameter< const List& >::type reads_per_umi(reads_per_umiSEXP);
     Rcpp::traits::input_parameter< const std::vector<s_vec_t>& >::type neighbourhood(neighbourhoodSEXP);
     Rcpp::traits::input_parameter< double >::type mult(multSEXP);
-    rcpp_result_gen = Rcpp::wrap(FilterUmisInGeneSimple(reads_per_umi, neighbourhood, mult));
+    Rcpp::traits::input_parameter< bool >::type return_data(return_dataSEXP);
+    rcpp_result_gen = Rcpp::wrap(FilterUmisInGeneClassic(reads_per_umi, neighbourhood, mult, return_data));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -368,14 +370,14 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_dropestr_GetCrossmergedMask", (DL_FUNC) &_dropestr_GetCrossmergedMask, 2},
-    {"_dropestr_ResolveUmisDependencies", (DL_FUNC) &_dropestr_ResolveUmisDependencies, 3},
+    {"_dropestr_ResolveUmisDependencies", (DL_FUNC) &_dropestr_ResolveUmisDependencies, 4},
     {"_dropestr_SubsetAdjacentUmis", (DL_FUNC) &_dropestr_SubsetAdjacentUmis, 1},
     {"_dropestr_FillAdjacentUmisData", (DL_FUNC) &_dropestr_FillAdjacentUmisData, 3},
     {"_dropestr_GetAdjacentUmisNum", (DL_FUNC) &_dropestr_GetAdjacentUmisNum, 6},
     {"_dropestr_FillDpMatrix", (DL_FUNC) &_dropestr_FillDpMatrix, 3},
     {"_dropestr_GetSmallerNeighboursDistributionsBySizes", (DL_FUNC) &_dropestr_GetSmallerNeighboursDistributionsBySizes, 6},
     {"_dropestr_GetSmallerNeighbourProbabilities", (DL_FUNC) &_dropestr_GetSmallerNeighbourProbabilities, 2},
-    {"_dropestr_FilterUmisInGeneSimple", (DL_FUNC) &_dropestr_FilterUmisInGeneSimple, 3},
+    {"_dropestr_FilterUmisInGeneClassic", (DL_FUNC) &_dropestr_FilterUmisInGeneClassic, 4},
     {"_dropestr_Quantize", (DL_FUNC) &_dropestr_Quantize, 2},
     {"_dropestr_PredictLeftPart", (DL_FUNC) &_dropestr_PredictLeftPart, 3},
     {"_dropestr_ArrangePredictions", (DL_FUNC) &_dropestr_ArrangePredictions, 2},
