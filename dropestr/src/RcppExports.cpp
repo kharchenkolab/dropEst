@@ -19,6 +19,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ResolveUmisDependencies
+std::vector<bool> ResolveUmisDependencies(const s_vec_t& base_umis, const s_vec_t& target_umis, const std::vector<double>& score);
+RcppExport SEXP _dropestr_ResolveUmisDependencies(SEXP base_umisSEXP, SEXP target_umisSEXP, SEXP scoreSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const s_vec_t& >::type base_umis(base_umisSEXP);
+    Rcpp::traits::input_parameter< const s_vec_t& >::type target_umis(target_umisSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type score(scoreSEXP);
+    rcpp_result_gen = Rcpp::wrap(ResolveUmisDependencies(base_umis, target_umis, score));
+    return rcpp_result_gen;
+END_RCPP
+}
 // SubsetAdjacentUmis
 List SubsetAdjacentUmis(const s_vec_t& umis);
 RcppExport SEXP _dropestr_SubsetAdjacentUmis(SEXP umisSEXP) {
@@ -271,18 +284,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// ParseUmisPerGene
-List ParseUmisPerGene(const List& reads_per_umigs, int umi_length);
-RcppExport SEXP _dropestr_ParseUmisPerGene(SEXP reads_per_umigsSEXP, SEXP umi_lengthSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const List& >::type reads_per_umigs(reads_per_umigsSEXP);
-    Rcpp::traits::input_parameter< int >::type umi_length(umi_lengthSEXP);
-    rcpp_result_gen = Rcpp::wrap(ParseUmisPerGene(reads_per_umigs, umi_length));
-    return rcpp_result_gen;
-END_RCPP
-}
 // TrimUmis
 List TrimUmis(const List& rpu_per_cell, int trim_length);
 RcppExport SEXP _dropestr_TrimUmis(SEXP rpu_per_cellSEXP, SEXP trim_lengthSEXP) {
@@ -367,6 +368,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_dropestr_GetCrossmergedMask", (DL_FUNC) &_dropestr_GetCrossmergedMask, 2},
+    {"_dropestr_ResolveUmisDependencies", (DL_FUNC) &_dropestr_ResolveUmisDependencies, 3},
     {"_dropestr_SubsetAdjacentUmis", (DL_FUNC) &_dropestr_SubsetAdjacentUmis, 1},
     {"_dropestr_FillAdjacentUmisData", (DL_FUNC) &_dropestr_FillAdjacentUmisData, 3},
     {"_dropestr_GetAdjacentUmisNum", (DL_FUNC) &_dropestr_GetAdjacentUmisNum, 6},
@@ -387,7 +389,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dropestr_ValueCountsC", (DL_FUNC) &_dropestr_ValueCountsC, 1},
     {"_dropestr_ValueCounts", (DL_FUNC) &_dropestr_ValueCounts, 1},
     {"_dropestr_BuildCountMatrix", (DL_FUNC) &_dropestr_BuildCountMatrix, 1},
-    {"_dropestr_ParseUmisPerGene", (DL_FUNC) &_dropestr_ParseUmisPerGene, 2},
     {"_dropestr_TrimUmis", (DL_FUNC) &_dropestr_TrimUmis, 2},
     {"_dropestr_AddIndexesToRpU", (DL_FUNC) &_dropestr_AddIndexesToRpU, 2},
     {"_dropestr_GetUmisDistribution", (DL_FUNC) &_dropestr_GetUmisDistribution, 2},

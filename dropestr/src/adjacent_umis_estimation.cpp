@@ -38,6 +38,45 @@ std::vector<bool> GetCrossmergedMask(const s_vec_t &base_umis, const s_vec_t &ta
 }
 
 // [[Rcpp::export]]
+std::vector<bool> ResolveUmisDependencies(const s_vec_t &base_umis, const s_vec_t &target_umis, const std::vector<double> &score) {
+  if (score.size() != base_umis.size() || score.size() != target_umis.size())
+    stop("All vectors must have the same size");
+
+  std::vector<int> merge_targets(score.size());
+  std::vector<int> inds(score.size());
+  std::iota(inds.begin(), inds.end(), 0);
+  std::iota(merge_targets.begin(), merge_targets.end(), 0);
+
+  std::sort(inds.begin(), inds.end(), [score](int i1, int i2){return score[i1] > score[i2];});
+
+  si_map_t inds_by_base;
+  for (int i = 0; i < score.size(); ++i) {
+    inds_by_base[base_umis[i]] = i;
+  }
+
+  for (int base_id : inds) {
+    // std::cout << base_umis[base_id] << "\n";
+    auto const &target_umi = target_umis[base_id];
+    auto iter = inds_by_base.find(target_umi);
+    int target_id = (iter == inds_by_base.end()) ? -1 : iter->second;
+    // std::cout << "\t" << base_umis[target_id] << "\n";
+    while (target_id != -1 && target_id != base_id && target_id != merge_targets[target_id]) {
+      target_id = merge_targets[target_id];
+      // std::cout << "\t" << base_umis[target_id] << "\n";
+    }
+
+    merge_targets[base_id] = target_id;
+  }
+
+  std::vector<bool> is_filtered;
+  for (int i = 0; i < inds.size(); ++i) {
+    is_filtered.push_back(i != merge_targets[i]);
+  }
+
+  return is_filtered;
+}
+
+// [[Rcpp::export]]
 List SubsetAdjacentUmis(const s_vec_t &umis) {
   s_set_t umis_set(umis.begin(), umis.end());
   List res(umis.size());

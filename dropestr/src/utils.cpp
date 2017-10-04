@@ -33,66 +33,18 @@ SEXP BuildCountMatrix(const List &reads_per_umi_per_cell) {
   return res;
 }
 
-//' Parse UMIgs.
-//'
-//' @param reads_per_umigs data from the estimation step.
-//' @param umi_length length of UMI.
-//' @return List of lists of vectors with number of reads per UMI per gene per cell.
-//'
-//' @export
-// [[Rcpp::export]]
-List ParseUmisPerGene(const List &reads_per_umigs, int umi_length) {
-  List res(reads_per_umigs.size());
-
-  auto const &cell_names = as<s_vec_t>(as<StringVector>(reads_per_umigs.names()));
-  for (int cell_ind = 0; cell_ind < reads_per_umigs.size(); ++cell_ind) {
-    ssi_map_t cur_genes;
-    const IntegerVector &rp_umigs = as<IntegerVector>(reads_per_umigs[cell_ind]);
-    const auto &umigs = as<s_vec_t>(as<StringVector>(rp_umigs.names()));
-
-    for (int i = 0; i < rp_umigs.size(); ++i) {
-      const auto &umig = umigs[i];
-      std::string umi(umig.substr(0, umi_length));
-      if (umi.find('N') != std::string::npos)
-        continue;
-
-      std::string gene(umig.substr(umi_length));
-      cur_genes[gene][umi] = rp_umigs[i];
-    }
-
-    res[cell_ind] = cur_genes;
-  }
-
-  res.attr("names") = as<StringVector>(reads_per_umigs.names());
-  return res;
-}
-
 // [[Rcpp::export]]
 List TrimUmis(const List &rpu_per_cell, int trim_length) {
-  List res(rpu_per_cell.size());
+  UmisInfo umis_info(rpu_per_cell);
+  UmisInfo umis_info_trimmed;
 
-  auto const &cell_names = as<s_vec_t>(as<StringVector>(rpu_per_cell.names()));
-  for (int cell_ind = 0; cell_ind < rpu_per_cell.size(); ++cell_ind) {
-    const auto &rpu_per_gene = as<List>(rpu_per_cell[cell_ind]);
-    List cell_rpus(rpu_per_gene.size());
-
-    for (int gene_ind = 0; gene_ind < rpu_per_gene.size(); ++gene_ind) {
-      auto const &reads_per_umi = as<IntegerVector>(rpu_per_gene[gene_ind]);
-      auto const &umis = as<s_vec_t>(as<StringVector>(reads_per_umi.names()));
-      si_map_t trimmed_rpus;
-      for (int umi_ind = 0; umi_ind < reads_per_umi.size(); ++umi_ind) {
-        trimmed_rpus[umis[umi_ind].substr(0, trim_length)] += reads_per_umi[umi_ind];
-      }
-
-      cell_rpus[gene_ind] = wrap(trimmed_rpus);
-    }
-
-    cell_rpus.attr("names") = as<StringVector>(rpu_per_gene.names());
-    res[cell_ind] = cell_rpus;
+  for (auto const &umi_iter : umis_info.info()) {
+    UmiInfo trimmed_umi(umi_iter.second.umi().substr(0, trim_length), umi_iter.second.reads_per_umi(),
+                        umi_iter.second.quality());
+    umis_info_trimmed.add_umi(trimmed_umi);
   }
 
-  res.attr("names") = cell_names;
-  return res;
+  return umis_info_trimmed.to_list();
 }
 
 //' @export

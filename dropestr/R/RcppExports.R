@@ -5,6 +5,10 @@ GetCrossmergedMask <- function(base_umis, target_umis) {
     .Call('_dropestr_GetCrossmergedMask', PACKAGE = 'dropestr', base_umis, target_umis)
 }
 
+ResolveUmisDependencies <- function(base_umis, target_umis, score) {
+    .Call('_dropestr_ResolveUmisDependencies', PACKAGE = 'dropestr', base_umis, target_umis, score)
+}
+
 SubsetAdjacentUmis <- function(umis) {
     .Call('_dropestr_SubsetAdjacentUmis', PACKAGE = 'dropestr', umis)
 }
@@ -103,17 +107,6 @@ ValueCounts <- function(values) {
 
 BuildCountMatrix <- function(reads_per_umi_per_cell) {
     .Call('_dropestr_BuildCountMatrix', PACKAGE = 'dropestr', reads_per_umi_per_cell)
-}
-
-#' Parse UMIgs.
-#'
-#' @param reads_per_umigs data from the estimation step.
-#' @param umi_length length of UMI.
-#' @return List of lists of vectors with number of reads per UMI per gene per cell.
-#'
-#' @export
-ParseUmisPerGene <- function(reads_per_umigs, umi_length) {
-    .Call('_dropestr_ParseUmisPerGene', PACKAGE = 'dropestr', reads_per_umigs, umi_length)
 }
 
 TrimUmis <- function(rpu_per_cell, trim_length) {

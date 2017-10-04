@@ -63,13 +63,13 @@ private:
 
 private:
   ClassifierRow fill_row(const UmiInfo &umi_small, const UmiInfo &umi_large, double umi_prob) {
-    if (umi_small.umi.length() != umi_large.umi.length())
+    if (umi_small.umi().length() != umi_large.umi().length())
       stop("UMIs must have the same length");
 
     int diff_pos = -1, diff_num = 0;
     std::string nuc_diff = "NN";
-    for (int i = 0; i < umi_small.umi.length(); ++i) {
-      char n1 = umi_small.umi[i], n2 = umi_large.umi[i];
+    for (int i = 0; i < umi_small.umi().length(); ++i) {
+      char n1 = umi_small.umi()[i], n2 = umi_large.umi()[i];
       if (n1 == n2)
         continue;
 
@@ -86,7 +86,7 @@ private:
     }
 
     if (diff_num > 1) {
-      diff_pos = runif(1, 0, umi_small.umi.length())[0];
+      diff_pos = runif(1, 0, umi_small.umi().length())[0];
       char n1, n2;
       do {
         n1 = NUCLEOTIDES[int(runif(1, 0, NUCLEOTIDES_NUM)[0])];
@@ -102,26 +102,26 @@ private:
     }
 
     if (diff_num == 1) {
-      double quality_small = diff_pos == -1 ? -1 : umi_small.mean_quality(diff_pos);
-      return ClassifierRow(umi_small.umi, umi_large.umi, umi_small.reads_per_umi, umi_large.reads_per_umi, diff_num,
-                           NUCL_PAIR_INDS.at(nuc_diff), diff_pos, umi_prob, quality_small);
+      double quality_small = diff_pos == -1 ? -1 : umi_small.quality()[diff_pos];
+      return ClassifierRow(umi_small.umi(), umi_large.umi(), umi_small.reads_per_umi(), umi_large.reads_per_umi(),
+                           diff_num, NUCL_PAIR_INDS.at(nuc_diff), diff_pos, umi_prob, quality_small);
     }
 
-    return ClassifierRow(umi_small.umi, umi_large.umi, umi_small.reads_per_umi, umi_large.reads_per_umi, diff_num,
-                         NA_INTEGER, NA_INTEGER, umi_prob, NA_REAL);
+    return ClassifierRow(umi_small.umi(), umi_large.umi(), umi_small.reads_per_umi(), umi_large.reads_per_umi(),
+                         diff_num, NA_INTEGER, NA_INTEGER, umi_prob, NA_REAL);
   }
 
 public:
   bool add_umis(const UmiInfo &umi1, const UmiInfo &umi2) {
-    const UmiInfo &umi_small = umi1.reads_per_umi <= umi2.reads_per_umi ? umi1 : umi2;
-    const UmiInfo &umi_large = umi1.reads_per_umi <= umi2.reads_per_umi ? umi2 : umi1;
+    const UmiInfo &umi_small = umi1.reads_per_umi() <= umi2.reads_per_umi() ? umi1 : umi2;
+    const UmiInfo &umi_large = umi1.reads_per_umi() <= umi2.reads_per_umi() ? umi2 : umi1;
 
-    if (!this->_presented_umi_pairs.insert(std::make_pair(umi_small.umi, umi_large.umi)).second)
+    if (!this->_presented_umi_pairs.insert(std::make_pair(umi_small.umi(), umi_large.umi())).second)
       return false;
 
     double umi_prob = -1;
     if (!this->_umi_probabilities_map.empty()) {
-      umi_prob = this->_umi_probabilities_map.at(umi_small.umi);
+      umi_prob = this->_umi_probabilities_map.at(umi_small.umi());
     }
     this->_data.push_back(this->fill_row(umi_small, umi_large, umi_prob));
     return true;
@@ -225,8 +225,8 @@ NumericVector PredictLeftPart(const List &classifier, const DataFrame &predict_d
 
   NV umi_prob_pos = log(NV(1 - vpow(1 - as<NV>(predict_data["UmiProb"]), gene_size)));
 
-  return exp((nucl_prob_err + position_prob_err + min_rpu_prob_err + max_rpu_prob_err + quality_prob_err) -
-             (umi_prob_pos + min_rpu_prob + max_rpu_prob + quality_prob));
+  return exp((nucl_prob_err + position_prob_err + min_rpu_prob_err + max_rpu_prob_err) - //  + quality_prob_err
+             (umi_prob_pos + min_rpu_prob + max_rpu_prob)); //  + quality_prob
 }
 
 // [[Rcpp::export]]

@@ -7,6 +7,7 @@
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 using s_set_t = std::unordered_set<std::string>;
 using s_vec_t = std::vector<std::string>;
