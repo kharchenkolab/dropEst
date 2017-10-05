@@ -39,8 +39,8 @@ List TrimUmis(const List &rpu_per_cell, int trim_length) {
   UmisInfo umis_info_trimmed;
 
   for (auto const &umi_iter : umis_info.info()) {
-    UmiInfo trimmed_umi(umi_iter.second.umi().substr(0, trim_length), umi_iter.second.reads_per_umi(),
-                        umi_iter.second.quality());
+    UmiInfo::quality_t trimmed_quality(umi_iter.second.quality().begin(), umi_iter.second.quality().begin() + trim_length);
+    UmiInfo trimmed_umi(umi_iter.second.umi().substr(0, trim_length), umi_iter.second.reads_per_umi(), trimmed_quality);
     umis_info_trimmed.add_umi(trimmed_umi);
   }
 

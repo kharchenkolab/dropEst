@@ -309,7 +309,7 @@ FilterUmisInGene <- function(cur.gene, neighbours.per.umi, dp.matrices, classifi
   for (step in 1:max.iter) {
     size.adj <- AdjustGeneExpression(length(filt.reads.per.umi), collisions.info$adjusted, collisions.info$observed)
 
-    classifier.df$MergeProb <- PredictLeftPart(classifier, classifier.df, size.adj)
+    classifier.df$MergeProb <- PredictLeftPartR(classifier, classifier.df, size.adj)
     classifier.df <- classifier.df[order(classifier.df$Target, classifier.df$MergeProb),]
 
     not.filtered.umis <- FilterUmisInGeneOneStep(filt.reads.per.umi, neighbours.per.umi, dp.matrices, max.neighbours.num,
