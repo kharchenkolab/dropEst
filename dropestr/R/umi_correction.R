@@ -237,18 +237,6 @@ GetUmiProbabilitiesIndex <- function(umi.probs, umi.tolerance) { #TODO: not expo
   return(res)
 }
 
-#' @export
-GetDPMatrices <- function(neighbour.probs, max.umi.per.gene, max.neighbours, tolerance.step=50) {
-  umi.tolerance <- max(neighbour.probs) / tolerance.step
-  neighb.prob.index <- GetUmiProbabilitiesIndex(neighbour.probs, umi.tolerance)
-
-  uniq.umi.probs <- unique(round(neighbour.probs / umi.tolerance)) * umi.tolerance
-  dp.matrices <- lapply(uniq.umi.probs, FillDpMatrixWithPrior, max.neighbours, max.umi.per.gene)
-  names(dp.matrices) <- GetUmiProbabilitiesIndex(uniq.umi.probs, umi.tolerance)
-
-  return(list(dp.matrices=dp.matrices, neighb.prob.index=neighb.prob.index))
-}
-
 # Algorithm:
 FilterUmisInGeneOneStep <- function(cur.reads.per.umi, neighbours.per.umi, dp.matrices, max.neighbours.num,
                                     neighbours.prob.index, predictions, not.filtered.umis, size.adj) {
@@ -269,8 +257,9 @@ FilterUmisInGeneOneStep <- function(cur.reads.per.umi, neighbours.per.umi, dp.ma
   filtered.mask <- predictions$Prior < predictions$MergeProb
   if (any(filtered.mask)) {
     filt.predictions <- predictions[filtered.mask,]
-    filtered.mask <- ResolveUmisDependencies(as.character(filt.predictions$Base), as.character(filt.predictions$Target),
-                                             log(filt.predictions$MergeProb) - log(filt.predictions$Prior))
+    filtered.mask[which(filtered.mask)] <- ResolveUmisDependencies(as.character(filt.predictions$Base),
+                                                                   as.character(filt.predictions$Target),
+                                                                   log(filt.predictions$MergeProb) - log(filt.predictions$Prior))
 
     not.filtered.umis <- base::setdiff(not.filtered.umis, predictions$Base[filtered.mask])
   }
