@@ -73,12 +73,12 @@ CorrectUmiSequenceErrorsClassic <- function(reads.per.umi.per.cb, mult, correcti
 }
 
 CorrectUmiSequenceErrorsBayesian <- function(reads.per.umi.per.cb, umi.probabilities, collisions.info, correction.info,
-                                             mc.cores, distribution.smooth, verbosity.level=0) {
+                                             mc.cores, distribution.smooth, verbosity.level=0, error.prior.prob=0.5) {
   if (verbosity.level > 0) {
     cat("\nEstimating prior error probabilities...")
   }
 
-  clf <- TrainNBClassifier(reads.per.umi.per.cb, distribution.smooth)
+  clf <- TrainNBClassifier(reads.per.umi.per.cb, distribution.smooth, error.prior.prob=error.prior.prob)
 
   if (verbosity.level > 0) {
     cat(" Completed.\n")
@@ -99,7 +99,7 @@ CorrectUmiSequenceErrorsBayesian <- function(reads.per.umi.per.cb, umi.probabili
 CorrectUmiSequenceErrors <- function(reads.per.umi.per.cb.info, umi.probabilities=NULL, collisions.info=NULL,
                                      correction.info=NULL, probability.quants.num=50, adjust.collisions=TRUE,
                                      collisions.adj.step=20, mc.cores=NULL, verbosity.level=0, return='matrix',
-                                     distribution.smooth=10, method='Bayesian', mult=1) {
+                                     distribution.smooth=10, method='Bayesian', mult=1, error.prior.prob=0.5) {
   kMethodsList <- c('Bayesian', 'Classic')
   kReturnList <- c('matrix', 'reads', 'umis')
 
@@ -154,7 +154,7 @@ CorrectUmiSequenceErrors <- function(reads.per.umi.per.cb.info, umi.probabilitie
     filt.genes <- CorrectUmiSequenceErrorsBayesian(reads.per.umi.per.cb, umi.probabilities=umi.probabilities,
                                                    collisions.info=collisions.info, correction.info=correction.info,
                                                    mc.cores=mc.cores, distribution.smooth=distribution.smooth,
-                                                   verbosity.level=verbosity.level)
+                                                   verbosity.level=verbosity.level, error.prior.prob=error.prior.prob)
   } else {
     filt.genes <- CorrectUmiSequenceErrorsClassic(reads.per.umi.per.cb, mult=mult, correction.info=correction.info,
                                                   mc.cores=mc.cores, verbosity.level=verbosity.level)
@@ -363,17 +363,9 @@ PrepareUmiCorrectionInfo <- function(umi.probabilities, max.umi.per.gene, reads.
               rpus.with.inds=rpus.with.inds, dp.matrices=dp.matrices))
 }
 
-GetReadsPerUmiDistribution <- function(reads.per.umi.per.cb, smooth=10) {
-  rpu.counts <- ValueCounts(unlist(reads.per.umi.per.cb)) #TODO: optimize with data.table? or optimize unlist or rewrite the whole function
-
-  rpu.probs <- rep(0, max(as.integer(names(rpu.counts))))
-  rpu.probs[as.integer(names(rpu.counts))] <- rpu.counts
-  rpu.probs <- rpu.probs + smooth
-  return(rpu.probs / sum(rpu.probs))
-}
-
 #' @export
-TrimAndCorrect <- function(reads.per.umi.per.cb.info, umi.trim.length, collisions.adj.step, mc.cores.large, mc.cores.small, verbosity.level=0) {
+TrimAndCorrect <- function(reads.per.umi.per.cb.info, umi.trim.length, collisions.adj.step, mc.cores.large,
+                           mc.cores.small, verbosity.level=0, prepare.only=FALSE) {
   reads.per.umi.per.cb <- reads.per.umi.per.cb.info$reads_per_umi
 
   trimmed <- list()
@@ -395,6 +387,9 @@ TrimAndCorrect <- function(reads.per.umi.per.cb.info, umi.trim.length, collision
   trimmed$correction.info <- PrepareUmiCorrectionInfoWrapper(trimmed$reads.per.umi.per.cb, trimmed$umi.probabilities,
                                                              method='Bayesian', verbosity.level=verbosity.level,
                                                              max.umi.per.gene=max.umi.per.gene.adj)
+
+  if (prepare.only)
+    return(trimmed)
 
   filt_cells <- list()
   filt_cells$NB <- CorrectUmiSequenceErrors(trimmed.reads.per.umi.per.cb, umi.probabilities=trimmed$umi.probabilities,
