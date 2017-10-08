@@ -87,21 +87,24 @@ PredictLeftPartR <- function(clf, classifier.df, gene.size) {
 
   min.rpu.prob.err <- emdbook::dbetabinom(classifier.df$MinRpU - 1, size=classifier.df$MinRpU + classifier.df$MaxRpU - 1,
                                           prob=clf$Negative$MinRpU$prob, theta=clf$Negative$MinRpU$theta, log=T)
-  # max.rpu.prob.err <- dnbinom(classifier.df$MaxRpU - 1, size=clf$Negative$MaxRpU$size, mu=clf$Negative$MaxRpU$mu, log=T)
+
+  merged.rpus <- classifier.df$MaxRpU + classifier.df$MinRpU
+  merged.rpus[merged.rpus > length(clf$Common$RpuProbs)] <- length(clf$Common$RpuProbs)
+  max.rpu.prob.err <- log(clf$Common$RpuProbs[merged.rpus])
 
   quantized.quality <- Quantize(classifier.df$Quality, clf$QualityQuantBorders)
 
   min.rpu.prob <- log(clf$Common$RpuProbs[classifier.df$MinRpU])
-  # max.rpu.prob <- log(clf$Common$RpuProbs[classifier.df$MaxRpU])
+  max.rpu.prob <- log(clf$Common$RpuProbs[classifier.df$MaxRpU])
 
   quality.prob <- log(clf$Common$Quality[quantized.quality + 1]);
   quality.prob.err <- log(clf$Negative$Quality[quantized.quality + 1]);
 
   umi.prob <- log(1 - (1 - classifier.df$UmiProb)^gene.size)
 
-  return(exp((nucl.prob.err + position.prob.err + min.rpu.prob.err + quality.prob.err + log(clf$ErrorPriorProb)) -
-               (umi.prob + min.rpu.prob + quality.prob + log(1 - clf$ErrorPriorProb))))
+  # return(exp((nucl.prob.err + position.prob.err + min.rpu.prob.err + quality.prob.err + log(clf$ErrorPriorProb)) -
+  #              (umi.prob + min.rpu.prob + quality.prob + log(1 - clf$ErrorPriorProb))))
 
-  # return(exp((nucl.prob.err + position.prob.err + min.rpu.prob.err + max.rpu.prob.err + quality.prob.err) -
-  #              (umi.prob + min.rpu.prob + max.rpu.prob + quality.prob)))
+  return(exp((nucl.prob.err + position.prob.err + min.rpu.prob.err + max.rpu.prob.err + quality.prob.err) -
+               (umi.prob + min.rpu.prob + max.rpu.prob + quality.prob)))
 }
