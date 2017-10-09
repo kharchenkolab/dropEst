@@ -1,18 +1,39 @@
-GetQuantBorders <- function(quality.vals, max.quants.num) {
+#' @export
+GetPercentileQuantBorders <- function(distribution, max.quants.num) {
   kEps <- 1e-5
-
-  quality.vals <- lapply(quality.vals, ValueCounts)
-  quality.vals <- lapply(quality.vals, function(v) data.frame(Quality=as.integer(names(v)), Probability=v / sum(v)))
-
-  distribution <- dplyr::full_join(quality.vals[[1]], quality.vals[[2]], by='Quality') %>%
-    dplyr::mutate_all(dplyr::funs(replace(., is.na(.), 0))) %>%
-    dplyr::mutate(Probability = (Probability.x + Probability.y) / 2) %>%
-    dplyr::arrange(Quality) %>% dplyr::select(Quality, Probability) %>%
-    dplyr::mutate(Probability = cumsum(Probability))
-
+  distribution <- distribution %>% dplyr::arrange(Value) %>% dplyr::mutate(Probability = cumsum(Probability))
   quants <- sapply(seq(1 / max.quants.num, 1, length.out = max.quants.num), function(q) which.max(q <= distribution$Probability))
   quants <- as.vector(quants[c(1, which(diff(quants) > kEps) + 1)])
-  return(distribution$Quality[quants])
+  return(distribution$Value[quants])
+}
+
+GetQualityQuantBorders <- function(values, max.quants.num, distribution.smooth = 0) {
+  values <- lapply(values, ValueCounts)
+  values <- lapply(values, function(v) data.frame(Value=as.integer(names(v)),
+                                                  Probability= (v + distribution.smooth) / sum(v + distribution.smooth)))
+
+  distribution <- dplyr::full_join(values[[1]], values[[2]], by='Value') %>%
+    dplyr::mutate_all(dplyr::funs(replace(., is.na(.), 0))) %>%
+    dplyr::mutate(Probability = (Probability.x + Probability.y) / 2) %>%
+    dplyr::select(Value, Probability)
+
+  return(GetPercentileQuantBorders(distribution, max.quants.num))
+}
+
+GetUmiPerGeneQuantBorders <- function(umis.per.gene, max.quants.num, distribution.smooth = 0) {
+  cnt <- ValueCounts(umis.per.gene)
+  cnt <- setNames(cnt * as.integer(names(cnt)) + distribution.smooth, names(cnt))
+  probs.df <- data.frame(Value=as.integer(names(cnt)), Probability=cnt / sum(cnt))
+  return(GetPercentileQuantBorders(probs.df, max.quants.num))
+}
+
+GetRpuProbsByGeneSize <- function(reads.per.umi.per.cb, max.quants.num, distribution.smooth) {
+  umis.per.gene <- sapply(reads.per.umi.per.cb, length)
+  umi.quant.borders <- GetUmiPerGeneQuantBorders(umis.per.gene, max.quants.num)
+  rpus.splitted <- split(reads.per.umi.per.cb, Quantize(umis.per.gene, umi.quant.borders))
+  rpu.distrs <- lapply(rpus.splitted, function(group) SmoothDistribution(unlist(ExtractReadsPerUmi(group)) - 1, distribution.smooth))
+
+  return(list(distributions=rpu.distrs, quant.borders=umi.quant.borders))
 }
 
 SmoothDistribution <- function(values, smooth, max.value=NULL, smooth.probs=FALSE) {
@@ -51,7 +72,7 @@ TrainNBNegative <- function(train.data, distribution.smooth, nucleotide.pairs.nu
 
 #' @export
 TrainNBClassifier <- function(reads.per.umi.per.cb, distribution.smooth, quality.quants.num=15,
-                              quality.smooth=0.01, error.prior.prob=0.5) {
+                              quality.smooth=0.01, error.prior.prob=0.5, gene.size.quants.num=5) {
   paired.rpus <- reads.per.umi.per.cb[sapply(reads.per.umi.per.cb, length) == 2]
   train.data <- PrepareClassifierTrainingData(paired.rpus)
 
@@ -61,23 +82,26 @@ TrainNBClassifier <- function(reads.per.umi.per.cb, distribution.smooth, quality
 
   # Quality estimation
   quality.vals <- list(negative=train.data$Quality, common=unlist(lapply(paired.rpus, sapply, `[[`, 2))) # TODO: try to use reads.per.umi.per.cb instead of paired.rpus?
-  quant.borders <- GetQuantBorders(quality.vals, quality.quants.num)
+  quant.borders <- GetQualityQuantBorders(quality.vals, quality.quants.num, distribution.smooth)
 
   quantized.quality.data <- lapply(quality.vals, Quantize, quant.borders)
   quants.num <- max(sapply(quantized.quality.data, max)) + 1
   quality.probs <- lapply(quantized.quality.data, SmoothDistribution, quality.smooth, quants.num, smooth.probs = T)
 
   # Distributions given error
-  clf_neg <- TrainNBNegative(train.data, distribution.smooth=distribution.smooth,
+  clf.neg <- TrainNBNegative(train.data, distribution.smooth=distribution.smooth,
                              nucleotide.pairs.number=NumberOfNucleotidePairs(),
                              umi.length=nchar(names(reads.per.umi.per.cb[[1]])[1]),
                              quality.prior=quality.probs$negative)
 
   # Distribution over all data
-  rpu.probs <- SmoothDistribution(unlist(lapply(reads.per.umi.per.cb, sapply, `[[`, 1)) - 1, distribution.smooth)
-  clf_common <- list(RpuProbs=rpu.probs, Quality=quality.probs$common)
+  rpu.probs <- SmoothDistribution(unlist(ExtractReadsPerUmi(reads.per.umi.per.cb)) - 1, distribution.smooth)
+  rpu.probs.by.gene.size.info <- GetRpuProbsByGeneSize(reads.per.umi.per.cb, gene.size.quants.num, distribution.smooth)
 
-  return(list(Negative=clf_neg, Common=clf_common, QualityQuantBorders=quant.borders, ErrorPriorProb=error.prior.prob))
+  clf.common <- list(RpuProbs=rpu.probs, RpuProbsByGeneSize=rpu.probs.by.gene.size.info$distributions,
+                     RpuQuantBorders=rpu.probs.by.gene.size.info$quant.borders, Quality=quality.probs$common)
+
+  return(list(Negative=clf.neg, Common=clf.common, QualityQuantBorders=quant.borders, ErrorPriorProb=error.prior.prob))
 }
 
 #' @export
@@ -92,19 +116,20 @@ PredictLeftPartR <- function(clf, classifier.df, gene.size) {
   merged.rpus[merged.rpus > length(clf$Common$RpuProbs)] <- length(clf$Common$RpuProbs)
   max.rpu.prob.err <- log(clf$Common$RpuProbs[merged.rpus])
 
-  quantized.quality <- Quantize(classifier.df$Quality, clf$QualityQuantBorders)
+  quantized.quality <- Quantize(classifier.df$Quality, clf$QualityQuantBorders) + 1
 
-  min.rpu.prob <- log(clf$Common$RpuProbs[classifier.df$MinRpU])
+  # min.rpu.prob <- log(clf$Common$RpuProbs[classifier.df$MinRpU])
+  min.rpu.prob <- log(clf$Common$RpuProbsByGeneSize[[Quantize(gene.size, clf$Common$RpuQuantBorders) + 1]][classifier.df$MinRpU])
   max.rpu.prob <- log(clf$Common$RpuProbs[classifier.df$MaxRpU])
 
-  quality.prob <- log(clf$Common$Quality[quantized.quality + 1]);
-  quality.prob.err <- log(clf$Negative$Quality[quantized.quality + 1]);
+  quality.prob <- log(clf$Common$Quality[quantized.quality]);
+  quality.prob.err <- log(clf$Negative$Quality[quantized.quality]);
 
   umi.prob <- log(1 - (1 - classifier.df$UmiProb)^gene.size)
 
   # return(exp((nucl.prob.err + position.prob.err + min.rpu.prob.err + quality.prob.err + log(clf$ErrorPriorProb)) -
   #              (umi.prob + min.rpu.prob + quality.prob + log(1 - clf$ErrorPriorProb))))
 
-  return(exp((nucl.prob.err + position.prob.err + min.rpu.prob.err + max.rpu.prob.err + quality.prob.err) -
-               (umi.prob + min.rpu.prob + max.rpu.prob + quality.prob)))
+  return(exp((nucl.prob.err + position.prob.err + min.rpu.prob.err + max.rpu.prob.err + quality.prob.err + log(clf$ErrorPriorProb)) -
+               (umi.prob + min.rpu.prob + max.rpu.prob + quality.prob + log(1 - clf$ErrorPriorProb))))
 }

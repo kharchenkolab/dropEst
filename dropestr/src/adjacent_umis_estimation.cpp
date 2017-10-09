@@ -164,6 +164,7 @@ List FillAdjacentUmisData(const NumericVector &umi_probabilites, bool adjacent_o
   return List::create(_["adjacent.umis"] = neighbours, _["probabilities"] = adjacent_probs);
 }
 
+//' @export
 // [[Rcpp::export]]
 List GetAdjacentUmisNum(const IntegerVector &reads_per_umi_from, const IntegerVector &reads_per_umi_to,
                           const List &neighbourhood, bool total = true, bool larger = false, bool smaller = false) {

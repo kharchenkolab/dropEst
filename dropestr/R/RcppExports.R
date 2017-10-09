@@ -25,6 +25,7 @@ FillAdjacentUmisData <- function(umi_probabilites, adjacent_only = FALSE, show_p
     .Call('_dropestr_FillAdjacentUmisData', PACKAGE = 'dropestr', umi_probabilites, adjacent_only, show_progress)
 }
 
+#' @export
 GetAdjacentUmisNum <- function(reads_per_umi_from, reads_per_umi_to, neighbourhood, total = TRUE, larger = FALSE, smaller = FALSE) {
     .Call('_dropestr_GetAdjacentUmisNum', PACKAGE = 'dropestr', reads_per_umi_from, reads_per_umi_to, neighbourhood, total, larger, smaller)
 }
@@ -46,6 +47,7 @@ FilterUmisInGeneClassic <- function(reads_per_umi, neighbourhood, mult = 1, retu
     .Call('_dropestr_FilterUmisInGeneClassic', PACKAGE = 'dropestr', reads_per_umi, neighbourhood, mult, return_data)
 }
 
+#' @export
 Quantize <- function(values, quant_borders) {
     .Call('_dropestr_Quantize', PACKAGE = 'dropestr', values, quant_borders)
 }
@@ -101,8 +103,8 @@ ValueCountsC <- function(values) {
 }
 
 #' @export
-ValueCounts <- function(values) {
-    .Call('_dropestr_ValueCounts', PACKAGE = 'dropestr', values)
+ValueCounts <- function(values, return_probs = FALSE) {
+    .Call('_dropestr_ValueCounts', PACKAGE = 'dropestr', values, return_probs)
 }
 
 BuildCountMatrix <- function(reads_per_umi_per_cell) {

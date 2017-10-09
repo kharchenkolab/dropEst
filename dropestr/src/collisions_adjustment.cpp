@@ -77,29 +77,29 @@ int AdjustGeneExpressionClassic(int value, int umis_number) {
 //' Adjust gene expression value for collisions.
 //'
 //' @param value gene expression value.
-//' @param observed_sizes vector of quantized ordered obseved gene sizes.
 //' @param adjusted_sizes vector of adjusted gene sizes for *observed_sizes*.
+//' @param observed_sizes vector of quantized ordered obseved gene sizes.
 //' @return Adjusted gene expression value.
 //'
 //' @export
 // [[Rcpp::export]]
-int AdjustGeneExpression(int value, const std::vector<int> &observed_sizes, const std::vector<double> &adjusted_sizes) {
-  if (adjusted_sizes.empty() || observed_sizes.empty() || observed_sizes.size() != adjusted_sizes.size())
-    stop("Bad input arrays: " + std::to_string(observed_sizes.size()) + ", " + std::to_string(adjusted_sizes.size()));
+int AdjustGeneExpression(int value, const std::vector<int> &adjusted_sizes, const std::vector<double> &observed_sizes) {
+  if (observed_sizes.empty() || adjusted_sizes.empty() || adjusted_sizes.size() != observed_sizes.size())
+    stop("Bad input arrays: " + std::to_string(adjusted_sizes.size()) + ", " + std::to_string(observed_sizes.size()));
 
-  if (adjusted_sizes.back() == value)
-    return observed_sizes.back();
+  if (observed_sizes.back() == value)
+    return adjusted_sizes.back();
 
-  auto est_iter = std::upper_bound(adjusted_sizes.begin(), adjusted_sizes.end(), double(value));
-  if (est_iter == adjusted_sizes.end())
+  auto est_iter = std::upper_bound(observed_sizes.begin(), observed_sizes.end(), double(value));
+  if (est_iter == observed_sizes.end())
     stop("Too large value of gene expression: " + std::to_string(value));
 
-  int index = std::distance(adjusted_sizes.begin(), est_iter);
+  int index = std::distance(observed_sizes.begin(), est_iter);
   if (index == 0)
     stop("Undexpected expression value: " + std::to_string(value));
 
-  int lower_real = observed_sizes[index - 1], upper_real = observed_sizes[index];
-  double lower_est = adjusted_sizes[index - 1], upper_est = adjusted_sizes[index];
+  int lower_est = adjusted_sizes[index - 1], upper_est = adjusted_sizes[index];
+  double lower_real = observed_sizes[index - 1], upper_real = observed_sizes[index];
 
-  return lower_real + (upper_real - lower_real) * (value - lower_est) / (upper_est - lower_est); // Linear interpolation
+  return std::lround(lower_est + (upper_est - lower_est) * (value - lower_real) / (upper_real - lower_real)); // Linear interpolation
 }

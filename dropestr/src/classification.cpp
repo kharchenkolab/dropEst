@@ -173,6 +173,7 @@ public:
   }
 };
 
+//' @export
 // [[Rcpp::export]]
 IntegerVector Quantize(const NumericVector &values, const NumericVector &quant_borders) {
   const double EPS = 1e-7;
@@ -181,7 +182,7 @@ IntegerVector Quantize(const NumericVector &values, const NumericVector &quant_b
   for (int val_id = 0; val_id < values.size(); ++val_id) {
     const double value = values[val_id];
     for (int border_id = 0; border_id < quant_borders.size(); ++border_id) {
-      if (value < quant_borders[border_id] + EPS) {
+      if (value < quant_borders[border_id] + EPS || border_id == quant_borders.size() - 1) {
         quants[val_id] = border_id;
         break;
       }

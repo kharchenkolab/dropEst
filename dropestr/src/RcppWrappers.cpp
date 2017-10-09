@@ -62,10 +62,11 @@ si_map_t ValueCountsC(const s_vec_t &values) {
 
 //' @export
 // [[Rcpp::export]]
-std::unordered_map<int, int> ValueCounts(const std::vector<int> &values) {
-  std::unordered_map<int, int> res;
+std::unordered_map<int, double> ValueCounts(const std::vector<int> &values, bool return_probs=false) {
+  std::unordered_map<int, double> res;
+  double delta = return_probs ? (1.0 / values.size()) : 1;
   for (int value : values) {
-    res[value]++;
+    res[value] += delta;
   }
 
   return res;

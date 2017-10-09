@@ -265,13 +265,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // ValueCounts
-std::unordered_map<int, int> ValueCounts(const std::vector<int>& values);
-RcppExport SEXP _dropestr_ValueCounts(SEXP valuesSEXP) {
+std::unordered_map<int, double> ValueCounts(const std::vector<int>& values, bool return_probs);
+RcppExport SEXP _dropestr_ValueCounts(SEXP valuesSEXP, SEXP return_probsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::vector<int>& >::type values(valuesSEXP);
-    rcpp_result_gen = Rcpp::wrap(ValueCounts(values));
+    Rcpp::traits::input_parameter< bool >::type return_probs(return_probsSEXP);
+    rcpp_result_gen = Rcpp::wrap(ValueCounts(values, return_probs));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -389,7 +390,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dropestr_AdjustGeneExpressionClassic", (DL_FUNC) &_dropestr_AdjustGeneExpressionClassic, 2},
     {"_dropestr_AdjustGeneExpression", (DL_FUNC) &_dropestr_AdjustGeneExpression, 3},
     {"_dropestr_ValueCountsC", (DL_FUNC) &_dropestr_ValueCountsC, 1},
-    {"_dropestr_ValueCounts", (DL_FUNC) &_dropestr_ValueCounts, 1},
+    {"_dropestr_ValueCounts", (DL_FUNC) &_dropestr_ValueCounts, 2},
     {"_dropestr_BuildCountMatrix", (DL_FUNC) &_dropestr_BuildCountMatrix, 1},
     {"_dropestr_TrimUmis", (DL_FUNC) &_dropestr_TrimUmis, 2},
     {"_dropestr_AddIndexesToRpU", (DL_FUNC) &_dropestr_AddIndexesToRpU, 2},

@@ -9,7 +9,6 @@ output:
   html_notebook: default
 ---
 
-
 ```{r}
 source("./Functions/PlotFuncs.R")
 
@@ -103,7 +102,7 @@ reads_per_umi_per_cell$reads_per_umi <- FilterNUmis(holder$reads_per_umi_per_cel
 ```
 
 ```{r}
-# reads_per_umi_per_cell <- readRDS('/d0-mendel/home/viktor_petukhov/Data/10x/aml035_post_transplant/est_10_20_umi_quality/reads_per_umi_subset.rds')
+reads_per_umi_per_cell <- readRDS('/d0-mendel/home/viktor_petukhov/Data/10x/aml035_post_transplant/est_10_20_umi_quality/reads_per_umi_subset.rds')
 # reads_per_umi_per_cell$reads_per_umi <- reads_per_umi_per_cell$reads_per_umi[1:1000]
 ```
 
@@ -126,13 +125,9 @@ trimmed <- TrimAndCorrect(reads_per_umi_per_cell, umi.trim.length=6, collisions.
 trimmed_reads_per_umi_per_cb <- reads_per_umi_per_cell
 trimmed_reads_per_umi_per_cb$reads_per_umi <- trimmed$reads.per.umi.per.cb
 
-trimmed$filt_cells$NB_p005 <- CorrectUmiSequenceErrors(trimmed_reads_per_umi_per_cb, umi.probabilities=trimmed$umi.probabilities,
+trimmed$filt_cells$NB_p05 <- CorrectUmiSequenceErrors(trimmed_reads_per_umi_per_cb, umi.probabilities=trimmed$umi.probabilities,
                                                    collisions.info=trimmed$collisions.info, correction.info=trimmed$correction.info,
-                                                   mc.cores=30, return='umis', verbosity.level=2, error.prior.prob=0.005)
-
-trimmed$filt_cells$NB2 <- CorrectUmiSequenceErrors(trimmed_reads_per_umi_per_cb, umi.probabilities=trimmed$umi.probabilities,
-                                                   collisions.info=trimmed$collisions.info, correction.info=trimmed$correction.info,
-                                                   mc.cores=30, return='umis', verbosity.level=2)
+                                                   mc.cores=30, return='umis', verbosity.level=2, error.prior.prob=0.05)
 ```
 
 ## Plots
@@ -143,7 +138,7 @@ plot_df_all <- GetPlotExrDf(trimmed, raw, 6, T) %>% filter(Correction != "NoCorr
 
 ```{r, fig.width=9, fig.height=5}
 p0 <- plot_df_all %>% filter(RealValue < 50)
-ggplot(p0 %>% head(1000), aes(x=as.factor(ceiling(RealValue / 5) * 5) , y=100 * (value - RealValue) / RealValue, color=Correction)) + 
+ggplot(p0, aes(x=as.factor(ceiling(RealValue / 5) * 5) , y=100 * (value - RealValue) / RealValue, color=Correction)) + 
   geom_boxplot_jitter_outlier(outlier.jitter.width=NULL, outlier.jitter.height=1, outlier.size=0.7, outlier.alpha=0.7) +
   labs(x='Corrected #UMIs without trimming', y='Error on trimmed data, %') + 
   scale_linetype_manual(values=c('dashed', 'solid')) + scale_color_jco() +
@@ -157,38 +152,7 @@ ggplot(plot_df, aes(x=RealValue, y=100 * (Median - RealValue) / RealValue, color
   geom_point(size=0.3, alpha=0.3) + geom_smooth(alpha=0.1) + 
   labs(x='Corrected #UMIs without trimming', y='Error on trimmed data, %') + 
   scale_linetype_manual(values=c('dashed', 'solid')) + scale_color_jco() +
-  scale_x_continuous(expand=c(0, 0), limits=c(1, 7999), trans='log10') + scale_y_continuous(expand=c(0, 0), limits=c(-101, 70)) + 
+  scale_x_continuous(expand=c(0, 0), limits=c(1, 7999), trans='identity') + scale_y_continuous(expand=c(0, 0), limits=c(-101, 70)) + 
   theme(legend.position=c(0, 0), legend.justification=c(0, 0), strip.background =element_blank(), strip.text = element_text(size=14)) + 
   guides(color=guide_legend(ncol=3))
-```
-
-# New ideas
-```{r}
-reads_per_umi_trimmed <- lapply(trimmed$reads.per.umi.per.cb, sapply, `[[`, 1)
-umis_per_gene_trimmed <- sapply(reads_per_umi_trimmed, length)
-
-PlotReadsDistribution <- function(reads.per.gene, umis.per.gene, min.umis=NULL, max.umis=NULL) {
-  if (is.null(min.umis)) {
-    min.umis <- 1
-  }
-  
-  if (is.null(max.umis)) {
-    max.umis <- max(umis.per.gene)
-  }
-  
-  rpus.filt <- unlist(reads.per.gene[(umis.per.gene >= min.umis) & (umis.per.gene <= max.umis)])
-  ggplot() + geom_histogram(aes(x=rpus.filt, y=..count.. / sum(..count..)), bins=50) + 
-    xlim(0, 20) + labs(title=paste0("Min: ", min.umis, ", max: ", max.umis), x='Reads per UMI', y='#UMIs')
-}
-
-PlotReadsDistribution(reads_per_umi_trimmed, umis_per_gene_trimmed)
-PlotReadsDistribution(reads_per_umi_trimmed, umis_per_gene_trimmed, 1, 10)
-PlotReadsDistribution(reads_per_umi_trimmed, umis_per_gene_trimmed, 10, 20)
-PlotReadsDistribution(reads_per_umi_trimmed, umis_per_gene_trimmed, 20, 50)
-PlotReadsDistribution(reads_per_umi_trimmed, umis_per_gene_trimmed, 50, 80)
-PlotReadsDistribution(reads_per_umi_trimmed, umis_per_gene_trimmed, 80, 100)
-PlotReadsDistribution(reads_per_umi_trimmed, umis_per_gene_trimmed, 100, 200)
-PlotReadsDistribution(reads_per_umi_trimmed, umis_per_gene_trimmed, 200, 500)
-PlotReadsDistribution(reads_per_umi_trimmed, umis_per_gene_trimmed, 500, 1000)
-PlotReadsDistribution(reads_per_umi_trimmed, umis_per_gene_trimmed, 1000)
 ```

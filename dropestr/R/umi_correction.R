@@ -19,6 +19,14 @@ if (requireNamespace("parallel", quietly = TRUE)) {
 }
 
 #' @export
+ExtractReadsPerUmi <- function(reads.per.umi.per.cb, one.gene=F) {
+  if (one.gene)
+    return(sapply(reads.per.umi.per.cb, `[[`, 1))
+
+  return(lapply(reads.per.umi.per.cb, sapply, `[[`, 1))
+}
+
+#' @export
 AdjustCollisions <- function(umis.per.gene, collisions.info, mc.cores.max = 1, verbosity.level = 0) {
   mc.cores <- min(mc.cores.max, round(length(umis.per.gene) / (500 * 1000)) + 1) # TODO: choose optimal threshold
 
@@ -73,12 +81,14 @@ CorrectUmiSequenceErrorsClassic <- function(reads.per.umi.per.cb, mult, correcti
 }
 
 CorrectUmiSequenceErrorsBayesian <- function(reads.per.umi.per.cb, umi.probabilities, collisions.info, correction.info,
-                                             mc.cores, distribution.smooth, verbosity.level=0, error.prior.prob=0.5) {
+                                             mc.cores, distribution.smooth, quality.quants.num, gene.size.quants.num,
+                                             verbosity.level=0, error.prior.prob=0.5) {
   if (verbosity.level > 0) {
     cat("\nEstimating prior error probabilities...")
   }
 
-  clf <- TrainNBClassifier(reads.per.umi.per.cb, distribution.smooth, error.prior.prob=error.prior.prob)
+  clf <- TrainNBClassifier(reads.per.umi.per.cb, distribution.smooth, error.prior.prob=error.prior.prob,
+                           quality.quants.num=quality.quants.num, gene.size.quants.num=gene.size.quants.num)
 
   if (verbosity.level > 0) {
     cat(" Completed.\n")
@@ -98,7 +108,8 @@ CorrectUmiSequenceErrorsBayesian <- function(reads.per.umi.per.cb, umi.probabili
 #' @export
 CorrectUmiSequenceErrors <- function(reads.per.umi.per.cb.info, umi.probabilities=NULL, collisions.info=NULL,
                                      correction.info=NULL, probability.quants.num=50, adjust.collisions=TRUE,
-                                     collisions.adj.step=20, mc.cores=NULL, verbosity.level=0, return='matrix',
+                                     collisions.adj.step=20, quality.quants.num=10, gene.size.quants.num=5,
+                                     mc.cores=NULL, verbosity.level=0, return='matrix',
                                      distribution.smooth=10, method='Bayesian', mult=1, error.prior.prob=0.5) {
   kMethodsList <- c('Bayesian', 'Classic')
   kReturnList <- c('matrix', 'reads', 'umis')
@@ -154,6 +165,8 @@ CorrectUmiSequenceErrors <- function(reads.per.umi.per.cb.info, umi.probabilitie
     filt.genes <- CorrectUmiSequenceErrorsBayesian(reads.per.umi.per.cb, umi.probabilities=umi.probabilities,
                                                    collisions.info=collisions.info, correction.info=correction.info,
                                                    mc.cores=mc.cores, distribution.smooth=distribution.smooth,
+                                                   quality.quants.num=quality.quants.num,
+                                                   gene.size.quants.num=gene.size.quants.num,
                                                    verbosity.level=verbosity.level, error.prior.prob=error.prior.prob)
   } else {
     filt.genes <- CorrectUmiSequenceErrorsClassic(reads.per.umi.per.cb, mult=mult, correction.info=correction.info,
@@ -293,7 +306,7 @@ FilterUmisInGene <- function(cur.gene, neighbours.per.umi, dp.matrices, classifi
   not.filtered.umis <- names(cur.gene)
   total.removed <- 0
 
-  cur.reads.per.umi <- sapply(cur.gene, `[[`, 1)
+  cur.reads.per.umi <- ExtractReadsPerUmi(cur.gene, one.gene=T)
   filt.reads.per.umi <- cur.reads.per.umi
   for (step in 1:max.iter) {
     size.adj <- AdjustGeneExpression(length(filt.reads.per.umi), collisions.info$adjusted, collisions.info$observed)
