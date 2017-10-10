@@ -252,7 +252,7 @@ void fillReverseCumSum(int max_neighbour_num, int larger_nn, int umi_ind, const 
   }
 }
 
-void fillCumSumRatio(int max_neighbour_num, int smaller_nn, int larger_nn, int umi_ind, const NumericVector &distr, NumericMatrix &res, double tol=1e-20) {
+void fillCumSumRatio(int max_neighbour_num, int smaller_nn, int larger_nn, int umi_ind, const NumericVector &distr, NumericMatrix &res, bool log_probs=false, double tol=1e-20) {
   double reverse_cum_sum = 0, direct_cum_sum = 0;
   std::vector<double> direct_cum_sums(max_neighbour_num, 0); // To prevent underflow
   for (int nn = larger_nn; nn <= larger_nn + smaller_nn; ++nn) {
@@ -268,14 +268,15 @@ void fillCumSumRatio(int max_neighbour_num, int smaller_nn, int larger_nn, int u
 
   for (int nn = larger_nn + smaller_nn; nn > larger_nn; --nn) {
     reverse_cum_sum += distr[nn];
-    res(nn - larger_nn, umi_ind) = std::exp(std::log(reverse_cum_sum) - std::log(direct_cum_sums[nn - 1]));
+    double log_value = std::log(reverse_cum_sum) - std::log(direct_cum_sums[nn - 1]);
+    res(nn - larger_nn, umi_ind) = log_probs ? log_value : std::exp(log_value);
   }
 }
 
 // [[Rcpp::export]]
 NumericMatrix GetSmallerNeighboursDistributionsBySizes(const List &dp_matrices, const IntegerVector &larger_neighbours_num,
                                                        const s_vec_t &neighbour_prob_inds, int size_adj, int max_neighbour_num,
-                                                       const IntegerVector &smaller_neighbours_num = IntegerVector()) {
+                                                       const IntegerVector &smaller_neighbours_num = IntegerVector(), bool log_probs=false) {
   // reads_per_umi, larger_neighbours_num and neighbour_prob_inds must have the same order
   si_map_t dp_matrices_index;
   for (int i = 0; i < dp_matrices.size(); ++i) {
@@ -306,7 +307,7 @@ NumericMatrix GetSmallerNeighboursDistributionsBySizes(const List &dp_matrices, 
     }
 
     if (smaller_neighbours_num.size() != 0) {
-      fillCumSumRatio(max_neighbour_num, smaller_neighbours_num.at(umi_ind), larger_nn, umi_ind, distr / prob_sum, res);
+      fillCumSumRatio(max_neighbour_num, smaller_neighbours_num.at(umi_ind), larger_nn, umi_ind, distr / prob_sum, res, log_probs);
     }
     else {
       fillReverseCumSum(max_neighbour_num, larger_nn, umi_ind, distr / prob_sum, res);

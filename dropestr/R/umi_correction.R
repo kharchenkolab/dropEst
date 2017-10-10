@@ -261,19 +261,21 @@ FilterUmisInGeneOneStep <- function(cur.reads.per.umi, neighbours.per.umi, dp.ma
   larger.nn <- nn$Larger[names(cur.reads.per.umi)]
 
   neighbour.distrs <- GetSmallerNeighboursDistributionsBySizes(dp.matrices, larger.nn, cur.n.p.i, size.adj,
-                                                               max.neighbours.num, smaller_neighbours_num=smaller.nn)
+                                                               max.neighbours.num,
+                                                               smaller_neighbours_num=smaller.nn, log_probs=T)
 
   small.neighb.num <- ValueCountsC(as.character(predictions$Target))
   small.neighb.num <- small.neighb.num[sort(names(small.neighb.num))]
 
-  predictions$Prior <- GetSmallerNeighbourProbabilities(as.matrix(neighbour.distrs[,names(small.neighb.num)]), small.neighb.num)
+  predictions$Prior <- GetSmallerNeighbourProbabilities(as.matrix(neighbour.distrs[,names(small.neighb.num)]),
+                                                        small.neighb.num)
 
   filtered.mask <- predictions$Prior < predictions$MergeProb
   if (any(filtered.mask)) {
     filt.predictions <- predictions[filtered.mask,]
     filtered.mask[which(filtered.mask)] <- ResolveUmisDependencies(as.character(filt.predictions$Base),
                                                                    as.character(filt.predictions$Target),
-                                                                   log(filt.predictions$MergeProb) - log(filt.predictions$Prior))
+                                                                   filt.predictions$MergeProb - filt.predictions$Prior)
 
     not.filtered.umis <- base::setdiff(not.filtered.umis, predictions$Base[filtered.mask])
   }
@@ -312,7 +314,7 @@ FilterUmisInGene <- function(cur.gene, neighbours.per.umi, dp.matrices, classifi
   filt.reads.per.umi <- cur.reads.per.umi
   for (step in 1:max.iter) {
     size.adj <- AdjustGeneExpression(length(filt.reads.per.umi), collisions.info$adjusted, collisions.info$observed)
-    classifier.df$MergeProb <- classifier.df$MergeProbConst * PredictLeftPartDependent(classifier, classifier.df, gene.size=size.adj)
+    classifier.df$MergeProb <- classifier.df$MergeProbConst + PredictLeftPartDependent(classifier, classifier.df, gene.size=size.adj)
 
     classifier.df <- classifier.df[order(classifier.df$Target, classifier.df$MergeProb),]
 

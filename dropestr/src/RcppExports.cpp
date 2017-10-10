@@ -87,8 +87,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // GetSmallerNeighboursDistributionsBySizes
-NumericMatrix GetSmallerNeighboursDistributionsBySizes(const List& dp_matrices, const IntegerVector& larger_neighbours_num, const s_vec_t& neighbour_prob_inds, int size_adj, int max_neighbour_num, const IntegerVector& smaller_neighbours_num);
-RcppExport SEXP _dropestr_GetSmallerNeighboursDistributionsBySizes(SEXP dp_matricesSEXP, SEXP larger_neighbours_numSEXP, SEXP neighbour_prob_indsSEXP, SEXP size_adjSEXP, SEXP max_neighbour_numSEXP, SEXP smaller_neighbours_numSEXP) {
+NumericMatrix GetSmallerNeighboursDistributionsBySizes(const List& dp_matrices, const IntegerVector& larger_neighbours_num, const s_vec_t& neighbour_prob_inds, int size_adj, int max_neighbour_num, const IntegerVector& smaller_neighbours_num, bool log_probs);
+RcppExport SEXP _dropestr_GetSmallerNeighboursDistributionsBySizes(SEXP dp_matricesSEXP, SEXP larger_neighbours_numSEXP, SEXP neighbour_prob_indsSEXP, SEXP size_adjSEXP, SEXP max_neighbour_numSEXP, SEXP smaller_neighbours_numSEXP, SEXP log_probsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -98,7 +98,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type size_adj(size_adjSEXP);
     Rcpp::traits::input_parameter< int >::type max_neighbour_num(max_neighbour_numSEXP);
     Rcpp::traits::input_parameter< const IntegerVector& >::type smaller_neighbours_num(smaller_neighbours_numSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetSmallerNeighboursDistributionsBySizes(dp_matrices, larger_neighbours_num, neighbour_prob_inds, size_adj, max_neighbour_num, smaller_neighbours_num));
+    Rcpp::traits::input_parameter< bool >::type log_probs(log_probsSEXP);
+    rcpp_result_gen = Rcpp::wrap(GetSmallerNeighboursDistributionsBySizes(dp_matrices, larger_neighbours_num, neighbour_prob_inds, size_adj, max_neighbour_num, smaller_neighbours_num, log_probs));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -376,7 +377,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dropestr_FillAdjacentUmisData", (DL_FUNC) &_dropestr_FillAdjacentUmisData, 3},
     {"_dropestr_GetAdjacentUmisNum", (DL_FUNC) &_dropestr_GetAdjacentUmisNum, 6},
     {"_dropestr_FillDpMatrix", (DL_FUNC) &_dropestr_FillDpMatrix, 3},
-    {"_dropestr_GetSmallerNeighboursDistributionsBySizes", (DL_FUNC) &_dropestr_GetSmallerNeighboursDistributionsBySizes, 6},
+    {"_dropestr_GetSmallerNeighboursDistributionsBySizes", (DL_FUNC) &_dropestr_GetSmallerNeighboursDistributionsBySizes, 7},
     {"_dropestr_GetSmallerNeighbourProbabilities", (DL_FUNC) &_dropestr_GetSmallerNeighbourProbabilities, 2},
     {"_dropestr_FilterUmisInGeneClassic", (DL_FUNC) &_dropestr_FilterUmisInGeneClassic, 4},
     {"_dropestr_Quantize", (DL_FUNC) &_dropestr_Quantize, 2},
