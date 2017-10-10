@@ -87,8 +87,9 @@ CorrectUmiSequenceErrorsBayesian <- function(reads.per.umi.per.cb, umi.probabili
     cat("\nEstimating prior error probabilities...")
   }
 
-  clf <- TrainNBClassifier(reads.per.umi.per.cb, distribution.smooth, error.prior.prob=error.prior.prob,
-                           quality.quants.num=quality.quants.num, gene.size.quants.num=gene.size.quants.num)
+  clf <- TrainNBClassifier(reads.per.umi.per.cb, distribution.smooth, quality.quants.num=quality.quants.num,
+                           gene.size.quants.num=gene.size.quants.num, correction.info=correction.info,
+                           umi.probabilities=umi.probabilities)
 
   if (verbosity.level > 0) {
     cat(" Completed.\n")
@@ -301,6 +302,7 @@ FilterUmisInGene <- function(cur.gene, neighbours.per.umi, dp.matrices, classifi
     return(cur.gene)
 
   classifier.df <- classifier.df[order(classifier.df$Target),]
+  classifier.df$MergeProbConst <- PredictLeftPartConst(classifier, classifier.df)
 
   # Iterations:
   not.filtered.umis <- names(cur.gene)
@@ -310,8 +312,8 @@ FilterUmisInGene <- function(cur.gene, neighbours.per.umi, dp.matrices, classifi
   filt.reads.per.umi <- cur.reads.per.umi
   for (step in 1:max.iter) {
     size.adj <- AdjustGeneExpression(length(filt.reads.per.umi), collisions.info$adjusted, collisions.info$observed)
+    classifier.df$MergeProb <- classifier.df$MergeProbConst * PredictLeftPartDependent(classifier, classifier.df, gene.size=size.adj)
 
-    classifier.df$MergeProb <- PredictLeftPartR(classifier, classifier.df, size.adj)
     classifier.df <- classifier.df[order(classifier.df$Target, classifier.df$MergeProb),]
 
     not.filtered.umis <- FilterUmisInGeneOneStep(filt.reads.per.umi, neighbours.per.umi, dp.matrices, max.neighbours.num,

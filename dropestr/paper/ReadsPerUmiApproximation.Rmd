@@ -1,0 +1,736 @@
+---
+title: "10x Aml035 Post"
+output:
+  html_document:
+    df_print: kable
+    number_sections: yes
+    theme: cerulean
+    toc: yes
+  html_notebook: default
+---
+```{r global_options, include=FALSE}
+library(ggplot2)
+library(ggsci)
+library(ggpubr)
+library(dplyr)
+library(parallel)
+# library(Rcpp)
+
+# source(paste0(kRootDir, '../Functions/UtilFuncs.R'))
+# source('Functions/Functions.R')
+# sourceCpp('Functions/cpp/Functions.cpp')
+
+knitr::opts_chunk$set(fig.width=5, fig.height=3, echo=FALSE, warning=FALSE, message=FALSE)
+
+theme_set(theme_bw(base_size=14, base_family='Helvetica') + theme(plot.title = element_text(hjust = 0.5)))
+
+kUmiBaseLength <- 10
+underestStep <- 20
+```
+
+```{r}
+holder <- readRDS('/d0-mendel/home/viktor_petukhov/Data/10x/aml035_post_transplant/est_10_20_umi_quality/aml035ost_transplant.rds')
+reads_per_umi_per_cell <- holder$reads_per_umi_per_cell
+reads_per_umi_per_cell$reads_per_umi <- holder$reads_per_umi_per_cell$reads_per_umi[1:25000]
+saveRDS(reads_per_umi_per_cell, '/d0-mendel/home/viktor_petukhov/Data/10x/aml035_post_transplant/est_10_20_umi_quality/reads_per_umi_subset.rds')
+```
+
+```{r}
+reads_per_umi_per_cell <- readRDS('/d0-mendel/home/viktor_petukhov/Data/10x/aml035_post_transplant/est_10_20_umi_quality/reads_per_umi_subset.rds')
+```
+
+<!-- Simple filtration of the raw data -->
+```{r}
+reads_per_umi_per_cell$reads_per_umi <- holder$reads_per_umi_per_cell$reads_per_umi[5000:10000]
+```
+
+```{r}
+raw <- list()
+
+raw$umi_distribution <- GetUmisDistribution(reads_per_umi_per_cell$reads_per_umi, smooth = 10)
+raw$filt_umis_per_gene_simple <- CorrectUmiSequenceErrors(reads_per_umi_per_cell, raw$umi_distribution, method='Classic',
+                                                 mc.cores=10, verbosity.level=2, return='umis')
+```
+
+```{r}
+trimmed <- TrimAndCorrect(reads_per_umi_per_cell, umi.trim.length=6, collisions.adj.step=20, mc.cores.large=20, mc.cores.small=10, verbosity.level=2)
+```
+
+## Plots
+```{r}
+GetExprDf <- function(filt.umis.per.gene.vec, real.umis.per.gene.vec, raw.umis.per.gene.vec, adjustment=FALSE) {
+  expressions <- as.data.frame(filt.umis.per.gene.vec)
+  expressions$Adjustment <- adjustment
+  expressions$RealValue <- real.umis.per.gene.vec
+  expressions$NoCorrection <- raw.umis.per.gene.vec
+  return(expressions %>% filter(NoCorrection > 1))
+}
+
+GetPlotExrDf <- function(trimmed.cur, raw, umi.length, return.all=FALSE) {
+  expr.df <- GetExprDf(trimmed.cur$filt_cells, raw$filt_umis_per_gene_simple, trimmed.cur$umis.per.gene, adjustment=T) %>% 
+    reshape2::melt(id.vars=c('RealValue', 'Adjustment'), variable.name='Correction') %>% mutate(UmiLen=umi.length)
+  
+  if (return.all)
+    return(expr.df)
+  
+  return(expr.df %>% 
+    group_by(Correction, RealValue, Adjustment) %>% 
+    summarise(Max=quantile(value, 0.95), Min=quantile(value, 0.05), Median=median(value)))
+}
+
+plot_df <- GetPlotExrDf(trimmed, raw, 6) %>% filter(Correction != "NoCorrection" & Adjustment | Correction == "NoCorrection" & !Adjustment) %>% dplyr::select(-Adjustment)
+plot_df_all <- GetPlotExrDf(trimmed, raw, 6, T) %>% filter(Correction != "NoCorrection" & Adjustment | Correction == "NoCorrection" & !Adjustment)
+```
+
+```{r, fig.width=7.5, fig.height=5}
+p0 <- plot_df_all %>% filter(RealValue < 50)
+ggplot(p0, aes(x=as.factor(ceiling(RealValue / 5) * 5) , y=100 * (value - RealValue) / RealValue, color=Correction)) + 
+  geom_boxplot() +
+  labs(x='Corrected #UMIs without trimming', y='Error on trimmed data, %') + 
+  scale_linetype_manual(values=c('dashed', 'solid')) + 
+  scale_color_manual(values=pal_jco(alpha=0.8)(5), labels=c('Bayesian', 'cluster', 'cluster,\nno equals', 'directional', 'no correction')) +
+  ylim(-50, 50) +
+  theme(legend.position=c(1, 0), legend.justification=c(1, 0), strip.background =element_blank(), strip.text = element_text(size=14)) + 
+  guides(color=guide_legend(ncol=3))
+
+# ggsave(paste0(kPlotsFolder, '10x_trimming_panel2.png'), width=12, height=8, units='in', dpi=300)
+# ggsave(paste0(kPlotsFolder, '10x_trimming_panel2.pdf'), width=7.5, height=5)
+```
+
+```{r, fig.width=7.5, fig.height=5}
+ggplot(plot_df, aes(x=RealValue, y=100 * (Median - RealValue) / RealValue, color=Correction)) + 
+  geom_point(size=0.3, alpha=0.3) + geom_smooth(alpha=0.1) + 
+  labs(x='Corrected #UMIs without trimming', y='Error on trimmed data, %') + 
+  scale_linetype_manual(values=c('dashed', 'solid')) + 
+  scale_color_manual(values=pal_jco(alpha=0.8)(5), labels=c('Bayesian', 'cluster', 'cluster,\nno equals', 'directional', 'no correction')) +
+  scale_x_continuous(expand=c(0, 0), limits=c(1, 7999), trans='log10') + scale_y_continuous(expand=c(0, 0), limits=c(-101, 70)) + 
+  theme(legend.position=c(0, 0), legend.justification=c(0, 0), strip.background =element_blank(), strip.text = element_text(size=14)) + 
+  guides(color=guide_legend(ncol=3))
+
+# ggsave(paste0(kPlotsFolder, '10x_trimming_panel.pdf'))
+```
+
+## Debug
+
+```{r}
+test_gene_id <- which(raw$filt_umis_per_gene_simple == 10 & trimmed$filt_cells$NB == 3)
+
+test_gene <- reads_per_umi_per_cell$reads_per_umi[[test_gene_id]]
+test_gene_trimmed <- trimmed$reads.per.umi.per.cb[[test_gene_id]]
+
+sapply(test_gene_trimmed, `[[`, 1)
+```
+
+```{r}
+clf <- TrainNBClassifier(reads_per_umi_per_cell$reads_per_umi, 10)
+
+FilterUmisInGene(trimmed$correction.info$rpus.with.inds[[test_gene_id]], trimmed$correction.info$neighbours.per.umi, 
+                 trimmed$correction.info$dp.matrices, clf, trimmed$correction.info$neighb.prob.index, 
+                 trimmed$umi.probabilities, trimmed$collisions.info)
+
+cur_neighborhood <- SubsetAdjacentUmis(names(test_gene_trimmed))
+classifier_df <- PrepareClassifierData(test_gene_trimmed, cur_neighborhood, trimmed$umi.probabilities)
+```
+
+```{r}
+umi_prob_neg <- clf$Negative$Position[classifier_df$Position + 1] * clf$Negative$Nucleotides[classifier_df$Nucleotides + 1]
+umi_prob_com <- 1 - (1 - classifier_df$UmiProb) ^ length(test_gene)
+umi_posterior <- umi_prob_neg / (umi_prob_neg + umi_prob_com)
+
+quality_quants <- Quantize(classifier_df$Quality, clf$QualityQuantBorders) + 1
+quality_posterior <- clf$Negative$Quality[quality_quants] / (clf$Negative$Quality[quality_quants] + clf$Common$Quality[quality_quants])
+
+rpu_prob_neg <- (clf$Negative$MinRpU ^ classifier_df$MinRpU) * (clf$Negative$MaxRpU ^ classifier_df$MaxRpU)
+rpu_prob_comm <- clf$Common$RpuProbs[classifier_df$MaxRpU] * clf$Common$RpuProbs[classifier_df$MinRpU]
+rpu_posterior <- rpu_prob_neg / (rpu_prob_neg + rpu_prob_comm)
+
+data.frame(Base=classifier_df$Base, Target=classifier_df$Target, umi=umi_posterior, quality=quality_posterior, RpU=rpu_posterior)
+```
+
+```{r}
+gene_size <- 10
+nucl_prob_err <- log(clf$Negative$Nucleotides[classifier_df$Nucleotides + 1])
+position_prob_err <- log(clf$Negative$Position[classifier_df$Position + 1])
+
+min_rpu_prob_err <- log(clf$Negative$MinRpU * classifier_df$MinRpU)
+max_rpu_prob_err <- log(clf$Negative$MaxRpU * classifier_df$MaxRpU)
+
+quantized_quality <- Quantize(classifier_df$Quality, clf$QualityQuantBorders)
+
+rpu_prob <- clf$Common$RpuProbs;
+min_rpu_prob <- log(clf$Common$RpuProbs[classifier_df$MinRpU])
+max_rpu_prob <- log(clf$Common$RpuProbs[classifier_df$MaxRpU])
+
+quality_prob <- log(clf$Common$Quality[quantized_quality + 1]);
+quality_prob_err <- log(clf$Negative$Quality[quantized_quality + 1]);
+
+umi_prob_pos <- log(1 - (1 - classifier_df$UmiProb)^gene_size)
+
+exp((nucl_prob_err + position_prob_err + min_rpu_prob_err + max_rpu_prob_err) - # + quality_prob_err
+           (umi_prob_pos + min_rpu_prob + max_rpu_prob)); # + quality_prob
+
+exp(min_rpu_prob_err)
+exp(max_rpu_prob_err)
+exp(max_rpu_prob)
+exp(min_rpu_prob)
+exp((min_rpu_prob_err + max_rpu_prob_err) - (min_rpu_prob + max_rpu_prob))
+```
+
+
+```{r}
+(umi_prob_neg * rpu_prob_neg) / (umi_prob_com * rpu_prob_comm)
+```
+
+```{r}
+PredictLeftPart(clf, classifier_df, 5000)
+```
+
+
+```{r}
+plot(igraph::graph_from_edgelist(as.matrix(classifier_df[1:2])), vertex.size=1)
+```
+
+## Reads per UMI distribution
+```{r}
+paired_rpus <- holder$reads_per_umi_per_cell$reads_per_umi[sapply(holder$reads_per_umi_per_cell$reads_per_umi, length) == 2]
+classifier_training_df <- PrepareClassifierTrainingData(paired_rpus)
+qplot(classifier_training_df %>% filter(ED == 1) %>% .$MaxRpU, bins=50) + xlim(1, 20)
+
+qplot(classifier_training_df %>% filter(ED == 1) %>% .$MinRpU - 1, bins=50) + xlim(-0.1, 5)
+qplot(classifier_training_df %>% filter(ED > 3) %>% .$MinRpU - 1, bins=50)
+```
+
+```{r}
+v_counts <- table(classifier_training_df %>% filter(ED == 1) %>% .$MinRpU)
+v_counts[1:6] / v_counts[2:7]
+
+r0 <- rbinom(n=100000, size=10, prob=0.01)
+qplot(r0, bins=50)
+```
+
+```{r}
+p_max <- fitdistrplus::fitdist(classifier_training_df %>% filter(ED == 1) %>% .$MaxRpU, 'nbinom')
+p_min <- fitdistrplus::fitdist(classifier_training_df %>% filter(ED > 3) %>% .$MinRpU, 'nbinom')
+```
+
+```{r}
+qplot(rnbinom(1000, size=p_min$estimate[1], mu=p_min$estimate[2]))
+qplot(rnbinom(10000, size=p_max$estimate[1], mu=p_max$estimate[2]), bins=50) + xlim(1, 20)
+qplot(rpois(1000, lambda=1))
+```
+
+```{r}
+qplot(rpois(10000, lambda=5), bins=50) + xlim(1, 20)
+
+qplot(rpois(10000, lambda=5), bins=50) + xlim(1, 20)
+
+rcpois <- function(n, lambda) {
+  x <- rpois(n, lambda=lambda)
+  return(x[x > 0])
+}
+qplot(apply(cbind(rcpois(10000, lambda=5)[1:5000], rcpois(10000, lambda=5)[1:5000]), 1, min), bins=50) + xlim(1, 20)
+qplot(rcpois(10000, lambda=5), bins=50) + xlim(1, 20)
+```
+
+
+```{r}
+fitdistrplus::descdist(classifier_training_df %>% filter(ED == 1) %>% .$MaxRpU, discrete=T, boot=500)
+fitdistrplus::descdist(classifier_training_df %>% filter(ED == 1) %>% .$MinRpU, discrete=T, boot=500)
+fitdistrplus::descdist(classifier_training_df %>% filter(ED > 3) %>% .$MinRpU, discrete=T, boot=500)
+```
+
+## Model reads distribution
+```{r}
+ggplot(reshape2::melt(data.frame(Data=train_df$MaxRpU, Sample=samples)), aes(x=value, fill=variable)) + geom_histogram(bins=50, position='dodge') + xlim(-1, 20)
+```
+
+```{r}
+train_df <- classifier_training_df %>% filter(ED == 1) %>% select(Base, Target, MinRpU, MaxRpU) %>% 
+  # mutate(SumRpU = MaxRpU + MinRpU, MinRpU = MinRpU, MaxRpU = MaxRpU)
+  mutate(SumRpU = MaxRpU + MinRpU - 2, MinRpU = MinRpU - 1, MaxRpU = MaxRpU - 1)
+
+max_rpu_params <- fitdistrplus::fitdist(train_df$MaxRpU, 'nbinom')$estimate
+samples <- rnbinom(nrow(train_df), size=max_rpu_params[1], mu=max_rpu_params[2])
+
+ggplot(reshape2::melt(data.frame(Data=train_df$MaxRpU+1, Sample=samples + 1)), aes(x=value, fill=variable)) + geom_histogram(bins=50, position='dodge') + xlim(-1, 20)
+```
+
+```{r}
+library(emdbook)
+library(bbmle)
+set.seed(1001)
+x1 <- rbetabinom(n=1000,prob=0.1,size=50,theta=10)
+mtmp <- function(prob, theta) -sum(dbetabinom(x1, prob, 50, theta, log=TRUE))
+(m0 <- mle2(mtmp,start=list(prob=0.9,theta=5)))
+```
+
+```{r}
+mtmp <- function(prob, theta) -sum(dbetabinom(train_df$MinRpU, prob, train_df$MaxRpU, theta, log=TRUE))
+m0 <- mle2(mtmp,start=list(prob=0.9,theta=5))
+m0@fullcoef
+```
+
+```{r}
+samples <- rbetabinom(n=nrow(train_df), prob=m0@fullcoef[1], size=train_df$MaxRpU, theta=m0@fullcoef[2])
+ggplot() + geom_histogram(aes(x=samples, fill='Samples'), alpha=0.9, bins=50) + geom_histogram(aes(x=train_df$MinRpU, fill='Data'), alpha=0.7, bins=50)
+cbind(Samples=table(samples)[1:7], Data=table(x=train_df$MinRpU)[1:7])
+```
+
+
+# Dev
+## Tests
+```{r}
+diff <- (trimmed$filt_cells$NB - trimmed$filt_cells$Simple1) / trimmed$filt_cells$Simple1
+qplot(diff[diff != 0])
+```
+
+## Debug
+```{r}
+which(trimmed$filt_cells$NB < trimmed$filt_cells$Simple1)[1]
+```
+
+```{r}
+mask <- trimmed$filt_cells$NB < trimmed$filt_cells$Simple1
+(test_gene_id <- which(mask)[which.min(trimmed$filt_cells$Simple1[mask])])
+# (test_gene_id <- which(trimmed$filt_cells$NB > trimmed$filt_cells$Simple2)[1])
+# (test_gene_id <- which(trimmed$filt_cells$NB == 28))
+test_gene <- reads_per_umi_per_cell$reads_per_umi[[test_gene_id]]
+test_gene_trimmed <- trimmed$reads.per.umi.per.cb[[test_gene_id]]
+c(length(test_gene), length(test_gene_trimmed))
+```
+
+```{r}
+trimmed.reads.per.umi.per.cb <- reads_per_umi_per_cell
+trimmed.reads.per.umi.per.cb$reads_per_umi <- trimmed$reads.per.umi.per.cb
+```
+
+```{r}
+filt_cells <- list()
+filt_cells$NB <- CorrectUmiSequenceErrors(trimmed.reads.per.umi.per.cb, umi.probabilities=trimmed$umi.probabilities,
+                                          collisions.info=trimmed$collisions.info, correction.info=trimmed$correction.info,
+                                          mc.cores=20, return='reads', verbosity.level=2)
+
+filt_cells$Simple1 <- CorrectUmiSequenceErrors(trimmed.reads.per.umi.per.cb, umi.probabilities=trimmed$umi.probabilities,
+                                               collisions.info=trimmed$collisions.info,
+                                               correction.info=trimmed$correction.info, mc.cores=20,
+                                               verbosity.level=2, return='reads', mult=1, method='Classic')
+```
+```{r}
+test_gene_trimmed
+```
+
+```{r}
+sort(names(test_gene_trimmed))
+sort(names(filt_cells$NB[[test_gene_id]]))
+sort(names(filt_cells$Simple1[[test_gene_id]]))
+```
+```{r, fig.width=7}
+library(igraph)
+
+tmp <- readRDS(paste0('~/tmp_r_exchange/nb.', test_gene_id, '.rds'))
+plot(igraph::graph_from_edgelist(as.matrix(tmp[c('Base', 'Target')])), vertex.size=1)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Old
+```{r}
+if (any(sapply(raw$filt_umis_per_gene_simple, function(x) any(x == 0))))
+  stop("Zero expression levels detected")
+```
+
+```{r}
+umiTrimLength <- 6
+allTrimmedData <- list()
+```
+
+# Trimmed UMI length = `r umiTrimLength`
+```{r child='TrimmedUMIsDemonstration.Rmd'}
+```
+
+```{r}
+umiTrimLength <- 7
+```
+
+# Trimmed UMI length = `r umiTrimLength`
+```{r child='TrimmedUMIsDemonstration.Rmd'}
+```
+
+```{r}
+umiTrimLength <- 8
+underestStep <- 50
+```
+
+# Trimmed UMI length = `r umiTrimLength`
+```{r child='TrimmedUMIsDemonstration.Rmd'}
+```
+
+```{r}
+umiTrimLength <- 9
+underestStep <- 100
+```
+
+# Trimmed UMI length = `r umiTrimLength`
+```{r child='TrimmedUMIsDemonstration.Rmd'}
+```
+
+```{r}
+umiTrimLength <- 10
+underestStep <- 100
+```
+
+# Trimmed UMI length = `r umiTrimLength`
+```{r child='TrimmedUMIsDemonstration.Rmd'}
+```
+
+```{r}
+saveRDS(allTrimmedData, '/d0-mendel/home/viktor_petukhov/Data/10x/aml035_post_transplant/est_06_03/all_trimmed_data.rds')
+saveRDS(raw, '/d0-mendel/home/viktor_petukhov/Data/10x/aml035_post_transplant/est_06_03/raw_data_corrections.rds')
+```
+
+# Collisions plot
+```{r}
+raw <- readRDS('/d0-mendel/home/viktor_petukhov/Data/10x/aml035_post_transplant/est_06_03/raw_data_corrections.rds')
+```
+
+```{r}
+collisions_after_trimming <- lapply(6:9, function(i) GetTrimCollisionsNum(raw$reads_per_umi_per_cb, i))
+```
+```{r}
+collisions_after_trimming <- lapply(collisions_after_trimming, function(x) unlist(ConcatLists(x)))
+raw$umi_per_cb_vec <- unlist(ConcatLists(lapply(raw$reads_per_umi_per_cb, sapply, length)))
+
+collisions_after_trimming <- data.frame(collisions_after_trimming)
+colnames(collisions_after_trimming) <- 6:9
+collisions_after_trimming[['v10']] <- raw$umi_per_cb_vec
+
+plot_df <- melt(collisions_after_trimming, id.vars='v10')
+```
+
+```{r, fig.width=4.5, fig.height=4}
+plot_df <- melt(collisions_after_trimming, id.vars='v10')
+
+gg <- ggplot(plot_df, aes(x=v10, y=value, color=variable)) + scale_x_continuous(expand=c(0, 0), limits=c(1, 10000)) + scale_y_continuous(expand=c(0, 0), limits=c(0, 4500))
+
+ggrast(gg, geom_point(size=0.5, alpha=0.4), 4.5, 4, xmin=-40, ymin=-60) + geom_smooth(alpha=0.5, size=0.3) + 
+  labs(x='#Molecules per gene\nbefore trimming', y='#Collisions') + theme(legend.position=c(0, 1), legend.justification=c(0, 1)) +
+  guides(colour = guide_legend(override.aes = list(size=2, fill='white')))
+ggsave(paste0(kPlotsFolder, 'observed_collisions_smooth.svg'), width=4.5, height=4, device=svg, bg="transparent")
+ggsave(paste0(kPlotsFolder, 'observed_collisions_smooth_r.svg'), width=4.5, height=4, bg="transparent")
+```
+
+# Cumulative plots  
+```{r}
+allTrimmedData <- readRDS('/d0-mendel/home/viktor_petukhov/Data/10x/aml035_post_transplant/est_06_03/all_trimmed_data.rds')
+```
+
+```{r}
+underest_sizes_all <- lapply(allTrimmedData, function(d) d$underest_sizes)
+```
+
+## Supp. Figure 3  
+```{r}
+umis_per_gene_df <- as.data.frame(lapply(allTrimmedData[6:9], function(v) v$umis_per_gene_vec))
+umis_per_gene_df$raw <- raw$umis_per_gene_vec
+colnames(umis_per_gene_df)[1:4] <- paste0(6:9)
+
+umis_per_gene_adj_df <- as.data.frame(mclapply(allTrimmedData[6:9], function(d) sapply(d$umis_per_gene_vec, GetGeneEstimatedValue, d$underest_sizes$real, d$underest_sizes$estimated), mc.cores=5))
+colnames(umis_per_gene_adj_df) <- paste0(6:9)
+
+umis_per_gene_adj_classic_df <- as.data.frame(mclapply(6:9, function(i) sapply(allTrimmedData[[i]]$umis_per_gene_vec, GetGeneEstimatedValueClassic, 4^i), mc.cores=5))
+colnames(umis_per_gene_adj_classic_df) <- paste0(6:9)
+
+plot_df <- melt(umis_per_gene_df, id.vars='raw', variable.name='UmiLen', value.name='NoAdjustment')
+plot_df$Adjusted <- melt(umis_per_gene_adj_df)$value
+plot_df$AdjustedClassic <- melt(umis_per_gene_adj_classic_df)$value
+
+plot_df <- melt(plot_df, id.vars=c('raw', 'UmiLen'), variable.name='Adjustment')
+head(plot_df)
+```
+
+```{r, fig.width=6, fig.width=8}
+plot_dfs <- split(plot_df, plot_df$UmiLen)
+
+ggs <- lapply(names(plot_dfs), function(n) ggplot(plot_dfs[[n]], aes(x=raw, y=(value - raw), linetype=Adjustment)) + 
+                geom_smooth(aes(col=UmiLen)) + 
+                scale_color_manual(values=scales::hue_pal()(4)[as.integer(n) - 5]) +
+                scale_linetype_manual(labels=c('No adjustment', 'Bootstrap', 'Uniform'), values=c('solid', 'dashed', 'dotted')) +
+                scale_x_continuous(expand=c(0, 0), limits=c(-1, 12300), breaks=seq(0, 10000, 2500)) + 
+                scale_y_continuous(expand=c(0, 0), limits=c(-10000, 0)) +
+                theme_pdf + rremove("xylab") + theme(plot.margin=margin(r=-20)))
+
+scale_y_low <- scale_y_continuous(limits=c(-5000, 0), breaks=seq(0, -5000, by=-2500), expand=c(0, 0))
+supp_fig3 <- ggarrange(ggs[[1]] + rremove("legend") + rremove("x.ticks") + rremove("x.text"), 
+                       ggs[[2]] + rremove("ticks") + rremove("xy.text") + rremove("legend") + theme(plot.margin=margin(l=-20)), 
+                       ggs[[3]] + scale_y_low + 
+                         theme(legend.position=c(0, 0), legend.justification=c(0, 0), legend.box = "horizontal") + 
+                         scale_color_manual(values=alpha(scales::hue_pal()(4), 0.7), name='Length of\ntrimmed UMI', labels=names(plot_dfs), drop=F) +
+                         guides(color=guide_legend(ncol=2, nrow=2, byrow=T)), 
+                       ggs[[4]] + scale_y_low + rremove("legend") + 
+                         rremove("y.ticks") + rremove("y.text") + theme(plot.margin=margin(l=-20)), 
+                       ncol=2, nrow=2, heights=c(2, 1), align='hv')
+
+supp_fig3_ann <- annotate_figure(supp_fig3, 
+                                 bottom=text_grob("#Molecules after trimming", size=14), 
+                                 left = text_grob("Error after trimming (#molecules)", rot = 90, size=14))
+
+ggexport(supp_fig3_ann, filename=paste0(kPlotsFolder, '/SuppFigure3.pdf'), pdf.height=6, pdf.width=8.3)
+```
+
+## Collisions number:  
+```{r}
+plot_df <- lapply(6:10, function(i) cbind(as.data.frame(underest_sizes_all[[i]][1:2]), UmiLen=i)) %>% 
+  bind_rows() %>% rename(Observed=estimated, Adjusted=real)
+plot_df$AdjustedClassic <- apply(plot_df, 1, function(row) GetGeneEstimatedValueClassic(round(row[2]), 4^row[3]))
+
+ggplot(plot_df, aes(x=Observed, col=as.factor(UmiLen))) + 
+  geom_line(aes(y=Adjusted - Observed, linetype='Bootstrap'), size=0.9) + 
+  geom_line(aes(y=AdjustedClassic - Observed, linetype='Uniform'), size=0.9)
+ggsave('~/Data/Plots/Paper/Collisions/10x_collisions.svg')
+```
+
+## Corrections comparison
+```{r}
+GetExprDf <- function(filt.umis.per.gene.vec, real.umis.per.gene.vec, raw.umis.per.gene.vec, adjustment=FALSE) {
+  expressions <- as.data.frame(filt.umis.per.gene.vec)
+  expressions$Adjustment <- adjustment
+  expressions$RealValue <- real.umis.per.gene.vec
+  expressions$NoCorrection <- raw.umis.per.gene.vec
+  return(expressions %>% filter(NoCorrection > 1))
+}
+
+GetPlotExrDf <- function(trimmed.cur, raw, umi.length, return.all=FALSE) {
+  expr.df <- GetExprDf(trimmed.cur$filt_umis_per_gene_vec, raw$filt_umis_per_gene_simple_vec, trimmed.cur$umis_per_gene_vec)
+  expr.df <- rbind(expr.df, GetExprDf(trimmed.cur$filt_umis_per_gene_vec_adj, raw$filt_umis_per_gene_simple_vec_adj, trimmed.cur$umis_per_gene_vec, adjustment=T))
+  expr.df <- expr.df %>% melt(id.vars=c('RealValue', 'Adjustment'), variable.name='Correction') %>% mutate(UmiLen=umi.length)
+  
+  if (return.all)
+    return(expr.df)
+  
+  return(expr.df %>% 
+    group_by(Correction, RealValue, Adjustment) %>% 
+    summarise(Max=quantile(value, 0.95), Min=quantile(value, 0.05), Median=median(value)))
+}
+
+# plot_dfs <- mclapply(6:10, function(i) GetPlotExrDf(allTrimmedData[[i]], raw, i) %>% filter(Correction != "NoCorrection" & Adjustment | Correction == "NoCorrection" & !Adjustment), mc.cores=5)
+plot_dfs <- lapply(6:10, function(i) GetPlotExrDf(allTrimmedData[[i]], raw, i) %>% filter(Correction != "NoCorrection" & Adjustment | Correction == "NoCorrection" & !Adjustment))
+plot_dfs <- lapply(plot_dfs, function(df) dplyr::filter(df, Correction != "NoCorrection" & Adjustment | Correction == "NoCorrection" & !Adjustment) %>% dplyr::select(-Adjustment))
+
+plot_dfs_all <- lapply(6:10, function(i) GetPlotExrDf(allTrimmedData[[i]], raw, i, T) %>% filter(Correction != "NoCorrection" & Adjustment | Correction == "NoCorrection" & !Adjustment))
+```
+
+```{r}
+ceiling(plot_dfs_all[[1]]$RealValue / 5) * 5
+```
+
+```{r, fig.width=7.5, fig.height=5}
+p0 <- lapply(plot_dfs_all[1:4], function(x) x %>% filter(RealValue < 50)) %>% bind_rows()
+ggplot(p0, aes(x=as.factor(ceiling(RealValue / 5) * 5) , y=100 * (value - RealValue) / RealValue, color=Correction)) + 
+  geom_boxplot() +
+  facet_wrap(~UmiLen, labeller=function(x) lapply(x, function(v) paste0('Length of trimmed UMI: ', v))) +
+  labs(x='Corrected #UMIs without trimming', y='Error on trimmed data, %') + 
+  scale_linetype_manual(values=c('dashed', 'solid')) + 
+  scale_color_manual(values=pal_jco(alpha=0.8)(5), labels=c('Bayesian', 'cluster', 'cluster,\nno equals', 'directional', 'no correction')) +
+  ylim(-50, 50) +
+  theme_pdf +
+  theme(legend.position=c(1, 0), legend.justification=c(1, 0), strip.background =element_blank(), strip.text = element_text(size=14)) + 
+  guides(color=guide_legend(ncol=3))
+
+ggsave(paste0(kPlotsFolder, '10x_trimming_panel2.png'), width=12, height=8, units='in', dpi=300)
+# ggsave(paste0(kPlotsFolder, '10x_trimming_panel2.pdf'), width=7.5, height=5)
+```
+
+```{r, fig.width=7.5, fig.height=5}
+ggplot(bind_rows(plot_dfs[1:4]), aes(x=RealValue, y=100 * (Median - RealValue) / RealValue, color=Correction)) + 
+  geom_point(size=0.3, alpha=0.3) + geom_smooth(alpha=0.1) + 
+  facet_wrap(~UmiLen, labeller=function(x) lapply(x, function(v) paste0('Length of trimmed UMI: ', v))) +
+  labs(x='Corrected #UMIs without trimming', y='Error on trimmed data, %') + 
+  scale_linetype_manual(values=c('dashed', 'solid')) + 
+  scale_color_manual(values=pal_jco(alpha=0.8)(5), labels=c('Bayesian', 'cluster', 'cluster,\nno equals', 'directional', 'no correction')) +
+  scale_x_continuous(expand=c(0, 0), limits=c(1, 7999), trans='log10') + scale_y_continuous(expand=c(0, 0), limits=c(-101, 70)) + theme_pdf +
+  theme(legend.position=c(0, 0), legend.justification=c(0, 0), strip.background =element_blank(), strip.text = element_text(size=14)) + 
+  guides(color=guide_legend(ncol=3))
+
+ggsave(paste0(kPlotsFolder, '10x_trimming_panel.pdf'))
+```
+
+## Main figure
+```{r}
+fig_umi_length <- 6
+trimmed_corrected_cells <- TrimUmis(raw$filt_cells_simple, fig_umi_length)
+trimmed_umis_per_gene_vec <- unlist(lapply(trimmed_corrected_cells, sapply, length))
+umis_per_gene_plt <- list()
+umis_per_gene_plt$none <- trimmed_umis_per_gene_vec
+umis_per_gene_plt$real <- raw$filt_umis_per_gene_simple_vec
+
+umis_per_gene_plt$bootstrap <- sapply(trimmed_umis_per_gene_vec, GetGeneEstimatedValue, allTrimmedData[[fig_umi_length]]$underest_sizes$real, allTrimmedData[[fig_umi_length]]$underest_sizes$estimated)
+umis_per_gene_plt$uniform <- sapply(trimmed_umis_per_gene_vec, GetGeneEstimatedValueClassic, 4^fig_umi_length)
+umis_per_gene_plt_df <- melt(as.data.frame(umis_per_gene_plt), id.vars='real', variable.name='Adjustment', value.name='value')
+
+umis_per_gene_plt_df <- umis_per_gene_plt_df %>% group_by(Adjustment, real) %>% summarize(value=median(value))
+
+gp1_base <- ggplot(umis_per_gene_plt_df, aes(x=real, y=100 * (value - real) / real, col=Adjustment)) + 
+  scale_x_continuous(limits=c(-1, max(umis_per_gene_plt$real)), expand=c(0, 0)) + 
+  scale_y_continuous(expand=c(0, 0)) + 
+  scale_color_nejm()
+
+gp1 <-gp1_base + geom_point(size=0.3, alpha=0.3) +
+  stat_smooth(method='gam', formula = y ~ s(x, k=15, bs="cs")) + 
+  scale_linetype_manual(values=c('solid', 'dashed', 'dotted')) + 
+  labs(x='Corrected #molecules without trimming', y='Error, %') +
+  theme(legend.position=c(0, 0), legend.justification=c(0, 0)) +
+  guides(color = guide_legend(title='Collisions adjustment', ncol=3)) + theme_pdf
+```
+
+```{r}
+umis_per_gene_vec <- as.data.frame(lapply(allTrimmedData[6:9], function(df) df$umis_per_gene_vec))
+colnames(umis_per_gene_vec) <- paste0(6:9)
+
+umis_per_gene_vec$real <- allTrimmedData[[10]]$filt_umis_per_gene_vec$Simple1
+
+umis_per_gene_vec <- melt(umis_per_gene_vec, id.vars='real', variable.name='UmiLen') %>% 
+  group_by(UmiLen, real) %>% summarize(value=median(value))
+
+gp2_base <- ggplot(umis_per_gene_vec, aes(x=real, y=100 * (value - real) / real, color=UmiLen)) + 
+  scale_x_continuous(limits=c(-1, max(umis_per_gene_vec$real)), expand=c(0, 0)) +
+  scale_y_continuous(limits=c(-105, 105), expand=c(0, 0)) + 
+  scale_color_npg()
+  
+gp2 <- gp2_base + geom_point(size=0.3, alpha=0.3) +
+  stat_smooth(method='gam', formula = y ~ s(x, k=15, bs="cs")) + 
+  theme(legend.position=c(0, 0), legend.justification=c(0, 0)) +
+  guides(color=guide_legend(title='Length of trimmed UMI', ncol=4)) + theme_pdf
+```
+
+```{r}
+fig_umi_length <- 8
+corrected_data <- as.data.frame(allTrimmedData[[fig_umi_length]]$filt_umis_per_gene_vec_adj)
+corrected_data$NoCorrection <- allTrimmedData[[fig_umi_length]]$umis_per_gene_vec
+corrected_data$real <- raw$filt_umis_per_gene_simple_vec
+plot_df <- melt(corrected_data, id.vars='real', variable.name='Correction') %>% 
+  group_by(Correction, real) %>% summarize(value=median(value))
+
+gp3_base <- ggplot(plot_df, aes(x=real, y=100 * (value - real) / real, color=Correction)) + 
+  scale_x_continuous(limits=c(-1, max(umis_per_gene_vec$real)), expand=c(0, 0)) +
+  scale_y_continuous(limits=c(-101, 51), expand=c(0, 0)) + 
+  scale_color_jco(labels=c('Bayessian', 'cluster', 'cluster,\nno equals', 'directional', 'no correction'))
+
+gp3 <- gp3_base + geom_point(size=0.3, alpha=0.3) + 
+  stat_smooth(method='gam', formula = y ~ s(x, k=15, bs="cs")) + 
+  theme(legend.position=c(0, 0), legend.justification=c(0, 0)) + 
+  guides(color=guide_legend(ncol=3)) + theme_pdf
+```
+
+```{r}
+aml035_plots <- list(gp1=gp1, gp2=gp2, gp3=gp3)
+saveRDS(aml035_plots, '/d0-mendel/home/viktor_petukhov/Data/10x/aml035_post_transplant/est_06_03/gg_plots.rds')
+```
+
+```{r}
+aml035_plots <- readRDS('/d0-mendel/home/viktor_petukhov/Data/10x/aml035_post_transplant/est_06_03/gg_plots.rds')
+f_bmmc_plots <- readRDS('/d0-mendel/home/viktor_petukhov/Data/10x/frozen_bmmc_healthy_donor1/est_07_05/correlations_by_clust.rds')
+f_pbmc_plots <- readRDS('/d0-mendel/home/viktor_petukhov/Data/10x/frozen_pbmc_donor_a/est_07_10/correlations_by_clust.rds')
+```
+
+```{r, fig.width=5, fig.height=4}
+color_scale <- scale_color_manual(name='Correction', values=alpha(c(pal_jco()(7)[c(7, 1:4)], '#228733'), 0.7), 
+                                  labels=c('Cell Ranger', 'Bayesian', 'cluster', 'cluster-neq', 'directional', 'no correction'))
+f_bmmc_plots$gg <- ggplot(f_bmmc_plots$correlations_by_clust, aes(x=spearman, color=CorrectionType, linetype=CollisionsAdjustment)) + 
+  geom_density(size=1.3, show.legend=F) + 
+  geom_line(aes(y=rep(0, nrow(f_bmmc_plots$correlations_by_clust))), size=1.3) +
+  color_scale + 
+  scale_linetype_manual(name='Collisions\nadjustment', values=c('solid', 'dashed'), labels=c('adjusted', 'unadjusted')) + 
+  scale_x_continuous(expand=c(0, 0), limits=c(0.55, 0.85)) + 
+  scale_y_continuous(expand=c(0, 0), limits=c(0, 9.5), name='Density') +
+  theme(legend.position=c(0, 1), legend.justification=c(0, 1)) + theme_pdf + 
+  guides(linetype=guide_legend(order=2), color=guide_legend(reverse=T, order=1))
+
+f_bmmc_plots$gg
+```
+
+```{r, fig.width=5, fig.height=8}
+corr_fig <- ggarrange(f_bmmc_plots$gg + rremove("xlab"), 
+                      f_pbmc_plots$gg + scale_x_continuous(expand=c(0, 0), limits=c(0.75, 0.9)) + color_scale + rremove("xlab") + rremove("legend"), 
+                      ncol=1, nrow=2, labels=c('D', 'E'), align='v')
+
+corr_fig_ann <- annotate_figure(corr_fig + theme(plot.margin=margin(t=10, unit='pt')), 
+                                bottom=text_grob("Spearman correlation", size=14))
+corr_fig_ann
+```
+
+```{r, fig.width=4, fig.height=7}
+scale_color_short <- scale_color_manual(values=alpha(c(pal_jco()(7)[1:4], '#228733'), 0.7))
+figure_trim <- ggarrange(aml035_plots$gp2 + ylab('Error, %') + rremove("xlab"), 
+                      aml035_plots$gp1 + rremove("xlab"), 
+                      aml035_plots$gp3 + ylab('Error, %') + 
+                      scale_color_short +
+                      guides(color=guide_legend(title='Correction (see Figure D)', label.theme=element_blank(), ncol=5, reverse=T)) + 
+                      rremove("xlab"), 
+                    ncol=1, nrow=3, labels = c("A", "B", "C"), align='v')
+
+figure_trim_ann <- annotate_figure(figure_trim + theme(plot.margin=margin(t=10, l=-10, unit='pt')), 
+                                   bottom=text_grob("Gene expression magnitude (#molecules)", size=14))
+
+figure_trim_ann
+```
+
+```{r, fig.width=8, fig.height=7}
+full_fig <- ggarrange(figure_trim_ann + theme(plot.margin=margin()), corr_fig_ann + theme(plot.margin=margin(l=-10)), ncol=2)
+full_fig_ann <- annotate_figure(full_fig, fig.lab="Figure 2", fig.lab.pos="top.right")
+ggexport(full_fig_ann, filename=paste0(kPlotsFolder, '/Figure.pdf'), pdf.width=8)
+full_fig_ann
+```
+
+# Supp. figure 7 (correlations)
+```{r}
+scg71_plots <- readRDS('/d0-mendel/home/viktor_petukhov/Data/SCG71/est_07_25_new_pipeline/correlations_by_clust.rds')
+mouse_plots <- readRDS('/d0/home/viktor_petukhov/RNotebooks/UMI Corrections/Data/Mouse/correlations_by_clust.rds')
+```
+
+```{r}
+mouse_plots$gg <- ggplot(mouse_plots$correlations_by_clust, aes(x=spearman, color=CorrectionType, linetype=CollisionsAdjustment)) + 
+  geom_density(size=1.3, show.legend=F) + 
+  geom_line(aes(y=rep(0, nrow(mouse_plots$correlations_by_clust))), size=1.3) +
+  scale_color_short + guides(linetype=guide_legend(order=2), color=guide_legend(reverse=T, order=1)) +
+  scale_linetype_manual(name='Collisions\nadjustment', values=c('solid', 'dashed'), labels=c('adjusted', 'unadjusted')) + 
+  scale_x_continuous(expand=c(0, 0), limits=c(0.3, 0.7)) + 
+  scale_y_continuous(expand=c(0, 0), limits=c(0, 8.5), name='Density') +
+  theme(legend.position=c(0, 1), legend.justification=c(0, 1)) + theme_pdf + 
+  guides(linetype=guide_legend(order=2), color=guide_legend(reverse=T, order=1, title='Correction'))
+
+scg71_plots$gg <- scg71_plots$gg + scale_color_short + scale_x_continuous(name='Spearman correlation', expand=c(0, 0), limits=c(0.25, 0.6))
+```
+
+```{r, fig.width=7, fig.height=7}
+fig_arr <- annotate_figure(ggarrange(mouse_plots$gg + rremove('xlab'), scg71_plots$gg + rremove('legend'), nrow=2, ncol=1, labels=c('A', 'B'))+ 
+                             theme(plot.margin=margin(t=10)),
+                           fig.lab="Figure S7", fig.lab.pos="top.right", fig.lab.size=14)
+ggexport(fig_arr, filename=paste0(kPlotsFolder, '/Figure S7.pdf'))
+```
+

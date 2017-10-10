@@ -241,15 +241,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // AdjustGeneExpression
-int AdjustGeneExpression(int value, const std::vector<int>& observed_sizes, const std::vector<double>& adjusted_sizes);
-RcppExport SEXP _dropestr_AdjustGeneExpression(SEXP valueSEXP, SEXP observed_sizesSEXP, SEXP adjusted_sizesSEXP) {
+int AdjustGeneExpression(int value, const std::vector<int>& adjusted_sizes, const std::vector<double>& observed_sizes);
+RcppExport SEXP _dropestr_AdjustGeneExpression(SEXP valueSEXP, SEXP adjusted_sizesSEXP, SEXP observed_sizesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< int >::type value(valueSEXP);
-    Rcpp::traits::input_parameter< const std::vector<int>& >::type observed_sizes(observed_sizesSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type adjusted_sizes(adjusted_sizesSEXP);
-    rcpp_result_gen = Rcpp::wrap(AdjustGeneExpression(value, observed_sizes, adjusted_sizes));
+    Rcpp::traits::input_parameter< const std::vector<int>& >::type adjusted_sizes(adjusted_sizesSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type observed_sizes(observed_sizesSEXP);
+    rcpp_result_gen = Rcpp::wrap(AdjustGeneExpression(value, adjusted_sizes, observed_sizes));
     return rcpp_result_gen;
 END_RCPP
 }

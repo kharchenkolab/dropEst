@@ -97,10 +97,10 @@ ggplot() + geom_bar(aes(x=1:length(clf$Common$RpuProbs), y=clf$Common$RpuProbs),
 ## Dependency of the error probability on gene size
 We can estimate mean number of adjacent UMIs for each gene size using dynamic programming matrices:
 ```{r}
-estimated_nn <- lapply(trimmed$correction.info$dp.matrices, function(m) colSums(m * 0:(nrow(m) - 1)))
-estimated_nn <- estimated_nn[trimmed$correction.info$neighb.prob.index[names(trimmed$umi.probabilities)]] %>% bind_cols()
-estimated_nn <- apply(estimated_nn, 1, `*`, trimmed$umi.probabilities)
-estimated_nn <- colSums(estimated_nn)
+estimated_nn <- EstimatedNumberOfAdjacentUmisByGeneSize(trimmed$correction.info$dp.matrices, 
+                                                        trimmed$correction.info$neighb.prob.index, trimmed$umi.probabilities)
+umis_per_gene_est <- 2:length(estimated_nn)
+estimated_nn <- estimated_nn[umis_per_gene_est]
 ```
 
 Let's calculate mean number of adjacent UMIs in the real data:
@@ -115,43 +115,33 @@ umis_per_gene_uniq <- as.integer(names(mean_neighbours_num))
 
 rm(upg_filt, rpus_filt)
 
-qplot(x=1:length(estimated_nn), y=estimated_nn, geom='line', color='Estimated') + 
+qplot(x=umis_per_gene_est, y=estimated_nn, geom='line', color='Estimated') + 
   geom_point(aes(x=umis_per_gene_uniq, y=mean_neighbours_num, color='Observed'), size=0.5) + 
   labs(x='#UMIs per gene', y='Mean #adjacent UMIs') + scale_color_npg(name='') + scale_x_log10()
 ```
 
-Current estimation uses adjusted number of UMIs, while observed number isn't adjusted. Let's remove adjustment for the estimated number:
+Current estimation uses adjusted number of UMIs, while observed number isn't adjusted. Let's perform collisions adjustment:
 ```{r}
-adjusted_umis_per_gene <- 2:length(estimated_nn)
-unadjusted_umis_per_gene <- sapply(adjusted_umis_per_gene, AdjustGeneExpression, trimmed$collisions.info$observed, trimmed$collisions.info$adjusted)
-
-estimated_nn_distinct <- sapply(split(estimated_nn[adjusted_umis_per_gene], unadjusted_umis_per_gene), mean)
-unadjusted_umis_per_gene <- unique(unadjusted_umis_per_gene)
-
-rm(adjusted_umis_per_gene)
-
-qplot(x=unadjusted_umis_per_gene, y=estimated_nn_distinct, geom='line', color='Estimated') + 
-  geom_point(aes(x=umis_per_gene_uniq, y=mean_neighbours_num, color='Observed'), size=0.5) + 
+umis_per_gene_uniq_adj <- sapply(umis_per_gene_uniq, AdjustGeneExpression, trimmed$collisions.info$adjusted, trimmed$collisions.info$observed)
+qplot(x=umis_per_gene_est, y=estimated_nn, geom='line', color='Estimated') + 
+  geom_point(aes(x=umis_per_gene_uniq_adj, y=mean_neighbours_num, color='Observed'), size=0.5) + 
   labs(x='#UMIs per gene', y='Mean #adjacent UMIs') + scale_color_npg(name='') + scale_x_log10()
 
-qplot(x=unadjusted_umis_per_gene, y=estimated_nn_distinct / (unadjusted_umis_per_gene - 1), geom='line', color='Estimated') + 
-  geom_point(aes(x=umis_per_gene_uniq, y=mean_neighbours_num / (umis_per_gene_uniq - 1), color='Observed'), size=0.5) + 
+qplot(x=umis_per_gene_est, y=estimated_nn / (umis_per_gene_est - 1), geom='line', color='Estimated') + 
+  geom_point(aes(x=umis_per_gene_uniq_adj, y=mean_neighbours_num / (umis_per_gene_uniq_adj - 1), color='Observed'), size=0.5) + 
   labs(x='#UMIs per gene', y='Probability of a pair of adjacent UMIs') + scale_color_npg(name='') +
   scale_x_log10() + scale_y_log10()
 ```
 
 Now we can estimate dependency of error probability on gene size. We can assume that the pure error probability is independent of gene size, but for large genes erroneous UMIs can have the same sequence as one of the real UMIs. In this case, erroneous UMIs won't be observed and can be ignored.
+
 ```{r}
-err_nn_est <- 0.46
-max_nn <- 6 * 3
+err_by_size <- ErrorByGeneSize(trimmed$correction.info$dp.matrices, trimmed$correction.info$neighb.prob.index, 
+                               trimmed$umi.probabilities, 3*6, 0.46)
 
-err_nn_obs_est <- err_nn_est * (max_nn - estimated_nn_distinct) / max_nn
-est_nn_with_errors <- err_nn_obs_est + estimated_nn_distinct
-
-qplot(x=distinct_umis_per_gene, y=est_nn_with_errors / (distinct_umis_per_gene - 1), geom='line', color='Estimated') + 
-  geom_point(aes(x=umis_per_gene_uniq, y=mean_neighbours_num / (umis_per_gene_uniq - 1), color='Observed'), size=0.5) + 
+qplot(x=1:length(err_by_size), y=err_by_size + c(0, estimated_nn / (umis_per_gene_est - 1)), geom='line', color='Estimated') + 
+  geom_point(aes(x=umis_per_gene_uniq_adj, y=mean_neighbours_num / (umis_per_gene_uniq_adj - 1), color='Observed'), size=0.5) + 
   labs(x='#UMIs per gene', y='Probability of a pair of adjacent UMIs') + scale_color_npg(name='') +
   scale_x_log10() + scale_y_log10()
 ```
-
 This model uses a wrong assumtion about uniform distribution of UMIs when estimating expected number of erroneous adjacent UMIs.

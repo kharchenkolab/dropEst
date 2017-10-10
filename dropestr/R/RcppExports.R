@@ -89,13 +89,13 @@ AdjustGeneExpressionClassic <- function(value, umis_number) {
 #' Adjust gene expression value for collisions.
 #'
 #' @param value gene expression value.
-#' @param observed_sizes vector of quantized ordered obseved gene sizes.
 #' @param adjusted_sizes vector of adjusted gene sizes for *observed_sizes*.
+#' @param observed_sizes vector of quantized ordered obseved gene sizes.
 #' @return Adjusted gene expression value.
 #'
 #' @export
-AdjustGeneExpression <- function(value, observed_sizes, adjusted_sizes) {
-    .Call('_dropestr_AdjustGeneExpression', PACKAGE = 'dropestr', value, observed_sizes, adjusted_sizes)
+AdjustGeneExpression <- function(value, adjusted_sizes, observed_sizes) {
+    .Call('_dropestr_AdjustGeneExpression', PACKAGE = 'dropestr', value, adjusted_sizes, observed_sizes)
 }
 
 ValueCountsC <- function(values) {

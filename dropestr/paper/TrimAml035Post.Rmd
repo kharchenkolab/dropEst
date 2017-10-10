@@ -122,12 +122,12 @@ trimmed <- TrimAndCorrect(reads_per_umi_per_cell, umi.trim.length=6, collisions.
 ```
 
 ```{r}
-trimmed_reads_per_umi_per_cb <- reads_per_umi_per_cell
-trimmed_reads_per_umi_per_cb$reads_per_umi <- trimmed$reads.per.umi.per.cb
+# trimmed_reads_per_umi_per_cb <- reads_per_umi_per_cell
+# trimmed_reads_per_umi_per_cb$reads_per_umi <- trimmed$reads.per.umi.per.cb
 
-trimmed$filt_cells$NB_p05 <- CorrectUmiSequenceErrors(trimmed_reads_per_umi_per_cb, umi.probabilities=trimmed$umi.probabilities,
-                                                   collisions.info=trimmed$collisions.info, correction.info=trimmed$correction.info,
-                                                   mc.cores=30, return='umis', verbosity.level=2, error.prior.prob=0.05)
+# trimmed$filt_cells$NB_p05 <- CorrectUmiSequenceErrors(trimmed_reads_per_umi_per_cb, umi.probabilities=trimmed$umi.probabilities,
+#                                                    collisions.info=trimmed$collisions.info, correction.info=trimmed$correction.info,
+#                                                    mc.cores=30, return='umis', verbosity.level=2, error.prior.prob=0.05)
 ```
 
 ## Plots
@@ -152,7 +152,7 @@ ggplot(plot_df, aes(x=RealValue, y=100 * (Median - RealValue) / RealValue, color
   geom_point(size=0.3, alpha=0.3) + geom_smooth(alpha=0.1) + 
   labs(x='Corrected #UMIs without trimming', y='Error on trimmed data, %') + 
   scale_linetype_manual(values=c('dashed', 'solid')) + scale_color_jco() +
-  scale_x_continuous(expand=c(0, 0), limits=c(1, 7999), trans='identity') + scale_y_continuous(expand=c(0, 0), limits=c(-101, 70)) + 
+  scale_x_continuous(expand=c(0, 0), limits=c(1, 7999), trans='log10') + scale_y_continuous(expand=c(0, 0), limits=c(-101, 70)) + 
   theme(legend.position=c(0, 0), legend.justification=c(0, 0), strip.background =element_blank(), strip.text = element_text(size=14)) + 
   guides(color=guide_legend(ncol=3))
 ```

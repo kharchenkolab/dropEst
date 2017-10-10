@@ -1,4 +1,21 @@
 #' @export
+EstimatedNumberOfAdjacentUmisByGeneSize <- function(dp.matrices, neighb.prob.index, umi.probabilities) {
+  nn.expectation.by.umi.prob <- lapply(dp.matrices, function(m) colSums(m * 0:(nrow(m) - 1)))
+  nn.expectation.by.umi <- nn.expectation.by.umi.prob[neighb.prob.index[names(umi.probabilities)]] %>% bind_cols()
+  estimated.nn <- colSums(apply(nn.expectation.by.umi, 1, `*`, umi.probabilities))
+  return(estimated.nn)
+}
+
+#' @export
+ErrorByGeneSize <- function(dp.matrices, neighb.prob.index, umi.probabilities, max.adjacent.umis.num, error.prior.prob) {
+  estimated.nn <- EstimatedNumberOfAdjacentUmisByGeneSize(dp.matrices, neighb.prob.index, umi.probabilities)
+  umis.per.gene <- 1:length(estimated.nn) - 1 # Exclude current UMI
+  umis.per.gene[1] <- 1
+
+  return(error.prior.prob * (max.adjacent.umis.num - estimated.nn) / max.adjacent.umis.num / umis.per.gene)
+}
+
+#' @export
 GetPercentileQuantBorders <- function(distribution, max.quants.num) {
   kEps <- 1e-5
   distribution <- distribution %>% dplyr::arrange(Value) %>% dplyr::mutate(Probability = cumsum(Probability))
@@ -52,11 +69,9 @@ SmoothDistribution <- function(values, smooth, max.value=NULL, smooth.probs=FALS
   return(freqs / sum(freqs))
 }
 
-TrainNBNegative <- function(train.data, distribution.smooth, nucleotide.pairs.number, umi.length, quality.prior) {
+TrainNBNegative <- function(train.data, distribution.smooth, nucleotide.pairs.number, umi.length, quality.prior,
+                            correction.info, umi.probabilities, error.prior.prob) {
   params.neg <- list()
-
-  # llNbinom <- function(size, mu) -sum(dnbinom(train.data$MaxRpU - 1, size=size, mu=mu, log=TRUE))
-  # suppressWarnings(params.neg$MaxRpU <- as.list(bbmle::mle2(llNbinom, start=list(size=1, mu=1))@fullcoef))
 
   llBetabinom <- function(prob, theta) {
     -sum(emdbook::dbetabinom(train.data$MinRpU - 1, prob=prob, size=train.data$MaxRpU + train.data$MinRpU - 1, theta=theta, log=TRUE))
@@ -67,13 +82,17 @@ TrainNBNegative <- function(train.data, distribution.smooth, nucleotide.pairs.nu
   params.neg$Nucleotides <- SmoothDistribution(train.data$Nucleotides, distribution.smooth, nucleotide.pairs.number)
   params.neg$Quality <- quality.prior
 
+  params.neg$ErrorProbByGeneSize <- ErrorByGeneSize(correction.info$dp.matrices, correction.info$neighb.prob.index,
+                                                    umi.probabilities, 3 * umi.length, error.prior.prob)
+
   return(params.neg)
 }
 
 #' @export
-TrainNBClassifier <- function(reads.per.umi.per.cb, distribution.smooth, quality.quants.num=15,
-                              quality.smooth=0.01, error.prior.prob=0.5, gene.size.quants.num=5) {
-  paired.rpus <- reads.per.umi.per.cb[sapply(reads.per.umi.per.cb, length) == 2]
+TrainNBClassifier <- function(reads.per.umi.per.cb, distribution.smooth, correction.info, umi.probabilities,
+                              quality.quants.num=15, quality.smooth=0.01, gene.size.quants.num=5) {
+  error.mask <- sapply(reads.per.umi.per.cb, length) == 2
+  paired.rpus <- reads.per.umi.per.cb[error.mask]
   train.data <- PrepareClassifierTrainingData(paired.rpus)
 
   train.data <- train.data %>% dplyr::filter(ED == 1) %>% dplyr::select(-ED)
@@ -92,7 +111,8 @@ TrainNBClassifier <- function(reads.per.umi.per.cb, distribution.smooth, quality
   clf.neg <- TrainNBNegative(train.data, distribution.smooth=distribution.smooth,
                              nucleotide.pairs.number=NumberOfNucleotidePairs(),
                              umi.length=nchar(names(reads.per.umi.per.cb[[1]])[1]),
-                             quality.prior=quality.probs$negative)
+                             quality.prior=quality.probs$negative, correction.info=correction.info,
+                             umi.probabilities=umi.probabilities, error.prior.prob=mean(error.mask))
 
   # Distribution over all data
   rpu.probs <- SmoothDistribution(unlist(ExtractReadsPerUmi(reads.per.umi.per.cb)) - 1, distribution.smooth)
@@ -101,7 +121,7 @@ TrainNBClassifier <- function(reads.per.umi.per.cb, distribution.smooth, quality
   clf.common <- list(RpuProbs=rpu.probs, RpuProbsByGeneSize=rpu.probs.by.gene.size.info$distributions,
                      RpuQuantBorders=rpu.probs.by.gene.size.info$quant.borders, Quality=quality.probs$common)
 
-  return(list(Negative=clf.neg, Common=clf.common, QualityQuantBorders=quant.borders, ErrorPriorProb=error.prior.prob))
+  return(list(Negative=clf.neg, Common=clf.common, QualityQuantBorders=quant.borders))
 }
 
 #' @export
@@ -118,7 +138,6 @@ PredictLeftPartR <- function(clf, classifier.df, gene.size) {
 
   quantized.quality <- Quantize(classifier.df$Quality, clf$QualityQuantBorders) + 1
 
-  # min.rpu.prob <- log(clf$Common$RpuProbs[classifier.df$MinRpU])
   min.rpu.prob <- log(clf$Common$RpuProbsByGeneSize[[Quantize(gene.size, clf$Common$RpuQuantBorders) + 1]][classifier.df$MinRpU])
   max.rpu.prob <- log(clf$Common$RpuProbs[classifier.df$MaxRpU])
 
@@ -127,9 +146,36 @@ PredictLeftPartR <- function(clf, classifier.df, gene.size) {
 
   umi.prob <- log(1 - (1 - classifier.df$UmiProb)^gene.size)
 
-  # return(exp((nucl.prob.err + position.prob.err + min.rpu.prob.err + quality.prob.err + log(clf$ErrorPriorProb)) -
-  #              (umi.prob + min.rpu.prob + quality.prob + log(1 - clf$ErrorPriorProb))))
-
   return(exp((nucl.prob.err + position.prob.err + min.rpu.prob.err + max.rpu.prob.err + quality.prob.err + log(clf$ErrorPriorProb)) -
                (umi.prob + min.rpu.prob + max.rpu.prob + quality.prob + log(1 - clf$ErrorPriorProb))))
+}
+
+#' @export
+PredictLeftPartConst <- function(clf, classifier.df) {
+  nucl.prob.err <- log(clf$Negative$Nucleotides[classifier.df$Nucleotides + 1])
+  position.prob.err <- log(clf$Negative$Position[classifier.df$Position + 1])
+
+  min.rpu.prob.err <- emdbook::dbetabinom(classifier.df$MinRpU - 1, size=classifier.df$MinRpU + classifier.df$MaxRpU - 1,
+                                          prob=clf$Negative$MinRpU$prob, theta=clf$Negative$MinRpU$theta, log=T)
+
+  quantized.quality <- Quantize(classifier.df$Quality, clf$QualityQuantBorders) + 1
+
+  quality.prob <- log(clf$Common$Quality[quantized.quality]);
+  quality.prob.err <- log(clf$Negative$Quality[quantized.quality]);
+
+  umi.prob <- log(classifier.df$UmiProb)
+
+  return(exp((nucl.prob.err + position.prob.err + min.rpu.prob.err + quality.prob.err) - (umi.prob + quality.prob)))
+}
+
+#' @export
+PredictLeftPartDependent <- function(clf, classifier.df, gene.size) {
+  rpu.probs <- clf$Common$RpuProbsByGeneSize[[Quantize(gene.size, clf$Common$RpuQuantBorders) + 1]]
+
+  max.rpu.prob.err <- log(rpu.probs[pmin(classifier.df$MaxRpU + classifier.df$MinRpU, length(rpu.probs))])
+  max.rpu.prob <- log(rpu.probs[pmin(classifier.df$MaxRpU, length(rpu.probs))])
+  min.rpu.prob <- log(rpu.probs[pmin(classifier.df$MinRpU, length(rpu.probs))])
+  err.prob <- clf$Negative$ErrorProbByGeneSize[gene.size]
+
+  return(exp((max.rpu.prob.err + log(err.prob)) - (max.rpu.prob + min.rpu.prob + log(1 - err.prob))))
 }
