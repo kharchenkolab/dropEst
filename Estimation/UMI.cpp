@@ -48,7 +48,7 @@ namespace Estimation
 		std::vector<double> res(this->_sum_quality.size());
 		for (int i = 0; i < res.size(); ++i)
 		{
-			res[i] = (this->_sum_quality[i] - Tools::ReadParameters::quality_offset) / this->_read_count;
+			res[i] = double(this->_sum_quality[i] - Tools::ReadParameters::quality_offset) / this->_read_count;
 		}
 
 		return res;

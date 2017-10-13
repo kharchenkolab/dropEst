@@ -271,7 +271,7 @@ NumericVector GetSmallerNeighbourProbabilities(const NumericMatrix &small_neighs
 // [[Rcpp::export]]
 IntegerVector FilterUmisInGeneSimple(const IntegerVector &reads_per_umi, const std::vector<s_vec_t> &neighbourhood, double mult=1) {
   if (neighbourhood.size() != reads_per_umi.size())
-    stop("Vectors must have equal size");
+    stop("Vectors must have the same size");
 
   if (reads_per_umi.size() == 1)
     return reads_per_umi;
@@ -297,7 +297,7 @@ IntegerVector FilterUmisInGeneSimple(const IntegerVector &reads_per_umi, const s
     int neighb_index = -1;
     for (auto const &neighbour : neighbours) {
       auto neighb_it = rpu_map.find(neighbour);
-      if (neighb_it == rpu_map.end() || (neighb_it->second < cur_rpu * mult - EPS)) // rpu_neighb >= cur_rpu
+      if (neighb_it == rpu_map.end() || (neighb_it->second < cur_rpu * mult - EPS)) // rpu_neighb >= cur_rpu * mult
         continue;
 
       int cur_neighb_index = umi_inds.at(neighb_it->first);
