@@ -16,7 +16,7 @@ set(Boost_USE_STATIC_RUNTIME     OFF)
 add_definitions(-DBOOST_ALL_DYN_LINK)
 
 # set(BOOST_ROOT "/home/vp76/local/")
-find_package(Boost 1.54.0 COMPONENTS unit_test_framework system log iostreams filesystem REQUIRED)
+find_package(Boost 1.54.0 COMPONENTS filesystem iostreams log system thread unit_test_framework REQUIRED) # Thread is required for log on some systems
 
 if(Boost_FOUND)
     message(STATUS "** Boost Include: ${Boost_INCLUDE_DIR}")
@@ -28,6 +28,7 @@ find_package (ZLIB REQUIRED)
 
 #set(BAMTOOLS_ROOT "/opt/bamtools-2.2.3/")
 find_package (BamTools REQUIRED)
+find_package (Threads REQUIRED)
 
 # set(R_ROOT "/opt/R-3.3.1/lib64/R/")
 find_package (R REQUIRED)

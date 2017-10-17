@@ -20,7 +20,7 @@ include(deps)
 set(INCLUDE_DIRS ${Boost_INCLUDE_DIR} ${PROJECT_SOURCE_DIR} ${ZLIB_INCLUDE_DIRS} ${BAMTOOLS_INCLUDE_DIRS} ${R_INCLUDE_DIRS})
 include_directories(${INCLUDE_DIRS})
 
-set(BASE_LIBRARIES ${R_LIBRARIES} ${Boost_LIBRARIES})
+set(BASE_LIBRARIES ${R_LIBRARIES} ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 FILE(GLOB DropToolsSources Tools/*.cpp)
 add_library(DropTools ${DropToolsSources})
