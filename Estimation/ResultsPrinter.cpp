@@ -25,14 +25,14 @@ namespace Estimation
 
 		L_TRACE << "Compiling diagnostic stats: ";
 		auto reads_per_chr_per_cell = this->get_reads_per_chr_per_cell_info(container); // Real cells, all UMIs.
-		auto saturation_info = this->get_saturation_analysis_info(container); // Filtered cells, query UMIs.
+		auto saturation_info = this->get_saturation_analysis_info(container); // Filtered cells, requested UMIs.
 		auto mean_reads_per_umi = this->get_mean_reads_per_umi(container); // Real cells, all UMIs.
-		auto reads_per_umi_per_cell = this->get_reads_per_umi_per_cell(container); // Filtered cells, query UMIs.
+		auto reads_per_umi_per_cell = this->get_reads_per_umi_per_cell(container); // Filtered cells, requested UMIs.
 		auto merge_targets = this->get_merge_targets(container); // All cells.
 		IntegerVector aligned_reads_per_cb = wrap(container.get_stat_by_real_cells(Stats::TOTAL_READS_PER_CB)); // Real cells, all UMIs
 		IntegerVector aligned_umis_per_cb = wrap(container.get_stat_by_real_cells(Stats::TOTAL_UMIS_PER_CB)); // Real cells, all UMIs
-		auto requested_umis_per_cb = this->get_requested_umis_per_cb(container); // Real cells, query UMIs
-		auto requested_reads_per_cb = this->get_requested_umis_per_cb(container, true); // Real cells, query UMIs
+		auto requested_umis_per_cb = this->get_requested_umis_per_cb(container); // Real cells, requested UMIs
+		auto requested_reads_per_cb = this->get_requested_umis_per_cb(container, true); // Real cells, requested UMIs
 		L_TRACE << "Completed.\n";
 
 		(*R)["d"] = List::create(

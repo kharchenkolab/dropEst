@@ -23,6 +23,7 @@ Pipeline for estimating molecular count matrices for droplet-based single-cell R
 	- [dropEst](#dropest)
 		- [Usage of tagged bam files (e.g. 10x, Drop-seq) as input](#usage-of-tagged-bam-files-eg-10x-drop-seq-as-input)
 		- [Usage of pseudoaligners](#usage-of-pseudoaligners)
+		- [Count intronic / exonic reads only](#count-intronic-/-exonic-reads-only)
 		- [Command line arguments for dropEst](#command-line-arguments-for-dropest)
 		- [Output](#output)
 	- [dropReport](#dropreport)
@@ -203,6 +204,37 @@ use "*-P*" option. Example:
  ```bash
  dropest [options] -P -c ./config.xml ./kallisto_res_*.bam
  ```
+
+### Count intronic / exonic reads only
+One feature of the pipeline is the ability to count only UMIs, which reads touch only specific parts of a genome. 
+Option *"-L"* allows to specify all acceptable types of regions:
+* e: UMIs with exonic reads only
+* i: UMIs with intronic reads only
+* E: UMIs, which have both exonic and not annotated reads
+* I: UMIs, which have both intronic and not annotated reads
+* B: UMIs, which have both exonic and intronic reads
+* A: UMIs, which have exonic, intronic and not annotated reads
+
+Thus, to count all UMIs with exonic **or** not annotated reads, use *"-L eE"*. Default value: *"-L eEBA"*.
+
+Example commands:
+* Intronic reads only:
+    ```bash
+    dropest [-f] [-g ./genes.gtf] -L i -c ./config.xml ./alignment_*.bam
+    ```
+* Exonic reads only:
+    ```bash
+    dropest [-f] [-g ./genes.gtf] -L i -c ./config.xml ./alignment_*.bam
+    ```
+* Exon/intron spanning reads:
+    ```bash
+    dropest [-f] [-g ./genes.gtf] -L BA -c ./config.xml ./alignment_*.bam
+    ```
+
+The pipeline can determine genome regions either using .gtf annotation file or using .bam tags, i.e. for CellRanger 
+output (see *Estimation/BamTags/Type* in *configs/config_desc.xml*). If .gtf file isn't provided and .bam file doesn't containt 
+annotation tags, all reads with not empty gene tag are considered as exonic. 
+
 
 ### Command line arguments for dropEst
 *  -b, --bam-output: print tagged bam files  

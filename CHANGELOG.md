@@ -1,9 +1,12 @@
 # Changelog
 
-## [Upcoming]
+## [0.7.0]
 ### Changed
 * Optimized cmake
 * **Secondary alignments are filtered now**
+
+### Added
+* Output UMIs with only exonic or only intronic reads 
 
 ## [0.6.8] - 2017-09-22
 ### Added
