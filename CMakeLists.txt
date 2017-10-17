@@ -4,7 +4,7 @@ project(dropEst)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMake")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -DBOOST_LOG_DYN_LINK -std=c++11 -Wno-attributes -Wno-deprecated -Wno-deprecated-declarations")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -std=c++11 -Wno-attributes -Wno-deprecated -Wno-deprecated-declarations")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -ggdb -gdwarf-2 -g3")
 
 if (NOT "${CMAKE_BUILD_TYPE}" STREQUAL Debug)
@@ -13,18 +13,9 @@ endif (NOT "${CMAKE_BUILD_TYPE}" STREQUAL Debug)
 
 add_definitions(-DPROJ_DATA_PATH=\"${PROJECT_SOURCE_DIR}/data\")
 add_definitions(-DPROJ_BIN_PATH=\"${CMAKE_CURRENT_BINARY_DIR}\")
-add_definitions(-DVERSION=\"0.6.8\")
+add_definitions(-DVERSION=\"0.7.0\")
 
-# set(BOOST_ROOT "/home/vp76/local/")
-find_package(Boost 1.54.0 COMPONENTS unit_test_framework thread system log iostreams filesystem REQUIRED)
-find_package (Threads REQUIRED)
-find_package (ZLIB REQUIRED)
-
-#set(BAMTOOLS_ROOT "/opt/bamtools-2.2.3/")
-find_package (BamTools REQUIRED)
-
-# set(R_ROOT "/opt/R-3.3.1/lib64/R/")
-find_package (R REQUIRED)
+include(deps)
 
 set(INCLUDE_DIRS ${Boost_INCLUDE_DIR} ${PROJECT_SOURCE_DIR} ${ZLIB_INCLUDE_DIRS} ${BAMTOOLS_INCLUDE_DIRS} ${R_INCLUDE_DIRS})
 include_directories(${INCLUDE_DIRS})

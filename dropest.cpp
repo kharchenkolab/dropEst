@@ -74,14 +74,14 @@ static void usage()
 	cerr << "\t-G, --genes-min num: minimal number of genes in output cells\n";
 	cerr << "\t-h, --help: show this info\n";
 	cerr << "\t-l, --log-prefix : logs prefix\n";
-//	cerr << "\t-L, --gene-match-level :\n"
-//			"\t\te: count UMIs with exonic reads only;\n"
-//			"\t\ti: count UMIs with intronic reads only;\n"
-//			"\t\tE: count UMIs, which have both exonic and not annotated reads;\n"
-//			"\t\tI: count UMIs, which have both intronic and not annotated reads;\n"
-//			"\t\tB: count UMIs, which have both exonic and intronic reads;\n"
-//			"\t\tA: count UMIs, which have exonic, intronic and not annotated reads.\n"
-//			"\t\tDefault: -L " << Params().gene_match_level << "." << endl;
+	cerr << "\t-L, --gene-match-level :\n"
+			"\t\te: count UMIs with exonic reads only;\n"
+			"\t\ti: count UMIs with intronic reads only;\n"
+			"\t\tE: count UMIs, which have both exonic and not annotated reads;\n"
+			"\t\tI: count UMIs, which have both intronic and not annotated reads;\n"
+			"\t\tB: count UMIs, which have both exonic and intronic reads;\n"
+			"\t\tA: count UMIs, which have exonic, intronic and not annotated reads.\n"
+			"\t\tDefault: -L " << Params().gene_match_level << "." << endl;
 	cerr << "\t-m, --merge-barcodes : merge linked cell tags" << endl;
 	cerr << "\t-M, --merge-barcodes-precise : use precise merge strategy (can be slow), recommended to use when the list of real barcodes is not available\n";
 	cerr << "\t-o, --output-file filename : output file name\n";

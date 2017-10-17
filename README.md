@@ -18,9 +18,12 @@ Pipeline for estimating molecular count matrices for droplet-based single-cell R
 			- [10x](#10x)
 		- [Command line arguments for dropTag](#command-line-arguments-for-droptag)
 	- [Alignment](#alignment)
+	    - [Alignment with TopHat](#alignment-with-tophat)
+	    - [Alignment with Kallisto](#alignment-with-kallisto)
 	- [dropEst](#dropest)
 		- [Usage of tagged bam files (e.g. 10x, Drop-seq) as input](#usage-of-tagged-bam-files-eg-10x-drop-seq-as-input)
 		- [Usage of pseudoaligners](#usage-of-pseudoaligners)
+		- [Count intronic / exonic reads only](#count-intronic-/-exonic-reads-only)
 		- [Command line arguments for dropEst](#command-line-arguments-for-dropest)
 		- [Output](#output)
 	- [dropReport](#dropreport)
@@ -74,7 +77,7 @@ If `cmake` can't find one of the libraries, or you want to use some specific ver
 * BamTools: BAMTOOLS_ROOT.
 * R: R_ROOT. Can be found by running the `cat(R.home())` in R.
 
-These variables should be set to the path to the installed library. It can be done either by using command line options: `cmake -D R_ROOT="path_to_r"` or by adding the variable declaration to CMakeLists.txt: `set(R_ROOT path_to_r)`.
+These variables should be set to the path to the installed library. It can be done either by using command line options: `cmake -D R_ROOT="path_to_r"` or by adding the variable declaration to the beginning of CMakeLists.txt: `set(R_ROOT path_to_r)`.
 
 
 In case you have some issues with the linker for specific library, please try to build this library manually with the version of compiler, which you're going to use for dropEst build.
@@ -146,7 +149,8 @@ Please, use `./droptag -h` for additional help.
 ## Alignment
 dropTag writes the tagged reads into multiple files. All these files must be aligned to reference, and all bam files with the alignments must be provided as input for the dropEst stage. In the paper we used [TopHat2](https://ccb.jhu.edu/software/tophat/tutorial.shtml) aligner, however any RNA-seq aligners (i.e. [Kallisto](https://pachterlab.github.io/kallisto/) or [STAR](https://github.com/alexdobin/STAR)) can be used.
 
-Alignment with TopHat2:
+### Alignment with TopHat
+
 1. Install [bowtie index](http://bowtie-bio.sourceforge.net/tutorial.shtml#preb) for the sequenced organism.
 2. Download corresponding [gene annotation](http://genome.ucsc.edu/cgi-bin/hgTables) in the gtf format.
 3. Run TopHat2 for each file:
@@ -154,6 +158,14 @@ Alignment with TopHat2:
 tophat2 -p number_of_threads --no-coverage-search -g 1 -G genes.gtf -o output_dir Bowtie2Index/genome reads.fastq.gz
 ```
 4. The result needed for the count estimation is *./output_dir/accepted_hits.bam*.
+
+### Alignment with Kallisto
+
+**Prior to v0.42.4, Kallisto didn't use BAM flags to mark primary/secondary alignments. Only versions $\geq$ 0.42.4 are supported.**
+
+1. Download transcript sequences in .fasta format (i.e. [Ensembl](https://www.ensembl.org/info/data/ftp/index.html) genes).
+2. Build Kallisto index: `kallisto index -i genes.fa.gz`.
+3. Run `kallisto quant --pseudobam --single -i genes.index -o out -l mean_length -s std_length reads.fastq.gz`. Here, *mean_length* is mean read length and *std_length* is standard deviataion of read length. You should specify values, according to the experiment design.
 
 ## dropEst
 
@@ -194,6 +206,37 @@ use "*-P*" option. Example:
  dropest [options] -P -c ./config.xml ./kallisto_res_*.bam
  ```
 
+### Count intronic / exonic reads only
+One feature of the pipeline is the ability to count only UMIs, which reads touch only specific parts of a genome. 
+Option *"-L"* allows to specify all acceptable types of regions:
+* e: UMIs with exonic reads only
+* i: UMIs with intronic reads only
+* E: UMIs, which have both exonic and not annotated reads
+* I: UMIs, which have both intronic and not annotated reads
+* B: UMIs, which have both exonic and intronic reads
+* A: UMIs, which have exonic, intronic and not annotated reads
+
+Thus, to count all UMIs with exonic **or** not annotated reads, use *"-L eE"*. Default value: *"-L eEBA"*.
+
+Example commands:
+* Intronic reads only:
+    ```bash
+    dropest [-f] [-g ./genes.gtf] -L i -c ./config.xml ./alignment_*.bam
+    ```
+* Exonic reads only:
+    ```bash
+    dropest [-f] [-g ./genes.gtf] -L i -c ./config.xml ./alignment_*.bam
+    ```
+* Exon/intron spanning reads:
+    ```bash
+    dropest [-f] [-g ./genes.gtf] -L BA -c ./config.xml ./alignment_*.bam
+    ```
+
+The pipeline can determine genome regions either using .gtf annotation file or using .bam tags, i.e. for CellRanger 
+output (see *Estimation/BamTags/Type* in *configs/config_desc.xml*). If .gtf file isn't provided and .bam file doesn't containt 
+annotation tags, all reads with not empty gene tag are considered as exonic. 
+
+
 ### Command line arguments for dropEst
 *  -b, --bam-output: print tagged bam files  
 *  -c, --config filename: xml file with estimation parameters  
@@ -224,11 +267,15 @@ Result of this phase is cell.counts.rds file with the next fields:
 To additionaly print the file with count matrix in MatrixMarket format use "*-w*" option.
 
 ## dropReport
-To run the report you have to install [dropestr](#dropestr-package) R package with all dependencies (`dependencies = T`).
+To run the report you have to install:
+* [dropestr](#dropestr-package) R package with all dependencies (`dependencies = T`).
+* [pandoc](https://pandoc.org/installing.html)
+* R packages:
+    ```R
+    install.packages(c("optparse","rmarkdown"))
+    ```
 
-You need pandoc for the creation of the report.html.
-
-The Report can be called with:
+To run report use:
 ```bash
 ./dropReport.Rsc cell.counts.rds
 ```
@@ -239,7 +286,7 @@ To see full list of options use:
 ```
 
 ### Troubleshooting
-If you get the error *"pandoc version 1.12.3 or higher is required and was not found"*, try to set path in the system variable:  `export RSTUDIO_PANDOC=/path/to/pandoc`.
+If you get the error *"pandoc version 1.12.3 or higher is required and was not found"*, try to set path in the corresponding environment variable:  `export RSTUDIO_PANDOC=/path/to/pandoc`.
 
 ## dropEstR package
 
