@@ -30,6 +30,7 @@ struct Params
 	bool pseudoaligner = false;
 	bool reads_output = false;
 	bool quiet = false;
+	bool velocyto_matrices = false;
 	bool write_matrix = false;
 	string config_file_name = "";
 	string genes_filename = "";
@@ -90,6 +91,7 @@ static void usage()
 	cerr << "\t-P, --pseudoaligner: use chromosome name as a source of gene id\n";
 	cerr << "\t-R, --reads-output: print count matrix for reads and don't use UMI statistics\n";
 	cerr << "\t-q, --quiet : disable logs\n";
+	cerr << "\t-V, --velocyto : save separate count matrices for exons, introns and exon/intron spanning reads\n";
 	cerr << "\t-w, --write-mtx : write out matrix in MatrixMarket format\n";
 }
 
@@ -118,10 +120,11 @@ static Params parse_cmd_params(int argc, char **argv)
 			{"pseudoaligner",   no_argument, 0, 'P'},
 			{"reads-output",     no_argument, 		0, 'R'},
 			{"quiet",         no_argument,       0, 'q'},
+			{"velocyto",     no_argument,       0, 'V'},
 			{"write-mtx",     no_argument,       0, 'w'},
 			{0, 0,                                 0, 0}
 	};
-	while ((c = getopt_long(argc, argv, "bc:C:fFg:G:hl:L:mMno:r:PRqw", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "bc:C:fFg:G:hl:L:mMno:r:PRqVw", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -176,6 +179,9 @@ static Params parse_cmd_params(int argc, char **argv)
 				break;
 			case 'q' :
 				params.quiet = true;
+				break;
+			case 'V' :
+				params.velocyto_matrices = true;
 				break;
 			case 'w' :
 				params.write_matrix = true;
@@ -294,6 +300,10 @@ int main(int argc, char **argv)
 		Tools::trace_time("Done");
 
 		printer.save_results(container, params.output_name);
+
+		if (params.velocyto_matrices) {
+			printer.save_intron_exon_matrices(container, params.output_name);
+		}
 	}
 	catch (std::runtime_error err)
 	{

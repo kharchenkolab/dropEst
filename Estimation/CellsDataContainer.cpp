@@ -44,7 +44,9 @@ namespace Estimation
 		this->_merge_targets = this->_merge_strategy->merge(*this);
 
 		this->_umi_merge_strategy->merge(*this);
-		size_t filtered_cells_num = this->update_cell_sizes(this->_merge_strategy->min_genes_after_merge(), this->_max_cells_num);
+		size_t filtered_cells_num = this->update_cell_sizes(this->_query_marks,
+		                                                    this->_merge_strategy->min_genes_after_merge(),
+		                                                    this->_max_cells_num);
 
 		L_TRACE << this->_number_of_real_cells << " cells are considered as real.\n";
 
@@ -64,7 +66,7 @@ namespace Estimation
 		if (res.second)
 		{
 			this->_cells.push_back(Cell(cell_barcode, this->_merge_strategy->min_genes_before_merge(),
-			                            this->_query_marks, &this->_gene_indexer, &this->_umi_indexer));
+			                            &this->_gene_indexer, &this->_umi_indexer));
 		}
 
 		size_t cell_id = res.first->second;
@@ -95,12 +97,13 @@ namespace Estimation
 		this->_cells.at(index).set_excluded();
 	}
 
-	size_t CellsDataContainer::update_cell_sizes(size_t requested_genes_threshold, int cell_threshold)
+	size_t CellsDataContainer::update_cell_sizes(const UMI::Mark::query_t &query_marks, size_t requested_genes_threshold,
+	                                             int cell_threshold)
 	{
 		this->_number_of_real_cells = 0;
 		for (size_t i = 0; i < this->_cells.size(); i++)
 		{
-			this->_cells[i].update_requested_size();
+			this->_cells[i].update_requested_size(query_marks);
 			if (!this->_cells[i].is_real())
 				continue;
 
@@ -151,7 +154,7 @@ namespace Estimation
 		if (this->_is_initialized)
 			throw std::runtime_error("Container is already initialized");
 
-		this->update_cell_sizes(0, -1);
+		this->update_cell_sizes(this->_query_marks, 0, -1);
 
 		L_TRACE << "\n" << this->_filtered_cells.size() << " CBs with more than "
 		        << this->_merge_strategy->min_genes_before_merge() << " genes";
@@ -198,7 +201,7 @@ namespace Estimation
 		this->_cells.at(cell_id).merge_umis(gene, merge_targets);
 	}
 
-	const std::vector<UMI::Mark>& CellsDataContainer::gene_match_level() const
+	const UMI::Mark::query_t& CellsDataContainer::gene_match_level() const
 	{
 		return this->_query_marks;
 	}

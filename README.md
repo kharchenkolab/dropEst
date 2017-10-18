@@ -23,7 +23,7 @@ Pipeline for estimating molecular count matrices for droplet-based single-cell R
 	- [dropEst](#dropest)
 		- [Usage of tagged bam files (e.g. 10x, Drop-seq) as input](#usage-of-tagged-bam-files-eg-10x-drop-seq-as-input)
 		- [Usage of pseudoaligners](#usage-of-pseudoaligners)
-		- [Count intronic / exonic reads only](#count-intronic-/-exonic-reads-only)
+		- [Count intronic / exonic reads only](#count-intronic--exonic-reads-only)
 		- [Command line arguments for dropEst](#command-line-arguments-for-dropest)
 		- [Output](#output)
 	- [dropReport](#dropreport)
@@ -236,6 +236,10 @@ The pipeline can determine genome regions either using .gtf annotation file or u
 output (see *Estimation/BamTags/Type* in *configs/config_desc.xml*). If .gtf file isn't provided and .bam file doesn't containt 
 annotation tags, all reads with not empty gene tag are considered as exonic. 
 
+#### Velocyto integration
+For some purposes (i.e. [velocyto](http://velocyto.org/)) it can be useful to look separately at the fraction of intronic and exonic UMIs.
+Option *"-V"* allows to output three separate count matrices, each of which contains only UMIs of a specific type: 
+intronic, exonic or exon/intron spanning. These matrices are stored in the separate file *"cell.counts.matrices.rds"*. 
 
 ### Command line arguments for dropEst
 *  -b, --bam-output: print tagged bam files  
@@ -251,6 +255,7 @@ annotation tags, all reads with not empty gene tag are considered as exonic.
 *  -o, --output-file filename : output file name  
 *  -R, --reads-output: print count matrix for reads and don't use UMI statistics  
 *  -q, --quiet : disable logs  
+*  -V, --velocyto : save separate count matrices for exons, introns and exon/intron spanning reads
 *  -w, --write-mtx : write out matrix in MatrixMarket format  
 
 ### Output

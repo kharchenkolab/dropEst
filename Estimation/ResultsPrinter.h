@@ -5,6 +5,7 @@
 #include <RcppEigen.h>
 
 #include <Estimation/Stats.h>
+#include "UMI.h"
 
 namespace Estimation
 {
@@ -40,14 +41,19 @@ namespace Estimation
 		Rcpp::List get_reads_per_umi_per_cell(const CellsDataContainer &container) const;
 		Rcpp::List get_merge_targets(const CellsDataContainer &container) const;
 
-		SEXP get_count_matrix_filtered(const CellsDataContainer &container) const;
+		SEXP get_count_matrix_filtered(const CellsDataContainer &container, const UMI::Mark::query_t &query_marks) const;
 
 		SEXP get_count_matrix_raw(const CellsDataContainer &container) const;
+
+		void save_rds(const std::string &filename_base, const std::string &list_name) const;
+		std::string extract_filename_base(const std::string &filename) const;
+		void save_mtx(const std::string &list_name, const std::string &filename_base) const;
 
 	public:
 		ResultsPrinter(bool write_matrix, bool reads_output);
 
 		void save_results(const CellsDataContainer &container, const std::string &filename) const;
+		void save_intron_exon_matrices(CellsDataContainer &container, const std::string &filename) const;
 
 		Rcpp::IntegerVector get_requested_umis_per_cb(const CellsDataContainer &container, bool return_reads = false) const;
 	};

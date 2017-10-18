@@ -1,6 +1,10 @@
 # Changelog
 
-## [0.7.0]
+## [0.7.1] - 2017-10-18
+### Added
+* Integration with velocyto
+
+## [0.7.0] - 2017-10-17
 ### Changed
 * Optimized cmake
 * **Secondary alignments are filtered now**

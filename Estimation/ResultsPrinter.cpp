@@ -14,6 +14,8 @@ namespace Estimation
 
 	void ResultsPrinter::save_results(const CellsDataContainer &container, const std::string &filename) const
 	{
+		const std::string list_name = "d";
+
 		if (container.filtered_cells().empty())
 		{
 			L_WARN << "WARNING: filtered cells are empty. Probably, filtration threshold is too strict"
@@ -35,7 +37,7 @@ namespace Estimation
 		auto requested_reads_per_cb = this->get_requested_umis_per_cb(container, true); // Real cells, requested UMIs
 		L_TRACE << "Completed.\n";
 
-		(*R)["d"] = List::create(
+		(*R)[list_name] = List::create(
 				_["cm"] = this->get_count_matrix(container, true),
 				_["cm_raw"] = this->get_count_matrix(container, false),
 				_["reads_per_chr_per_cells"] = reads_per_chr_per_cell,
@@ -48,30 +50,35 @@ namespace Estimation
 				_["requested_umis_per_cb"] = requested_umis_per_cb,
 				_["requested_reads_per_cb"] = requested_reads_per_cb);
 
-		std::string filename_base = filename;
-		auto extension_pos = filename.find_last_of(".");
-		if (extension_pos != std::string::npos && filename.substr(extension_pos + 1) == "rds")
-		{
-			filename_base = filename.substr(0, extension_pos);
-		}
-
-		std::string rds_filename = filename_base + ".rds";
-
-		L_TRACE << "";
-		Tools::trace_time("Writing R data to " + rds_filename + " ...");
-		R->parseEvalQ("saveRDS(d, '" + rds_filename + "')");
-		Tools::trace_time("Completed");
+		std::string filename_base = this->extract_filename_base(filename);
+		this->save_rds(filename_base, list_name);
 
 		if (this->write_matrix) {
-			std::string mtx_file = filename_base + ".mtx";
-			L_TRACE << "Writing " + mtx_file + " ...";
-			R->parseEvalQ("Matrix::writeMM(d$cm, '" + mtx_file + "')");
-			R->parseEvalQ("write.table(colnames(d$cm), '" + filename_base + ".cells.tsv', row.names = F, col.names = F, quote = F)");
-			R->parseEvalQ("write.table(rownames(d$cm), '" + filename_base + ".genes.tsv', row.names = F, col.names = F, quote = F)");
-			L_TRACE << "Completed.";
+			this->save_mtx(list_name, filename_base);
 		}
 
 		L_TRACE << "";
+	}
+
+	void ResultsPrinter::save_mtx(const std::string &list_name, const std::string &filename_base) const
+	{
+		RInside *R = Tools::init_r();
+		std::string mtx_file = filename_base + ".mtx";
+
+		L_TRACE << "Writing " + mtx_file + " ...";
+		R->parseEvalQ("Matrix::writeMM(" + list_name + "$cm, '" + mtx_file + "')");
+		R->parseEvalQ("write.table(colnames(" + list_name + "$cm), '" + filename_base + ".cells.tsv', row.names = F, col.names = F, quote = F)");
+		R->parseEvalQ("write.table(rownames(" + list_name + "$cm), '" + filename_base + ".genes.tsv', row.names = F, col.names = F, quote = F)");
+		L_TRACE << "Completed.";
+	}
+
+	std::string ResultsPrinter::extract_filename_base(const std::string &filename) const
+	{
+		auto extension_pos = filename.find_last_of(".");
+		if (extension_pos != std::string::npos && filename.substr(extension_pos + 1) == "rds")
+			return filename.substr(0, extension_pos);
+
+		return filename;
 	}
 
 	IntegerMatrix ResultsPrinter::create_matrix(const s_vec_t &col_names, const s_vec_t &row_names,
@@ -104,7 +111,7 @@ namespace Estimation
 				continue;
 
 			const auto &cb = cell.barcode();
-			for (auto const& gene : cell.requested_reads_per_umi_per_gene())
+			for (auto const& gene : cell.requested_reads_per_umi_per_gene(container.gene_match_level()))
 			{
 				for (auto const &reads_per_umi : gene.second)
 				{
@@ -165,7 +172,7 @@ namespace Estimation
 		SEXP cm;
 		if (filtered)
 		{
-			cm = this->get_count_matrix_filtered(container);
+			cm = this->get_count_matrix_filtered(container, container.gene_match_level());
 		}
 		else
 		{
@@ -247,7 +254,7 @@ namespace Estimation
 		for (auto cell_id : container.filtered_cells())
 		{
 			auto &cell_reads_p_umigs = reads_per_umi_per_cell[container.cell(cell_id).barcode()];
-			for (auto const &gene_rpus : container.cell(cell_id).requested_reads_per_umi_per_gene())
+			for (auto const &gene_rpus : container.cell(cell_id).requested_reads_per_umi_per_gene(container.gene_match_level()))
 			{
 				auto &out_gene_umis = cell_reads_p_umigs[gene_rpus.first];
 				for (auto const &umi_reads : gene_rpus.second)
@@ -278,7 +285,7 @@ namespace Estimation
 		return wrap(merge_targets);
 	}
 
-	SEXP ResultsPrinter::get_count_matrix_filtered(const CellsDataContainer &container) const
+	SEXP ResultsPrinter::get_count_matrix_filtered(const CellsDataContainer &container, const UMI::Mark::query_t &query_marks) const
 	{
 		s_vec_t gene_names, cell_names;
 		std::unordered_map<std::string, size_t> gene_ids;
@@ -289,7 +296,7 @@ namespace Estimation
 			auto const &cur_cell = container.cell(container.filtered_cells()[column_num]);
 			cell_names.push_back(cur_cell.barcode());
 
-			for (auto const &umis_per_gene : cur_cell.requested_umis_per_gene(this->reads_output))
+			for (auto const &umis_per_gene : cur_cell.requested_umis_per_gene(query_marks, this->reads_output))
 			{
 				auto gene_it = gene_ids.emplace(umis_per_gene.first, gene_ids.size());
 				if (gene_it.second)
@@ -359,7 +366,7 @@ namespace Estimation
 			size_t cell_expression = 0;
 			if (return_reads)
 			{
-				for (auto const &gene : cell.requested_umis_per_gene(true))
+				for (auto const &gene : cell.requested_umis_per_gene(container.gene_match_level(), true))
 				{
 					cell_expression += gene.second;
 				}
@@ -386,5 +393,37 @@ namespace Estimation
 		S4 res(wrap(mat));
 		res.slot("Dimnames") = List::create(row_names, col_names);
 		return res;
+	}
+
+	void ResultsPrinter::save_rds(const std::string &filename_base, const std::string &list_name) const
+	{
+		RInside *R = Tools::init_r();
+		std::string rds_filename = filename_base + ".rds";
+
+		L_TRACE << "";
+		Tools::trace_time("Writing R data to " + rds_filename + " ...");
+		R->parseEvalQ("saveRDS(" + list_name + ", '" + rds_filename + "')");
+		Tools::trace_time("Completed");
+	}
+
+	void ResultsPrinter::save_intron_exon_matrices(CellsDataContainer &container, const std::string &filename) const
+	{
+		const std::string list_name = "matrices";
+		RInside *R = Tools::init_r();
+
+		Tools::trace_time("Compiling intron/exon matrices");
+		List matrices;
+		L_TRACE << "Exon";
+		matrices["exon"] = this->get_count_matrix_filtered(container, UMI::Mark::get_by_code("e"));
+		L_TRACE << "Intron";
+		matrices["intron"] = this->get_count_matrix_filtered(container, UMI::Mark::get_by_code("i"));
+		L_TRACE << "Intron/exon spanning";
+		matrices["spanning"] = this->get_count_matrix_filtered(container, UMI::Mark::get_by_code("BA"));
+		Tools::trace_time("Done");
+
+		(*R)[list_name] = matrices;
+
+		std::string filename_base = this->extract_filename_base(filename);
+		this->save_rds(filename_base + ".matrices", list_name);
 	}
 }

@@ -23,7 +23,6 @@ namespace Estimation
 	private:
 		std::unique_ptr<char[]> _barcode;
 		const size_t _min_genes_to_be_real;
-		const UMI::Mark::query_t _query_marks;
 
 		bool _is_merged;
 		bool _is_excluded;
@@ -49,8 +48,8 @@ namespace Estimation
 		const Stats &stats() const;
 		Stats &stats();
 		const genes_t& genes() const;
-		s_ul_hash_t requested_umis_per_gene(bool return_reads) const;
-		ss_ul_hash_t requested_reads_per_umi_per_gene() const;
+		s_ul_hash_t requested_umis_per_gene(const UMI::Mark::query_t &query_marks, bool return_reads) const;
+		ss_ul_hash_t requested_reads_per_umi_per_gene(const UMI::Mark::query_t &query_marks) const;
 
 		size_t size() const;
 		const Gene& at(const std::string &gene) const;
@@ -60,9 +59,9 @@ namespace Estimation
 		void set_excluded();
 		void merge(const Cell &source);
 		void merge_umis(StringIndexer::index_t gene, const s_s_hash_t &merge_targets);
-		void update_requested_size();
+		void update_requested_size(const UMI::Mark::query_t &query_marks);
 
-		Cell(const std::string &barcode, size_t min_genes_to_be_real, const std::vector<UMI::Mark> &query_marks,
-		     StringIndexer *gene_indexer, StringIndexer *umi_indexer);
+		Cell(const std::string &barcode, size_t min_genes_to_be_real, StringIndexer *gene_indexer,
+		     StringIndexer *umi_indexer);
 	};
 }
