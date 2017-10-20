@@ -4,7 +4,6 @@
 #include <Estimation/Merge/UMIs/MergeUMIsStrategySimple.h>
 
 #include <Tools/Logs.h>
-#include <Tools/RefGenesContainer.h>
 
 #include <api/BamMultiReader.h>
 
@@ -15,8 +14,6 @@ using namespace std;
 
 namespace Estimation
 {
-	using Tools::IndexedValue;
-
 	const std::string UMI::Mark::DEFAULT_CODE = "eEBA";
 	const size_t CellsDataContainer::TOP_PRINT_SIZE = 10;
 

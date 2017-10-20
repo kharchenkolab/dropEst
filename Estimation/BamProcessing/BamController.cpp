@@ -148,7 +148,7 @@ namespace BamProcessing
 		{
 			mark = parser->get_gene(chr_name, alignment, gene);
 		}
-		catch (Tools::RefGenesContainer::ChrNotFoundException ex)
+		catch (Tools::GeneAnnotation::RefGenesContainer::ChrNotFoundException ex)
 		{
 			if (unexpected_chromosomes.emplace(ex.chr_name).second)
 			{

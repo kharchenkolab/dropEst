@@ -17,5 +17,6 @@ namespace Tools
 	};
 	unsigned edit_distance(const char *s1, const char *s2, bool skip_n = true, unsigned max_ed=10000);
 	unsigned hamming_distance(const std::string &s1, const std::string &s2, bool skip_n = true);
+	double fpow(double base, long exp);
 	RInside* init_r();
 };

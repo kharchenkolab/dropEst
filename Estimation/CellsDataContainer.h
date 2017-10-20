@@ -2,8 +2,6 @@
 
 #include "Cell.h"
 #include "Stats.h"
-#include "Tools/IndexedValue.h"
-#include <Tools/GtfRecord.h>
 #include "UMI.h"
 #include "StringIndexer.h"
 
@@ -41,7 +39,6 @@ namespace Estimation
 		typedef std::unordered_map<std::string, size_t> s_ul_hash_t;
 		typedef std::unordered_map<std::string, int> s_i_hash_t; // not long because of RCpp
 
-		typedef std::vector<Tools::IndexedValue> i_counter_t;
 		typedef std::vector<size_t> ids_t;
 		typedef std::vector<int> counts_t;
 		typedef std::vector<std::string> names_t;

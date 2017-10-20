@@ -5,14 +5,15 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/unordered_map.hpp>
 #include <Tools/ReadParameters.h>
-#include <Tools/RefGenesContainer.h>
+#include <Tools/GeneAnnotation/RefGenesContainer.h>
 
-#include "Tools/GtfRecord.h"
+#include "Tools/GeneAnnotation/GtfRecord.h"
 #include "Tools/Logs.h"
-#include "Tools/RefGenesContainer.h"
+#include "Tools/GeneAnnotation/RefGenesContainer.h"
 #include "Tools/UtilFunctions.h"
 
 using namespace Tools;
+using namespace Tools::GeneAnnotation;
 
 struct Fixture
 {

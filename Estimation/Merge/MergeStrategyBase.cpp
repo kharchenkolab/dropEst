@@ -1,6 +1,5 @@
 #include <Tools/Logs.h>
 #include <Estimation/CellsDataContainer.h>
-#include <Tools/IndexedValue.h>
 #include "MergeStrategyBase.h"
 
 #include <numeric>

@@ -4,6 +4,25 @@
 
 namespace Tools
 {
+	double fpow(double base, long exp)
+	{
+		if (exp == 1)
+			return base;
+
+		double result = 1;
+		while (exp)
+		{
+			if (exp & 1)
+			{
+				result *= base;
+			}
+			exp >>= 1;
+			base *= base;
+		}
+
+		return result;
+	}
+
 	unsigned edit_distance(const char *s1, const char *s2, bool skip_n, unsigned max_ed)
 	{
 		int olddiag;

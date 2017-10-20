@@ -2,7 +2,7 @@
 
 #include <cstddef>
 #include <vector>
-#include <Tools/GtfRecord.h>
+#include <Tools/GeneAnnotation/GtfRecord.h>
 
 namespace Estimation
 {
@@ -32,7 +32,7 @@ namespace Estimation
 
 			void add(const Mark &mark);
 			void add(MarkType type);
-			void add(Tools::GtfRecord::RecordType type);
+			void add(Tools::GeneAnnotation::GtfRecord::RecordType type);
 			bool check(MarkType type) const;
 			bool match(const std::vector<Mark>) const;
 			bool operator==(const MarkType &other) const;
