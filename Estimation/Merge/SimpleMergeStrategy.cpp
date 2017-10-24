@@ -45,7 +45,7 @@ namespace Merge
 		return "Simple";
 	}
 
-	long SimpleMergeStrategy::get_merge_target(const CellsDataContainer &container, size_t base_cell_ind) const
+	long SimpleMergeStrategy::get_merge_target(const CellsDataContainer &container, size_t base_cell_ind)
 	{
 		u_u_hash_t cells_with_common_umigs = this->get_cells_with_common_umigs(container, base_cell_ind);
 

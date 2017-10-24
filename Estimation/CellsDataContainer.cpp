@@ -165,21 +165,21 @@ namespace Estimation
 		return this->_cell_ids_by_cb.at(barcode);
 	}
 
-	CellsDataContainer::s_ul_hash_t CellsDataContainer::umis_distribution() const
+	CellsDataContainer::s_ul_hash_t CellsDataContainer::umi_distribution() const
 	{
-		s_ul_hash_t umis_dist;
+		s_ul_hash_t umi_dist;
 		for (size_t cell_id : this->_filtered_cells)
 		{
 			for (auto const &gene : this->_cells[cell_id].genes())
 			{
 				for (auto const &umi : gene.second.umis())
 				{
-					umis_dist[this->_umi_indexer.get_value(umi.first)]++;
+					umi_dist[this->_umi_indexer.get_value(umi.first)]++;
 				}
 			}
 		}
 
-		return umis_dist;
+		return umi_dist;
 	}
 
 	std::string CellsDataContainer::merge_type() const

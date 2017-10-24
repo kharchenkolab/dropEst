@@ -113,6 +113,6 @@ namespace Estimation
 		const StringIndexer& gene_indexer() const;
 		const StringIndexer& umi_indexer() const;
 
-		s_ul_hash_t umis_distribution() const;
+		s_ul_hash_t umi_distribution() const;
 	};
 }

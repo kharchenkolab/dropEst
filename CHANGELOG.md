@@ -1,5 +1,9 @@
 # Changelog
 
+## [Upcoming]
+### Changed
+* Optimized precise merge performance
+
 ## [0.7.1] - 2017-10-18
 ### Added
 * Integration with velocyto

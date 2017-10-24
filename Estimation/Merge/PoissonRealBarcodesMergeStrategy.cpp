@@ -30,7 +30,7 @@ namespace Merge
 	void PoissonRealBarcodesMergeStrategy::init(const Estimation::CellsDataContainer &container)
 	{
 		RealBarcodesMergeStrategy::init(container);
-		this->_target_estimator.init(container);
+		this->_target_estimator.init(container.umi_distribution());
 	}
 
 	void PoissonRealBarcodesMergeStrategy::release()
@@ -40,7 +40,7 @@ namespace Merge
 	}
 
 	long PoissonRealBarcodesMergeStrategy::get_best_merge_target(const CellsDataContainer &container, size_t base_cell_ind,
-																 const MergeStrategyAbstract::ul_list_t &neighbour_cells) const
+																 const MergeStrategyAbstract::ul_list_t &neighbour_cells)
 	{
 		return this->_target_estimator.get_best_merge_target(container, base_cell_ind, neighbour_cells);
 	}

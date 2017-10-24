@@ -19,7 +19,7 @@ namespace Estimation
 			this->_barcodes_parser->init();
 		}
 
-		long RealBarcodesMergeStrategy::get_merge_target(const Estimation::CellsDataContainer &container, size_t base_cell_ind) const
+		long RealBarcodesMergeStrategy::get_merge_target(const Estimation::CellsDataContainer &container, size_t base_cell_ind)
 		{
 			ul_list_t neighbour_cells = this->get_real_neighbour_cbs(container, base_cell_ind);
 			if (neighbour_cells.empty())
@@ -29,7 +29,7 @@ namespace Estimation
 		}
 
 		long RealBarcodesMergeStrategy::get_best_merge_target(const CellsDataContainer &container, size_t base_cell_ind,
-															  const MergeStrategyAbstract::ul_list_t &neighbour_cells) const
+															  const MergeStrategyAbstract::ul_list_t &neighbour_cells)
 		{
 			if (neighbour_cells[0] == base_cell_ind)
 				return base_cell_ind;
