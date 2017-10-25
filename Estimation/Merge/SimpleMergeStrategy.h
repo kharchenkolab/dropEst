@@ -21,7 +21,7 @@ namespace Merge
 	protected:
 		u_u_hash_t get_cells_with_common_umigs(const CellsDataContainer &container, size_t base_cell_ind) const;
 
-		virtual long get_merge_target(const CellsDataContainer &container, size_t base_cell_ind) override;
+		virtual long get_merge_target(CellsDataContainer &container, size_t base_cell_ind) override;
 		virtual void init(const CellsDataContainer &container) override;
 		virtual void release() override;
 

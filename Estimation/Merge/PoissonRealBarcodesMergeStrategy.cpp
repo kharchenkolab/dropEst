@@ -39,8 +39,8 @@ namespace Merge
 		RealBarcodesMergeStrategy::release();
 	}
 
-	long PoissonRealBarcodesMergeStrategy::get_best_merge_target(const CellsDataContainer &container, size_t base_cell_ind,
-																 const MergeStrategyAbstract::ul_list_t &neighbour_cells)
+	long PoissonRealBarcodesMergeStrategy::get_best_merge_target(CellsDataContainer &container, size_t base_cell_ind,
+	                                                             const MergeStrategyAbstract::ul_list_t &neighbour_cells)
 	{
 		return this->_target_estimator.get_best_merge_target(container, base_cell_ind, neighbour_cells);
 	}

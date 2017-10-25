@@ -47,8 +47,8 @@ namespace Estimation
 			virtual void init(const Estimation::CellsDataContainer::s_ul_hash_t &umi_distribution);
 			virtual void release();
 
-			virtual long get_best_merge_target(const CellsDataContainer &container, size_t base_cell_ind,
-											   const ul_list_t &neighbour_cells);
+			virtual long get_best_merge_target(CellsDataContainer &container, size_t base_cell_ind,
+			                                   const ul_list_t &neighbour_cells);
 		};
 	}
 }

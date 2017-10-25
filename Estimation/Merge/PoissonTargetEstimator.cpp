@@ -12,7 +12,7 @@ PoissonTargetEstimator::PoissonTargetEstimator(double max_merge_prob, double max
 	, max_real_cb_merge_prob(max_real_cb_merge_prob)
 {}
 
-long PoissonTargetEstimator::get_best_merge_target(const CellsDataContainer &container, size_t base_cell_ind,
+long PoissonTargetEstimator::get_best_merge_target(CellsDataContainer &container, size_t base_cell_ind,
                                                    const ul_list_t &neighbour_cells)
 {
 	bool is_base_cb_real = (base_cell_ind == neighbour_cells.at(0));
@@ -31,8 +31,9 @@ long PoissonTargetEstimator::get_best_merge_target(const CellsDataContainer &con
 
 		double prob = this->get_intersection_prob(container, base_cell_ind, cell_ind);
 
-//		container.stats().set(Stats::MERGE_PROB_BY_CELL, container.cell_barcode(base_cell_ind),
-//							  container.cell_barcode(cell_ind), prob);
+		container.cell(base_cell_ind).stats().set(Stats::MERGE_PROB_PER_TARGET_PER_CELL,
+		                                          container.cell(cell_ind).barcode(), prob);
+
 		if (prob < min_prob)
 		{
 			min_prob = prob;

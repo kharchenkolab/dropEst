@@ -35,6 +35,8 @@ namespace Estimation
 		IntegerVector aligned_umis_per_cb = wrap(container.get_stat_by_real_cells(Stats::TOTAL_UMIS_PER_CB)); // Real cells, all UMIs
 		auto requested_umis_per_cb = this->get_requested_umis_per_cb(container); // Real cells, requested UMIs
 		auto requested_reads_per_cb = this->get_requested_umis_per_cb(container, true); // Real cells, requested UMIs
+
+		auto merge_probs = this->get_merge_probs(container); // All cells, doesn't depend on UMIs
 		L_TRACE << "Completed.\n";
 
 		(*R)[list_name] = List::create(
@@ -45,6 +47,7 @@ namespace Estimation
 				_["mean_reads_per_umi"] = mean_reads_per_umi,
 				_["saturation_info"] = saturation_info,
 				_["merge_targets"] = merge_targets, // TODO: optimize it
+				_["merge_probs"] = merge_probs,
 				_["aligned_reads_per_cell"] = aligned_reads_per_cb,
 				_["aligned_umis_per_cell"] = aligned_umis_per_cb,
 				_["requested_umis_per_cb"] = requested_umis_per_cb,
@@ -425,5 +428,26 @@ namespace Estimation
 
 		std::string filename_base = this->extract_filename_base(filename);
 		this->save_rds(filename_base + ".matrices", list_name);
+	}
+
+	List ResultsPrinter::get_merge_probs(const CellsDataContainer &container) const
+	{
+		std::vector<Stats::double_stat_list_t> stats;
+		std::vector<std::string> cell_barcodes;
+
+		for (size_t cell_id = 0; cell_id < container.total_cells_number(); ++cell_id)
+		{
+			auto const &cur_cell = container.cell(cell_id);
+			auto cur_stat = cur_cell.stats().get(Stats::MERGE_PROB_PER_TARGET_PER_CELL);
+			if (cur_stat.empty())
+				continue;
+
+			stats.push_back(cur_stat);
+			cell_barcodes.push_back(cur_cell.barcode());
+		}
+
+		List res = wrap(stats);
+		res.attr("names") = cell_barcodes;
+		return res;
 	}
 }
