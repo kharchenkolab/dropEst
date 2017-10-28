@@ -99,20 +99,19 @@ double PoissonTargetEstimator::estimate_genes_intersection_size(size_t gene1_siz
 		std::swap(gene1_size, gene2_size);
 	}
 
-	gene1_size = this->_adjuster.estimate_adjusted_gene_expression(gene1_size);
-	gene2_size = this->_adjuster.estimate_adjusted_gene_expression(gene2_size);
-
 	auto gene_pair = std::make_pair(gene1_size, gene2_size);
 	auto pair_it = this->_estimated_gene_intersections.find(gene_pair);
 	if (pair_it != this->_estimated_gene_intersections.end())
 		return pair_it->second;
 
-	const size_t d_size = gene2_size - gene1_size;
+	const size_t gene1_size_adj = this->_adjuster.estimate_adjusted_gene_expression(gene1_size);
+	const size_t gene2_size_adj = this->_adjuster.estimate_adjusted_gene_expression(gene2_size);
+	const size_t d_size = gene2_size_adj - gene1_size_adj;
 
 	double est_size = 0;
 	for (size_t i = 0; i < this->_umi_distribution.size(); ++i)
 	{
-		double min_prob = Tools::fpow(1 - this->_umi_distribution[i], gene1_size);
+		double min_prob = Tools::fpow(1 - this->_umi_distribution[i], gene1_size_adj);
 		double max_prob = min_prob * Tools::fpow(1 - this->_umi_distribution[i], d_size);
 		est_size += (1 - min_prob) * (1 - max_prob);
 	}
