@@ -109,13 +109,13 @@ BOOST_AUTO_TEST_SUITE(TestEstimatorMergeProbs)
 		this->estimator.init(this->container_full->umi_distribution());
 
 		// Values were obtained with R
-		BOOST_CHECK_LE(std::abs(this->estimator.estimate_genes_intersection_size(1, 5) - 0.7747731), 1e-4);
-		BOOST_CHECK_LE(std::abs(this->estimator.estimate_genes_intersection_size(2, 5) - 1.9436867), 1e-4);
-		BOOST_CHECK_LE(std::abs(this->estimator.estimate_genes_intersection_size(3, 5) - 2.3853127), 1e-4);
-		BOOST_CHECK_LE(std::abs(this->estimator.estimate_genes_intersection_size(4, 5) - 3.3316282), 1e-4);
-		BOOST_CHECK_LE(std::abs(this->estimator.estimate_genes_intersection_size(5, 5) - 3.9162887), 1e-4);
+		BOOST_CHECK_LE(std::abs(this->estimator.estimate_genes_intersection_size(1, 5) - 0.7264), 1e-2);
+		BOOST_CHECK_LE(std::abs(this->estimator.estimate_genes_intersection_size(2, 5) - 1.4484), 1e-2);
+		BOOST_CHECK_LE(std::abs(this->estimator.estimate_genes_intersection_size(3, 5) - 2.1380), 1e-2);
+		BOOST_CHECK_LE(std::abs(this->estimator.estimate_genes_intersection_size(4, 5) - 2.7923), 1e-2);
+		BOOST_CHECK_LE(std::abs(this->estimator.estimate_genes_intersection_size(5, 5) - 3.4346), 1e-2);
 
-		BOOST_CHECK_LE(std::abs(this->estimator.estimate_genes_intersection_size(5, 3) - 2.3853127), 1e-4);
+		BOOST_CHECK_LE(std::abs(this->estimator.estimate_genes_intersection_size(5, 3) - 2.1380), 1e-2);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testPoissonMergeProbs, Fixture)
@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimatorMergeProbs)
 		BOOST_CHECK_EQUAL(this->estimator.get_intersection_prob(*this->container_full, 0, 1), 1);
 		BOOST_CHECK_LE(std::abs(this->estimator.get_intersection_prob(*this->container_full, 1, 2) - 0.16), 0.05);
 		BOOST_CHECK_LE(std::abs(this->estimator.get_intersection_prob(*this->container_full, 3, 4) - 0.15), 0.05);
-		BOOST_CHECK_LE(std::abs(this->estimator.get_intersection_prob(*this->container_full, 5, 6) - 0.1), 0.01);
+		BOOST_CHECK_LE(std::abs(this->estimator.get_intersection_prob(*this->container_full, 5, 6) - 0.025), 0.01);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testPoissonMergeRejections, Fixture)

@@ -1,6 +1,5 @@
 #include "PoissonTargetEstimator.h"
 
-#include <Tools/UtilFunctions.h>
 #include "MergeStrategyBase.h"
 
 namespace Estimation
@@ -60,6 +59,7 @@ void PoissonTargetEstimator::init(const Estimation::CellsDataContainer::s_ul_has
 		this->_umi_distribution.push_back(it.second / sum);
 	}
 
+	this->_umi_sampler = std::discrete_distribution<umi_t>(this->_umi_distribution.begin(), this->_umi_distribution.end());
 	this->_adjuster.init(this->_umi_distribution);
 
 	Tools::init_r();
@@ -94,6 +94,8 @@ double PoissonTargetEstimator::get_intersection_prob(const CellsDataContainer &c
 
 double PoissonTargetEstimator::estimate_genes_intersection_size(size_t gene1_size, size_t gene2_size)
 {
+	const size_t repeats_num = 10000;
+
 	if (gene1_size > gene2_size)
 	{
 		std::swap(gene1_size, gene2_size);
@@ -104,17 +106,33 @@ double PoissonTargetEstimator::estimate_genes_intersection_size(size_t gene1_siz
 	if (pair_it != this->_estimated_gene_intersections.end())
 		return pair_it->second;
 
-	const size_t gene1_size_adj = this->_adjuster.estimate_adjusted_gene_expression(gene1_size);
-	const size_t gene2_size_adj = this->_adjuster.estimate_adjusted_gene_expression(gene2_size);
-	const size_t d_size = gene2_size_adj - gene1_size_adj;
+	size_t repeats_sum = 0;
+	std::vector<umi_t> intersection_marks(this->_umi_distribution.size(), 0);
+	std::mt19937 gen;
 
-	double est_size = 0;
-	for (size_t i = 0; i < this->_umi_distribution.size(); ++i)
+	for (unsigned repeat_id = 1; repeat_id <= repeats_num; ++repeat_id)
 	{
-		double min_prob = Tools::fpow(1 - this->_umi_distribution[i], gene1_size_adj);
-		double max_prob = min_prob * Tools::fpow(1 - this->_umi_distribution[i], d_size);
-		est_size += (1 - min_prob) * (1 - max_prob);
+		size_t intersect_size = 0;
+
+		for (size_t choice_num = 0; choice_num < gene1_size; ++choice_num)
+		{
+			intersection_marks[this->_umi_sampler(gen)] = repeat_id;
+		}
+
+		for (size_t choice_num = 0; choice_num < gene2_size; ++choice_num)
+		{
+			umi_t umi = this->_umi_sampler(gen);
+			if (intersection_marks[umi] == repeat_id)
+			{
+				intersect_size++;
+				intersection_marks[umi] = 0;
+			}
+		}
+
+		repeats_sum += intersect_size;
 	}
+
+	double est_size = repeats_sum / (double) repeats_num;
 
 	this->_estimated_gene_intersections.emplace(gene_pair, est_size);
 	return est_size;

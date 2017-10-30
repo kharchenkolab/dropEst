@@ -6,6 +6,7 @@
 
 #include <Tools/UtilFunctions.h>
 #include <Tools/CollisionsAdjuster.h>
+#include <random>
 
 namespace TestEstimatorMergeProbs
 {
@@ -29,11 +30,13 @@ namespace Estimation
 
 		private:
 			typedef Estimation::CellsDataContainer::ids_t ul_list_t;
+			typedef unsigned umi_t;
 
 		private:
 			const double max_merge_prob;
 			const double max_real_cb_merge_prob;
 
+			std::discrete_distribution<umi_t> _umi_sampler;
 			Tools::CollisionsAdjuster _adjuster;
 			std::vector<double> _umi_distribution;
 			std::unordered_map<std::pair<size_t, size_t>, double, Tools::PairHash> _estimated_gene_intersections;
