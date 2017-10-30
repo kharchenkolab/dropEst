@@ -60,7 +60,7 @@ void PoissonTargetEstimator::init(const Estimation::CellsDataContainer::s_ul_has
 	}
 
 	this->_umi_sampler = std::discrete_distribution<umi_t>(this->_umi_distribution.begin(), this->_umi_distribution.end());
-	this->_adjuster.init(this->_umi_distribution);
+//	this->_adjuster.init(this->_umi_distribution);
 
 	Tools::init_r();
 }
@@ -107,7 +107,7 @@ double PoissonTargetEstimator::estimate_genes_intersection_size(size_t gene1_siz
 		return pair_it->second;
 
 	size_t repeats_sum = 0;
-	std::vector<umi_t> intersection_marks(this->_umi_distribution.size(), 0);
+	std::vector<long> intersection_marks(this->_umi_distribution.size(), 0);
 	std::mt19937 gen;
 
 	for (unsigned repeat_id = 1; repeat_id <= repeats_num; ++repeat_id)
@@ -116,17 +116,31 @@ double PoissonTargetEstimator::estimate_genes_intersection_size(size_t gene1_siz
 
 		for (size_t choice_num = 0; choice_num < gene1_size; ++choice_num)
 		{
-			intersection_marks[this->_umi_sampler(gen)] = repeat_id;
+			umi_t sample_umi = this->_umi_sampler(gen);
+			if (intersection_marks[sample_umi] == repeat_id)
+			{
+				--choice_num;
+				continue;
+			}
+
+			intersection_marks[sample_umi] = repeat_id;
 		}
 
 		for (size_t choice_num = 0; choice_num < gene2_size; ++choice_num)
 		{
-			umi_t umi = this->_umi_sampler(gen);
-			if (intersection_marks[umi] == repeat_id)
+			umi_t sample_umi = this->_umi_sampler(gen);
+			if (intersection_marks[sample_umi] == -repeat_id)
+			{
+				--choice_num;
+				continue;
+			}
+
+			if (intersection_marks[sample_umi] == repeat_id)
 			{
 				intersect_size++;
-				intersection_marks[umi] = 0;
 			}
+
+			intersection_marks[sample_umi] = -repeat_id;
 		}
 
 		repeats_sum += intersect_size;

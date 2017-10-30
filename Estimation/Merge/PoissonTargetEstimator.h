@@ -37,7 +37,7 @@ namespace Estimation
 			const double max_real_cb_merge_prob;
 
 			std::discrete_distribution<umi_t> _umi_sampler;
-			Tools::CollisionsAdjuster _adjuster;
+//			Tools::CollisionsAdjuster _adjuster;
 			std::vector<double> _umi_distribution;
 			std::unordered_map<std::pair<size_t, size_t>, double, Tools::PairHash> _estimated_gene_intersections;
 
