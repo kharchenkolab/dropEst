@@ -36,7 +36,9 @@ namespace Estimation
 		auto requested_umis_per_cb = this->get_requested_umis_per_cb(container); // Real cells, requested UMIs
 		auto requested_reads_per_cb = this->get_requested_umis_per_cb(container, true); // Real cells, requested UMIs
 
-		auto merge_probs = this->get_merge_probs(container); // All cells, doesn't depend on UMIs
+		auto merge_probs = this->get_merge_info(container, Stats::MERGE_PROB_PER_TARGET_PER_CELL); // All cells, doesn't depend on UMIs
+		auto merge_intersection = this->get_merge_info(container, Stats::MERGE_INTERSECTION_PER_TARGET_PER_CELL); // All cells, doesn't depend on UMIs
+		auto merge_intersection_est = this->get_merge_info(container, Stats::MERGE_INTERSECTION_EST_PER_TARGET_PER_CELL); // All cells, doesn't depend on UMIs
 		L_TRACE << "Completed.\n";
 
 		(*R)[list_name] = List::create(
@@ -48,6 +50,8 @@ namespace Estimation
 				_["saturation_info"] = saturation_info,
 				_["merge_targets"] = merge_targets, // TODO: optimize it
 				_["merge_probs"] = merge_probs,
+				_["merge_intersection"] = merge_intersection,
+				_["merge_intersection_est"] = merge_intersection_est,
 				_["aligned_reads_per_cell"] = aligned_reads_per_cb,
 				_["aligned_umis_per_cell"] = aligned_umis_per_cb,
 				_["requested_umis_per_cb"] = requested_umis_per_cb,
@@ -430,7 +434,7 @@ namespace Estimation
 		this->save_rds(filename_base + ".matrices", list_name);
 	}
 
-	List ResultsPrinter::get_merge_probs(const CellsDataContainer &container) const
+	List ResultsPrinter::get_merge_info(const CellsDataContainer &container, Stats::CellDoubleStatType stat) const
 	{
 		std::vector<Stats::double_stat_list_t> stats;
 		std::vector<std::string> cell_barcodes;
@@ -438,7 +442,7 @@ namespace Estimation
 		for (size_t cell_id = 0; cell_id < container.total_cells_number(); ++cell_id)
 		{
 			auto const &cur_cell = container.cell(cell_id);
-			auto cur_stat = cur_cell.stats().get(Stats::MERGE_PROB_PER_TARGET_PER_CELL);
+			auto cur_stat = cur_cell.stats().get(stat);
 			if (cur_stat.empty())
 				continue;
 

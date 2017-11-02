@@ -30,9 +30,6 @@ long PoissonTargetEstimator::get_best_merge_target(CellsDataContainer &container
 
 		double prob = this->get_intersection_prob(container, base_cell_ind, cell_ind);
 
-		container.cell(base_cell_ind).stats().set(Stats::MERGE_PROB_PER_TARGET_PER_CELL,
-		                                          container.cell(cell_ind).barcode(), prob);
-
 		if (prob < min_prob)
 		{
 			min_prob = prob;
@@ -70,7 +67,7 @@ void PoissonTargetEstimator::release()
 	this->_umi_distribution.clear();
 }
 
-double PoissonTargetEstimator::get_intersection_prob(const CellsDataContainer &container, size_t cell1_ind,
+double PoissonTargetEstimator::get_intersection_prob(CellsDataContainer &container, size_t cell1_ind,
                                                      size_t cell2_ind)
 {
 	auto const &cell1 = container.cell(cell1_ind);
@@ -89,7 +86,16 @@ double PoissonTargetEstimator::get_intersection_prob(const CellsDataContainer &c
 		est_intersection_size += this->estimate_genes_intersection_size(gene1_it.second.size(), gene2_it->second.size());
 	}
 
-	return Rcpp::ppois(Rcpp::IntegerVector::create(intersect_size - 1), est_intersection_size, false)[0];
+	double prob = Rcpp::ppois(Rcpp::IntegerVector::create(intersect_size - 1), est_intersection_size, false)[0];
+
+	container.cell(cell1_ind).stats().set(Stats::MERGE_PROB_PER_TARGET_PER_CELL,
+	                                          container.cell(cell2_ind).barcode(), prob);
+	container.cell(cell1_ind).stats().set(Stats::MERGE_INTERSECTION_PER_TARGET_PER_CELL,
+	                                          container.cell(cell2_ind).barcode(), intersect_size);
+	container.cell(cell1_ind).stats().set(Stats::MERGE_INTERSECTION_EST_PER_TARGET_PER_CELL,
+	                                          container.cell(cell2_ind).barcode(), est_intersection_size);
+
+	return prob;
 }
 
 double PoissonTargetEstimator::estimate_genes_intersection_size(size_t gene1_size, size_t gene2_size)
@@ -112,8 +118,6 @@ double PoissonTargetEstimator::estimate_genes_intersection_size(size_t gene1_siz
 
 	for (unsigned repeat_id = 1; repeat_id <= repeats_num; ++repeat_id)
 	{
-		size_t intersect_size = 0;
-
 		for (size_t choice_num = 0; choice_num < gene1_size; ++choice_num)
 		{
 			umi_t sample_umi = this->_umi_sampler(gen);
@@ -126,6 +130,7 @@ double PoissonTargetEstimator::estimate_genes_intersection_size(size_t gene1_siz
 			intersection_marks[sample_umi] = repeat_id;
 		}
 
+		size_t intersect_size = 0;
 		for (size_t choice_num = 0; choice_num < gene2_size; ++choice_num)
 		{
 			umi_t sample_umi = this->_umi_sampler(gen);

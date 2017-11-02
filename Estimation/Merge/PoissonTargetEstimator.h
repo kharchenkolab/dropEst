@@ -42,7 +42,7 @@ namespace Estimation
 			std::unordered_map<std::pair<size_t, size_t>, double, Tools::PairHash> _estimated_gene_intersections;
 
 		private:
-			double get_intersection_prob(const CellsDataContainer &container, size_t cell1_ind, size_t cell2_ind);
+			double get_intersection_prob(CellsDataContainer &container, size_t cell1_ind, size_t cell2_ind);
 			double estimate_genes_intersection_size(size_t gene1_size, size_t gene2_size);
 
 		public:
