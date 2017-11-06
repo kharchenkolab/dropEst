@@ -6,7 +6,7 @@ namespace Estimation
 	namespace Merge
 	{
 		void MergeProbabilityValidator::run_validation(const CellsDataContainer &container, unsigned min_ed,
-		                                               size_t cb_pairs_num)
+		                                               unsigned max_ed, size_t cb_pairs_num)
 		{
 			if (container.filtered_cells().empty())
 				return;
@@ -17,7 +17,7 @@ namespace Estimation
 			estimator.init(container.umi_distribution());
 			for (size_t iter_num = 0; iter_num < cb_pairs_num; ++iter_num)
 			{
-				if (iter_num % 500 == 0)
+				if (iter_num % 100000 == 0)
 				{
 					Tools::trace_time("Iteration: " + std::to_string(iter_num) + ": cache size " + std::to_string(estimator.cache_size()));
 				}
@@ -30,7 +30,8 @@ namespace Estimation
 					if (cb_id1 == cb_id2)
 						continue;
 
-					if (Tools::edit_distance(container.cell(cb_id1).barcode_c(), container.cell(cb_id2).barcode_c(), true, min_ed) >= min_ed)
+					auto edit_distance = Tools::edit_distance(container.cell(cb_id1).barcode_c(), container.cell(cb_id2).barcode_c(), true, min_ed);
+					if (edit_distance >= min_ed && edit_distance <= max_ed)
 						break;
 				}
 

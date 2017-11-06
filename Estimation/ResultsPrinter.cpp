@@ -37,7 +37,8 @@ namespace Estimation
 		auto requested_umis_per_cb = this->get_requested_umis_per_cb(container); // Real cells, requested UMIs
 		auto requested_reads_per_cb = this->get_requested_umis_per_cb(container, true); // Real cells, requested UMIs
 
-		auto merge_validation_info = this->get_merge_validation_info(container); // Real cells, doesn't depend on UMIs
+		auto merge_validation_info = this->get_merge_validation_info(container, 8, 100); // Real cells, doesn't depend on UMIs
+		auto merge_validation_info_adjacent = this->get_merge_validation_info(container, 1, 4); // Real cells, doesn't depend on UMIs
 		L_TRACE << "Completed.\n";
 
 		(*R)[list_name] = List::create(
@@ -49,6 +50,7 @@ namespace Estimation
 				_["saturation_info"] = saturation_info,
 				_["merge_targets"] = merge_targets, // TODO: optimize it
 				_["merge_validation_info"] = merge_validation_info,
+				_["merge_validation_info_adjacent"] = merge_validation_info_adjacent,
 				_["aligned_reads_per_cell"] = aligned_reads_per_cb,
 				_["aligned_umis_per_cell"] = aligned_umis_per_cb,
 				_["requested_umis_per_cb"] = requested_umis_per_cb,
@@ -431,11 +433,11 @@ namespace Estimation
 		this->save_rds(filename_base + ".matrices", list_name);
 	}
 
-	List ResultsPrinter::get_merge_validation_info(const CellsDataContainer &container) const
+	List ResultsPrinter::get_merge_validation_info(const CellsDataContainer &container, unsigned min_ed, unsigned max_ed) const
 	{
 		L_TRACE << "Merge validation;";
 		Merge::MergeProbabilityValidator validator;
-		validator.run_validation(container, 8, 10000);
+		validator.run_validation(container, min_ed, max_ed, 1000000);
 
 		return List::create(
 				_["Probabilities"]=validator.merge_probs(),

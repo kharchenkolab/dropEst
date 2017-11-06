@@ -21,7 +21,8 @@ namespace Estimation
 			d_vec_t _expected_intersection_size;
 
 		public:
-			void run_validation(const CellsDataContainer &container, unsigned min_ed, size_t cb_pairs_num);
+			void run_validation(const CellsDataContainer &container, unsigned min_ed, unsigned max_ed,
+			                    size_t cb_pairs_num);
 
 			const ul_vec_t& umis_per_cell1() const;
 			const ul_vec_t& umis_per_cell2() const;
