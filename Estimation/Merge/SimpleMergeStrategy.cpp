@@ -22,13 +22,12 @@ namespace Merge
 			for (auto const &umi_count: gene.second.umis())
 			{
 				auto umig = std::make_pair(umi_count.first, gene.first);
-				const auto &umig_cells = this->_umig_cell_ids.at(umig);
+				const auto &umig_cells = this->_cell_ids_by_umig.at(umig);
 				for (size_t cell_with_same_umig_id : umig_cells)
 				{
 					if (cell_with_same_umig_id == base_cell_ind)
 						continue;
 
-					// We don't need to check if cell is reassigned, because of sorting in descending order
 					if (container.cell(cell_with_same_umig_id).size() >= container.cell(base_cell_ind).size())
 					{
 						common_umigs_per_cell[cell_with_same_umig_id]++;
@@ -96,7 +95,7 @@ namespace Merge
 				for (auto const &umi : gene.second.umis())
 				{
 					auto umig = std::make_pair(umi.first, gene.first);
-					auto res = this->_umig_cell_ids.emplace(std::make_pair(umig, sul_set_t()));
+					auto res = this->_cell_ids_by_umig.emplace(std::make_pair(umig, sul_set_t()));
 					res.first->second.emplace(cell_id);
 				}
 			}
@@ -105,7 +104,7 @@ namespace Merge
 
 	void SimpleMergeStrategy::release()
 	{
-		this->_umig_cell_ids.clear();
+		this->_cell_ids_by_umig.clear();
 		MergeStrategyAbstract::release();
 	}
 }

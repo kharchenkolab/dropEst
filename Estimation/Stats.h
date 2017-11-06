@@ -30,32 +30,19 @@ namespace Estimation
 			CHROMOSOME_STAT_SIZE
 		};
 
-		enum CellDoubleStatType
-		{
-			MERGE_PROB_PER_TARGET_PER_CELL,
-			MERGE_INTERSECTION_PER_TARGET_PER_CELL,
-			MERGE_INTERSECTION_EST_PER_TARGET_PER_CELL,
-			CELL_DOUBLE_STAT_SIZE
-		};
-
 	private:
 		typedef std::unordered_set<size_t> id_set_t;
 		typedef std::unordered_map<size_t, int> i_cnt_t;
 		typedef std::unordered_map<std::string, size_t> str_map_t;
-		typedef std::unordered_map<size_t, double> i_double_t;
 		typedef std::vector<std::string> names_t;
 
 	private:
 		int _stat_data[CELL_STAT_SIZE];
 		i_cnt_t _chromosome_stat_data[CHROMOSOME_STAT_SIZE];
-		i_double_t _cell_stat_data[CELL_DOUBLE_STAT_SIZE];
 
 		static id_set_t _presented_chromosomes[CHROMOSOME_STAT_SIZE];
 		static str_map_t _chromosome_inds;
 		static names_t _chromosome_names;
-
-		static str_map_t _cell_inds;
-		static names_t _cell_barcodes;
 
 	public:
 		Stats();
@@ -65,9 +52,6 @@ namespace Estimation
 		void inc(CellChrStatType stat, const std::string &subtype);
 		stat_t get(CellStatType type) const;
 		bool get(CellChrStatType stat, stat_list_t &counts) const;
-
-		void set(CellDoubleStatType stat, const std::string &subtype, double value);
-		double_stat_list_t get(CellDoubleStatType stat) const;
 
 		void merge(const Stats &source);
 

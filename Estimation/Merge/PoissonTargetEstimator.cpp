@@ -28,7 +28,7 @@ long PoissonTargetEstimator::get_best_merge_target(CellsDataContainer &container
 		if (cell_ind == base_cell_ind)
 			continue;
 
-		double prob = this->get_intersection_prob(container, base_cell_ind, cell_ind);
+		double prob = this->estimate_intersection_prob(container, base_cell_ind, cell_ind).merge_probability;
 
 		if (prob < min_prob)
 		{
@@ -67,35 +67,27 @@ void PoissonTargetEstimator::release()
 	this->_umi_distribution.clear();
 }
 
-double PoissonTargetEstimator::get_intersection_prob(CellsDataContainer &container, size_t cell1_ind,
-                                                     size_t cell2_ind)
+PoissonTargetEstimator::EstimationResult
+PoissonTargetEstimator::estimate_intersection_prob(const CellsDataContainer &container, size_t cell1_ind, size_t cell2_ind)
 {
 	auto const &cell1 = container.cell(cell1_ind);
 	auto const &cell2 = container.cell(cell2_ind);
 	size_t intersect_size = MergeStrategyBase::get_umigs_intersect_size(cell1, cell2);
 	if (intersect_size == 0)
-		return 1;
+		return EstimationResult(intersect_size, -1, 1);
 
-	double est_intersection_size = 0;
+	double expected_intersect_size = 0;
 	for (auto const &gene1_it : cell1.genes())
 	{
 		auto const& gene2_it = cell2.genes().find(gene1_it.first);
 		if (gene2_it == cell2.genes().end())
 			continue;
 
-		est_intersection_size += this->estimate_genes_intersection_size(gene1_it.second.size(), gene2_it->second.size());
+		expected_intersect_size += this->estimate_genes_intersection_size(gene1_it.second.size(), gene2_it->second.size());
 	}
 
-	double prob = Rcpp::ppois(Rcpp::IntegerVector::create(intersect_size - 1), est_intersection_size, false)[0];
-
-	container.cell(cell1_ind).stats().set(Stats::MERGE_PROB_PER_TARGET_PER_CELL,
-	                                          container.cell(cell2_ind).barcode(), prob);
-	container.cell(cell1_ind).stats().set(Stats::MERGE_INTERSECTION_PER_TARGET_PER_CELL,
-	                                          container.cell(cell2_ind).barcode(), intersect_size);
-	container.cell(cell1_ind).stats().set(Stats::MERGE_INTERSECTION_EST_PER_TARGET_PER_CELL,
-	                                          container.cell(cell2_ind).barcode(), est_intersection_size);
-
-	return prob;
+	double prob = Rcpp::ppois(Rcpp::IntegerVector::create(intersect_size - 1), expected_intersect_size, false)[0];
+	return EstimationResult(intersect_size, expected_intersect_size, prob);
 }
 
 double PoissonTargetEstimator::estimate_genes_intersection_size(size_t gene1_size, size_t gene2_size)
@@ -156,5 +148,18 @@ double PoissonTargetEstimator::estimate_genes_intersection_size(size_t gene1_siz
 	this->_estimated_gene_intersections.emplace(gene_pair, est_size);
 	return est_size;
 }
+
+size_t PoissonTargetEstimator::cache_size() const
+{
+	return this->_estimated_gene_intersections.size();
+}
+
+PoissonTargetEstimator::EstimationResult::EstimationResult(size_t intersection_size,
+                                                           double expected_intersection_size,
+	                                                   double merge_probability)
+	: intersection_size(intersection_size)
+	, expected_intersection_size(expected_intersection_size)
+	, merge_probability(merge_probability)
+{}
 }
 }

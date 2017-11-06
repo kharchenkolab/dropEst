@@ -5,6 +5,7 @@
 #include <Estimation/CellsDataContainer.h>
 #include <Tools/Logs.h>
 #include <Tools/UtilFunctions.h>
+#include <Estimation/Merge/MergeProbabilityValidator.h>
 
 using namespace Rcpp;
 
@@ -36,9 +37,7 @@ namespace Estimation
 		auto requested_umis_per_cb = this->get_requested_umis_per_cb(container); // Real cells, requested UMIs
 		auto requested_reads_per_cb = this->get_requested_umis_per_cb(container, true); // Real cells, requested UMIs
 
-		auto merge_probs = this->get_merge_info(container, Stats::MERGE_PROB_PER_TARGET_PER_CELL); // All cells, doesn't depend on UMIs
-		auto merge_intersection = this->get_merge_info(container, Stats::MERGE_INTERSECTION_PER_TARGET_PER_CELL); // All cells, doesn't depend on UMIs
-		auto merge_intersection_est = this->get_merge_info(container, Stats::MERGE_INTERSECTION_EST_PER_TARGET_PER_CELL); // All cells, doesn't depend on UMIs
+		auto merge_validation_info = this->get_merge_validation_info(container); // Real cells, doesn't depend on UMIs
 		L_TRACE << "Completed.\n";
 
 		(*R)[list_name] = List::create(
@@ -49,9 +48,7 @@ namespace Estimation
 				_["mean_reads_per_umi"] = mean_reads_per_umi,
 				_["saturation_info"] = saturation_info,
 				_["merge_targets"] = merge_targets, // TODO: optimize it
-				_["merge_probs"] = merge_probs,
-				_["merge_intersection"] = merge_intersection,
-				_["merge_intersection_est"] = merge_intersection_est,
+				_["merge_validation_info"] = merge_validation_info,
 				_["aligned_reads_per_cell"] = aligned_reads_per_cb,
 				_["aligned_umis_per_cell"] = aligned_umis_per_cb,
 				_["requested_umis_per_cb"] = requested_umis_per_cb,
@@ -434,24 +431,18 @@ namespace Estimation
 		this->save_rds(filename_base + ".matrices", list_name);
 	}
 
-	List ResultsPrinter::get_merge_info(const CellsDataContainer &container, Stats::CellDoubleStatType stat) const
+	List ResultsPrinter::get_merge_validation_info(const CellsDataContainer &container) const
 	{
-		std::vector<Stats::double_stat_list_t> stats;
-		std::vector<std::string> cell_barcodes;
+		L_TRACE << "Merge validation;";
+		Merge::MergeProbabilityValidator validator;
+		validator.run_validation(container, 8, 10000);
 
-		for (size_t cell_id = 0; cell_id < container.total_cells_number(); ++cell_id)
-		{
-			auto const &cur_cell = container.cell(cell_id);
-			auto cur_stat = cur_cell.stats().get(stat);
-			if (cur_stat.empty())
-				continue;
-
-			stats.push_back(cur_stat);
-			cell_barcodes.push_back(cur_cell.barcode());
-		}
-
-		List res = wrap(stats);
-		res.attr("names") = cell_barcodes;
-		return res;
+		return List::create(
+				_["Probabilities"]=validator.merge_probs(),
+				_["UmisPerCell1"]=validator.umis_per_cell1(),
+				_["UmisPerCell2"]=validator.umis_per_cell2(),
+				_["IntersectionSize"]=validator.intersection_size(),
+				_["ExpectedIntersectionSize"]=validator.expected_intersection_size()
+		);
 	}
 }

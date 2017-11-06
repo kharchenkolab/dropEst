@@ -121,10 +121,10 @@ BOOST_AUTO_TEST_SUITE(TestEstimatorMergeProbs)
 	BOOST_FIXTURE_TEST_CASE(testPoissonMergeProbs, Fixture)
 	{
 		this->estimator.init(this->container_full->umi_distribution());
-		BOOST_CHECK_EQUAL(this->estimator.get_intersection_prob(*this->container_full, 0, 1), 1);
-		BOOST_CHECK_LE(std::abs(this->estimator.get_intersection_prob(*this->container_full, 1, 2) - 0.16), 0.05);
-		BOOST_CHECK_LE(std::abs(this->estimator.get_intersection_prob(*this->container_full, 3, 4) - 0.15), 0.05);
-		BOOST_CHECK_LE(std::abs(this->estimator.get_intersection_prob(*this->container_full, 5, 6) - 0.05), 0.01);
+		BOOST_CHECK_EQUAL(this->estimator.estimate_intersection_prob(*this->container_full, 0, 1).merge_probability, 1);
+		BOOST_CHECK_LE(std::abs(this->estimator.estimate_intersection_prob(*this->container_full, 1, 2).merge_probability - 0.16), 0.05);
+		BOOST_CHECK_LE(std::abs(this->estimator.estimate_intersection_prob(*this->container_full, 3, 4).merge_probability - 0.15), 0.05);
+		BOOST_CHECK_LE(std::abs(this->estimator.estimate_intersection_prob(*this->container_full, 5, 6).merge_probability - 0.05), 0.01);
 	}
 
 	BOOST_FIXTURE_TEST_CASE(testPoissonMergeRejections, Fixture)

@@ -40,7 +40,7 @@ namespace Estimation
 		Rcpp::NumericVector get_mean_reads_per_umi(const CellsDataContainer &container) const;
 		Rcpp::List get_reads_per_umi_per_cell(const CellsDataContainer &container) const;
 		Rcpp::List get_merge_targets(const CellsDataContainer &container) const;
-		Rcpp::List get_merge_info(const CellsDataContainer &container, Stats::CellDoubleStatType stat) const;
+		Rcpp::List get_merge_validation_info(const CellsDataContainer &container) const;
 
 		SEXP get_count_matrix_filtered(const CellsDataContainer &container, const UMI::Mark::query_t &query_marks) const;
 
