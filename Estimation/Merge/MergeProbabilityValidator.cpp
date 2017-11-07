@@ -13,13 +13,11 @@ namespace Estimation
 
 			srand(42);
 			const size_t max_cell_id = container.filtered_cells().size();
-			PoissonTargetEstimator estimator(1, 1);
-			estimator.init(container.umi_distribution());
 			for (size_t iter_num = 0; iter_num < cb_pairs_num; ++iter_num)
 			{
-				if (iter_num % 100000 == 0)
+				if (iter_num % 10000 == 0)
 				{
-					Tools::trace_time("Iteration: " + std::to_string(iter_num) + ": cache size " + std::to_string(estimator.cache_size()));
+					Tools::trace_time("Iteration: " + std::to_string(iter_num) + ": cache size " + std::to_string(this->_estimator->cache_size()));
 				}
 
 				size_t cb_id1, cb_id2;
@@ -36,7 +34,7 @@ namespace Estimation
 						break;
 				}
 
-				auto estimation_result = estimator.estimate_intersection_prob(container, cb_id1, cb_id2);
+				auto estimation_result = this->_estimator->estimate_intersection_prob(container, cb_id1, cb_id2);
 
 				this->_umis_per_cell1.push_back(unsigned(container.cell(cb_id1).umis_number()));
 				this->_umis_per_cell2.push_back(unsigned(container.cell(cb_id2).umis_number()));
@@ -76,5 +74,9 @@ namespace Estimation
 		{
 			return this->_expected_intersection_size;
 		}
+
+		MergeProbabilityValidator::MergeProbabilityValidator(const std::shared_ptr<PoissonTargetEstimator> &_estimator)
+			: _estimator(_estimator)
+		{}
 	}
 }

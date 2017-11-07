@@ -5,6 +5,7 @@
 #include <RcppEigen.h>
 
 #include <Estimation/Stats.h>
+#include <Estimation/Merge/PoissonTargetEstimator.h>
 #include "UMI.h"
 
 namespace Estimation
@@ -40,7 +41,8 @@ namespace Estimation
 		Rcpp::NumericVector get_mean_reads_per_umi(const CellsDataContainer &container) const;
 		Rcpp::List get_reads_per_umi_per_cell(const CellsDataContainer &container) const;
 		Rcpp::List get_merge_targets(const CellsDataContainer &container) const;
-		Rcpp::List get_merge_validation_info(const CellsDataContainer &container, unsigned min_ed, unsigned max_ed) const;
+		Rcpp::List get_merge_validation_info(const std::shared_ptr<Merge::PoissonTargetEstimator> &target_estimator,
+		                                     const CellsDataContainer &container, unsigned min_ed, unsigned max_ed) const;
 
 		SEXP get_count_matrix_filtered(const CellsDataContainer &container, const UMI::Mark::query_t &query_marks) const;
 

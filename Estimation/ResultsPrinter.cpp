@@ -37,8 +37,11 @@ namespace Estimation
 		auto requested_umis_per_cb = this->get_requested_umis_per_cb(container); // Real cells, requested UMIs
 		auto requested_reads_per_cb = this->get_requested_umis_per_cb(container, true); // Real cells, requested UMIs
 
-		auto merge_validation_info = this->get_merge_validation_info(container, 8, 100); // Real cells, doesn't depend on UMIs
-		auto merge_validation_info_adjacent = this->get_merge_validation_info(container, 1, 2); // Real cells, doesn't depend on UMIs
+
+		auto estimator = std::make_shared<Merge::PoissonTargetEstimator>(1, 1);
+		estimator->init(container.umi_distribution());
+		auto merge_validation_info = this->get_merge_validation_info(estimator, container, 5, 100); // Real cells, doesn't depend on UMIs
+		auto merge_validation_info_adjacent = this->get_merge_validation_info(estimator, container, 1, 1); // Real cells, doesn't depend on UMIs
 		L_TRACE << "Completed.\n";
 
 		(*R)[list_name] = List::create(
@@ -433,10 +436,11 @@ namespace Estimation
 		this->save_rds(filename_base + ".matrices", list_name);
 	}
 
-	List ResultsPrinter::get_merge_validation_info(const CellsDataContainer &container, unsigned min_ed, unsigned max_ed) const
+	List ResultsPrinter::get_merge_validation_info(const std::shared_ptr<Merge::PoissonTargetEstimator> &target_estimator,
+	                                               const CellsDataContainer &container, unsigned min_ed, unsigned max_ed) const
 	{
 		L_TRACE << "Merge validation;";
-		Merge::MergeProbabilityValidator validator;
+		Merge::MergeProbabilityValidator validator(target_estimator);
 		validator.run_validation(container, min_ed, max_ed, 1000000);
 
 		return List::create(
