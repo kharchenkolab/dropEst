@@ -23,6 +23,7 @@ namespace Estimation
 				}
 
 				size_t cb_id1, cb_id2;
+				unsigned edit_distance;
 				while (true)
 				{
 					cb_id1 = container.filtered_cells()[rand() % max_cell_id];
@@ -30,29 +31,35 @@ namespace Estimation
 					if (cb_id1 == cb_id2)
 						continue;
 
-					auto edit_distance = Tools::edit_distance(container.cell(cb_id1).barcode_c(), container.cell(cb_id2).barcode_c(), true, min_ed);
+					edit_distance = Tools::edit_distance(container.cell(cb_id1).barcode_c(), container.cell(cb_id2).barcode_c(), true, min_ed);
 					if (edit_distance >= min_ed && edit_distance <= max_ed)
 						break;
 				}
 
 				auto estimation_result = estimator.estimate_intersection_prob(container, cb_id1, cb_id2);
 
-				this->_umis_per_cell1.push_back(container.cell(cb_id1).umis_number());
-				this->_umis_per_cell2.push_back(container.cell(cb_id2).umis_number());
+				this->_umis_per_cell1.push_back(unsigned(container.cell(cb_id1).umis_number()));
+				this->_umis_per_cell2.push_back(unsigned(container.cell(cb_id2).umis_number()));
+				this->_edit_distances.push_back(edit_distance);
 				this->_merge_probs.push_back(estimation_result.merge_probability);
-				this->_intersection_size.push_back(estimation_result.intersection_size);
+				this->_intersection_size.push_back(unsigned(estimation_result.intersection_size));
 				this->_expected_intersection_size.push_back(estimation_result.expected_intersection_size);
 			}
 		}
 
-		const MergeProbabilityValidator::ul_vec_t &MergeProbabilityValidator::umis_per_cell1() const
+		const MergeProbabilityValidator::u_vec_t &MergeProbabilityValidator::umis_per_cell1() const
 		{
 			return this->_umis_per_cell1;
 		}
 
-		const MergeProbabilityValidator::ul_vec_t &MergeProbabilityValidator::umis_per_cell2() const
+		const MergeProbabilityValidator::u_vec_t &MergeProbabilityValidator::umis_per_cell2() const
 		{
 			return this->_umis_per_cell2;
+		}
+
+		const MergeProbabilityValidator::u_vec_t &MergeProbabilityValidator::edit_distances() const
+		{
+			return this->_edit_distances;
 		}
 
 		const MergeProbabilityValidator::d_vec_t &MergeProbabilityValidator::merge_probs() const
@@ -60,7 +67,7 @@ namespace Estimation
 			return this->_merge_probs;
 		}
 
-		const MergeProbabilityValidator::ul_vec_t &MergeProbabilityValidator::intersection_size() const
+		const MergeProbabilityValidator::u_vec_t &MergeProbabilityValidator::intersection_size() const
 		{
 			return this->_intersection_size;
 		}

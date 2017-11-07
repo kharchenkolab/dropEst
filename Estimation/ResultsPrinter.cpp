@@ -38,7 +38,7 @@ namespace Estimation
 		auto requested_reads_per_cb = this->get_requested_umis_per_cb(container, true); // Real cells, requested UMIs
 
 		auto merge_validation_info = this->get_merge_validation_info(container, 8, 100); // Real cells, doesn't depend on UMIs
-		auto merge_validation_info_adjacent = this->get_merge_validation_info(container, 1, 4); // Real cells, doesn't depend on UMIs
+		auto merge_validation_info_adjacent = this->get_merge_validation_info(container, 1, 2); // Real cells, doesn't depend on UMIs
 		L_TRACE << "Completed.\n";
 
 		(*R)[list_name] = List::create(
@@ -440,9 +440,10 @@ namespace Estimation
 		validator.run_validation(container, min_ed, max_ed, 1000000);
 
 		return List::create(
-				_["Probabilities"]=validator.merge_probs(),
+				_["Probability"]=validator.merge_probs(),
 				_["UmisPerCell1"]=validator.umis_per_cell1(),
 				_["UmisPerCell2"]=validator.umis_per_cell2(),
+				_["EditDistance"]=validator.edit_distances(),
 				_["IntersectionSize"]=validator.intersection_size(),
 				_["ExpectedIntersectionSize"]=validator.expected_intersection_size()
 		);
