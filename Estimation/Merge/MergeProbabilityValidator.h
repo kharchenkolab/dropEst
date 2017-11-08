@@ -29,7 +29,7 @@ namespace Estimation
 			MergeProbabilityValidator(const std::shared_ptr<PoissonTargetEstimator> &_estimator);
 
 			void run_validation(const CellsDataContainer &container, unsigned min_ed, unsigned max_ed,
-			                    size_t cb_pairs_num);
+			                    size_t cb_pairs_num, unsigned log_period);
 
 			const u_vec_t& umis_per_cell1() const;
 			const u_vec_t& umis_per_cell2() const;

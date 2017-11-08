@@ -40,8 +40,8 @@ namespace Estimation
 
 		auto estimator = std::make_shared<Merge::PoissonTargetEstimator>(1, 1);
 		estimator->init(container.umi_distribution());
-		auto merge_validation_info = this->get_merge_validation_info(estimator, container, 5, 100); // Real cells, doesn't depend on UMIs
-		auto merge_validation_info_adjacent = this->get_merge_validation_info(estimator, container, 1, 1); // Real cells, doesn't depend on UMIs
+		auto merge_validation_info = this->get_merge_validation_info(estimator, container, 5, 100, 1000000, 100000); // Real cells, doesn't depend on UMIs
+		auto merge_validation_info_adjacent = this->get_merge_validation_info(estimator, container, 1, 1, 100000, 10000); // Real cells, doesn't depend on UMIs
 		L_TRACE << "Completed.\n";
 
 		(*R)[list_name] = List::create(
@@ -437,11 +437,12 @@ namespace Estimation
 	}
 
 	List ResultsPrinter::get_merge_validation_info(const std::shared_ptr<Merge::PoissonTargetEstimator> &target_estimator,
-	                                               const CellsDataContainer &container, unsigned min_ed, unsigned max_ed) const
+	                                               const CellsDataContainer &container, unsigned min_ed, unsigned max_ed,
+	                                               size_t cb_pairs_num, unsigned log_period) const
 	{
 		L_TRACE << "Merge validation;";
 		Merge::MergeProbabilityValidator validator(target_estimator);
-		validator.run_validation(container, min_ed, max_ed, 1000000);
+		validator.run_validation(container, min_ed, max_ed, cb_pairs_num, log_period);
 
 		return List::create(
 				_["Probability"]=validator.merge_probs(),

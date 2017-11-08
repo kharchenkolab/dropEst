@@ -6,7 +6,7 @@ namespace Estimation
 	namespace Merge
 	{
 		void MergeProbabilityValidator::run_validation(const CellsDataContainer &container, unsigned min_ed,
-		                                               unsigned max_ed, size_t cb_pairs_num)
+		                                               unsigned max_ed, size_t cb_pairs_num, unsigned log_period)
 		{
 			if (container.filtered_cells().empty())
 				return;
@@ -15,7 +15,7 @@ namespace Estimation
 			const size_t max_cell_id = container.filtered_cells().size();
 			for (size_t iter_num = 0; iter_num < cb_pairs_num; ++iter_num)
 			{
-				if (iter_num % 10000 == 0)
+				if (iter_num % log_period == 0)
 				{
 					Tools::trace_time("Iteration: " + std::to_string(iter_num) + ": cache size " + std::to_string(this->_estimator->cache_size()));
 				}
