@@ -60,7 +60,7 @@ std::string PoissonSimpleMergeStrategy::merge_type() const
 
 size_t PoissonSimpleMergeStrategy::get_log_period() const
 {
-	return 1000;
+	return 10000;
 }
 }
 }

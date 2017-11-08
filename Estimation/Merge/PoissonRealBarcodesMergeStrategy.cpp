@@ -47,7 +47,7 @@ namespace Merge
 
 	size_t PoissonRealBarcodesMergeStrategy::get_log_period() const
 	{
-		return 1000;
+		return 10000;
 	}
 }
 }

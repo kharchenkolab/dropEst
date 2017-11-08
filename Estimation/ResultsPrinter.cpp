@@ -36,12 +36,6 @@ namespace Estimation
 		IntegerVector aligned_umis_per_cb = wrap(container.get_stat_by_real_cells(Stats::TOTAL_UMIS_PER_CB)); // Real cells, all UMIs
 		auto requested_umis_per_cb = this->get_requested_umis_per_cb(container); // Real cells, requested UMIs
 		auto requested_reads_per_cb = this->get_requested_umis_per_cb(container, true); // Real cells, requested UMIs
-
-
-		auto estimator = std::make_shared<Merge::PoissonTargetEstimator>(1, 1);
-		estimator->init(container.umi_distribution());
-		auto merge_validation_info = this->get_merge_validation_info(estimator, container, 5, 100, 1000000, 100000); // Real cells, doesn't depend on UMIs
-		auto merge_validation_info_adjacent = this->get_merge_validation_info(estimator, container, 1, 1, 100000, 10000); // Real cells, doesn't depend on UMIs
 		L_TRACE << "Completed.\n";
 
 		(*R)[list_name] = List::create(
@@ -52,12 +46,15 @@ namespace Estimation
 				_["mean_reads_per_umi"] = mean_reads_per_umi,
 				_["saturation_info"] = saturation_info,
 				_["merge_targets"] = merge_targets, // TODO: optimize it
-				_["merge_validation_info"] = merge_validation_info,
-				_["merge_validation_info_adjacent"] = merge_validation_info_adjacent,
 				_["aligned_reads_per_cell"] = aligned_reads_per_cb,
 				_["aligned_umis_per_cell"] = aligned_umis_per_cb,
 				_["requested_umis_per_cb"] = requested_umis_per_cb,
 				_["requested_reads_per_cb"] = requested_reads_per_cb);
+
+		if (this->validation_stats)
+		{
+			this->save_validation_stats(list_name, container);
+		}
 
 		std::string filename_base = this->extract_filename_base(filename);
 		this->save_rds(filename_base, list_name);
@@ -101,9 +98,10 @@ namespace Estimation
 		return mat;
 	}
 
-	ResultsPrinter::ResultsPrinter(bool write_matrix, bool reads_output)
+	ResultsPrinter::ResultsPrinter(bool write_matrix, bool reads_output, bool validation_stats)
 		: write_matrix(write_matrix)
 		, reads_output(reads_output)
+		, validation_stats(validation_stats)
 	{}
 
 	List ResultsPrinter::get_saturation_analysis_info(const CellsDataContainer &container) const
@@ -452,5 +450,22 @@ namespace Estimation
 				_["IntersectionSize"]=validator.intersection_size(),
 				_["ExpectedIntersectionSize"]=validator.expected_intersection_size()
 		);
+	}
+
+	void ResultsPrinter::save_validation_stats(const std::string list_name, const CellsDataContainer &container) const
+	{
+		const std::string val_info_list_name = list_name + "_val";
+
+		RInside *R = Tools::init_r();
+
+		auto estimator = std::make_shared<Merge::PoissonTargetEstimator>(1, 1);
+		estimator->init(container.umi_distribution());
+
+		auto distant = this->get_merge_validation_info(estimator, container, 5, 100, 1000000, 100000); // Real cells, doesn't depend on UMIs
+		auto adjacent = this->get_merge_validation_info(estimator, container, 1, 1, 100000, 10000); // Real cells, doesn't depend on UMIs
+
+		(*R)[val_info_list_name] = List::create(_["distant"] = distant, _["adjacent"] = adjacent);
+		R->parseEvalQ(list_name + "$merge_validation_info <- " + val_info_list_name);
+		R->parseEvalQ("rm(" + val_info_list_name + ")");
 	}
 }

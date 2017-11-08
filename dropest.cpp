@@ -28,8 +28,9 @@ struct Params
 	bool merge_tags = false;
 	bool merge_tags_precise = false;
 	bool pseudoaligner = false;
-	bool reads_output = false;
 	bool quiet = false;
+	bool reads_output = false;
+	bool stats_for_validation = false;
 	bool velocyto_matrices = false;
 	bool write_matrix = false;
 	string config_file_name = "";
@@ -89,8 +90,8 @@ static void usage()
 	cerr << "\t-r, --reads-params filenames: file or files with serialized params from tags search step. If there are several files"
 	     << ", they should be provided in quotes, separated by space: \"file1.reads.gz file2.reads.gz file3.reads.gz\"" << endl;
 	cerr << "\t-P, --pseudoaligner: use chromosome name as a source of gene id\n";
-	cerr << "\t-R, --reads-output: print count matrix for reads and don't use UMI statistics\n";
 	cerr << "\t-q, --quiet : disable logs\n";
+	cerr << "\t-R, --reads-output: print count matrix for reads and don't use UMI statistics\n";
 	cerr << "\t-V, --velocyto : save separate count matrices for exons, introns and exon/intron spanning reads\n";
 	cerr << "\t-w, --write-mtx : write out matrix in MatrixMarket format\n";
 }
@@ -118,13 +119,14 @@ static Params parse_cmd_params(int argc, char **argv)
 			{"output-file",     required_argument, 0, 'o'},
 			{"reads-params",     required_argument, 0, 'r'},
 			{"pseudoaligner",   no_argument, 0, 'P'},
-			{"reads-output",     no_argument, 		0, 'R'},
 			{"quiet",         no_argument,       0, 'q'},
+			{"reads-output",     no_argument, 		0, 'R'},
+			{"validation-stats", no_argument,       0, 'S'},
 			{"velocyto",     no_argument,       0, 'V'},
 			{"write-mtx",     no_argument,       0, 'w'},
 			{0, 0,                                 0, 0}
 	};
-	while ((c = getopt_long(argc, argv, "bc:C:fFg:G:hl:L:mMno:r:PRqVw", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "bc:C:fFg:G:hl:L:mMno:r:PqRSVw", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -179,6 +181,9 @@ static Params parse_cmd_params(int argc, char **argv)
 				break;
 			case 'q' :
 				params.quiet = true;
+				break;
+			case 'S' :
+				params.stats_for_validation = true;
 				break;
 			case 'V' :
 				params.velocyto_matrices = true;
@@ -296,7 +301,7 @@ int main(int argc, char **argv)
 			bam_controller.write_filtered_bam_files(files, container);
 		}
 
-		ResultsPrinter printer(params.write_matrix, params.reads_output);
+		ResultsPrinter printer(params.write_matrix, params.reads_output, params.stats_for_validation);
 		Tools::trace_time("Done");
 
 		printer.save_results(container, params.output_name);

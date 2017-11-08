@@ -23,6 +23,7 @@ namespace Estimation
 	private:
 		const bool write_matrix;
 		const bool reads_output;
+		const bool validation_stats;
 
 		static const size_t top_print_size = 10;
 
@@ -54,11 +55,13 @@ namespace Estimation
 		void save_mtx(const std::string &list_name, const std::string &filename_base) const;
 
 	public:
-		ResultsPrinter(bool write_matrix, bool reads_output);
+		ResultsPrinter(bool write_matrix, bool reads_output, bool validation_stats);
 
 		void save_results(const CellsDataContainer &container, const std::string &filename) const;
 		void save_intron_exon_matrices(CellsDataContainer &container, const std::string &filename) const;
 
 		Rcpp::IntegerVector get_requested_umis_per_cb(const CellsDataContainer &container, bool return_reads = false) const;
+
+		void save_validation_stats(const std::string list_name, const CellsDataContainer &container) const;
 	};
 }
