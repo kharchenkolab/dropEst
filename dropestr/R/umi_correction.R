@@ -27,21 +27,11 @@ ExtractReadsPerUmi <- function(reads.per.umi.per.cb, one.gene=F) {
 }
 
 #' @export
-AdjustCollisions <- function(umis.per.gene, collisions.info, mc.cores.max = 1, verbosity.level = 0) {
-  mc.cores <- min(mc.cores.max, round(length(umis.per.gene) / (500 * 1000)) + 1) # TODO: choose optimal threshold
+AdjustCollisions <- function(umis.per.gene, collisions.info) {
+  if (any(umis.per.gene > length(collisions.info)))
+    stop(paste0("Too large value of gene expression: ", umis.per.gene))
 
-  if (verbosity.level > 0) {
-    cat("Adjusting collisions...")
-  }
-
-  umis.per.gene <- unlist(plapply(umis.per.gene, sapply, AdjustGeneExpression, collisions.info$adjusted,
-                                  collisions.info$observed, mc.cores=mc.cores))
-
-  if (verbosity.level > 0) {
-    cat(" Completed.\n")
-  }
-
-  return(umis.per.gene)
+  return(collisions.info[umis.per.gene])
 }
 
 #' @export
@@ -87,9 +77,14 @@ CorrectUmiSequenceErrorsBayesian <- function(reads.per.umi.per.cb, umi.probabili
     cat("\nEstimating prior error probabilities...")
   }
 
-  clf <- TrainNBClassifier(reads.per.umi.per.cb, distribution.smooth, quality.quants.num=quality.quants.num,
-                           gene.size.quants.num=gene.size.quants.num, correction.info=correction.info,
-                           umi.probabilities=umi.probabilities)
+  clf <- try(TrainNBClassifier(reads.per.umi.per.cb, distribution.smooth, quality.quants.num=quality.quants.num,
+                               gene.size.quants.num=gene.size.quants.num, correction.info=correction.info,
+                               umi.probabilities=umi.probabilities))
+
+  if (class(clf) == 'try-error') {
+    warning(clf)
+    return(lapply(correction.info$rpus.with.inds, `[[`, 'rpus'))
+  }
 
   if (verbosity.level > 0) {
     cat(" Completed.\n")
@@ -146,8 +141,7 @@ CorrectUmiSequenceErrors <- function(reads.per.umi.per.cb.info, umi.probabilitie
       cat("Filling collisions info...\n")
     }
 
-    collisions.info <- FillCollisionsAdjustmentInfo(umi.probabilities, max.umi.per.gene, collisions.adj.step,
-                                                    mc.cores=mc.cores, verbose=(verbosity.level > 1))
+    collisions.info <- FillCollisionsAdjustmentInfo(umi.probabilities, max.umi.per.gene)
 
     if (verbosity.level > 0) {
       cat("Completed.\n")
@@ -155,7 +149,7 @@ CorrectUmiSequenceErrors <- function(reads.per.umi.per.cb.info, umi.probabilitie
   }
 
   if (is.null(correction.info)) {
-    max.umi.per.gene.adj <- AdjustGeneExpression(max.umi.per.gene, collisions.info$adjusted, collisions.info$observed)
+    max.umi.per.gene.adj <- AdjustGeneExpression(max.umi.per.gene, collisions.info)
     correction.info <- PrepareUmiCorrectionInfoWrapper(reads.per.umi.per.cb, umi.probabilities=umi.probabilities,
                                                        method=method, verbosity.level=verbosity.level,
                                                        max.umi.per.gene=max.umi.per.gene.adj,
@@ -180,8 +174,7 @@ CorrectUmiSequenceErrors <- function(reads.per.umi.per.cb.info, umi.probabilitie
 
   filt.umis.per.gene <- sapply(filt.genes, length)
   if (adjust.collisions) {
-    filt.umis.per.gene <- AdjustCollisions(filt.umis.per.gene, collisions.info, mc.cores.max=mc.cores,
-                                           verbosity.level=verbosity.level)
+    filt.umis.per.gene <- AdjustCollisions(filt.umis.per.gene, collisions.info)
   }
 
   if (return == 'umis') {
@@ -190,58 +183,6 @@ CorrectUmiSequenceErrors <- function(reads.per.umi.per.cb.info, umi.probabilitie
 
   reads.per.umi.per.cb.info$umis_per_gene <- filt.umis.per.gene
   return(BuildCountMatrix(reads.per.umi.per.cb.info))
-}
-
-#' @export
-FillCollisionsAdjustmentInfo <- function(umi.probabilities, max.umi.per.gene, step, repeats.number = 1000,
-                                         max.steps.num=1000, max.iter=1000, verbose=FALSE, mc.cores=NULL) {
-  umi.length <- nchar(names(umi.probabilities)[1])
-
-  if (verbose) {
-    cat('Max umi per gene: ', max.umi.per.gene, "\n\n")
-  }
-
-  umis.number <- 4^umi.length
-  max.umi.per.gene.adj.classic <- AdjustGeneExpressionClassic(max.umi.per.gene, umis.number)
-  if (step >= max.umi.per.gene.adj.classic) {
-    step <- max.umi.per.gene.adj.classic %/% 2
-  }
-  adjusted.sizes <- seq(0, max.umi.per.gene.adj.classic, by=step)
-  seeds <- round(runif(length(adjusted.sizes), 0, 1e9))
-  estimated.sizes <- unlist(plapply(1:length(adjusted.sizes), function(i) GetBootstrapUmisMeanNum(umi.probabilities, adjusted.sizes[i], repeats.number, seeds[i]), mc.cores=mc.cores))
-
-  for (iter in 1:max.iter) {
-    max.adjusted.size <- adjusted.sizes[length(adjusted.sizes)]
-    max.estimated.size <- estimated.sizes[length(estimated.sizes)]
-
-    if (verbose) {
-      cat('Iteration: ', iter, "\n")
-      cat('Max observed size: ', max.estimated.size, "\n")
-      cat('Max adjusted size: ', max.adjusted.size, "\n")
-    }
-
-    if (round(max.estimated.size) >= max.umi.per.gene) {
-      estimated.sizes[length(estimated.sizes)] <- max(max.estimated.size, round(max.estimated.size))
-      break
-    }
-
-    steps.num <- round((max.umi.per.gene - max.estimated.size) / abs(max.estimated.size - estimated.sizes[length(estimated.sizes) - 1]))
-    steps.num <- max(min(steps.num, max.steps.num), 1)
-    next.adjusted.sizes <- seq(max.adjusted.size + step, max.adjusted.size + step * steps.num, by=step)
-    seeds <- round(runif(length(next.adjusted.sizes), 0, 1e9))
-
-    next.estimated.sizes <- unlist(plapply(1:length(next.adjusted.sizes), function(i) GetBootstrapUmisMeanNum(umi.probabilities, next.adjusted.sizes[i], repeats.number, seeds[i]), mc.cores=mc.cores))
-
-    adjusted.sizes <- c(adjusted.sizes, next.adjusted.sizes)
-    estimated.sizes <- c(estimated.sizes, next.estimated.sizes)
-  }
-
-  if (round(max.estimated.size) < max.umi.per.gene) {
-    warning("Method haven't converged. Try to increase step or max iterations number")
-  }
-
-
-  return(list(adjusted=adjusted.sizes, observed=estimated.sizes, is.converged=(max.estimated.size >= max.umi.per.gene)))
 }
 
 #' @export
@@ -261,8 +202,8 @@ FilterUmisInGeneOneStep <- function(cur.reads.per.umi, neighbours.per.umi, dp.ma
   larger.nn <- nn$Larger[names(cur.reads.per.umi)]
 
   neighbour.distrs <- GetSmallerNeighboursDistributionsBySizes(dp.matrices, larger.nn, cur.n.p.i, size.adj,
-                                                               max.neighbours.num,
-                                                               smaller_neighbours_num=smaller.nn, log_probs=T)
+                                                               max.neighbours.num, smaller_neighbours_num=smaller.nn,
+                                                               log_probs=T)
 
   small.neighb.num <- ValueCountsC(as.character(predictions$Target))
   small.neighb.num <- small.neighb.num[sort(names(small.neighb.num))]
@@ -312,8 +253,9 @@ FilterUmisInGene <- function(cur.gene, neighbours.per.umi, dp.matrices, classifi
 
   cur.reads.per.umi <- ExtractReadsPerUmi(cur.gene, one.gene=T)
   filt.reads.per.umi <- cur.reads.per.umi
+
   for (step in 1:max.iter) {
-    size.adj <- AdjustGeneExpression(length(filt.reads.per.umi), collisions.info$adjusted, collisions.info$observed)
+    size.adj <- AdjustGeneExpression(length(filt.reads.per.umi), collisions.info)
     classifier.df$MergeProb <- classifier.df$MergeProbConst + PredictLeftPartDependent(classifier, classifier.df, gene.size=size.adj)
 
     classifier.df <- classifier.df[order(classifier.df$Target, classifier.df$MergeProb),]
@@ -381,8 +323,8 @@ PrepareUmiCorrectionInfo <- function(umi.probabilities, max.umi.per.gene, reads.
 }
 
 #' @export
-TrimAndCorrect <- function(reads.per.umi.per.cb.info, umi.trim.length, collisions.adj.step, mc.cores.large,
-                           mc.cores.small, verbosity.level=0, prepare.only=FALSE) {
+TrimAndCorrect <- function(reads.per.umi.per.cb.info, umi.trim.length, mc.cores.large, mc.cores.small, verbosity.level=0,
+                           prepare.only=FALSE) {
   reads.per.umi.per.cb <- reads.per.umi.per.cb.info$reads_per_umi
 
   trimmed <- list()
@@ -397,9 +339,8 @@ TrimAndCorrect <- function(reads.per.umi.per.cb.info, umi.trim.length, collision
 
   max.umi.per.gene <- max(trimmed$umis.per.gene)
 
-  trimmed$collisions.info <- FillCollisionsAdjustmentInfo(trimmed$umi.probabilities, max.umi.per.gene, step=collisions.adj.step,
-                                                          mc.cores=mc.cores.small, verbose=T)
-  max.umi.per.gene.adj <- AdjustGeneExpression(max.umi.per.gene, trimmed$collisions.info$adjusted, trimmed$collisions.info$observed)
+  trimmed$collisions.info <- FillCollisionsAdjustmentInfo(trimmed$umi.probabilities, max.umi.per.gene)
+  max.umi.per.gene.adj <- AdjustGeneExpression(max.umi.per.gene, trimmed$collisions.info)
 
   trimmed$correction.info <- PrepareUmiCorrectionInfoWrapper(trimmed$reads.per.umi.per.cb, trimmed$umi.probabilities,
                                                              method='Bayesian', verbosity.level=verbosity.level,

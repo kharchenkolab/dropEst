@@ -252,9 +252,15 @@ void fillReverseCumSum(int max_neighbour_num, int larger_nn, int umi_ind, const 
   }
 }
 
-void fillCumSumRatio(int max_neighbour_num, int smaller_nn, int larger_nn, int umi_ind, const NumericVector &distr, NumericMatrix &res, bool log_probs=false, double tol=1e-20) {
+void fillCumSumRatio(int max_neighbour_num, int smaller_nn, int larger_nn, int umi_ind, const NumericVector &distr,
+                     NumericMatrix &res, bool log_probs=false, double tol=1e-20) {
+  if (distr.size() <= larger_nn + smaller_nn) {
+    stop("Strange numbers: max=" + std::to_string(max_neighbour_num) + ", larget=" + std::to_string(larger_nn) +
+      ", smaller=" + std::to_string(smaller_nn));
+  }
+
   double reverse_cum_sum = 0, direct_cum_sum = 0;
-  std::vector<double> direct_cum_sums(max_neighbour_num, 0); // To prevent underflow
+  std::vector<double> direct_cum_sums(max_neighbour_num + 1, 0); // To prevent underflow
   for (int nn = larger_nn; nn <= larger_nn + smaller_nn; ++nn) {
     direct_cum_sum += distr[nn];
     direct_cum_sums[nn] = direct_cum_sum;

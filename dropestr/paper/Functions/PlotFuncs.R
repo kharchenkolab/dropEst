@@ -63,3 +63,46 @@ geom_boxplot_jitter_outlier <- function(mapping = NULL, data = NULL,
       outlier.jitter.width=outlier.jitter.width,
       outlier.jitter.height=outlier.jitter.height, ...))
 }
+
+legend_pos <- function(..., offset=1e-3) {
+  args <- list(...)
+  if (length(args) > 2)
+    stop("Too much arguments")
+
+  if (length(args) == 0)
+    stop("Too much arguments")
+
+  if (length(args) == 2) {
+    pos <- unlist(args)
+    pos[pos < offset] <- offset
+    pos[pos > 1 - offset] <- 1 - offset
+  } else {
+    position <- args[[1]]
+    if (position == 'bottom-left' || position == 00) {
+      pos <- c(offset, offset)
+    } else if (position == 'bottom-right' || position == 10) {
+      pos <- c(1 - offset, offset)
+    } else if (position == 'top-left' || position ==01) {
+      pos <- c(offset, 1 - offset)
+    } else if (position == 'top-right' || position == 11) {
+      pos <- c(1 - offset, 1 - offset)
+    } else stop("Unknown position")
+  }
+
+  return(ggplot2::theme(legend.position=pos, legend.justification=pos))
+}
+
+theme_base <- ggplot2::theme_bw(base_size=14, base_family='Helvetica') + ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5))
+theme_pdf <- ggplot2::theme(axis.line = ggplot2::element_line(size=.7, color = "black"),
+                   axis.text=ggplot2::element_text(size=12),
+                   axis.title.x=ggplot2::element_text(margin=ggplot2::margin(t=3, unit='pt')),
+                   axis.title.y=ggplot2::element_text(margin=ggplot2::margin(r=3, unit='pt')),
+                   legend.background = ggplot2::element_rect(fill="transparent"),
+                   legend.box.background = ggplot2::element_rect(fill=ggplot2::alpha('white', 0.7), color=ggplot2::alpha('black', 0.3)),
+                   legend.box.margin = ggplot2::margin(t=3, r=3, b=3, l=3, unit='pt'),
+                   legend.key.size = ggplot2::unit(12, "pt"),
+                   legend.margin = ggplot2::margin(t=0, r=0, b=0, l=0, unit='pt'),
+                   legend.text = ggplot2::element_text(size=10),
+                   legend.title = ggplot2::element_text(size=12),
+                   plot.margin = ggplot2::margin(t=12, r=12, b=0, l=0, unit='pt'),
+                   plot.title = ggplot2::element_text(hjust=0.5))

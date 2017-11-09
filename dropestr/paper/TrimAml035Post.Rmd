@@ -11,55 +11,7 @@ output:
 
 ```{r}
 source("./Functions/PlotFuncs.R")
-
-FilterNUmis <- function(reads.per.umi) {
-  return(lapply(reads.per.umi, function(rpus) rpus[grep("^[^N]+$", names(rpus))]))
-}
-
-GetExprDf <- function(filt.umis.per.gene.vec, real.umis.per.gene.vec, raw.umis.per.gene.vec, adjustment=FALSE) {
-  expressions <- as.data.frame(filt.umis.per.gene.vec)
-  expressions$Adjustment <- adjustment
-  expressions$RealValue <- real.umis.per.gene.vec
-  expressions$NoCorrection <- raw.umis.per.gene.vec
-  return(expressions %>% filter(NoCorrection > 1))
-}
-
-GetPlotExrDf <- function(trimmed.cur, raw, umi.length, return.all=FALSE) {
-  expr.df <- GetExprDf(trimmed.cur$filt_cells, raw$filt_umis_per_gene_simple, trimmed.cur$umis.per.gene, adjustment=T) %>% 
-    reshape2::melt(id.vars=c('RealValue', 'Adjustment'), variable.name='Correction') %>% mutate(UmiLen=umi.length)
-  
-  if (return.all)
-    return(expr.df)
-  
-  return(expr.df %>% 
-    group_by(Correction, RealValue, Adjustment) %>% 
-    summarise(Max=quantile(value, 0.95), Min=quantile(value, 0.05), Median=median(value)))
-}
-
-PlotTrimmedCorrections <- function(trimmed.data, raw.data, trim.length) {
-  plot.df <- GetPlotExrDf(trimmed.data, raw.data, trim.length) %>% filter(Correction != "NoCorrection" & Adjustment | Correction == "NoCorrection" & !Adjustment) %>% dplyr::select(-Adjustment)
-  plot.df.all <- GetPlotExrDf(trimmed.data, raw.data, trim.length, T) %>% filter(Correction != "NoCorrection" & Adjustment | Correction == "NoCorrection" & !Adjustment)
-  
-  plot.df.subset <- plot.df.all %>% filter(RealValue < 50)
-  gg.small <- ggplot(plot.df.subset, aes(x=as.factor(ceiling(RealValue / 5) * 5) , y=100 * (value - RealValue) / RealValue, color=Correction)) + 
-    geom_boxplot_jitter_outlier(outlier.jitter.width=NULL, outlier.jitter.height=1, outlier.size=0.7, outlier.alpha=0.7) +
-    labs(x='Corrected #UMIs without trimming', y='Error on trimmed data, %') + 
-    scale_linetype_manual(values=c('dashed', 'solid')) + scale_color_jco() +
-    ylim(-50, 50) +
-    theme(legend.position="none")
-
-  gg.large <- ggplot(plot.df, aes(x=RealValue, y=100 * (Median - RealValue) / RealValue, color=Correction)) + 
-    geom_point(size=0.3, alpha=0.3) + geom_smooth(alpha=0.1) + 
-    labs(x='Corrected #UMIs without trimming', y='Error on trimmed data, %') + 
-    scale_linetype_manual(values=c('dashed', 'solid')) + scale_color_jco(labels=c('Bayesian', 'cluster', 'cluster,\nno equals', 'directional')) +
-    scale_x_continuous(expand=c(0, 0), limits=c(1, 7999), trans='log10') + scale_y_continuous(expand=c(0, 0), limits=c(-101, 70)) + 
-    theme(legend.position=c(0, 0), legend.justification=c(0, 0), strip.background =element_blank(), strip.text = element_text(size=14)) + 
-    guides(color=guide_legend(ncol=3))
-  
-  return(annotate_figure(ggarrange(gg.small + rremove('xlab'), gg.large + rremove('ylab') + rremove('xlab')),
-                         bottom=text_grob("Corrected #UMIs without trimming", size=14),
-                         top=text_grob(paste0("UMI length: ", trim.length), size=18)))
-}
+source("./Functions/Functions.R")
 ```
 
 ```{r global_options, include=FALSE}
@@ -78,13 +30,6 @@ theme_set(theme_bw(base_size=14, base_family='Helvetica') + theme(plot.title = e
 holder <- readRDS('/d0-mendel/home/viktor_petukhov/Data/10x/aml035_post_transplant/est_10_20_umi_quality/aml035ost_transplant.rds')
 reads_per_umi_per_cell <- holder$reads_per_umi_per_cell
 reads_per_umi_per_cell$reads_per_umi <- FilterNUmis(holder$reads_per_umi_per_cell$reads_per_umi)
-reads_per_umi_per_cell$reads_per_umi <- holder$reads_per_umi_per_cell$reads_per_umi[1:100000]
-# saveRDS(reads_per_umi_per_cell, '/d0-mendel/home/viktor_petukhov/Data/10x/aml035_post_transplant/est_10_20_umi_quality/reads_per_umi_subset.rds')
-```
-
-```{r}
-# reads_per_umi_per_cell <- readRDS('/d0-mendel/home/viktor_petukhov/Data/10x/aml035_post_transplant/est_10_20_umi_quality/reads_per_umi_subset.rds')
-# reads_per_umi_per_cell$reads_per_umi <- reads_per_umi_per_cell$reads_per_umi[1:5000]
 ```
 
 <!-- Simple filtration of the raw data -->
@@ -95,16 +40,20 @@ raw$umi_distribution <- GetUmisDistribution(reads_per_umi_per_cell$reads_per_umi
 raw$correction_info <- PrepareUmiCorrectionInfoWrapper(reads_per_umi_per_cell$reads_per_umi, umi.probabilities=raw$umi_distribution / sum(raw$umi_distribution),
                                                        method='Classic', verbosity.level=2, max.umi.per.gene=NULL, probability.quants.num=NULL)
 
-raw$filt_umis_per_gene_simple <- CorrectUmiSequenceErrors(reads_per_umi_per_cell, raw$umi_distribution, method='Classic',
-                                                          correction.info=raw$correction_info,
-                                                          mc.cores=20, verbosity.level=2, return='umis')
+max_umi_per_gene <- max(sapply(reads_per_umi_per_cell$reads_per_umi, length))
+collisions_info <- FillCollisionsAdjustmentInfo(raw$umi_distribution / sum(raw$umi_distribution), max_umi_per_gene)
 
-trimmed <- lapply(6:9, function(i) TrimAndCorrect(reads_per_umi_per_cell, umi.trim.length=i, collisions.adj.step=30 * (i - 5), mc.cores.large=30, mc.cores.small=15, verbosity.level=1))
+raw$filt_umis_per_gene_simple <- CorrectUmiSequenceErrors(reads_per_umi_per_cell, raw$umi_distribution, method='Classic',
+                                                          correction.info=raw$correction_info, collisions.info=collisions_info,
+                                                          mc.cores=30, verbosity.level=2, return='umis')
+
+trimmed <- lapply(6:9, function(i) TrimAndCorrect(reads_per_umi_per_cell, umi.trim.length=i, mc.cores.large=30, mc.cores.small=15, verbosity.level=1))
 ```
 
 ## Plots
 ```{r, fig.width=10, fig.height=5, warning=FALSE, message=FALSE}
 for (i in 6:9) {
-  print(PlotTrimmedCorrections(trimmed[[i]], raw, i))
+  print(PlotTrimmedCorrections(trimmed[[i - 5]], raw, i))
 }
 ```
+

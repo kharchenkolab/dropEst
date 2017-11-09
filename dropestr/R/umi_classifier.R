@@ -2,7 +2,7 @@
 EstimatedNumberOfAdjacentUmisByGeneSize <- function(dp.matrices, neighb.prob.index, umi.probabilities) {
   nn.expectation.by.umi.prob <- lapply(dp.matrices, function(m) colSums(m * 0:(nrow(m) - 1)))
   nn.expectation.by.umi <- nn.expectation.by.umi.prob[neighb.prob.index[names(umi.probabilities)]] %>% bind_cols()
-  estimated.nn <- colSums(apply(nn.expectation.by.umi, 1, `*`, umi.probabilities))
+  estimated.nn <- colSums(t(as.matrix(nn.expectation.by.umi)) * umi.probabilities)
   return(estimated.nn)
 }
 
@@ -80,7 +80,24 @@ TrainNBNegative <- function(train.data, distribution.smooth, nucleotide.pairs.nu
   llBetabinom <- function(prob, theta) {
     -sum(emdbook::dbetabinom(train.data$MinRpU - 1, prob=prob, size=train.data$MaxRpU + train.data$MinRpU - 1, theta=theta, log=TRUE))
   }
-  suppressWarnings(params.neg$MinRpU <- as.list(bbmle::mle2(llBetabinom, start=list(prob=0.1,theta=20))@fullcoef))
+
+  params.list <- cbind(seq(0.05, 0.95, 0.2), rep(seq(20, 5, -5), each=5))
+  for (row in 1:nrow(params.list)) {
+    params <- list(prob=params.list[row,1], theta=params.list[row,2])
+    min.rpu <- try(suppressWarnings(as.list(bbmle::mle2(llBetabinom, start=params)@fullcoef)), silent=T)
+    if (class(min.rpu) != 'try-error')
+      break
+  }
+
+  if (class(min.rpu) == 'try-error') {
+    min.rpu <- try(suppressWarnings(bbmle::mle2(llBetabinom, start=list(prob=0.1, theta=20), method='Nelder-Mead')@fullcoef), silent=T)
+  }
+
+  if (class(min.rpu) == 'try-error') {
+    stop("Unable to estimate distribution parameters")
+  }
+
+  params.neg$MinRpU <- as.list(min.rpu)
 
   params.neg$Position <- SmoothDistribution(train.data$Position, distribution.smooth, umi.length, log.probs=T)
   params.neg$Nucleotides <- SmoothDistribution(train.data$Nucleotides, distribution.smooth, nucleotide.pairs.number, log.probs=T)

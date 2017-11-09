@@ -203,29 +203,15 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// GetTrimCollisionsNum
-List GetTrimCollisionsNum(const List& rpu_per_cell, int trim_length);
-RcppExport SEXP _dropestr_GetTrimCollisionsNum(SEXP rpu_per_cellSEXP, SEXP trim_lengthSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const List& >::type rpu_per_cell(rpu_per_cellSEXP);
-    Rcpp::traits::input_parameter< int >::type trim_length(trim_lengthSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetTrimCollisionsNum(rpu_per_cell, trim_length));
-    return rcpp_result_gen;
-END_RCPP
-}
-// GetBootstrapUmisMeanNum
-double GetBootstrapUmisMeanNum(const std::vector<double>& umi_probabilities, size_t size, unsigned repeats_num, int seed);
-RcppExport SEXP _dropestr_GetBootstrapUmisMeanNum(SEXP umi_probabilitiesSEXP, SEXP sizeSEXP, SEXP repeats_numSEXP, SEXP seedSEXP) {
+// FillCollisionsAdjustmentInfo
+std::vector<unsigned> FillCollisionsAdjustmentInfo(const std::vector<double>& umi_probabilities, unsigned max_umi_per_gene);
+RcppExport SEXP _dropestr_FillCollisionsAdjustmentInfo(SEXP umi_probabilitiesSEXP, SEXP max_umi_per_geneSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::vector<double>& >::type umi_probabilities(umi_probabilitiesSEXP);
-    Rcpp::traits::input_parameter< size_t >::type size(sizeSEXP);
-    Rcpp::traits::input_parameter< unsigned >::type repeats_num(repeats_numSEXP);
-    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetBootstrapUmisMeanNum(umi_probabilities, size, repeats_num, seed));
+    Rcpp::traits::input_parameter< unsigned >::type max_umi_per_gene(max_umi_per_geneSEXP);
+    rcpp_result_gen = Rcpp::wrap(FillCollisionsAdjustmentInfo(umi_probabilities, max_umi_per_gene));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -242,15 +228,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // AdjustGeneExpression
-int AdjustGeneExpression(int value, const std::vector<int>& adjusted_sizes, const std::vector<double>& observed_sizes);
-RcppExport SEXP _dropestr_AdjustGeneExpression(SEXP valueSEXP, SEXP adjusted_sizesSEXP, SEXP observed_sizesSEXP) {
+unsigned AdjustGeneExpression(unsigned value, const std::vector<int>& adjusted_sizes);
+RcppExport SEXP _dropestr_AdjustGeneExpression(SEXP valueSEXP, SEXP adjusted_sizesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type value(valueSEXP);
+    Rcpp::traits::input_parameter< unsigned >::type value(valueSEXP);
     Rcpp::traits::input_parameter< const std::vector<int>& >::type adjusted_sizes(adjusted_sizesSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type observed_sizes(observed_sizesSEXP);
-    rcpp_result_gen = Rcpp::wrap(AdjustGeneExpression(value, adjusted_sizes, observed_sizes));
+    rcpp_result_gen = Rcpp::wrap(AdjustGeneExpression(value, adjusted_sizes));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -386,10 +371,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dropestr_FilterPredictions", (DL_FUNC) &_dropestr_FilterPredictions, 3},
     {"_dropestr_PrepareClassifierData", (DL_FUNC) &_dropestr_PrepareClassifierData, 3},
     {"_dropestr_PrepareClassifierTrainingData", (DL_FUNC) &_dropestr_PrepareClassifierTrainingData, 1},
-    {"_dropestr_GetTrimCollisionsNum", (DL_FUNC) &_dropestr_GetTrimCollisionsNum, 2},
-    {"_dropestr_GetBootstrapUmisMeanNum", (DL_FUNC) &_dropestr_GetBootstrapUmisMeanNum, 4},
+    {"_dropestr_FillCollisionsAdjustmentInfo", (DL_FUNC) &_dropestr_FillCollisionsAdjustmentInfo, 2},
     {"_dropestr_AdjustGeneExpressionClassic", (DL_FUNC) &_dropestr_AdjustGeneExpressionClassic, 2},
-    {"_dropestr_AdjustGeneExpression", (DL_FUNC) &_dropestr_AdjustGeneExpression, 3},
+    {"_dropestr_AdjustGeneExpression", (DL_FUNC) &_dropestr_AdjustGeneExpression, 2},
     {"_dropestr_ValueCountsC", (DL_FUNC) &_dropestr_ValueCountsC, 1},
     {"_dropestr_ValueCounts", (DL_FUNC) &_dropestr_ValueCounts, 2},
     {"_dropestr_BuildCountMatrix", (DL_FUNC) &_dropestr_BuildCountMatrix, 1},

@@ -74,12 +74,8 @@ PrepareClassifierTrainingData <- function(reads_per_umi_pairs) {
     .Call('_dropestr_PrepareClassifierTrainingData', PACKAGE = 'dropestr', reads_per_umi_pairs)
 }
 
-GetTrimCollisionsNum <- function(rpu_per_cell, trim_length) {
-    .Call('_dropestr_GetTrimCollisionsNum', PACKAGE = 'dropestr', rpu_per_cell, trim_length)
-}
-
-GetBootstrapUmisMeanNum <- function(umi_probabilities, size, repeats_num, seed = -1L) {
-    .Call('_dropestr_GetBootstrapUmisMeanNum', PACKAGE = 'dropestr', umi_probabilities, size, repeats_num, seed)
+FillCollisionsAdjustmentInfo <- function(umi_probabilities, max_umi_per_gene) {
+    .Call('_dropestr_FillCollisionsAdjustmentInfo', PACKAGE = 'dropestr', umi_probabilities, max_umi_per_gene)
 }
 
 AdjustGeneExpressionClassic <- function(value, umis_number) {
@@ -94,8 +90,8 @@ AdjustGeneExpressionClassic <- function(value, umis_number) {
 #' @return Adjusted gene expression value.
 #'
 #' @export
-AdjustGeneExpression <- function(value, adjusted_sizes, observed_sizes) {
-    .Call('_dropestr_AdjustGeneExpression', PACKAGE = 'dropestr', value, adjusted_sizes, observed_sizes)
+AdjustGeneExpression <- function(value, adjusted_sizes) {
+    .Call('_dropestr_AdjustGeneExpression', PACKAGE = 'dropestr', value, adjusted_sizes)
 }
 
 ValueCountsC <- function(values) {
