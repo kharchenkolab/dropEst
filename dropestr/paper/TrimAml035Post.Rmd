@@ -9,30 +9,30 @@ output:
   html_notebook: default
 ---
 
-```{r}
-source("./Functions/PlotFuncs.R")
-source("./Functions/Functions.R")
-```
-
 ```{r global_options, include=FALSE}
 library(ggplot2)
 library(ggsci)
 library(ggpubr)
 library(dplyr)
 library(parallel)
+library(reshape2)
+
+source("./Functions/PlotFuncs.R")
+source("./Functions/Functions.R")
 
 knitr::opts_chunk$set(fig.width=5, fig.height=3, echo=FALSE, warning=FALSE, message=FALSE)
 
-theme_set(theme_bw(base_size=14, base_family='Helvetica') + theme(plot.title = element_text(hjust = 0.5)))
+theme_set(theme_base)
 ```
 
 ```{r}
-holder <- readRDS('/d0-mendel/home/viktor_petukhov/Data/10x/aml035_post_transplant/est_10_20_umi_quality/aml035ost_transplant.rds')
+kDataPath <- '/d0-mendel/home/viktor_petukhov/Data/10x/aml035_post_transplant/est_10_20_umi_quality/'
+holder <- readRDS(paste0(kDataPath, '/aml035ost_transplant.rds'))
 reads_per_umi_per_cell <- holder$reads_per_umi_per_cell
 reads_per_umi_per_cell$reads_per_umi <- FilterNUmis(holder$reads_per_umi_per_cell$reads_per_umi)
 ```
 
-<!-- Simple filtration of the raw data -->
+# UMI errors
 ```{r}
 raw <- list()
 
@@ -41,19 +41,79 @@ raw$correction_info <- PrepareUmiCorrectionInfoWrapper(reads_per_umi_per_cell$re
                                                        method='Classic', verbosity.level=2, max.umi.per.gene=NULL, probability.quants.num=NULL)
 
 max_umi_per_gene <- max(sapply(reads_per_umi_per_cell$reads_per_umi, length))
-collisions_info <- FillCollisionsAdjustmentInfo(raw$umi_distribution / sum(raw$umi_distribution), max_umi_per_gene)
+raw$collisions_info <- FillCollisionsAdjustmentInfo(raw$umi_distribution / sum(raw$umi_distribution), max_umi_per_gene)
 
 raw$filt_umis_per_gene_simple <- CorrectUmiSequenceErrors(reads_per_umi_per_cell, raw$umi_distribution, method='Classic',
-                                                          correction.info=raw$correction_info, collisions.info=collisions_info,
+                                                          correction.info=raw$correction_info, collisions.info=raw$collisions_info,
                                                           mc.cores=30, verbosity.level=2, return='umis')
 
+raw$umis_per_gene <- sapply(reads_per_umi_per_cell$reads_per_umi, length)
+
 trimmed <- lapply(6:9, function(i) TrimAndCorrect(reads_per_umi_per_cell, umi.trim.length=i, mc.cores.large=30, mc.cores.small=15, verbosity.level=1))
+for (i in 1:length(trimmed)) {
+  trimmed[[i]]$umis.per.gene.adj <- trimmed[[i]]$collisions.info[trimmed[[i]]$umis.per.gene]
+}
 ```
 
 ## Plots
-```{r, fig.width=10, fig.height=5, warning=FALSE, message=FALSE}
-for (i in 6:9) {
-  print(PlotTrimmedCorrections(trimmed[[i - 5]], raw, i))
-}
+```{r}
+plots <- lapply(6:9, function(i) PlotTrimmedCorrections(trimmed[[i - 5]], raw, i, log=T))
+large_plots <- lapply(plots, `[[`, 'large')
+large_plots <- lapply(large_plots, `+`, annotation_logticks(sides='b'))
+small_plots <- lapply(plots, `[[`, 'small')
+```
+
+```{r, fig.width=8, fig.height=10, warning=FALSE, message=FALSE}
+gp_large <- BuildPanel4(large_plots, "Corrected #UMIs without trimming", "Error on trimmed data, %", show.legend=T)
+gp_small <- BuildPanel4(small_plots, "Corrected #UMIs without trimming", "Error on trimmed data, %", show.legend=F)
+supp_fig_errors <- ggarrange(gp_large, gp_small, nrow=2, labels=c('A', 'B'))
+supp_fig_errors
+```
+
+# Collisions
+```{r}
+umis_per_gene_df <- as.data.frame(lapply(trimmed[1:4], `[[`, 'umis.per.gene'))
+umis_per_gene_df$raw <- raw$umis_per_gene
+colnames(umis_per_gene_df)[1:4] <- paste0(6:9)
+
+umis_per_gene_adj_df <- as.data.frame(lapply(trimmed[1:4], `[[`, 'umis.per.gene.adj'))
+colnames(umis_per_gene_adj_df) <- paste0(6:9)
+
+umis_per_gene_adj_classic_df <- as.data.frame(mclapply(6:9, function(i) sapply(trimmed[[i - 5]]$umis.per.gene, AdjustGeneExpressionClassic, 4^i), mc.cores=5))
+colnames(umis_per_gene_adj_classic_df) <- paste0(6:9)
+
+plot_df <- melt(umis_per_gene_df, id.vars='raw', variable.name='UmiLen', value.name='NoAdjustment')
+plot_df$Adjusted <- melt(umis_per_gene_adj_df)$value
+plot_df$AdjustedClassic <- melt(umis_per_gene_adj_classic_df)$value
+
+plot_df <- melt(plot_df, id.vars=c('raw', 'UmiLen'), variable.name='Adjustment')
+plot_dfs <- split(plot_df, plot_df$UmiLen)
+```
+
+```{r, fig.width=6, fig.width=8}
+scale_y_low <- scale_y_continuous(limits=c(-3000, 0), breaks=seq(0, -3000, by=-1000), expand=c(0, 0))
+
+ggs <- lapply(names(plot_dfs), function(n) ggplot(plot_dfs[[n]], aes(x=raw, y=(value - raw), linetype=Adjustment)) + 
+                geom_smooth(aes(col=UmiLen)) + 
+                scale_color_manual(values=scales::hue_pal()(4)[as.integer(n) - 5]) +
+                scale_linetype_manual(labels=c('No adjustment', 'Bootstrap', 'Uniform'), values=c('solid', 'dashed', 'dotted')) +
+                scale_x_continuous(expand=c(0, 0), limits=c(-1, 12300), breaks=seq(0, 10000, 2500)) + 
+                scale_y_continuous(expand=c(0, 0), limits=c(-10000, 0)))
+
+ggs[3:4] <- lapply(ggs[3:4], `+`, scale_y_low)
+ggs[[3]] <- ggs[[3]] + legend_pos(0, 0) + theme(legend.box='horizontal') +
+  scale_color_manual(values=alpha(scales::hue_pal()(4), 0.7), name='Length of\ntrimmed UMI', labels=names(plot_dfs), drop=F) +
+  guides(color=guide_legend(ncol=2, nrow=2, byrow=T))
+
+ggs <- BuildPanel4(ggs, "", "", show.legend=T, return.raw=T)
+
+ga1 <- ggarrange(plotlist=ggs[c(1,3)], nrow=2, heights=c(2, 1), align='v')
+ga2 <- ggarrange(plotlist=ggs[c(2,4)], nrow=2, heights=c(2, 1), align='v')
+
+supp_fig_collisions <- annotate_figure(ggarrange(ga1, ga2, ncol=2), 
+                                 bottom=text_grob("#Molecules after trimming", size=14), 
+                                 left = text_grob("Error after trimming (#molecules)", rot=90, size=14))
+
+supp_fig_collisions
 ```
 

@@ -72,7 +72,7 @@ CorrectUmiSequenceErrorsClassic <- function(reads.per.umi.per.cb, mult, correcti
 
 CorrectUmiSequenceErrorsBayesian <- function(reads.per.umi.per.cb, umi.probabilities, collisions.info, correction.info,
                                              mc.cores, distribution.smooth, quality.quants.num, gene.size.quants.num,
-                                             verbosity.level=0, error.prior.prob=0.5) {
+                                             verbosity.level=0) {
   if (verbosity.level > 0) {
     cat("\nEstimating prior error probabilities...")
   }
@@ -104,9 +104,8 @@ CorrectUmiSequenceErrorsBayesian <- function(reads.per.umi.per.cb, umi.probabili
 #' @export
 CorrectUmiSequenceErrors <- function(reads.per.umi.per.cb.info, umi.probabilities=NULL, collisions.info=NULL,
                                      correction.info=NULL, probability.quants.num=50, adjust.collisions=TRUE,
-                                     collisions.adj.step=20, quality.quants.num=10, gene.size.quants.num=5,
-                                     mc.cores=NULL, verbosity.level=0, return='matrix',
-                                     distribution.smooth=10, method='Bayesian', mult=1, error.prior.prob=0.5) {
+                                     quality.quants.num=10, gene.size.quants.num=5, mc.cores=NULL, verbosity.level=0,
+                                     return='matrix', distribution.smooth=10, method='Bayesian', mult=1) {
   kMethodsList <- c('Bayesian', 'Classic')
   kReturnList <- c('matrix', 'reads', 'umis')
 
@@ -162,7 +161,7 @@ CorrectUmiSequenceErrors <- function(reads.per.umi.per.cb.info, umi.probabilitie
                                                    mc.cores=mc.cores, distribution.smooth=distribution.smooth,
                                                    quality.quants.num=quality.quants.num,
                                                    gene.size.quants.num=gene.size.quants.num,
-                                                   verbosity.level=verbosity.level, error.prior.prob=error.prior.prob)
+                                                   verbosity.level=verbosity.level)
   } else {
     filt.genes <- CorrectUmiSequenceErrorsClassic(reads.per.umi.per.cb, mult=mult, correction.info=correction.info,
                                                   mc.cores=mc.cores, verbosity.level=verbosity.level)

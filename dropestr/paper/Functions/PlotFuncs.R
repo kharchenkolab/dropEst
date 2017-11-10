@@ -1,3 +1,113 @@
+library(ggplot2)
+library(ggpubr)
+# ggpubr
+.is_list <- function (x) {
+  inherits(x, "list")
+}
+
+.file_ext <- function (x) {
+  pos <- regexpr("\\.([[:alnum:]]+)$", x)
+  ifelse(pos > -1L, substring(x, pos + 1L), "")
+}
+
+.device <- function (filename) {
+  device <- .file_ext(filename)
+  devices <- list(eps = grDevices::postscript, ps = grDevices::postscript,
+                  pdf = grDevices::pdf, png = grDevices::png, jpg = grDevices::jpeg,
+                  jpeg = grDevices::jpeg, bmp = grDevices::bmp, tiff = grDevices::tiff)
+  dev <- devices[[device]]
+  if (is.null(dev)) {
+    stop("Unknown graphics device '", device, "'", call. = FALSE)
+  }
+  dev
+}
+
+.add_item <- function (.list, ...) {
+  pms <- list(...)
+  for (pms.names in names(pms)) {
+    .list[[pms.names]] <- pms[[pms.names]]
+  }
+  .list
+}
+
+.collapse <- function (x, y = NULL, sep = ".")
+{
+  if (missing(y))
+    paste(x, collapse = sep)
+  else if (is.null(x) & is.null(y))
+    return(NULL)
+  else if (is.null(x))
+    return(as.character(y))
+  else if (is.null(y))
+    return(as.character(x))
+  else paste0(x, sep, y)
+}
+
+.random_string <- function (.length = 7) {
+  index <- sample(1:26, .length)
+  paste(letters[index], collapse = "")
+}
+
+ggexport <- function (..., plotlist = NULL, filename = NULL, ncol = NULL,
+                      nrow = NULL, width = 480, height = 480, pointsize = 12,
+                      res = NA, verbose = TRUE, pdf.width=7, pdf.height=7, paper='special') {
+  if (is.null(filename))
+    filename <- .collapse(.random_string(), ".pdf", sep = "")
+  file.ext <- .file_ext(filename)
+  dev <- .device(filename)
+  dev.opts <- list(file = filename)
+  if (file.ext %in% c("ps", "eps"))
+    dev.opts <- dev.opts %>% .add_item(onefile = FALSE,
+                                       horizontal = FALSE)
+  else if (file.ext %in% c("png", "jpeg", "jpg", "bmp", "tiff"))
+    dev.opts <- dev.opts %>% .add_item(width = width, height = height,
+                                       pointsize = pointsize, res = res)
+  else if (file.ext == 'pdf')
+    dev.opts <- dev.opts %>% .add_item(width = pdf.width, height = pdf.height, paper=paper)
+  plots <- c(list(...), plotlist)
+  nb.plots <- length(plots)
+  if (nb.plots == 1)
+    plots <- plots[[1]]
+  else if (!is.null(ncol) | !is.null(nrow)) {
+    plots <- ggarrange(plotlist = plots, ncol = ncol, nrow = nrow)
+  }
+  if (inherits(plots, "ggarrange") & .is_list(plots))
+    nb.plots <- length(plots)
+  if (nb.plots > 1 & file.ext %in% c("eps", "ps", "png", "jpeg",
+                                     "jpg", "tiff", "bmp", "svg")) {
+    filename <- gsub(paste0(".", file.ext), paste0("%03d.",
+                                                   file.ext), filename)
+    dev.opts$file <- filename
+    print(filename)
+  }
+  do.call(dev, dev.opts)
+  utils::capture.output(print(plots))
+  utils::capture.output(grDevices::dev.off())
+  message("file saved to ", filename)
+}
+
+BuildPanel4 <- function(gg.plots, ylabel, xlabel, show.legend=F, return.raw=F) {
+  margin.theme <- theme(plot.margin=margin(l=0.03, r=0.03, b=0.03, t=0.06, "in"))
+
+  gg.plots <- lapply(gg.plots, function(gg) gg + theme_pdf + margin.theme + rremove('xylab') + rremove('legend'))
+  gg.plots[[1]] <- gg.plots[[1]] + rremove("x.ticks") + rremove("x.text")
+  gg.plots[[2]] <- gg.plots[[2]] + rremove("ticks") + rremove("xy.text")
+  if (show.legend) {
+    gg.plots[[3]] <- gg.plots[[3]] + legend_pos(0, 0)
+  }
+  gg.plots[[4]] <- gg.plots[[4]] + rremove("y.ticks") + rremove("y.text")
+
+  if (return.raw)
+    return(gg.plots)
+
+  gg.res <- annotate_figure(ggarrange(plotlist=gg.plots, ncol=2, nrow=2),
+                            left=text_grob(ylabel, size=14, rot=90),
+                            bottom=text_grob(xlabel, size=14))
+
+  return(gg.res)
+}
+
+# Boxplot Jitter Outliers
 DrawGeomBoxplotJitterOutlier <- function(data, panel_params, coord, ...,
                                          outlier.jitter.width=NULL,
                                          outlier.jitter.height=0,
@@ -92,6 +202,23 @@ legend_pos <- function(..., offset=1e-3) {
   return(ggplot2::theme(legend.position=pos, legend.justification=pos))
 }
 
+# ggrast <- function(gg, raster.geom, width, height, dpi=400, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) {
+#   theme.blank <- theme(axis.line=element_blank(),axis.text.x=element_blank(),
+#                        axis.text.y=element_blank(),axis.ticks=element_blank(),
+#                        axis.title.x=element_blank(),
+#                        axis.title.y=element_blank(),legend.position="none",
+#                        panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
+#                        plot.margin=margin(t=0, r=0, b=0, l=0, unit='pt'),
+#                        panel.grid.minor=element_blank(),plot.background=element_blank())
+#   Cairo::Cairo(type='raster', width=width*dpi, height=height*dpi, dpi=dpi, units='px', bg="transparent")
+#   print(gg + raster.geom + theme.blank)
+#   rast <- as.raster(grDevices::dev.capture())
+#   dev.off()
+#   return(gg + ggplot2::annotation_raster(rast, xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax))
+# }
+
+# Themes
+
 theme_base <- ggplot2::theme_bw(base_size=14, base_family='Helvetica') + ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5))
 theme_pdf <- ggplot2::theme(axis.line = ggplot2::element_line(size=.7, color = "black"),
                    axis.text=ggplot2::element_text(size=12),
@@ -105,4 +232,4 @@ theme_pdf <- ggplot2::theme(axis.line = ggplot2::element_line(size=.7, color = "
                    legend.text = ggplot2::element_text(size=10),
                    legend.title = ggplot2::element_text(size=12),
                    plot.margin = ggplot2::margin(t=12, r=12, b=0, l=0, unit='pt'),
-                   plot.title = ggplot2::element_text(hjust=0.5))
+                   plot.title = ggplot2::element_text(hjust=0.5, size=14))

@@ -203,6 +203,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// GetTrimCollisionsNum
+IntegerVector GetTrimCollisionsNum(const List& rpu_per_gene, int trim_length);
+RcppExport SEXP _dropestr_GetTrimCollisionsNum(SEXP rpu_per_geneSEXP, SEXP trim_lengthSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const List& >::type rpu_per_gene(rpu_per_geneSEXP);
+    Rcpp::traits::input_parameter< int >::type trim_length(trim_lengthSEXP);
+    rcpp_result_gen = Rcpp::wrap(GetTrimCollisionsNum(rpu_per_gene, trim_length));
+    return rcpp_result_gen;
+END_RCPP
+}
 // FillCollisionsAdjustmentInfo
 std::vector<unsigned> FillCollisionsAdjustmentInfo(const std::vector<double>& umi_probabilities, unsigned max_umi_per_gene);
 RcppExport SEXP _dropestr_FillCollisionsAdjustmentInfo(SEXP umi_probabilitiesSEXP, SEXP max_umi_per_geneSEXP) {
@@ -371,6 +383,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dropestr_FilterPredictions", (DL_FUNC) &_dropestr_FilterPredictions, 3},
     {"_dropestr_PrepareClassifierData", (DL_FUNC) &_dropestr_PrepareClassifierData, 3},
     {"_dropestr_PrepareClassifierTrainingData", (DL_FUNC) &_dropestr_PrepareClassifierTrainingData, 1},
+    {"_dropestr_GetTrimCollisionsNum", (DL_FUNC) &_dropestr_GetTrimCollisionsNum, 2},
     {"_dropestr_FillCollisionsAdjustmentInfo", (DL_FUNC) &_dropestr_FillCollisionsAdjustmentInfo, 2},
     {"_dropestr_AdjustGeneExpressionClassic", (DL_FUNC) &_dropestr_AdjustGeneExpressionClassic, 2},
     {"_dropestr_AdjustGeneExpression", (DL_FUNC) &_dropestr_AdjustGeneExpression, 2},

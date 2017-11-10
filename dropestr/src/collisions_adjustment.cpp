@@ -1,39 +1,29 @@
 #include "dropestr.h"
+#include "umi_processing.h"
 
 using namespace Rcpp;
 
-// // [[Rcpp::export]]
-// List GetTrimCollisionsNum(const List &rpu_per_cell, int trim_length) {
-//   List res(rpu_per_cell.size());
-//
-//   auto const &cell_names = as<s_vec_t>(as<StringVector>(rpu_per_cell.names()));
-//   for (int cell_ind = 0; cell_ind < rpu_per_cell.size(); ++cell_ind) {
-//     const auto &rpu_per_gene = as<List>(rpu_per_cell[cell_ind]);
-//     IntegerVector collisions_per_gene(rpu_per_gene.size());
-//
-//     for (int gene_ind = 0; gene_ind < rpu_per_gene.size(); ++gene_ind) {
-//       auto const &reads_per_umi = as<IntegerVector>(rpu_per_gene[gene_ind]);
-//       auto const &umis = as<s_vec_t>(as<StringVector>(reads_per_umi.names()));
-//       s_set_t trimmed_rpus;
-//
-//       int collisions_num = 0;
-//       for (int umi_ind = 0; umi_ind < reads_per_umi.size(); ++umi_ind) {
-//         auto ins = trimmed_rpus.insert(umis[umi_ind].substr(0, trim_length));
-//         if (!ins.second) {
-//           collisions_num++;
-//         }
-//       }
-//
-//       collisions_per_gene[gene_ind] = collisions_num;
-//     }
-//
-//     collisions_per_gene.attr("names") = as<StringVector>(rpu_per_gene.names());
-//     res[cell_ind] = collisions_per_gene;
-//   }
-//
-//   res.attr("names") = cell_names;
-//   return res;
-// }
+// [[Rcpp::export]]
+IntegerVector GetTrimCollisionsNum(const List &rpu_per_gene, int trim_length) {
+  IntegerVector res(rpu_per_gene.size());
+
+  for (int gene_ind = 0; gene_ind < rpu_per_gene.size(); ++gene_ind) {
+    const GeneInfo gene_info(as<List>(rpu_per_gene[gene_ind]));
+    s_set_t trimmed_rpus;
+
+    int collisions_num = 0;
+    for (int umi_ind = 0; umi_ind < gene_info.reads_per_umi.size(); ++umi_ind) {
+      auto ins = trimmed_rpus.insert(gene_info.umis[umi_ind].substr(0, trim_length));
+      if (!ins.second) {
+        collisions_num++;
+      }
+    }
+
+    res[gene_ind] = collisions_num;
+  }
+
+  return res;
+}
 
 class CollisionsAdjuster {
 public:
@@ -108,6 +98,7 @@ std::vector<unsigned> FillCollisionsAdjustmentInfo(const std::vector<double> &um
   return adjuster.adjusted_sizes();
 }
 
+// '@export
 // [[Rcpp::export]]
 int AdjustGeneExpressionClassic(int value, int umis_number) {
   if (value == umis_number) {
