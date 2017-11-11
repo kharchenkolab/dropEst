@@ -4,7 +4,7 @@
 \alias{AdjustGeneExpression}
 \title{Adjust gene expression value for collisions.}
 \usage{
-AdjustGeneExpression(value, adjusted_sizes)
+AdjustGeneExpression(value, adjusted_expressions)
 }
 \arguments{
 \item{value}{gene expression value.}

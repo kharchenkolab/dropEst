@@ -116,9 +116,35 @@ int AdjustGeneExpressionClassic(int value, int umis_number) {
 //'
 //' @export
 // [[Rcpp::export]]
-unsigned AdjustGeneExpression(unsigned value, const std::vector<int> &adjusted_sizes) {
-  if (value > adjusted_sizes.size())
-    stop("Too large value of gene expression: " + std::to_string(value) + ", max acceptable is " + std::to_string(adjusted_sizes.size()));
+unsigned AdjustGeneExpression(unsigned value, const std::vector<unsigned> &adjusted_expressions) {
+  if (value > adjusted_expressions.size())
+    stop("Too large value of gene expression: " + std::to_string(value) + ", max acceptable is " + std::to_string(adjusted_expressions.size()));
 
-  return adjusted_sizes[value - 1];
+  return adjusted_expressions[value - 1];
+}
+
+// [[Rcpp::export]]
+unsigned DeadjustGeneExpression(double gene_expression, const std::vector<unsigned> &adjusted_expressions) {
+  if (adjusted_expressions.empty())
+    stop("Empty collisions info");
+
+  if (gene_expression < 0)
+    stop("Negative gene expression value: " + std::to_string(gene_expression));
+
+  const double EPS = 1e-3;
+  if (gene_expression < 1 + EPS)
+    return 1;
+
+  auto upper_iter = std::lower_bound(adjusted_expressions.begin(), adjusted_expressions.end(), gene_expression - EPS);
+  if (upper_iter == adjusted_expressions.end())
+    stop("Too large value of gene expression: " + std::to_string(gene_expression));
+
+  size_t upper_ind = upper_iter - adjusted_expressions.begin();
+  if (upper_ind == 0)
+    return 1;
+
+  double upper_expr = adjusted_expressions[upper_ind];
+  double lower_expr = adjusted_expressions[upper_ind - 1];
+
+  return std::lround(upper_ind + 1 - (upper_expr - gene_expression) / (upper_expr - lower_expr));
 }

@@ -1,15 +1,15 @@
 #' @export
 EstimatedNumberOfAdjacentUmisByGeneSize <- function(dp.matrices, neighb.prob.index, umi.probabilities) {
   nn.expectation.by.umi.prob <- lapply(dp.matrices, function(m) colSums(m * 0:(nrow(m) - 1)))
-  nn.expectation.by.umi <- nn.expectation.by.umi.prob[neighb.prob.index[names(umi.probabilities)]] %>% bind_cols()
+  nn.expectation.by.umi <- nn.expectation.by.umi.prob[neighb.prob.index[names(umi.probabilities)]] %>% dplyr::bind_cols()
   estimated.nn <- colSums(t(as.matrix(nn.expectation.by.umi)) * umi.probabilities)
   return(estimated.nn)
 }
 
 #' @export
-ErrorByGeneSize <- function(dp.matrices, neighb.prob.index, umi.probabilities, max.adjacent.umis.num, error.prior.prob) {
+ErrorByGeneSize <- function(dp.matrices, neighb.prob.index, umi.probabilities, max.adjacent.umis.num, error.prior.prob, collisions.info) {
   estimated.nn <- EstimatedNumberOfAdjacentUmisByGeneSize(dp.matrices, neighb.prob.index, umi.probabilities)
-  umis.per.gene <- 1:length(estimated.nn) - 1 # Exclude current UMI
+  umis.per.gene <- sapply(1:length(estimated.nn), DeadjustGeneExpression, collisions.info) - 1 # "-1" excludes current UMI
   umis.per.gene[1] <- 1
 
   return(error.prior.prob * (max.adjacent.umis.num - estimated.nn) / max.adjacent.umis.num / umis.per.gene)
@@ -74,7 +74,7 @@ SmoothDistribution <- function(values, smooth, max.value=NULL, smooth.probs=FALS
 }
 
 TrainNBNegative <- function(train.data, distribution.smooth, nucleotide.pairs.number, umi.length, quality.prior,
-                            correction.info, umi.probabilities, error.prior.prob) {
+                            correction.info, collisions.info, umi.probabilities, error.prior.prob) {
   params.neg <- list()
 
   llBetabinom <- function(prob, theta) {
@@ -104,14 +104,15 @@ TrainNBNegative <- function(train.data, distribution.smooth, nucleotide.pairs.nu
   params.neg$Quality <- quality.prior
 
   params.neg$ErrorProbByGeneSize <- log(ErrorByGeneSize(correction.info$dp.matrices, correction.info$neighb.prob.index,
-                                                        umi.probabilities, 3 * umi.length, error.prior.prob))
+                                                        umi.probabilities, 3 * umi.length, error.prior.prob,
+                                                        collisions.info=collisions.info))
 
   return(params.neg)
 }
 
 #' @export
-TrainNBClassifier <- function(reads.per.umi.per.cb, distribution.smooth, correction.info, umi.probabilities,
-                              quality.quants.num=15, quality.smooth=0.01, gene.size.quants.num=5) {
+TrainNBClassifier <- function(reads.per.umi.per.cb, distribution.smooth, correction.info, collisions.info,
+                              umi.probabilities, quality.quants.num=15, quality.smooth=0.01, gene.size.quants.num=5) {
   error.mask <- sapply(reads.per.umi.per.cb, length) == 2
   paired.rpus <- reads.per.umi.per.cb[error.mask]
   train.data <- PrepareClassifierTrainingData(paired.rpus)
@@ -133,7 +134,8 @@ TrainNBClassifier <- function(reads.per.umi.per.cb, distribution.smooth, correct
                              nucleotide.pairs.number=NumberOfNucleotidePairs(),
                              umi.length=nchar(names(reads.per.umi.per.cb[[1]])[1]),
                              quality.prior=quality.probs$negative, correction.info=correction.info,
-                             umi.probabilities=umi.probabilities, error.prior.prob=mean(error.mask))
+                             collisions.info=collisions.info, umi.probabilities=umi.probabilities,
+                             error.prior.prob=mean(error.mask))
 
   # Distribution over all data
   rpu.probs.by.gene.size.info <- GetRpuProbsByGeneSize(reads.per.umi.per.cb, gene.size.quants.num, distribution.smooth, log.probs=T)

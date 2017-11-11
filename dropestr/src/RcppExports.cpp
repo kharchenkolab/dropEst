@@ -240,14 +240,26 @@ BEGIN_RCPP
 END_RCPP
 }
 // AdjustGeneExpression
-unsigned AdjustGeneExpression(unsigned value, const std::vector<int>& adjusted_sizes);
-RcppExport SEXP _dropestr_AdjustGeneExpression(SEXP valueSEXP, SEXP adjusted_sizesSEXP) {
+unsigned AdjustGeneExpression(unsigned value, const std::vector<unsigned>& adjusted_expressions);
+RcppExport SEXP _dropestr_AdjustGeneExpression(SEXP valueSEXP, SEXP adjusted_expressionsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< unsigned >::type value(valueSEXP);
-    Rcpp::traits::input_parameter< const std::vector<int>& >::type adjusted_sizes(adjusted_sizesSEXP);
-    rcpp_result_gen = Rcpp::wrap(AdjustGeneExpression(value, adjusted_sizes));
+    Rcpp::traits::input_parameter< const std::vector<unsigned>& >::type adjusted_expressions(adjusted_expressionsSEXP);
+    rcpp_result_gen = Rcpp::wrap(AdjustGeneExpression(value, adjusted_expressions));
+    return rcpp_result_gen;
+END_RCPP
+}
+// DeadjustGeneExpression
+unsigned DeadjustGeneExpression(double gene_expression, const std::vector<unsigned>& adjusted_expressions);
+RcppExport SEXP _dropestr_DeadjustGeneExpression(SEXP gene_expressionSEXP, SEXP adjusted_expressionsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type gene_expression(gene_expressionSEXP);
+    Rcpp::traits::input_parameter< const std::vector<unsigned>& >::type adjusted_expressions(adjusted_expressionsSEXP);
+    rcpp_result_gen = Rcpp::wrap(DeadjustGeneExpression(gene_expression, adjusted_expressions));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -286,14 +298,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // TrimUmis
-List TrimUmis(const List& rpu_per_cell, int trim_length);
-RcppExport SEXP _dropestr_TrimUmis(SEXP rpu_per_cellSEXP, SEXP trim_lengthSEXP) {
+List TrimUmis(const List& rpu_per_cell, int trim_length, bool reverse);
+RcppExport SEXP _dropestr_TrimUmis(SEXP rpu_per_cellSEXP, SEXP trim_lengthSEXP, SEXP reverseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const List& >::type rpu_per_cell(rpu_per_cellSEXP);
     Rcpp::traits::input_parameter< int >::type trim_length(trim_lengthSEXP);
-    rcpp_result_gen = Rcpp::wrap(TrimUmis(rpu_per_cell, trim_length));
+    Rcpp::traits::input_parameter< bool >::type reverse(reverseSEXP);
+    rcpp_result_gen = Rcpp::wrap(TrimUmis(rpu_per_cell, trim_length, reverse));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -387,10 +400,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dropestr_FillCollisionsAdjustmentInfo", (DL_FUNC) &_dropestr_FillCollisionsAdjustmentInfo, 2},
     {"_dropestr_AdjustGeneExpressionClassic", (DL_FUNC) &_dropestr_AdjustGeneExpressionClassic, 2},
     {"_dropestr_AdjustGeneExpression", (DL_FUNC) &_dropestr_AdjustGeneExpression, 2},
+    {"_dropestr_DeadjustGeneExpression", (DL_FUNC) &_dropestr_DeadjustGeneExpression, 2},
     {"_dropestr_ValueCountsC", (DL_FUNC) &_dropestr_ValueCountsC, 1},
     {"_dropestr_ValueCounts", (DL_FUNC) &_dropestr_ValueCounts, 2},
     {"_dropestr_BuildCountMatrix", (DL_FUNC) &_dropestr_BuildCountMatrix, 1},
-    {"_dropestr_TrimUmis", (DL_FUNC) &_dropestr_TrimUmis, 2},
+    {"_dropestr_TrimUmis", (DL_FUNC) &_dropestr_TrimUmis, 3},
     {"_dropestr_AddIndexesToRpU", (DL_FUNC) &_dropestr_AddIndexesToRpU, 2},
     {"_dropestr_GetUmisDistribution", (DL_FUNC) &_dropestr_GetUmisDistribution, 2},
     {"_dropestr_GetUmisList", (DL_FUNC) &_dropestr_GetUmisList, 1},

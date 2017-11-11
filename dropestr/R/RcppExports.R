@@ -94,8 +94,12 @@ AdjustGeneExpressionClassic <- function(value, umis_number) {
 #' @return Adjusted gene expression value.
 #'
 #' @export
-AdjustGeneExpression <- function(value, adjusted_sizes) {
-    .Call('_dropestr_AdjustGeneExpression', PACKAGE = 'dropestr', value, adjusted_sizes)
+AdjustGeneExpression <- function(value, adjusted_expressions) {
+    .Call('_dropestr_AdjustGeneExpression', PACKAGE = 'dropestr', value, adjusted_expressions)
+}
+
+DeadjustGeneExpression <- function(gene_expression, adjusted_expressions) {
+    .Call('_dropestr_DeadjustGeneExpression', PACKAGE = 'dropestr', gene_expression, adjusted_expressions)
 }
 
 ValueCountsC <- function(values) {
@@ -111,8 +115,9 @@ BuildCountMatrix <- function(reads_per_umi_per_cell) {
     .Call('_dropestr_BuildCountMatrix', PACKAGE = 'dropestr', reads_per_umi_per_cell)
 }
 
-TrimUmis <- function(rpu_per_cell, trim_length) {
-    .Call('_dropestr_TrimUmis', PACKAGE = 'dropestr', rpu_per_cell, trim_length)
+#' @export
+TrimUmis <- function(rpu_per_cell, trim_length, reverse = FALSE) {
+    .Call('_dropestr_TrimUmis', PACKAGE = 'dropestr', rpu_per_cell, trim_length, reverse)
 }
 
 #' @export

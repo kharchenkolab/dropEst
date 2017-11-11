@@ -33,14 +33,18 @@ SEXP BuildCountMatrix(const List &reads_per_umi_per_cell) {
   return res;
 }
 
+//' @export
 // [[Rcpp::export]]
-List TrimUmis(const List &rpu_per_cell, int trim_length) {
+List TrimUmis(const List &rpu_per_cell, int trim_length, bool reverse=false) {
   UmisInfo umis_info(rpu_per_cell);
   UmisInfo umis_info_trimmed;
 
   for (auto const &umi_iter : umis_info.info()) {
-    UmiInfo::quality_t trimmed_quality(umi_iter.second.quality().begin(), umi_iter.second.quality().begin() + trim_length);
-    UmiInfo trimmed_umi(umi_iter.second.umi().substr(0, trim_length), umi_iter.second.reads_per_umi(), trimmed_quality);
+    auto const &umi_info = umi_iter.second;
+    size_t trim_start = reverse ? (umi_info.umi().length() - trim_length) : 0;
+    UmiInfo::quality_t trimmed_quality(umi_info.quality().begin() + trim_start,
+                                       umi_info.quality().begin() + trim_start + trim_length);
+    UmiInfo trimmed_umi(umi_info.umi().substr(trim_start, trim_length), umi_info.reads_per_umi(), trimmed_quality);
     umis_info_trimmed.add_umi(trimmed_umi);
   }
 

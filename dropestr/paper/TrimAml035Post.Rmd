@@ -23,6 +23,7 @@ source("./Functions/Functions.R")
 knitr::opts_chunk$set(fig.width=5, fig.height=3, echo=FALSE, warning=FALSE, message=FALSE)
 
 theme_set(theme_base)
+# kPlotsFolder <- '~/Data/Plots/Paper/UmiErrors/'
 ```
 
 ```{r}
@@ -53,6 +54,9 @@ trimmed <- lapply(6:9, function(i) TrimAndCorrect(reads_per_umi_per_cell, umi.tr
 for (i in 1:length(trimmed)) {
   trimmed[[i]]$umis.per.gene.adj <- trimmed[[i]]$collisions.info[trimmed[[i]]$umis.per.gene]
 }
+
+# saveRDS(trimmed, paste0(kDataPath, 'trimmed.rds'))
+# saveRDS(raw, paste0(kDataPath, 'raw.rds'))
 ```
 
 ## Plots
@@ -68,6 +72,26 @@ gp_large <- BuildPanel4(large_plots, "Corrected #UMIs without trimming", "Error 
 gp_small <- BuildPanel4(small_plots, "Corrected #UMIs without trimming", "Error on trimmed data, %", show.legend=F)
 supp_fig_errors <- ggarrange(gp_large, gp_small, nrow=2, labels=c('A', 'B'))
 supp_fig_errors
+
+# ggexport(supp_fig_errors, filename=paste0(kPlotsFolder, '/SuppFigureErrors.pdf'), pdf.height=10, pdf.width=8.3)
+```
+
+```{r, fig.width=8, fig.height=10, warning=FALSE, message=FALSE}
+gp_large <- BuildPanel4(large_plots, "Corrected #UMIs without trimming", "Error on trimmed data, %", show.legend=T)
+gp_small <- BuildPanel4(small_plots, "Corrected #UMIs without trimming", "Error on trimmed data, %", show.legend=F)
+supp_fig_errors <- ggarrange(gp_large, gp_small, nrow=2, labels=c('A', 'B'))
+supp_fig_errors
+
+# ggexport(supp_fig_errors, filename=paste0(kPlotsFolder, '/SuppFigureErrors.pdf'), pdf.height=10, pdf.width=8.3)
+```
+
+```{r, fig.width=8, fig.height=10, warning=FALSE, message=FALSE}
+gp_large <- BuildPanel4(large_plots, "Corrected #UMIs without trimming", "Error on trimmed data, %", show.legend=T)
+gp_small <- BuildPanel4(small_plots, "Corrected #UMIs without trimming", "Error on trimmed data, %", show.legend=F)
+supp_fig_errors <- ggarrange(gp_large, gp_small, nrow=2, labels=c('A', 'B'))
+supp_fig_errors
+
+ggexport(supp_fig_errors, filename=paste0(kPlotsFolder, '/SuppFigureErrors.pdf'), pdf.height=10, pdf.width=8.3)
 ```
 
 # Collisions
@@ -115,5 +139,59 @@ supp_fig_collisions <- annotate_figure(ggarrange(ga1, ga2, ncol=2),
                                  left = text_grob("Error after trimming (#molecules)", rot=90, size=14))
 
 supp_fig_collisions
+
+# ggexport(supp_fig3_ann, filename=paste0(kPlotsFolder, '/SuppFigure3.pdf'), pdf.height=6, pdf.width=8.3)
 ```
 
+# Estimated number of adjacent UMIs
+```{r}
+SampleNoReps <- function(size, ids, probs) {
+  umis <- unique(sample(ids, size=size, prob=probs, replace=T))
+  while (length(umis) < size) {
+    umis <- c(umis, unique(sample(ids, size=size, prob=probs, replace=T)))
+  }
+  
+  return(umis[1:size])
+}
+
+SampleNumOfAdjacentUmis <- function(gene.size, umi.probabilities, neighbours.per.umi, uniform=FALSE) {
+  if (uniform) {
+    umis <- SampleNoReps(gene.size, ids=names(umi.probabilities), probs=NULL)
+  } else {
+    umis <- SampleNoReps(gene.size, ids=names(umi.probabilities), probs=umi.probabilities)
+  }
+  
+  rpu <- setNames(rep(1, gene.size), umis)
+  return(sum(GetAdjacentUmisNum(rpu, rpu, neighbours.per.umi)$Total))
+}
+
+SampleNumbersOfAdjacentUmis <- function(gene.size, trimmed.info, samples.num, uniform=FALSE) {
+  return(sapply(1:samples.num, function(i) 
+    SampleNumOfAdjacentUmis(gene.size, trimmed.info$umi.probabilities, trimmed.info$correction.info$neighbours.per.umi, uniform=uniform)))
+}
+
+tr_cur <- trimmed[[1]]
+```
+
+```{r}
+gene_sizes <- list(2:10, 11:50, seq(60, 300, 10), seq(300, 500, 25), seq(600, 4090, 200), c(4050, 4095))
+sample_nums <- unlist(mapply(rep, c(100000, 100000, 15000, 1000, 500, 500), sapply(gene_sizes, length)))
+gene_sizes_f <- unlist(gene_sizes)
+
+adjacent_umis_num <- mcmapply(function(s, n) SampleNumbersOfAdjacentUmis(s, tr_cur, n, uniform=F), gene_sizes_f, sample_nums, mc.cores=30)
+adjacent_umis_num_unif <- mcmapply(function(s, n) SampleNumbersOfAdjacentUmis(s, tr_cur, n, uniform=T), gene_sizes_f, sample_nums, mc.cores=30)
+```
+
+```{r}
+plot_df <- data.frame(GeneSize=unlist(gene_sizes),
+                      NumOfAdjacentUMIs=sapply(adjacent_umis_num, mean),
+                      NumOfAdjacentUMIsUnif=sapply(adjacent_umis_num_unif, mean))
+ggplot(plot_df, aes(x=GeneSize)) + 
+  geom_line(aes(y=NumOfAdjacentUMIs / GeneSize^2, color='Bootstrap')) + 
+  geom_line(aes(y=NumOfAdjacentUMIsUnif / GeneSize^2, color='Uniform'))
+```
+
+```{r}
+ggplot(plot_df, aes(x=GeneSize)) + geom_smooth(aes(y=NumOfAdjacentUMIs / NumOfAdjacentUMIsUnif)) + 
+  scale_x_log10() + annotation_logticks(sides='b')
+```

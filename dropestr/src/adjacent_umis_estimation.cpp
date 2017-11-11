@@ -225,7 +225,7 @@ List GetAdjacentUmisNum(const IntegerVector &reads_per_umi_from, const IntegerVe
 //' @export
 // [[Rcpp::export]]
 NumericMatrix FillDpMatrix(double prior_prob, int neighbours_num, int max_umi_per_cell) { //TODO: not export this
-  int n_col = max_umi_per_cell + 1, n_row = neighbours_num + 1;
+  int n_col = max_umi_per_cell, n_row = neighbours_num + 1;
   NumericMatrix dp_matrix(n_row, n_col);
 
   double prod = 1;
@@ -283,6 +283,9 @@ void fillCumSumRatio(int max_neighbour_num, int smaller_nn, int larger_nn, int u
 NumericMatrix GetSmallerNeighboursDistributionsBySizes(const List &dp_matrices, const IntegerVector &larger_neighbours_num,
                                                        const s_vec_t &neighbour_prob_inds, int size_adj, int max_neighbour_num,
                                                        const IntegerVector &smaller_neighbours_num = IntegerVector(), bool log_probs=false) {
+  if (size_adj == 0)
+    stop("Zero gene size");
+
   // reads_per_umi, larger_neighbours_num and neighbour_prob_inds must have the same order
   si_map_t dp_matrices_index;
   for (int i = 0; i < dp_matrices.size(); ++i) {
@@ -297,7 +300,7 @@ NumericMatrix GetSmallerNeighboursDistributionsBySizes(const List &dp_matrices, 
       return res;
 
     auto const &matrix = as<NumericMatrix>(dp_matrices.at(dp_matrices_index.at(neighbour_prob_inds.at(umi_ind))));
-    auto const &distr = matrix.column(size_adj);
+    auto const &distr = matrix.column(size_adj - 1);
 
     int larger_nn = larger_neighbours_num.at(umi_ind);
     double prob_sum = 0;
