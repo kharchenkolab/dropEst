@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Upcoming]
+### Added
+* Dockers for Centos6, Centos7 and Debian9
 ### Changed
 * Optimized precise merge performance
 
