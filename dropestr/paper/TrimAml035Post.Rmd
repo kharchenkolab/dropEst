@@ -31,6 +31,11 @@ kDataPath <- '/d0-mendel/home/viktor_petukhov/Data/10x/aml035_post_transplant/es
 holder <- readRDS(paste0(kDataPath, '/aml035ost_transplant.rds'))
 reads_per_umi_per_cell <- holder$reads_per_umi_per_cell
 reads_per_umi_per_cell$reads_per_umi <- FilterNUmis(holder$reads_per_umi_per_cell$reads_per_umi)
+# 
+# saveRDS(reads_per_umi_per_cell, paste0(kDataPath, 'reads_per_umi_per_cell.rds'))
+
+# reads_per_umi_per_cell <- readRDS(paste0(kDataPath, 'reads_per_umi_per_cell.rds'))
+# raw <- readRDS(paste0(kDataPath, 'raw.rds'))
 ```
 
 # UMI errors
@@ -38,13 +43,14 @@ reads_per_umi_per_cell$reads_per_umi <- FilterNUmis(holder$reads_per_umi_per_cel
 raw <- list()
 
 raw$umi_distribution <- GetUmisDistribution(reads_per_umi_per_cell$reads_per_umi, smooth = 10)
-raw$correction_info <- PrepareUmiCorrectionInfoWrapper(reads_per_umi_per_cell$reads_per_umi, umi.probabilities=raw$umi_distribution / sum(raw$umi_distribution),
+raw$umi_probabilities <- raw$umi_distribution / sum(raw$umi_distribution)
+raw$correction_info <- PrepareUmiCorrectionInfoWrapper(reads_per_umi_per_cell$reads_per_umi, umi.probabilities=raw$umi_probabilities,
                                                        method='Classic', verbosity.level=2, max.umi.per.gene=NULL, probability.quants.num=NULL)
 
 max_umi_per_gene <- max(sapply(reads_per_umi_per_cell$reads_per_umi, length))
-raw$collisions_info <- FillCollisionsAdjustmentInfo(raw$umi_distribution / sum(raw$umi_distribution), max_umi_per_gene)
+raw$collisions_info <- FillCollisionsAdjustmentInfo(raw$umi_probabilities, max_umi_per_gene)
 
-raw$filt_umis_per_gene_simple <- CorrectUmiSequenceErrors(reads_per_umi_per_cell, raw$umi_distribution, method='Classic',
+raw$filt_umis_per_gene_simple <- CorrectUmiSequenceErrors(reads_per_umi_per_cell, raw$umi_probabilities, method='Classic',
                                                           correction.info=raw$correction_info, collisions.info=raw$collisions_info,
                                                           mc.cores=30, verbosity.level=2, return='umis')
 
@@ -57,6 +63,19 @@ for (i in 1:length(trimmed)) {
 
 # saveRDS(trimmed, paste0(kDataPath, 'trimmed.rds'))
 # saveRDS(raw, paste0(kDataPath, 'raw.rds'))
+```
+
+```{r}
+# tr_reads_per_umi_per_cb <- reads_per_umi_per_cell
+# for (i in 1:4) {
+#   tr_reads_per_umi_per_cb$reads_per_umi <- trimmed[[i]]$reads.per.umi.per.cb
+#   
+#   trimmed[[i]]$filt_cells$NB <- CorrectUmiSequenceErrors(tr_reads_per_umi_per_cb, trimmed[[i]]$umi.probabilities,
+#                                                          correction.info=trimmed[[i]]$correction.info,
+#                                                          collisions.info=trimmed[[i]]$collisions.info,
+#                                                          error.prior.prob=0.001,
+#                                                          mc.cores=30, verbosity.level=2, return='umis')
+# }
 ```
 
 ## Plots
@@ -72,26 +91,6 @@ gp_large <- BuildPanel4(large_plots, "Corrected #UMIs without trimming", "Error 
 gp_small <- BuildPanel4(small_plots, "Corrected #UMIs without trimming", "Error on trimmed data, %", show.legend=F)
 supp_fig_errors <- ggarrange(gp_large, gp_small, nrow=2, labels=c('A', 'B'))
 supp_fig_errors
-
-# ggexport(supp_fig_errors, filename=paste0(kPlotsFolder, '/SuppFigureErrors.pdf'), pdf.height=10, pdf.width=8.3)
-```
-
-```{r, fig.width=8, fig.height=10, warning=FALSE, message=FALSE}
-gp_large <- BuildPanel4(large_plots, "Corrected #UMIs without trimming", "Error on trimmed data, %", show.legend=T)
-gp_small <- BuildPanel4(small_plots, "Corrected #UMIs without trimming", "Error on trimmed data, %", show.legend=F)
-supp_fig_errors <- ggarrange(gp_large, gp_small, nrow=2, labels=c('A', 'B'))
-supp_fig_errors
-
-# ggexport(supp_fig_errors, filename=paste0(kPlotsFolder, '/SuppFigureErrors.pdf'), pdf.height=10, pdf.width=8.3)
-```
-
-```{r, fig.width=8, fig.height=10, warning=FALSE, message=FALSE}
-gp_large <- BuildPanel4(large_plots, "Corrected #UMIs without trimming", "Error on trimmed data, %", show.legend=T)
-gp_small <- BuildPanel4(small_plots, "Corrected #UMIs without trimming", "Error on trimmed data, %", show.legend=F)
-supp_fig_errors <- ggarrange(gp_large, gp_small, nrow=2, labels=c('A', 'B'))
-supp_fig_errors
-
-ggexport(supp_fig_errors, filename=paste0(kPlotsFolder, '/SuppFigureErrors.pdf'), pdf.height=10, pdf.width=8.3)
 ```
 
 # Collisions
@@ -187,11 +186,18 @@ plot_df <- data.frame(GeneSize=unlist(gene_sizes),
                       NumOfAdjacentUMIs=sapply(adjacent_umis_num, mean),
                       NumOfAdjacentUMIsUnif=sapply(adjacent_umis_num_unif, mean))
 ggplot(plot_df, aes(x=GeneSize)) + 
-  geom_line(aes(y=NumOfAdjacentUMIs / GeneSize^2, color='Bootstrap')) + 
-  geom_line(aes(y=NumOfAdjacentUMIsUnif / GeneSize^2, color='Uniform'))
+  geom_line(aes(y=NumOfAdjacentUMIs / GeneSize^2, color='Bootstrap'), size=2) + 
+  geom_line(aes(y=NumOfAdjacentUMIsUnif / GeneSize^2, color='Uniform'), size=2) +
+  labs(x = '#UMIs per gene', y='Probability to observe adjacent UMI') +
+  guides(color=guide_legend(title='UMI distribution')) + 
+  scale_x_continuous(expand=c(0.1, 0.1)) + scale_y_continous(expand=c(1e-5, 1e-5))
+  theme_pdf + legend_pos(1, 1)
 ```
 
 ```{r}
 ggplot(plot_df, aes(x=GeneSize)) + geom_smooth(aes(y=NumOfAdjacentUMIs / NumOfAdjacentUMIsUnif)) + 
-  scale_x_log10() + annotation_logticks(sides='b')
+  scale_x_log10(expand=c(0.05, 0.05)) + annotation_logticks(sides='b') +
+  labs(x='#UMIs per gene', y='Probabilities ratio') +
+  scale_y_continuous(expand=c(0.01, 0.01)) +
+  theme_pdf
 ```

@@ -8,11 +8,14 @@ EstimatedNumberOfAdjacentUmisByGeneSize <- function(dp.matrices, neighb.prob.ind
 
 #' @export
 ErrorByGeneSize <- function(dp.matrices, neighb.prob.index, umi.probabilities, max.adjacent.umis.num, error.prior.prob, collisions.info) {
-  estimated.nn <- EstimatedNumberOfAdjacentUmisByGeneSize(dp.matrices, neighb.prob.index, umi.probabilities)
-  umis.per.gene <- sapply(1:length(estimated.nn), DeadjustGeneExpression, collisions.info) - 1 # "-1" excludes current UMI
-  umis.per.gene[1] <- 1
+  # estimated.nn <- EstimatedNumberOfAdjacentUmisByGeneSize(dp.matrices, neighb.prob.index, umi.probabilities)
+  # umis.per.gene <- sapply(1:length(estimated.nn), DeadjustGeneExpression, collisions.info) - 1 # "-1" excludes current UMI
+  # umis.per.gene <- sapply(1:ncol(dp.matrices[[1]]), DeadjustGeneExpression, collisions.info) - 1 # "-1" excludes current UMI
+  # umis.per.gene[1] <- 1
 
-  return(error.prior.prob * (max.adjacent.umis.num - estimated.nn) / max.adjacent.umis.num / umis.per.gene)
+  # return(error.prior.prob * (max.adjacent.umis.num - estimated.nn) / max.adjacent.umis.num)
+  # return(error.prior.prob * (max.adjacent.umis.num - estimated.nn) / max.adjacent.umis.num / umis.per.gene)
+  return(error.prior.prob)
 }
 
 #' @export
@@ -112,12 +115,13 @@ TrainNBNegative <- function(train.data, distribution.smooth, nucleotide.pairs.nu
 
 #' @export
 TrainNBClassifier <- function(reads.per.umi.per.cb, distribution.smooth, correction.info, collisions.info,
-                              umi.probabilities, quality.quants.num=15, quality.smooth=0.01, gene.size.quants.num=5) {
-  error.mask <- sapply(reads.per.umi.per.cb, length) == 2
-  paired.rpus <- reads.per.umi.per.cb[error.mask]
+                              umi.probabilities, quality.quants.num=15, quality.smooth=0.01, gene.size.quants.num=5,
+                              error.prior.prob=0.001) {
+  umis.per.gene <- sapply(reads.per.umi.per.cb, length)
+  paired.rpus <- reads.per.umi.per.cb[umis.per.gene == 2]
   train.data <- PrepareClassifierTrainingData(paired.rpus)
-
   train.data <- train.data %>% dplyr::filter(ED == 1) %>% dplyr::select(-ED)
+
   if (nrow(train.data) == 0)
     stop('Data has no training samples with UMI errors')
 
@@ -135,7 +139,7 @@ TrainNBClassifier <- function(reads.per.umi.per.cb, distribution.smooth, correct
                              umi.length=nchar(names(reads.per.umi.per.cb[[1]])[1]),
                              quality.prior=quality.probs$negative, correction.info=correction.info,
                              collisions.info=collisions.info, umi.probabilities=umi.probabilities,
-                             error.prior.prob=mean(error.mask))
+                             error.prior.prob=error.prior.prob)
 
   # Distribution over all data
   rpu.probs.by.gene.size.info <- GetRpuProbsByGeneSize(reads.per.umi.per.cb, gene.size.quants.num, distribution.smooth, log.probs=T)
@@ -156,8 +160,8 @@ PredictLeftPartConst <- function(clf, classifier.df) {
 
   quantized.quality <- Quantize(classifier.df$Quality, clf$QualityQuantBorders) + 1
 
-  quality.prob <- clf$Common$Quality[quantized.quality];
-  quality.prob.err <- clf$Negative$Quality[quantized.quality];
+  quality.prob <- clf$Common$Quality[quantized.quality]
+  quality.prob.err <- clf$Negative$Quality[quantized.quality]
 
   umi.prob <- log(classifier.df$UmiProb)
 
@@ -171,7 +175,8 @@ PredictLeftPartDependent <- function(clf, classifier.df, gene.size) {
   max.rpu.prob.err <- rpu.probs[pmin(classifier.df$MaxRpU + classifier.df$MinRpU, length(rpu.probs))]
   max.rpu.prob <- rpu.probs[pmin(classifier.df$MaxRpU, length(rpu.probs))]
   min.rpu.prob <- rpu.probs[pmin(classifier.df$MinRpU, length(rpu.probs))]
-  err.prob <- clf$Negative$ErrorProbByGeneSize[gene.size]
+  # err.prob <- clf$Negative$ErrorProbByGeneSize[gene.size]
+  err.prob <- clf$Negative$ErrorProbByGeneSize
 
   return((max.rpu.prob.err + err.prob) - (max.rpu.prob + min.rpu.prob + log(1 - exp(err.prob))))
 }
