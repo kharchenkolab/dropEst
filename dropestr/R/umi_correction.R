@@ -77,10 +77,15 @@ CorrectUmiSequenceErrorsBayesian <- function(reads.per.umi.per.cb, umi.probabili
     cat("\nEstimating prior error probabilities...")
   }
 
+  if (length(correction.info$rpus.with.inds) == 0)
+    return(correction.info$rpus.with.inds)
+
+  if (length(correction.info$rpus.with.inds[[1]]$rpus[[1]][[2]]) == 0)
+    stop("Information about quality is required for UMI correction")
+
   clf <- try(TrainNBClassifier(reads.per.umi.per.cb, distribution.smooth, quality.quants.num=quality.quants.num,
                                gene.size.quants.num=gene.size.quants.num, correction.info=correction.info,
-                               collisions.info=collisions.info, umi.probabilities=umi.probabilities,
-                               error.prior.prob=error.prior.prob))
+                               umi.probabilities=umi.probabilities, error.prior.prob=error.prior.prob))
 
   if (class(clf) == 'try-error') {
     warning(clf)
@@ -92,7 +97,8 @@ CorrectUmiSequenceErrorsBayesian <- function(reads.per.umi.per.cb, umi.probabili
     cat("Correcting UMI sequence errors...")
   }
   filt.genes <- plapply(correction.info$rpus.with.inds, FilterUmisInGene, correction.info$neighbours.per.umi,
-                        clf, correction.info$neighb.prob.index, umi.probabilities, collisions.info, mc.cores=mc.cores)
+                        clf, correction.info$neighb.prob.index, umi.probabilities, collisions.info,
+                        correction.info$dp.matrices, mc.cores=mc.cores)
 
   if (verbosity.level > 0) {
     cat(" Completed.\n")
@@ -194,17 +200,26 @@ GetUmiProbabilitiesIndex <- function(umi.probs, umi.tolerance) { #TODO: not expo
 }
 
 # Algorithm:
-FilterUmisInGeneOneStep <- function(predictions, not.filtered.umis, classifier, collisions.info, cur.gene.size) {
+FilterUmisInGeneOneStep <- function(cur.reads.per.umi, neighbours.per.umi, dp.matrices, max.neighbours.num, neighbours.prob.index,
+                                    predictions, not.filtered.umis, classifier, collisions.info, cur.gene.size, size.adj) {
   small.neighb.num <- ValueCountsC(as.character(predictions$Target))
   small.neighb.num <- small.neighb.num[sort(names(small.neighb.num))]
 
-  filtered.mask <- (predictions$MergeScore > 0)
+  cur.n.p.i <- neighbours.prob.index[names(cur.reads.per.umi)]
+
+  nn <- GetAdjacentUmisNum(cur.reads.per.umi, cur.reads.per.umi, neighbours.per.umi, total=F, larger=T, smaller=T)
+  smaller.nn <- nn$Smaller[names(cur.reads.per.umi)]
+  larger.nn <- nn$Larger[names(cur.reads.per.umi)]
+
+  neighbour.distrs <- GetSmallerNeighboursDistributionsBySizes(dp.matrices, larger.nn, cur.n.p.i, size.adj, max.neighbours.num, smaller_neighbours_num=smaller.nn)
+  predictions$Prior <- GetSmallerNeighbourProbabilities(as.matrix(neighbour.distrs[,names(small.neighb.num)]), small.neighb.num)
+  filtered.mask <- (predictions$Prior < predictions$MergeScore)
 
   if (any(filtered.mask)) {
     filt.predictions <- predictions[filtered.mask,]
     filtered.mask[which(filtered.mask)] <- ResolveUmisDependencies(as.character(filt.predictions$Base),
                                                                    as.character(filt.predictions$Target),
-                                                                   filt.predictions$MergeScore)
+                                                                   log(filt.predictions$MergeScore) - log(filt.predictions$Prior))
 
     not.filtered.umis <- base::setdiff(not.filtered.umis, predictions$Base[filtered.mask])
   }
@@ -214,9 +229,11 @@ FilterUmisInGeneOneStep <- function(predictions, not.filtered.umis, classifier, 
 
 #' @export
 FilterUmisInGene <- function(cur.gene, neighbours.per.umi, classifier, neighbours.prob.index,
-                             umi.probabilities, collisions.info, max.iter=100, verbose=FALSE) {
+                             umi.probabilities, collisions.info, dp.matrices, max.iter=100, verbose=FALSE) {
   if (length(cur.gene$rpus) == 1)
     return(cur.gene$rpus)
+
+  max.neighbours.num <- nchar(names(umi.probabilities)[1]) * 3
 
   neighbours.per.umi <- neighbours.per.umi[cur.gene$indexes + 1]
   neighbours.prob.index <- neighbours.prob.index[cur.gene$indexes + 1]
@@ -246,8 +263,9 @@ FilterUmisInGene <- function(cur.gene, neighbours.per.umi, classifier, neighbour
 
     classifier.df <- classifier.df[order(classifier.df$Target, classifier.df$MergeScore),]
 
-    not.filtered.umis <- FilterUmisInGeneOneStep(classifier.df[c('Base', 'Target', 'MergeScore')], not.filtered.umis,
-                                                 classifier, collisions.info, length(filt.reads.per.umi))
+    not.filtered.umis <- FilterUmisInGeneOneStep(cur.reads.per.umi, neighbours.per.umi, dp.matrices, max.neighbours.num, neighbours.prob.index,
+                                                 classifier.df[c('Base', 'Target', 'MergeScore')], not.filtered.umis,
+                                                 classifier, collisions.info, length(filt.reads.per.umi), size.adj)
 
     # Next iteration
     filt.index <- FilterPredictions(not.filtered.umis, as.character(classifier.df$Base), as.character(classifier.df$Target))
@@ -311,6 +329,12 @@ PrepareUmiCorrectionInfo <- function(umi.probabilities, max.umi.per.gene, reads.
 TrimAndCorrect <- function(reads.per.umi.per.cb.info, umi.trim.length, mc.cores.large, mc.cores.small, error.prior.prob=0.001,
                            verbosity.level=0, prepare.only=FALSE) {
   reads.per.umi.per.cb <- reads.per.umi.per.cb.info$reads_per_umi
+
+  if (length(reads.per.umi.per.cb) == 0)
+    stop("Empty input")
+
+  if (length(reads.per.umi.per.cb[[1]][[1]][[2]]) == 0)
+    stop("Information about quality is required for UMI correction")
 
   trimmed <- list()
   trimmed$reads.per.umi.per.cb <- lapply(reads.per.umi.per.cb, TrimUmis, umi.trim.length)

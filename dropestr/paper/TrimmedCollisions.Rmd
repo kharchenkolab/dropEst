@@ -1,0 +1,227 @@
+---
+title: "10x Aml035 Post, collisions plots"
+output:
+  html_document:
+    df_print: kable
+    number_sections: yes
+    theme: cerulean
+    toc: yes
+  html_notebook: default
+---
+
+```{r global_options, include=FALSE}
+library(ggplot2)
+library(ggsci)
+library(ggpubr)
+library(ggridges)
+library(dplyr)
+library(parallel)
+library(reshape2)
+
+source("./Functions/PlotFuncs.R")
+source("./Functions/Functions.R")
+
+knitr::opts_chunk$set(fig.width=5, fig.height=3, echo=FALSE, warning=FALSE, message=FALSE)
+
+theme_set(theme_base)
+# kPlotsFolder <- '~/Data/Plots/Paper/Review/UmiCollisions/'
+```
+
+```{r}
+kDataPath <- '/d0-mendel/home/viktor_petukhov/Data/10x/aml035_post_transplant/est_10_20_umi_quality/'
+holder <- readRDS(paste0(kDataPath, '/aml035ost_transplant.rds'))
+reads_per_umi_per_cell <- holder$reads_per_umi_per_cell
+reads_per_umi_per_cell$reads_per_umi <- FilterNUmis(holder$reads_per_umi_per_cell$reads_per_umi)
+```
+
+```{r}
+TrimUmisWrap <- function(reads.per.umi.per.cell, trimmed.umi.length, reverse=FALSE) {
+  trimmed <- list()
+  trimmed$reads.per.umi.per.cb <- lapply(reads.per.umi.per.cell$reads_per_umi, TrimUmis,
+                                         trimmed.umi.length, reverse=reverse)
+  trimmed$umis.per.gene <- sapply(trimmed$reads.per.umi.per.cb, length)
+
+  umi.distribution <- GetUmisDistribution(trimmed$reads.per.umi.per.cb, trimmed.umi.length)
+  trimmed$umi.probabilities <- umi.distribution / sum(umi.distribution)
+
+  max.umi.per.gene <- max(trimmed$umis.per.gene)
+  trimmed$collisions.info <- FillCollisionsAdjustmentInfo(trimmed$umi.probabilities, max.umi.per.gene)
+  trimmed$neighbours.per.umi <- FillAdjacentUmisData(trimmed$umi.probabilities, adjacent_only=T, show_progress=0)[names(trimmed$umi.probabilities)]
+  return(trimmed)
+}
+
+MaxCharFreq <- function(str) {
+  return(max(table(strsplit(str, split='')) / nchar(str)))
+}
+
+MaxFreqDistribution <- function(tail.length, umi.distr.tail) {
+  substrs <- sapply(names(umi.distr.tail),
+                    function(n) substr(n, nchar(n) - tail.length + 1, nchar(n)))
+  max.frecs <- sapply(substrs, MaxCharFreq)
+  observed <- sapply(split(umi.distr.tail, max.frecs), sum) / sum(umi.distr.tail)
+
+  uniform <- sapply(1:10000, function(i) max(table(sample(1:4, size=tail.length, replace = T)) / tail.length))
+  estimated <- table(uniform) / length(uniform)
+
+  all.fracs <- union(names(estimated), names(observed))
+  all.observed <- setNames(rep(0, length(all.fracs)), all.fracs)
+  all.observed[names(observed)] <- observed
+  all.estimated <- setNames(rep(0, length(all.fracs)), all.fracs)
+  all.estimated[names(estimated)] <- estimated
+  all.fracs <- as.numeric(all.fracs)
+  
+  return(data.frame(observed=c(0, as.vector(all.observed), 0),
+                    estimated=c(0, as.vector(all.estimated), 0),
+                    fracs=c(min(all.fracs) - 1e-5, all.fracs, max(all.fracs) + 1e-5)))
+}
+```
+
+```{r}
+umi_lengths <- rep(6:10, 2)
+is_reverse <- c(rep(F, 5), rep(T, 5))
+
+trimmed <- mcmapply(function(i, b) TrimUmisWrap(reads_per_umi_per_cell, i, b),
+                    umi_lengths, is_reverse, SIMPLIFY = F, mc.cores=10)
+```
+
+# Collisions plot
+```{r}
+collisions_infos <- lapply(trimmed, function(d) d$collisions.info)
+dfs <- mapply(function(s, l, r) data.frame(Observed=1:length(s), Adjusted=s, UmiLength=l, IsReverse=r),
+              collisions_infos, umi_lengths, is_reverse, SIMPLIFY = F)
+
+df <- Reduce(rbind, dfs)
+df$AdjustedClassic <- mapply(AdjustGeneExpressionClassic, df$Observed, 4^df$UmiLength)
+df_s <- setNames(split(df, df$IsReverse), c('Reverse', 'Direct'))
+```
+
+```{r, fig.width=4, fig.height=5}
+plt_guide <- guides(color=guide_legend(title='UMI length', nrow = 2, order=1),
+                    linetype=guide_legend(title='UMI distribution', order=2, keywidth = 1.5))
+
+expand <- c(0.01, 0)
+
+fig_collisions <- ggplot(df_s$Direct, aes(x=Observed, col=as.factor(UmiLength))) + 
+  geom_line(aes(y=Adjusted - Observed, linetype='Empirical'), size=0.9) + #, trim back
+  geom_line(aes(y=AdjustedClassic - Observed, linetype='Uniform'), size=0.9) +
+  # geom_line(data=df_s$Reverse, mapping=aes(y=Adjusted - Observed, linetype='Empirical, trim front'), size=0.9) +
+  scale_x_continuous(expand = expand, breaks=seq(4000, 12000, 4000)) + scale_y_continuous(expand = expand) +
+  labs(x='#Observed UMIs', y='#Collisions') +
+  legend_pos(1, 1) + theme_pdf + plt_guide
+
+ggsave(fig_collisions, filename=paste0(kPlotsFolder, '/FigureCollisons.pdf'), height=8, width=4)
+fig_collisions
+```
+
+```{r, fig.width=4, fig.height=5}
+gg_collisions_ext <- ggplot(mapping=aes(x=Observed, col=as.factor(UmiLength), y=Adjusted / AdjustedClassic)) + 
+  geom_smooth(data=df_s$Direct, mapping=aes(linetype='Empirical, trim back'), size=0.9, se=F) +
+  geom_smooth(data=df_s$Reverse, mapping=aes(linetype='Empirical, trim front'), size=0.9, se=F) +
+  scale_x_continuous(expand = expand) + scale_y_continuous(expand = expand) +
+  labs(x='#Observed UMIs', y='#Collisions empirical / #Collisions uniform') +
+  legend_pos(1, 1) + theme_pdf + plt_guide
+
+gg_collisions_ext
+```
+
+# Aberrant mononucleotide stretches
+```{r}
+umi_distribution <- GetUmisDistribution(holder$reads_per_umi_per_cell$reads_per_umi, smooth=0)
+umi_distribution <- umi_distribution[umi_distribution > 0]
+
+umi_distribution_tail <- umi_distribution[umi_distribution > quantile(umi_distribution, 0.995)]
+```
+
+```{r}
+tail_lengths <- seq(2, 10, 2)
+distrs_by_length <- mclapply(tail_lengths, MaxFreqDistribution, umi_distribution_tail, mc.cores=10)
+plot_df <- lapply(1:length(tail_lengths),
+                  function(i) cbind(melt(distrs_by_length[[i]], id.vars = 'fracs'), TailLength=tail_lengths[i]))
+plot_df <- plot_df %>% bind_rows()
+```
+
+```{r, fig.width=4, fig.height=6}
+gl <- guide_legend(title='Distribution')
+gg_stretches <- ggplot(plot_df, aes(x = fracs, y = as.factor(TailLength), height = value,
+                                    fill=variable, linetype=variable)) + 
+  geom_density_ridges(stat = "identity", scale = 0.95, alpha=0.7) +
+  scale_x_continuous(expand = c(0.005, 0.005)) +
+  scale_y_discrete(expand = c(0.02, 0.02)) +
+  labs(x='Fraction of the most\nfrequent nucleotide', y='UMI tail length') +
+  theme_pdf + legend_pos(0.01, 0) +
+  guides(fill=gl, linetype=gl)
+
+gg_stretches
+```
+
+# Estimated number of adjacent UMIs
+```{r}
+SampleNoReps <- function(size, ids, probs) {
+  umis <- unique(sample(ids, size=size, prob=probs, replace=T))
+  while (length(umis) < size) {
+    umis <- c(umis, unique(sample(ids, size=size, prob=probs, replace=T)))
+  }
+  
+  return(umis[1:size])
+}
+
+SampleNumOfAdjacentUmis <- function(gene.size, umi.probabilities, neighbours.per.umi, uniform=FALSE) {
+  if (uniform) {
+    umis <- SampleNoReps(gene.size, ids=names(umi.probabilities), probs=NULL)
+  } else {
+    umis <- SampleNoReps(gene.size, ids=names(umi.probabilities), probs=umi.probabilities)
+  }
+  
+  rpu <- setNames(rep(1, gene.size), umis)
+  return(sum(GetAdjacentUmisNum(rpu, rpu, neighbours.per.umi)$Total))
+}
+
+SampleNumbersOfAdjacentUmis <- function(gene.size, trimmed.info, samples.num, uniform=FALSE) {
+  return(sapply(1:samples.num, function(i) 
+    SampleNumOfAdjacentUmis(gene.size, trimmed.info$umi.probabilities, trimmed.info$neighbours.per.umi, uniform=uniform)))
+}
+
+tr_cur <- trimmed[[1]]
+```
+
+```{r}
+gene_sizes <- list(2:10, 11:50, seq(60, 300, 10), seq(300, 500, 25), seq(600, 4090, 200), c(4050, 4095))
+sample_nums <- unlist(mapply(rep, c(100000, 100000, 15000, 1000, 500, 500), sapply(gene_sizes, length)))
+gene_sizes_f <- unlist(gene_sizes)
+
+adjacent_umis_num <- mcmapply(function(s, n) SampleNumbersOfAdjacentUmis(s, tr_cur, n, uniform=F), gene_sizes_f, sample_nums, mc.cores=30)
+adjacent_umis_num_unif <- mcmapply(function(s, n) SampleNumbersOfAdjacentUmis(s, tr_cur, n, uniform=T), gene_sizes_f, sample_nums, mc.cores=30)
+```
+
+```{r}
+plot_df <- data.frame(GeneSize=c(1, unlist(gene_sizes))) %>% 
+  mutate(ProbOfAdjacentUMIs=c(0, sapply(adjacent_umis_num, mean)) / GeneSize^2,
+         ProbOfAdjacentUMIsUnif=c(0, sapply(adjacent_umis_num_unif, mean)) / GeneSize^2)
+
+axis_ratio <- 200
+axis_offset <- 0.001
+
+gg_prob_ratio <- ggplot(plot_df, aes(x=GeneSize)) + 
+  geom_line(aes(y=ProbOfAdjacentUMIs, color='Empirical'), size=2, alpha=0.8) + 
+  geom_line(aes(y=ProbOfAdjacentUMIsUnif, color='Uniform'), size=2, alpha=0.78) +
+  geom_smooth(aes(y=ProbOfAdjacentUMIs / ProbOfAdjacentUMIsUnif / axis_ratio - axis_offset, linetype='Empirical / Uniform'), size=1.5, color='black') +
+  labs(x = '#UMIs per gene', y='Adjacent UMI probability') +
+  scale_x_log10(expand=c(1e-10, 0)) + annotation_logticks(side='b') +
+  scale_y_continuous(expand=c(1e-5, 1e-5), limits=c(0.002, 0.006), sec.axis=sec_axis(trans=~.*axis_ratio + axis_offset*axis_ratio, name='Probabilities ratio')) +
+  scale_linetype_manual(values='dashed', name='Probabilities ratio') +
+  guides(color=guide_legend(title='UMI distribution')) + 
+  guides(linetype=guide_legend(override.aes=list(linetype=6))) +
+  theme_pdf + legend_pos(0.5, 0) + 
+  theme(legend.box='horizontal', legend.key.width=unit(0.3, 'in'))
+gg_prob_ratio
+```
+
+```{r, fig.height=8, fig.width=7}
+gg_upper <- cowplot::plot_grid(gg_stretches, gg_collisions_ext, ncol=2, labels=c('A', 'B'), align='h', label_x=0.03)
+gg_figure <- cowplot::plot_grid(gg_upper, gg_prob_ratio + theme(plot.margin=margin(0, 0, 0, 0, 'in')), 
+                                nrow=2, labels=c('', 'C'), align='h', rel_heights=c(3, 2), label_x=0.03, label_y=1.12)
+
+# ggsave(gg_figure, filename=paste0(kPlotsFolder, 'CollisionsSupFig.pdf'), width=8, height=7)
+gg_figure
+```
+

@@ -7,15 +7,10 @@ EstimatedNumberOfAdjacentUmisByGeneSize <- function(dp.matrices, neighb.prob.ind
 }
 
 #' @export
-ErrorByGeneSize <- function(dp.matrices, neighb.prob.index, umi.probabilities, max.adjacent.umis.num, error.prior.prob, collisions.info) {
-  # estimated.nn <- EstimatedNumberOfAdjacentUmisByGeneSize(dp.matrices, neighb.prob.index, umi.probabilities)
-  # umis.per.gene <- sapply(1:length(estimated.nn), DeadjustGeneExpression, collisions.info) - 1 # "-1" excludes current UMI
-  # umis.per.gene <- sapply(1:ncol(dp.matrices[[1]]), DeadjustGeneExpression, collisions.info) - 1 # "-1" excludes current UMI
-  # umis.per.gene[1] <- 1
+ErrorByGeneSize <- function(dp.matrices, neighb.prob.index, umi.probabilities, max.adjacent.umis.num, error.prior.prob) {
+  estimated.nn <- EstimatedNumberOfAdjacentUmisByGeneSize(dp.matrices, neighb.prob.index, umi.probabilities)
 
-  # return(error.prior.prob * (max.adjacent.umis.num - estimated.nn) / max.adjacent.umis.num)
-  # return(error.prior.prob * (max.adjacent.umis.num - estimated.nn) / max.adjacent.umis.num / umis.per.gene)
-  return(error.prior.prob)
+  return(error.prior.prob * (max.adjacent.umis.num - estimated.nn) / max.adjacent.umis.num)
 }
 
 #' @export
@@ -77,7 +72,7 @@ SmoothDistribution <- function(values, smooth, max.value=NULL, smooth.probs=FALS
 }
 
 TrainNBNegative <- function(train.data, distribution.smooth, nucleotide.pairs.number, umi.length, quality.prior,
-                            correction.info, collisions.info, umi.probabilities, error.prior.prob) {
+                            correction.info, umi.probabilities, error.prior.prob) {
   params.neg <- list()
 
   llBetabinom <- function(prob, theta) {
@@ -107,14 +102,13 @@ TrainNBNegative <- function(train.data, distribution.smooth, nucleotide.pairs.nu
   params.neg$Quality <- quality.prior
 
   params.neg$ErrorProbByGeneSize <- log(ErrorByGeneSize(correction.info$dp.matrices, correction.info$neighb.prob.index,
-                                                        umi.probabilities, 3 * umi.length, error.prior.prob,
-                                                        collisions.info=collisions.info))
+                                                        umi.probabilities, 3 * umi.length, error.prior.prob))
 
   return(params.neg)
 }
 
 #' @export
-TrainNBClassifier <- function(reads.per.umi.per.cb, distribution.smooth, correction.info, collisions.info,
+TrainNBClassifier <- function(reads.per.umi.per.cb, distribution.smooth, correction.info,
                               umi.probabilities, quality.quants.num=15, quality.smooth=0.01, gene.size.quants.num=5,
                               error.prior.prob=0.001) {
   umis.per.gene <- sapply(reads.per.umi.per.cb, length)
@@ -138,8 +132,7 @@ TrainNBClassifier <- function(reads.per.umi.per.cb, distribution.smooth, correct
                              nucleotide.pairs.number=NumberOfNucleotidePairs(),
                              umi.length=nchar(names(reads.per.umi.per.cb[[1]])[1]),
                              quality.prior=quality.probs$negative, correction.info=correction.info,
-                             collisions.info=collisions.info, umi.probabilities=umi.probabilities,
-                             error.prior.prob=error.prior.prob)
+                             umi.probabilities=umi.probabilities, error.prior.prob=error.prior.prob)
 
   # Distribution over all data
   rpu.probs.by.gene.size.info <- GetRpuProbsByGeneSize(reads.per.umi.per.cb, gene.size.quants.num, distribution.smooth, log.probs=T)
@@ -175,8 +168,7 @@ PredictLeftPartDependent <- function(clf, classifier.df, gene.size) {
   max.rpu.prob.err <- rpu.probs[pmin(classifier.df$MaxRpU + classifier.df$MinRpU, length(rpu.probs))]
   max.rpu.prob <- rpu.probs[pmin(classifier.df$MaxRpU, length(rpu.probs))]
   min.rpu.prob <- rpu.probs[pmin(classifier.df$MinRpU, length(rpu.probs))]
-  # err.prob <- clf$Negative$ErrorProbByGeneSize[gene.size]
-  err.prob <- clf$Negative$ErrorProbByGeneSize
+  err.prob <- clf$Negative$ErrorProbByGeneSize[gene.size]
 
   return((max.rpu.prob.err + err.prob) - (max.rpu.prob + min.rpu.prob + log(1 - exp(err.prob))))
 }
