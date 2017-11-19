@@ -82,6 +82,9 @@ These variables should be set to the path to the installed library. It can be do
 
 In case you have some issues with the linker for specific library, please try to build this library manually with the version of compiler, which you're going to use for dropEst build.
 
+#### Dockers
+In case you still can't build the project, dockerfiles for the most popular linux distributions are provided (see `dropEst/dockers/`). You can either build and run these dockers or just read dockerfiles for the further instructions on dropEst installation for specific distribution.
+
 ## dropTag
     droptag -- generate tagged fastq files for alignment
 
