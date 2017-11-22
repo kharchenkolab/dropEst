@@ -15,14 +15,16 @@
 #include "TagsSearch/TagsFinderBase.h"
 #include "TagsSearch/IndropV3TagsFinder.h"
 #include <TagsSearch/ConcurrentGzWriter.h>
+#include <TagsSearch/IClipTagsFinder.h>
 #include "Tools/Logs.h"
 
 using namespace std;
 using namespace TagsSearch;
 
-const std::string PROCESSING_CONFIG_PATH = "config.TagsSearch.Processing";
-const std::string BARCODES_CONFIG_PATH = "config.TagsSearch.BarcodesSearch";
-const std::string SPACER_CONFIG_PATH = "config.TagsSearch.SpacerSearch";
+const std::string CONFIG_PATH = "config.TagsSearch";
+const std::string PROCESSING_CONFIG_PATH = CONFIG_PATH + ".Processing";
+const std::string BARCODES_CONFIG_PATH = CONFIG_PATH + ".BarcodesSearch";
+const std::string SPACER_CONFIG_PATH = CONFIG_PATH + ".SpacerSearch";
 
 static const std::string SCRIPT_NAME = "droptag";
 
@@ -75,37 +77,64 @@ static void check_files_existence(const Params &params)
 
 shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const boost::property_tree::ptree &pt)
 {
+	auto const &config = pt.get_child(CONFIG_PATH);
+	std::string protocol_type = config.get<std::string>("protocol", "");
+	if (protocol_type.empty())
+		throw std::runtime_error("Protocol is empty. Please, specify it in the config (TagsSearch/protocol)");
+
 	auto const &processing_config = pt.get_child(PROCESSING_CONFIG_PATH, boost::property_tree::ptree());
 
 	size_t max_file_size = processing_config.get<size_t>("reads_per_out_file", std::numeric_limits<size_t>::max());
 	auto writer = std::make_shared<ConcurrentGzWriter>(params.base_name, "fastq.gz", max_file_size);
 
-	if (params.read_files.size() == 4)
+	const std::string input_files_num_error_text = "Unexpected number of read files: " +
+			std::to_string(params.read_files.size()) +
+			" for protocol \"" + protocol_type + "\"";
+
+	if (protocol_type == "indrop3")
 	{
-		if (params.lib_tag == "")
-			throw std::runtime_error("For IndropV3 with library tag, tag (-t option) should be specified");
+		if (params.read_files.size() == 4)
+		{
+			if (params.lib_tag == "")
+				throw std::runtime_error("For IndropV3 with library tag, tag (-t option) should be specified");
 
-		return shared_ptr<TagsFinderBase>(
-				new IndropV3LibsTagsFinder(params.read_files, params.lib_tag, pt.get_child(BARCODES_CONFIG_PATH),
-				                           processing_config, writer, params.save_stats, params.save_reads_names));
-	}
+			return shared_ptr<TagsFinderBase>(
+					new IndropV3LibsTagsFinder(params.read_files, params.lib_tag, pt.get_child(BARCODES_CONFIG_PATH),
+					                           processing_config, writer, params.save_stats, params.save_reads_names));
+		}
 
-	if (params.read_files.size() == 3)
+		if (params.read_files.size() != 3)
+			throw std::runtime_error(input_files_num_error_text);
+
 		return shared_ptr<TagsFinderBase>(
 				new IndropV3TagsFinder(params.read_files, pt.get_child(BARCODES_CONFIG_PATH), processing_config,
 				                       writer, params.save_stats, params.save_reads_names));
+	}
 
-	if (params.read_files.size() != 2)
-		throw std::runtime_error("Unexpected number of read files: " + std::to_string(params.read_files.size()));
+	if (protocol_type == "indrop")
+	{
+		if (params.read_files.size() != 2)
+			throw std::runtime_error(input_files_num_error_text);
 
-	if (pt.get<std::string>("config.TagsSearch.SpacerSearch.barcode_mask", "") != "")
+		if (pt.get<std::string>(SPACER_CONFIG_PATH + ".barcode_mask", "") != "")
+			return shared_ptr<TagsFinderBase>(
+					new FixPosSpacerTagsFinder(params.read_files, pt.get_child(SPACER_CONFIG_PATH), processing_config,
+					                           writer, params.save_stats, params.save_reads_names));
+
 		return shared_ptr<TagsFinderBase>(
-				new FixPosSpacerTagsFinder(params.read_files, pt.get_child(SPACER_CONFIG_PATH), processing_config,
-				                           writer, params.save_stats, params.save_reads_names));
+				new IndropV1TagsFinder(params.read_files, pt.get_child(SPACER_CONFIG_PATH), processing_config,
+				                       writer, params.save_stats, params.save_reads_names));
+	}
 
-	return shared_ptr<TagsFinderBase>(
-			new IndropV1TagsFinder(params.read_files, pt.get_child(SPACER_CONFIG_PATH), processing_config,
-			                       writer, params.save_stats, params.save_reads_names));
+	if (protocol_type == "iclip")
+	{
+		if (params.read_files.size() != 1)
+			throw std::runtime_error(input_files_num_error_text);
+
+		return shared_ptr<TagsFinderBase>(
+				new IClipTagsFinder(params.read_files, pt.get_child(BARCODES_CONFIG_PATH), processing_config,
+				                    writer, params.save_stats, params.save_reads_names));
+	}
 }
 
 

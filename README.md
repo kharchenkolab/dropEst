@@ -16,6 +16,7 @@ Pipeline for estimating molecular count matrices for droplet-based single-cell R
 			- [inDrop v1 & v2](#indrop-v1--v2)
 			- [inDrop v3](#indrop-v3)
 			- [10x](#10x)
+			- [iCLIP](#iCLIP)
 		- [Command line arguments for dropTag](#command-line-arguments-for-droptag)
 	- [Alignment](#alignment)
 	    - [Alignment with TopHat](#alignment-with-tophat)
@@ -72,6 +73,7 @@ cmake . && make
 ```
 
 ### Troubleshooting
+#### Local libraries installation
 If `cmake` can't find one of the libraries, or you want to use some specific versions, which are currently not in the default path, use corresponding cmake variables:
 * Boost: BOOST_ROOT.
 * BamTools: BAMTOOLS_ROOT.
@@ -81,6 +83,9 @@ These variables should be set to the path to the installed library. It can be do
 
 
 In case you have some issues with the linker for specific library, please try to build this library manually with the version of compiler, which you're going to use for dropEst build.
+
+#### Boost 1.65
+CMake < 3.10 has known issues with boost 1.65. If you have such combination, please try either to upgrade cmake or to downgrade boost.
 
 #### Dockers
 In case you still can't build the project, dockerfiles for the most popular linux distributions are provided (see `dropEst/dockers/`). You can either build and run these dockers or just read dockerfiles for the further instructions on dropEst installation for specific distribution.
@@ -137,6 +142,15 @@ Example command:
 ```
 
 While dropTag provides way to demultiplex 10x data, [Cell Ranger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger) is still recommended tool for this. [dropEst](##dropEst) phase can be ran on the Cell Ranger demultiplexed .bam file to obtain data in the format, optimized for the subsequent analysis.
+
+#### iCLIP
+* File 1: Gene reads with barcodes at the beginning of the sequence
+
+Example config file is located at "*dropEst/configs/iclip.xml*".  
+Example command:
+```bash
+./droptag -c dropEst/configs/iclip.xml [-S] data.fastq
+```
 
 ### Command line arguments for dropTag
 *  -c, --config filename: xml file with droptag parameters  
