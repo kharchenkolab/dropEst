@@ -288,8 +288,12 @@ FilterUmisInGene <- function(cur.gene, neighbours.per.umi, classifier, neighbour
   return(cur.gene[names(filt.reads.per.umi)])
 }
 
+
+
 #' @export
-FilterUmisInGeneNew <- function(cur.gene, umi.probabilities, probs.given.reads.large) {
+FilterUmisInGeneNew <- function(cur.gene, umi.probabilities, probs.given.reads.large, classifier) {
+  divSum <- function(x) x / sum(x)
+
   if (length(cur.gene$rpus) == 1)
     return(cur.gene$rpus)
 
@@ -302,11 +306,26 @@ FilterUmisInGeneNew <- function(cur.gene, umi.probabilities, probs.given.reads.l
   if (nrow(classifier.df) == 0)
     return(cur.gene)
 
-  classifier.df <- classifier.df[order(classifier.df$Target, classifier.df$Base),]
+  dbetabinom <- function(...) emdbook::dbetabinom(..., prob=classifier$ReadErrorProb, theta=classifier$ReadsPerUmiNegTheta)
+  errorsNumMle <- function(error.prob.rl, error.prob.rs, real.prob.rs) {
+    error.part.prob <- c(1, error.prob.rs)
+    real.part.prob <- rev(c(1, cumprod(rev(real.prob.rs))))
+    return(which.max(error.prob.rl * error.part.prob * real.part.prob) - 1)
+  }
 
-  filtered.mask <- classifier.df %>% dplyr::group_by(Target, MaxRpU) %>%
-    dplyr::mutate(IsMerged=1:length(Base) <= (apply(as.matrix(probs.given.reads.large[, MaxRpU]), 2, which.max) - 1))
-  filtered.mask <- as.vector(filtered.mask$IsMerged)
+  # TODO: replace RpU with score
+  classifier.df <- classifier.df[order(classifier.df$Target, classifier.df$MinRpU, classifier.df$Base),]
+
+  classifier.df <- classifier.df %>% dplyr::group_by(MaxRpU) %>%
+    dplyr::mutate(RealProbRS = classifier$ReadsPerUmi[MinRpU] / sum(classifier$ReadsPerUmi[1:unique(MaxRpU)]),
+                  ErrorProbRS = dbetabinom(cumsum(MinRpU), size=cumsum(MinRpU)+MaxRpU) / (1 - dbetabinom(0, size=cumsum(MinRpU)+MaxRpU)))
+
+  classifier.df <- classifier.df[order(classifier.df$Target, classifier.df$MinRpU, classifier.df$Base),]
+
+  classifier.df <- classifier.df %>% dplyr::group_by(Target, MaxRpU) %>%
+    dplyr::mutate(IsMerged=1:n() <= errorsNumMle(divSum(probs.given.reads.large[, MaxRpU][1:(n() + 1)]), ErrorProbRS, RealProbRS))
+
+  filtered.mask <- classifier.df$IsMerged
 
   if (any(filtered.mask)) {
     filt.predictions <- classifier.df[filtered.mask,]
