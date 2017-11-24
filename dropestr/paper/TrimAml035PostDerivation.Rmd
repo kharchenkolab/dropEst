@@ -1,0 +1,112 @@
+---
+title: "10x Aml035 Post"
+output:
+  html_document:
+    df_print: kable
+    number_sections: yes
+    theme: cerulean
+    toc: yes
+  html_notebook: default
+---
+
+```{r global_options, include=FALSE}
+library(ggplot2)
+library(ggsci)
+library(ggpubr)
+library(ggrastr)
+library(dplyr)
+library(parallel)
+library(reshape2)
+
+source("./Functions/PlotFuncs.R")
+source("./Functions/Functions.R")
+
+knitr::opts_chunk$set(fig.width=5, fig.height=3, echo=FALSE, warning=FALSE, message=FALSE)
+
+theme_set(theme_base)
+kPlotsFolder <- '~/Data/Plots/Paper/Review/UmiErrors/'
+kDataPath <- '/d0-mendel/home/viktor_petukhov/Data/10x/aml035_post_transplant/est_10_20_umi_quality/'
+```
+
+```{r}
+# holder <- readRDS(paste0(kDataPath, '/aml035ost_transplant.rds'))
+# reads_per_umi_per_cell <- holder$reads_per_umi_per_cell
+# reads_per_umi_per_cell$reads_per_umi <- FilterNUmis(holder$reads_per_umi_per_cell$reads_per_umi)
+# 
+# saveRDS(reads_per_umi_per_cell, paste0(kDataPath, 'reads_per_umi_per_cell.rds'))
+
+# reads_per_umi_per_cell <- readRDS(paste0(kDataPath, 'reads_per_umi_per_cell.rds'))
+# length(reads_per_umi_per_cell$reads_per_umi)
+```
+```{r}
+# reads_per_umi_per_cell$reads_per_umi <- reads_per_umi_per_cell$reads_per_umi[1:100000]
+```
+
+```{r}
+raw <- readRDS(paste0(kDataPath, 'raw.rds'))
+trimmed <- readRDS(paste0(kDataPath, 'trimmed_6.rds'))
+```
+
+# Reads per UMI large
+```{r}
+sum_max_rpus_paired <- lapply(trimmed$reads.per.umi.per.cb[trimmed$umis.per.gene == 2], ExtractReadsPerUmi, one.gene=T) %>% 
+  sapply(max) %>% sum()
+sum_rpus_single <- sum(unlist(ExtractReadsPerUmi(trimmed$reads.per.umi.per.cb[trimmed$umis.per.gene == 1])))
+errors_num <- sum(trimmed$umis.per.gene == 2)
+read_error_prob <- errors_num / (sum_max_rpus_paired + sum_rpus_single + errors_num)
+read_error_prob
+```
+
+```{r}
+reads_num <- max(unlist(mclapply(trimmed$reads.per.umi.per.cb, function(x)
+  max(ExtractReadsPerUmi(x, one.gene=T)), mc.cores=10)))
+
+umi_num <- nchar(names(trimmed$umi.probabilities)[1]) * 3 - 1
+
+ErrorNumProb <- function(error.num, reads.num, error.prob, p.collisions) {
+  if (error.num > reads.num)
+    return(0)
+  
+  cell <- function(i) {
+    dbinom(i, size=reads.num, prob=error.prob) * p.collisions[error.num + 1, i + 1]
+  }
+  return(sum(sapply(error.num:reads.num, cell)))
+}
+
+ErrorProbsGivenNumOfReadsLarge <- function(max.reads.num, error.prob, umi.num) {
+  p.collisions <- FillDpMatrix(1, umi.num + 1, max.reads.num + 1)
+  probs <- sapply(1:max.reads.num, function(r) sapply(0:umi.num, function(e) 
+    ErrorNumProb(e, r, error.prob, p.collisions)))
+  
+  colnames(probs) <- paste(1:ncol(probs))
+  rownames(probs) <- paste(0:(nrow(probs) - 1))
+  return(probs)
+}
+
+probs_given_reads_large <- ErrorProbsGivenNumOfReadsLarge(reads_num, read_error_prob, umi_num)
+```
+
+```{r}
+rpus_filt <- mclapply(trimmed$correction.info$rpus.with.inds, FilterUmisInGeneNew, trimmed$umi.probabilities, probs_given_reads_large, mc.cores=30)
+
+trimmed$filt_cells$NB <- trimmed$collisions.info[sapply(rpus_filt, length)]
+```
+
+```{r}
+ggs <- PlotTrimmedCorrections(trimmed, raw, 6, raster=F)
+ggs$large
+```
+
+```{r}
+### Validation
+# sampleReads <- function(reads.num, error.prob, umi.num) {
+#   return(sample(1:umi.num, size=sum(rbinom(reads.num, 1, error.prob)), replace=T) %>% unique() %>% length())
+# }
+# nums <- mclapply(1:10000, function(i) sapply(1:reads_num, sampleReads, read_error_prob, umi_num), mc.cores=30)
+# nums_m <- Reduce(cbind, nums)
+# 
+# r0 <- apply(nums_m, 1, function(x) c(table(x) / length(x), rep(0, umi_num - max(x))))
+# 
+# Reduce(rbind, r0[1:25])
+```
+

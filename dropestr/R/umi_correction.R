@@ -19,11 +19,11 @@ if (requireNamespace("parallel", quietly = TRUE)) {
 }
 
 #' @export
-ExtractReadsPerUmi <- function(reads.per.umi.per.cb, one.gene=F) {
+ExtractReadsPerUmi <- function(reads.per.umi.per.cb, one.gene=F, mc.cores=1) {
   if (one.gene)
     return(sapply(reads.per.umi.per.cb, `[[`, 1))
 
-  return(lapply(reads.per.umi.per.cb, sapply, `[[`, 1))
+  return(plapply(reads.per.umi.per.cb, sapply, `[[`, 1, mc.cores=mc.cores))
 }
 
 #' @export
@@ -286,6 +286,42 @@ FilterUmisInGene <- function(cur.gene, neighbours.per.umi, classifier, neighbour
     return(cur.gene[which.max(cur.reads.per.umi)])
 
   return(cur.gene[names(filt.reads.per.umi)])
+}
+
+#' @export
+FilterUmisInGeneNew <- function(cur.gene, umi.probabilities, probs.given.reads.large) {
+  if (length(cur.gene$rpus) == 1)
+    return(cur.gene$rpus)
+
+  umi.probabilities <- umi.probabilities[cur.gene$indexes + 1]
+
+  cur.gene <- cur.gene$rpus
+  cur.neighborhood <- SubsetAdjacentUmis(names(cur.gene))
+
+  classifier.df <- PrepareClassifierData(cur.gene, cur.neighborhood, umi.probabilities)
+  if (nrow(classifier.df) == 0)
+    return(cur.gene)
+
+  classifier.df <- classifier.df[order(classifier.df$Target, classifier.df$Base),]
+
+  filtered.mask <- classifier.df %>% dplyr::group_by(Target, MaxRpU) %>%
+    dplyr::mutate(IsMerged=1:length(Base) <= (apply(as.matrix(probs.given.reads.large[, MaxRpU]), 2, which.max) - 1))
+  filtered.mask <- as.vector(filtered.mask$IsMerged)
+
+  if (any(filtered.mask)) {
+    filt.predictions <- classifier.df[filtered.mask,]
+    filtered.mask[which(filtered.mask)] <- ResolveUmisDependencies(as.character(filt.predictions$Base),
+                                                                   as.character(filt.predictions$Target),
+                                                                   filt.predictions$MaxRpU)
+  }
+
+  not.filtered.umis <- base::setdiff(names(cur.gene), classifier.df$Base[filtered.mask])
+  cur.reads.per.umi <- ExtractReadsPerUmi(cur.gene, one.gene=T)
+
+  if (length(not.filtered.umis) == 0)
+    return(cur.gene[which.max(cur.reads.per.umi)])
+
+  return(cur.gene[not.filtered.umis])
 }
 
 #' @export
