@@ -71,6 +71,30 @@ EstimateReadsBetaBinomial <- function(reads.small, reads.large, error.prob) {
   
   return(params$theta)
 }
+
+ReadsPerUmiDataset <- function(reads.per.umi.per.cb, max.umis.per.cb=4) { # TODO: merge it with TrainNBClassifier
+  umis.per.gene <- sapply(reads.per.umi.per.cb, length)
+  reads.large.all <- unlist(ExtractReadsPerUmi(reads.per.umi.per.cb[umis.per.gene == 1]))
+  reads.small.all <- rep(0, length(reads.large.all))
+  
+  for (i in 2:max.umis.per.cb) {
+    rpus <- ExtractReadsPerUmi(reads.per.umi.per.cb[umis.per.gene == i])
+    adj.umis <- lapply(rpus, function(g) sapply(SubsetAdjacentUmis(names(g)), length))
+    nn <- setNames(sapply(adj.umis, max), names(sapply(adj.umis, which.max)))
+    
+    selected.inds <- which(nn == i - 1)
+    selected.inds <- selected.inds[sapply(adj.umis[selected.inds], which.max) == 
+                                     sapply(rpus[selected.inds], which.max)]
+    
+    reads.small <- mapply(function(r, n) sum(r[names(r) != n]), rpus[selected.inds], names(selected.inds))
+    reads.large <- mapply(function(r, n) r[[n]], rpus[selected.inds], names(selected.inds))
+    
+    reads.small.all <- c(reads.small.all, reads.small)
+    reads.large.all <- c(reads.large.all, reads.large)
+  }
+  
+  return(data.frame(Large=reads.large.all, Small=reads.small.all))
+}
 ```
 
 ```{r}
@@ -102,32 +126,6 @@ read_error_prob
 ```
 
 ```{r}
-ReadsPerUmiDataset <- function(reads.per.umi.per.cb, max.umis.per.cb=4) {
-  umis.per.gene <- sapply(reads.per.umi.per.cb, length)
-  reads.large.all <- unlist(ExtractReadsPerUmi(reads.per.umi.per.cb[umis.per.gene == 1]))
-  reads.small.all <- rep(0, length(reads.large.all))
-  
-  for (i in 2:max.umis.per.cb) {
-    rpus <- ExtractReadsPerUmi(reads.per.umi.per.cb[umis.per.gene == i])
-    adj.umis <- lapply(rpus, function(g) sapply(SubsetAdjacentUmis(names(g)), length))
-    nn <- setNames(sapply(adj.umis, max), names(sapply(adj.umis, which.max)))
-    
-    selected.inds <- which(nn == i - 1)
-    selected.inds <- selected.inds[sapply(adj.umis[selected.inds], which.max) == 
-                                     sapply(rpus[selected.inds], which.max)]
-    
-    reads.small <- mapply(function(r, n) sum(r[names(r) != n]), rpus[selected.inds], names(selected.inds))
-    reads.large <- mapply(function(r, n) r[[n]], rpus[selected.inds], names(selected.inds))
-    
-    reads.small.all <- c(reads.small.all, reads.small)
-    reads.large.all <- c(reads.large.all, reads.large)
-  }
-  
-  return(data.frame(Large=reads.large.all, Small=reads.small.all))
-}
-```
-
-```{r}
 reads_per_umi_train <- ReadsPerUmiDataset(trimmed$reads.per.umi.per.cb)
 theta <- EstimateReadsBetaBinomial(reads_per_umi_train$Small, reads_per_umi_train$Large, read_error_prob)
 reads_num <- 3
@@ -147,19 +145,21 @@ rpu_distribution <- SmoothDistribution(unlist(rpus_extracted) - 1, 10, log.probs
 ```
 
 ```{r}
-# rpu_distribution[1:r_max] / sum(rpu_distribution[1:r_max])
-classifier <- list(ReadsPerUmi=rpu_distribution, ReadsPerUmiNegTheta=theta, ReadErrorProb=read_error_prob)
+classifier <- TrainNBClassifier(trimmed$reads.per.umi.per.cb, 50, trimmed$correction.info, trimmed$umi.probabilities)
+classifier$RpU <- list(Distribution=log(rpu_distribution), NegDistParams=list(Theta=theta, Prob=read_error_prob), ErrNumRL=probs_given_reads_large)
 ```
 
 ```{r}
-classifier_df <- data.frame(Base=names(trimmed$umi.probabilities)[1:10], Target='AAAAAA', MinRpU=1, MaxRpU=44)
+classifier_df <- data.frame(Base=names(trimmed$umi.probabilities)[1:10], Target='AAAAAA', Quality = 52, MinRpU=1, MaxRpU=25)
+PredictNew(classifier, classifier_df)
 ```
+
 ```{r}
 rpus_filt <- mclapply(trimmed$correction.info$rpus.with.inds, FilterUmisInGeneNew, trimmed$umi.probabilities, 
-                      probs_given_reads_large, classifier, mc.cores=30)
+                      classifier, mc.cores=30)
 
-rpus_filt <- lapply(trimmed$correction.info$rpus.with.inds[1:100], FilterUmisInGeneNew, trimmed$umi.probabilities, 
-                      probs_given_reads_large, classifier)
+rpus_filt <- lapply(trimmed$correction.info$rpus.with.inds[1:1000], FilterUmisInGeneNew, trimmed$umi.probabilities, 
+                      classifier)
 
 r0 <- FilterUmisInGeneNew(trimmed$correction.info$rpus.with.inds[trimmed$umis.per.gene == 50][[2]], trimmed$umi.probabilities, probs_given_reads_large, classifier)
 
@@ -177,48 +177,10 @@ ggs$small
 
 ```{r}
 ggs <- PlotTrimmedCorrections(trimmed, raw, 6, raster=F)
-ggs$large
+ggs$large + theme_pdf()
 ```
 
 ```{r}
-ggs$small
-```
-
-
-
-```{r}
-# trimmed$correction.info$rpus.with.inds
-# trimmed$correction.info$neighbours.per.umi
-
-# (cur_gene <- ExtractReadsPerUmi(trimmed$reads.per.umi.per.cb[trimmed$umis.per.gene > 3][[3]], one.gene=T))
-(cur_gene <- trimmed$reads.per.umi.per.cb[trimmed$umis.per.gene > 3][[3]]) # [[3]]
-
-cur_neighborhood <- SubsetAdjacentUmis(names(cur_gene))
-classifier_df <- PrepareClassifierData(cur_gene, cur_neighborhood, trimmed$umi.probabilities)
-classifier_df <- classifier_df[order(classifier_df$Target, classifier_df$Base),]
-
-filtered_mask <- classifier_df %>% group_by(Target, MaxRpU) %>% 
-  mutate(IsMerged=1:length(Base) <= (apply(as.matrix(probs_given_reads_large[, MaxRpU]), 2, which.max) - 1)) %>%
-  .$IsMerged
-
-if (any(filtered_mask)) {
-  filt_predictions <- classifier_df[filtered_mask,]
-  filtered_mask[which(filtered_mask)] <- ResolveUmisDependencies(as.character(classifier_df$Base),
-                                                                 as.character(classifier_df$Target),
-                                                                 classifier_df$MaxRpU)
-}
-```
-
-```{r}
-### Validation
-# sampleReads <- function(reads.num, error.prob, umi.num) {
-#   return(sample(1:umi.num, size=sum(rbinom(reads.num, 1, error.prob)), replace=T) %>% unique() %>% length())
-# }
-# nums <- mclapply(1:10000, function(i) sapply(1:reads_num, sampleReads, read_error_prob, umi_num), mc.cores=30)
-# nums_m <- Reduce(cbind, nums)
-# 
-# r0 <- apply(nums_m, 1, function(x) c(table(x) / length(x), rep(0, umi_num - max(x))))
-# 
-# Reduce(rbind, r0[1:25])
+ggs$small + theme_pdf()
 ```
 

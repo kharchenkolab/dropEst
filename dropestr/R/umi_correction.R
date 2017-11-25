@@ -288,12 +288,8 @@ FilterUmisInGene <- function(cur.gene, neighbours.per.umi, classifier, neighbour
   return(cur.gene[names(filt.reads.per.umi)])
 }
 
-
-
 #' @export
-FilterUmisInGeneNew <- function(cur.gene, umi.probabilities, probs.given.reads.large, classifier) {
-  divSum <- function(x) x / sum(x)
-
+FilterUmisInGeneNew <- function(cur.gene, umi.probabilities, classifier) {
   if (length(cur.gene$rpus) == 1)
     return(cur.gene$rpus)
 
@@ -306,32 +302,14 @@ FilterUmisInGeneNew <- function(cur.gene, umi.probabilities, probs.given.reads.l
   if (nrow(classifier.df) == 0)
     return(cur.gene)
 
-  dbetabinom <- function(...) emdbook::dbetabinom(..., prob=classifier$ReadErrorProb, theta=classifier$ReadsPerUmiNegTheta)
-  errorsNumMle <- function(error.prob.rl, error.prob.rs, real.prob.rs) {
-    error.part.prob <- c(1, error.prob.rs)
-    real.part.prob <- rev(c(1, cumprod(rev(real.prob.rs))))
-    return(which.max(error.prob.rl * error.part.prob * real.part.prob) - 1)
-  }
+  prediction <- PredictNew(classifier, classifier.df)
 
-  # TODO: replace RpU with score
-  classifier.df <- classifier.df[order(classifier.df$Target, classifier.df$MinRpU, classifier.df$Base),]
-
-  classifier.df <- classifier.df %>% dplyr::group_by(MaxRpU) %>%
-    dplyr::mutate(RealProbRS = classifier$ReadsPerUmi[MinRpU] / sum(classifier$ReadsPerUmi[1:unique(MaxRpU)]),
-                  ErrorProbRS = dbetabinom(cumsum(MinRpU), size=cumsum(MinRpU)+MaxRpU) / (1 - dbetabinom(0, size=cumsum(MinRpU)+MaxRpU)))
-
-  classifier.df <- classifier.df[order(classifier.df$Target, classifier.df$MinRpU, classifier.df$Base),]
-
-  classifier.df <- classifier.df %>% dplyr::group_by(Target, MaxRpU) %>%
-    dplyr::mutate(IsMerged=1:n() <= errorsNumMle(divSum(probs.given.reads.large[, MaxRpU][1:(n() + 1)]), ErrorProbRS, RealProbRS))
-
-  filtered.mask <- classifier.df$IsMerged
-
+  filtered.mask <- prediction$IsMerged
   if (any(filtered.mask)) {
-    filt.predictions <- classifier.df[filtered.mask,]
+    filt.predictions <- prediction[filtered.mask,]
     filtered.mask[which(filtered.mask)] <- ResolveUmisDependencies(as.character(filt.predictions$Base),
                                                                    as.character(filt.predictions$Target),
-                                                                   filt.predictions$MaxRpU)
+                                                                   filt.predictions$MaxRpU * 10000 + filt.predictions$MinRpU) # TODO: use score for order
   }
 
   not.filtered.umis <- base::setdiff(names(cur.gene), classifier.df$Base[filtered.mask])

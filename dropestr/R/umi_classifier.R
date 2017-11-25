@@ -172,3 +172,34 @@ PredictLeftPartDependent <- function(clf, classifier.df, gene.size) {
 
   return((max.rpu.prob.err + err.prob) - (max.rpu.prob + min.rpu.prob + log(1 - exp(err.prob))))
 }
+
+#' @export #TODO: not export
+PredictNew <- function(classifier, classifier.df) {
+  divSum <- function(x) x / sum(x)
+  dbetabinom <- function(...) emdbook::dbetabinom(..., prob=classifier$RpU$NegDistParams$Prob, theta=classifier$RpU$NegDistParams$Theta)
+  errorsNumMle <- function(error.prob.rl, log.error.prob, log.real.prob) {
+    error.part.prob <- c(0, log.error.prob)
+    real.part.prob <- rev(c(0, cumsum(rev(log.real.prob))))
+    return(which.max(log(error.prob.rl) + error.part.prob + real.part.prob) - 1)
+  }
+
+  quantized.quality <- Quantize(classifier.df$Quality, classifier$QualityQuantBorders) + 1
+  classifier.df$RealQualityProb <- classifier$Common$Quality[quantized.quality]
+  classifier.df$ErrorQualityProb <- classifier$Negative$Quality[quantized.quality]
+
+  classifier.df <- classifier.df %>% dplyr::group_by(MaxRpU) %>%
+    dplyr::mutate(
+      RealProb = classifier$RpU$Distribution[MinRpU] - log(sum(exp(classifier$RpU$Distribution[1:unique(MaxRpU)]))) +
+        RealQualityProb,
+      ErrorProb = dbetabinom(cumsum(MinRpU), size=cumsum(MinRpU)+MaxRpU, log=T) -
+        log(1 - dbetabinom(0, size=cumsum(MinRpU)+MaxRpU)) + ErrorQualityProb
+      )
+
+  # TODO: order by target and score
+  classifier.df <- classifier.df[order(classifier.df$Target, classifier.df$MinRpU, classifier.df$Quality, classifier.df$Base),]
+
+  classifier.df <- classifier.df %>% dplyr::group_by(Target, MaxRpU) %>%
+    dplyr::mutate(IsMerged=1:n() <= errorsNumMle(divSum(classifier$RpU$ErrNumRL[, MaxRpU][1:(n() + 1)]), ErrorProb, RealProb))
+
+  return(classifier.df[, c('Base', 'Target', 'MaxRpU', 'MinRpU', 'IsMerged')])
+}
