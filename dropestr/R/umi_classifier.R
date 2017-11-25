@@ -173,8 +173,8 @@ PredictLeftPartDependent <- function(clf, classifier.df, gene.size) {
   return((max.rpu.prob.err + err.prob) - (max.rpu.prob + min.rpu.prob + log(1 - exp(err.prob))))
 }
 
-#' @export #TODO: not export
-PredictNew <- function(classifier, classifier.df) {
+#' @export
+PredictNew <- function(classifier, classifier.df) { #TODO: not export
   divSum <- function(x) x / sum(x)
   dbetabinom <- function(...) emdbook::dbetabinom(..., prob=classifier$RpU$NegDistParams$Prob, theta=classifier$RpU$NegDistParams$Theta)
   errorsNumMle <- function(error.prob.rl, log.error.prob, log.real.prob) {

@@ -380,6 +380,8 @@ BEGIN_RCPP
 END_RCPP
 }
 
+RcppExport SEXP _rcpp_module_boot_CppMapModule();
+
 static const R_CallMethodDef CallEntries[] = {
     {"_dropestr_GetCrossmergedMask", (DL_FUNC) &_dropestr_GetCrossmergedMask, 2},
     {"_dropestr_ResolveUmisDependencies", (DL_FUNC) &_dropestr_ResolveUmisDependencies, 4},
@@ -411,6 +413,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dropestr_ConcatLists", (DL_FUNC) &_dropestr_ConcatLists, 1},
     {"_dropestr_GetMirrorPairs", (DL_FUNC) &_dropestr_GetMirrorPairs, 3},
     {"_dropestr_NumberOfNucleotidePairs", (DL_FUNC) &_dropestr_NumberOfNucleotidePairs, 0},
+    {"_rcpp_module_boot_CppMapModule", (DL_FUNC) &_rcpp_module_boot_CppMapModule, 0},
     {NULL, NULL, 0}
 };
 

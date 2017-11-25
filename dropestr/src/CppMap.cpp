@@ -53,3 +53,17 @@ void CppMap::clear() {
 const CppMap::data_t& CppMap::data() const {
   return this->_data;
 }
+
+RCPP_MODULE(CppMapModule) {
+  using namespace Rcpp;
+
+  class_<CppMap>("CppMap")
+    .default_constructor("Default constructor")
+    .constructor<SEXP>()
+    .constructor<s_vec_t, std::vector<double>>()
+    .method("at", &CppMap::at)
+    .method("set", &CppMap::set)
+    .method("size", &CppMap::size)
+    .method("clear", &CppMap::clear)
+  ;
+}

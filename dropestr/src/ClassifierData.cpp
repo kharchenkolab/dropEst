@@ -1,6 +1,7 @@
 #include <dropestr.h>
 #include <umi_processing.h>
 #include <ClassifierData.h>
+#include <CppMap.h>
 
 using namespace Rcpp;
 

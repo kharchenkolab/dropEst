@@ -289,13 +289,11 @@ FilterUmisInGene <- function(cur.gene, neighbours.per.umi, classifier, neighbour
 }
 
 #' @export
-FilterUmisInGeneNew <- function(cur.gene, umi.probabilities, classifier) {
-  if (length(cur.gene$rpus) == 1)
-    return(cur.gene$rpus)
+FilterUmisInGeneNew <- function(cur.gene, umi.probabilities.map, classifier) {
+  if (length(cur.gene) == 1)
+    return(cur.gene)
 
-  umi.probabilities <- umi.probabilities[cur.gene$indexes + 1]
-
-  cur.gene <- cur.gene$rpus
+  umi.probabilities <- umi.probabilities.map$at(names(cur.gene))
   cur.neighborhood <- SubsetAdjacentUmis(names(cur.gene))
 
   classifier.df <- PrepareClassifierData(cur.gene, cur.neighborhood, umi.probabilities)

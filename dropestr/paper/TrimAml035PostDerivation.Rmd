@@ -155,24 +155,31 @@ PredictNew(classifier, classifier_df)
 ```
 
 ```{r}
-rpus_filt <- mclapply(trimmed$correction.info$rpus.with.inds, FilterUmisInGeneNew, trimmed$umi.probabilities, 
+library(Rcpp)
+# tprobs <- setNames(1:100, paste0(1:100))
+umi_proobabilities_map <- new(CppMap, names(trimmed$umi.probabilities), as.vector(trimmed$umi.probabilities))
+```
+
+```{r}
+rpus_filt <- mclapply(trimmed$reads.per.umi.per.cb, FilterUmisInGeneNew, umi_proobabilities_map, 
                       classifier, mc.cores=30)
 
-rpus_filt <- lapply(trimmed$correction.info$rpus.with.inds[1:1000], FilterUmisInGeneNew, trimmed$umi.probabilities, 
-                      classifier)
+rpus_filt <- lapply(trimmed$reads.per.umi.per.cb[1:1000], FilterUmisInGeneNew, umi_proobabilities_map, 
+                    classifier)
 
-r0 <- FilterUmisInGeneNew(trimmed$correction.info$rpus.with.inds[trimmed$umis.per.gene == 50][[2]], trimmed$umi.probabilities, probs_given_reads_large, classifier)
+r0 <- FilterUmisInGeneNew(trimmed$reads.per.umi.per.cb[trimmed$umis.per.gene == 50][[2]], umi_proobabilities_map, classifier)
 
 trimmed$filt_cells$NB <- trimmed$collisions.info[sapply(rpus_filt, length)]
 ```
 
+
 ```{r}
 ggs <- PlotTrimmedCorrections(trimmed, raw, 6, raster=F)
-ggs$large
+ggs$large + theme_pdf()
 ```
 
 ```{r}
-ggs$small
+ggs$small + theme_pdf()
 ```
 
 ```{r}

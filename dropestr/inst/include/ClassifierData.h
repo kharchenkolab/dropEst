@@ -25,6 +25,8 @@ struct pair_hash
 class ClassifierData
 {
 private:
+  using pairs_set = std::unordered_set<std::pair<std::string, std::string>, pair_hash>;
+
   class ClassifierRow
   {
   public:
@@ -43,8 +45,6 @@ private:
                   double umi_prob, double log_quality_small);
   };
 
-  using pairs_set = std::unordered_set<std::pair<std::string, std::string>, pair_hash>;
-
 private:
   const sd_map_t _umi_probabilities_map;
   const bool _save_probs;
@@ -56,9 +56,8 @@ private:
   ClassifierRow fill_row(const UmiInfo &umi_small, const UmiInfo &umi_large, double umi_prob);
 
 public:
-  bool add_umis(const UmiInfo &umi1, const UmiInfo &umi2);
-
   ClassifierData(bool force_neighbours, const sd_map_t &umi_probabilities_map = sd_map_t());
 
+  bool add_umis(const UmiInfo &umi1, const UmiInfo &umi2);
   Rcpp::DataFrame to_data_frame() const;
 };
