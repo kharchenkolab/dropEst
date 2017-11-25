@@ -47,3 +47,26 @@ Rcpp::NumericVector vpow(const Rcpp::NumericVector& base, double exp);
 si_map_t ValueCountsC(const s_vec_t &values);
 
 Rcpp::List GetUmisDifference(const std::string &umi1, const std::string &umi2, int rpu1, int rpu2, bool force_neighbours = false, double umi_prob=-1);
+
+template<class T>
+Rcpp::XPtr<T> UnwrapRobject(const SEXP& sexp){
+  Rcpp::RObject ro(sexp);
+  if(ro.isObject()) {
+    Rcpp::Language call("as.environment",sexp);
+    SEXP ev = call.eval();
+    Rcpp::Language call1("get",".pointer",-1,ev);
+    SEXP ev1 = call1.eval();
+    Rcpp::XPtr<T> xp(ev1);
+    return xp;
+  } else {
+    Rcpp::XPtr<T> xp(sexp);
+    return xp;
+  }
+}
+
+template<class T>
+SEXP WrapInReferenceClass(const T& obj,std::string class_name) {
+  Rcpp::XPtr<T> xp(new T(obj));
+  Rcpp::Language call("new", Rcpp::Symbol(class_name), xp);
+  return call.eval();
+}
