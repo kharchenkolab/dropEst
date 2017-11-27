@@ -4,7 +4,7 @@
 using namespace Rcpp;
 
 template<typename T>
-s_vec_t getAdjacentUmis(const std::string &umi, const T &filter) {
+s_vec_t getAdjacentUmis(const std::string &umi, const T &filter, bool need_filter) {
   static_assert((std::is_same<s_set_t, T>::value || std::is_same<si_map_t, T>::value), "Only map or set");
   s_vec_t res;
   for (int i = 0; i < umi.length(); ++i) {
@@ -15,13 +15,19 @@ s_vec_t getAdjacentUmis(const std::string &umi, const T &filter) {
 
       cur_umi[i] = n;
 
-      if (filter.find(cur_umi) != filter.end()) {
+      if (!need_filter || filter.find(cur_umi) != filter.end()) {
         res.push_back(cur_umi);
       }
     }
   }
 
   return res;
+}
+
+//' @export
+// [[Rcpp::export]]
+s_vec_t GetAdjacentUmis(const std::string &umi) { // TODO: not @export
+  return getAdjacentUmis(umi, s_set_t(), false);
 }
 
 // [[Rcpp::export]]
@@ -39,7 +45,7 @@ std::vector<bool> GetCrossmergedMask(const s_vec_t &base_umis, const s_vec_t &ta
 }
 
 // [[Rcpp::export]]
-std::vector<bool> ResolveUmisDependencies(const s_vec_t &base_umis, const s_vec_t &target_umis, const std::vector<double> &score, bool verbose=false) { // TODO: remove verbose
+std::vector<bool> ResolveUmiDependencies(const s_vec_t &base_umis, const s_vec_t &target_umis, const std::vector<double> &score, bool verbose=false) { // TODO: remove verbose
   if (score.size() != base_umis.size() || score.size() != target_umis.size())
     stop("All vectors must have the same size");
 
@@ -99,15 +105,14 @@ std::vector<bool> ResolveUmisDependencies(const s_vec_t &base_umis, const s_vec_
 }
 
 // [[Rcpp::export]]
-List SubsetAdjacentUmis(const s_vec_t &umis) {
+std::unordered_map<std::string, s_vec_t> SubsetAdjacentUmis(const s_vec_t &umis) { // TODO: not export
   s_set_t umis_set(umis.begin(), umis.end());
-  List res(umis.size());
+  std::unordered_map<std::string, s_vec_t> res;
 
-  for (int i = 0; i < umis.size(); ++i) {
-    res[i] = getAdjacentUmis(umis[i], umis_set);
+  for (auto const &umi : umis) {
+    res[umi] = getAdjacentUmis(umi, umis_set, true);
   }
 
-  res.attr("names") = wrap(umis);
   return res;
 }
 
@@ -397,7 +402,7 @@ List FilterUmisInGeneClassic(const List &reads_per_umi, const std::vector<s_vec_
   if (return_data)
     return List::create(_["Base"]=base_umis, _["Target"]=target_umis, _["Score"]=score);
 
-  std::vector<bool> is_base_filt = ResolveUmisDependencies(base_umis, target_umis, score);
+  std::vector<bool> is_base_filt = ResolveUmiDependencies(base_umis, target_umis, score);
   LogicalVector filt_mask(reads_per_umi.size(), true);
   for (int i = 0; i < is_base_filt.size(); ++i) {
     if (is_base_filt[i]) {

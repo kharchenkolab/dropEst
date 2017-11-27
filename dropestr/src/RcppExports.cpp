@@ -7,6 +7,17 @@
 
 using namespace Rcpp;
 
+// GetAdjacentUmis
+s_vec_t GetAdjacentUmis(const std::string& umi);
+RcppExport SEXP _dropestr_GetAdjacentUmis(SEXP umiSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type umi(umiSEXP);
+    rcpp_result_gen = Rcpp::wrap(GetAdjacentUmis(umi));
+    return rcpp_result_gen;
+END_RCPP
+}
 // GetCrossmergedMask
 std::vector<bool> GetCrossmergedMask(const s_vec_t& base_umis, const s_vec_t& target_umis);
 RcppExport SEXP _dropestr_GetCrossmergedMask(SEXP base_umisSEXP, SEXP target_umisSEXP) {
@@ -19,9 +30,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// ResolveUmisDependencies
-std::vector<bool> ResolveUmisDependencies(const s_vec_t& base_umis, const s_vec_t& target_umis, const std::vector<double>& score, bool verbose);
-RcppExport SEXP _dropestr_ResolveUmisDependencies(SEXP base_umisSEXP, SEXP target_umisSEXP, SEXP scoreSEXP, SEXP verboseSEXP) {
+// ResolveUmiDependencies
+std::vector<bool> ResolveUmiDependencies(const s_vec_t& base_umis, const s_vec_t& target_umis, const std::vector<double>& score, bool verbose);
+RcppExport SEXP _dropestr_ResolveUmiDependencies(SEXP base_umisSEXP, SEXP target_umisSEXP, SEXP scoreSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -29,12 +40,12 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const s_vec_t& >::type target_umis(target_umisSEXP);
     Rcpp::traits::input_parameter< const std::vector<double>& >::type score(scoreSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(ResolveUmisDependencies(base_umis, target_umis, score, verbose));
+    rcpp_result_gen = Rcpp::wrap(ResolveUmiDependencies(base_umis, target_umis, score, verbose));
     return rcpp_result_gen;
 END_RCPP
 }
 // SubsetAdjacentUmis
-List SubsetAdjacentUmis(const s_vec_t& umis);
+std::unordered_map<std::string, s_vec_t> SubsetAdjacentUmis(const s_vec_t& umis);
 RcppExport SEXP _dropestr_SubsetAdjacentUmis(SEXP umisSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -180,15 +191,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // PrepareClassifierData
-DataFrame PrepareClassifierData(const List& reads_per_umi, const List& neighborhood, const NumericVector& umi_probabilities);
-RcppExport SEXP _dropestr_PrepareClassifierData(SEXP reads_per_umiSEXP, SEXP neighborhoodSEXP, SEXP umi_probabilitiesSEXP) {
+DataFrame PrepareClassifierData(const List& reads_per_umi, const NumericVector& umi_probabilities, const NumericVector& probability_normalizers);
+RcppExport SEXP _dropestr_PrepareClassifierData(SEXP reads_per_umiSEXP, SEXP umi_probabilitiesSEXP, SEXP probability_normalizersSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const List& >::type reads_per_umi(reads_per_umiSEXP);
-    Rcpp::traits::input_parameter< const List& >::type neighborhood(neighborhoodSEXP);
     Rcpp::traits::input_parameter< const NumericVector& >::type umi_probabilities(umi_probabilitiesSEXP);
-    rcpp_result_gen = Rcpp::wrap(PrepareClassifierData(reads_per_umi, neighborhood, umi_probabilities));
+    Rcpp::traits::input_parameter< const NumericVector& >::type probability_normalizers(probability_normalizersSEXP);
+    rcpp_result_gen = Rcpp::wrap(PrepareClassifierData(reads_per_umi, umi_probabilities, probability_normalizers));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -383,8 +394,9 @@ END_RCPP
 RcppExport SEXP _rcpp_module_boot_CppMapModule();
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_dropestr_GetAdjacentUmis", (DL_FUNC) &_dropestr_GetAdjacentUmis, 1},
     {"_dropestr_GetCrossmergedMask", (DL_FUNC) &_dropestr_GetCrossmergedMask, 2},
-    {"_dropestr_ResolveUmisDependencies", (DL_FUNC) &_dropestr_ResolveUmisDependencies, 4},
+    {"_dropestr_ResolveUmiDependencies", (DL_FUNC) &_dropestr_ResolveUmiDependencies, 4},
     {"_dropestr_SubsetAdjacentUmis", (DL_FUNC) &_dropestr_SubsetAdjacentUmis, 1},
     {"_dropestr_FillAdjacentUmisData", (DL_FUNC) &_dropestr_FillAdjacentUmisData, 3},
     {"_dropestr_GetAdjacentUmisNum", (DL_FUNC) &_dropestr_GetAdjacentUmisNum, 6},

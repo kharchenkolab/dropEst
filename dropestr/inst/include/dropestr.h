@@ -26,9 +26,15 @@ const si_map_t NUCL_PAIR_INDS = {
   std::make_pair("AC", 0),
   std::make_pair("AG", 1),
   std::make_pair("AT", 2),
-  std::make_pair("CG", 3),
-  std::make_pair("CT", 4),
-  std::make_pair("GT", 5)
+  std::make_pair("CA", 3),
+  std::make_pair("CG", 4),
+  std::make_pair("CT", 5),
+  std::make_pair("GA", 6),
+  std::make_pair("GC", 7),
+  std::make_pair("GT", 8),
+  std::make_pair("TA", 9),
+  std::make_pair("TC", 10),
+  std::make_pair("TG", 11)
 };
 
 template<typename T>
@@ -47,6 +53,7 @@ Rcpp::NumericVector vpow(const Rcpp::NumericVector& base, double exp);
 si_map_t ValueCountsC(const s_vec_t &values);
 
 Rcpp::List GetUmisDifference(const std::string &umi1, const std::string &umi2, int rpu1, int rpu2, bool force_neighbours = false, double umi_prob=-1);
+std::unordered_map<std::string, s_vec_t> SubsetAdjacentUmis(const s_vec_t &umis);
 
 template<class T>
 Rcpp::XPtr<T> UnwrapRobject(const SEXP& sexp){

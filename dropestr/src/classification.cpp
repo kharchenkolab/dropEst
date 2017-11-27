@@ -98,20 +98,24 @@ FilterPredictions(const s_vec_t &not_filtered_umis, const s_vec_t &base_umis, co
   return res;
 }
 
-// TODO: remove export
-//' @export
 // [[Rcpp::export]]
 DataFrame
-PrepareClassifierData(const List &reads_per_umi, const List &neighborhood, const NumericVector &umi_probabilities) {
+PrepareClassifierData(const List &reads_per_umi, const NumericVector &umi_probabilities,
+                      const NumericVector &probability_normalizers = NumericVector()) {
   auto rpu_data_map = parseList(reads_per_umi);
-  ClassifierData res_data(true, parseVector(umi_probabilities));
-  auto const &umis = as<s_vec_t>(neighborhood.names());
+  ClassifierData res_data(parseVector(umi_probabilities), parseVector(probability_normalizers));
 
-  for (int i = 0; i < neighborhood.size(); ++i) {
-    const auto &umi1_info = UmiInfo(umis[i], rpu_data_map.at(umis[i]));
-    for (auto const &umi2 : as<s_vec_t>(as<StringVector>(neighborhood[i]))) {
-      res_data.add_umis(umi1_info, UmiInfo(umi2, rpu_data_map.at(umi2)));
+  try {
+    auto neighbourhood = SubsetAdjacentUmis(as<s_vec_t>(reads_per_umi.names()));
+    for (auto const &it : neighbourhood) {
+      const auto &umi1_info = UmiInfo(it.first, rpu_data_map.at(it.first));
+      for (auto const &umi2 : it.second) {
+        res_data.add_umis(umi1_info, UmiInfo(umi2, rpu_data_map.at(umi2)));
+      }
     }
+  }
+  catch (std::exception ex) {
+    stop("Can't prepare classifier data: " + std::string(ex.what()));
   }
 
   return res_data.to_data_frame();
@@ -121,7 +125,7 @@ PrepareClassifierData(const List &reads_per_umi, const List &neighborhood, const
 //' @export
 // [[Rcpp::export]]
 DataFrame PrepareClassifierTrainingData(const List &reads_per_umi_pairs) {
-  ClassifierData res_data(false);
+  ClassifierData res_data;
   for (const List &rpu_pair : reads_per_umi_pairs) {
     auto umis = as<s_vec_t>(as<StringVector>(rpu_pair.names()));
     res_data.add_umis(UmiInfo(umis[0], as<List>(rpu_pair[0])), UmiInfo(umis[1], as<List>(rpu_pair[1])));

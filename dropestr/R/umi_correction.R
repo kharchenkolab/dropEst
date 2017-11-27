@@ -217,9 +217,9 @@ FilterUmisInGeneOneStep <- function(cur.reads.per.umi, neighbours.per.umi, dp.ma
 
   if (any(filtered.mask)) {
     filt.predictions <- predictions[filtered.mask,]
-    filtered.mask[which(filtered.mask)] <- ResolveUmisDependencies(as.character(filt.predictions$Base),
-                                                                   as.character(filt.predictions$Target),
-                                                                   log(filt.predictions$MergeScore) - log(filt.predictions$Prior))
+    filtered.mask[which(filtered.mask)] <- ResolveUmiDependencies(as.character(filt.predictions$Base),
+                                                                  as.character(filt.predictions$Target),
+                                                                  log(filt.predictions$MergeScore) - log(filt.predictions$Prior))
 
     not.filtered.umis <- base::setdiff(not.filtered.umis, predictions$Base[filtered.mask])
   }
@@ -240,10 +240,9 @@ FilterUmisInGene <- function(cur.gene, neighbours.per.umi, classifier, neighbour
   umi.probabilities <- umi.probabilities[cur.gene$indexes + 1]
 
   cur.gene <- cur.gene$rpus
-  cur.neighborhood <- SubsetAdjacentUmis(names(cur.gene))
 
   # Classifier
-  classifier.df <- PrepareClassifierData(cur.gene, cur.neighborhood, umi.probabilities)
+  classifier.df <- PrepareClassifierData(cur.gene, umi.probabilities)
   if (nrow(classifier.df) == 0)
     return(cur.gene)
 
@@ -294,9 +293,11 @@ FilterUmisInGeneNew <- function(cur.gene, umi.probabilities.map, classifier) {
     return(cur.gene)
 
   umi.probabilities <- umi.probabilities.map$at(names(cur.gene))
-  cur.neighborhood <- SubsetAdjacentUmis(names(cur.gene))
 
-  classifier.df <- PrepareClassifierData(cur.gene, cur.neighborhood, umi.probabilities)
+  umi.probs.normalizers <- lapply(names(cur.gene), GetAdjacentUmis)%>% lapply(umi.probabilities.map$at) %>%
+    sapply(sum) %>% setNames(names(cur.gene))
+
+  classifier.df <- PrepareClassifierData(cur.gene, umi.probabilities, umi.probs.normalizers)
   if (nrow(classifier.df) == 0)
     return(cur.gene)
 
@@ -305,9 +306,10 @@ FilterUmisInGeneNew <- function(cur.gene, umi.probabilities.map, classifier) {
   filtered.mask <- prediction$IsMerged
   if (any(filtered.mask)) {
     filt.predictions <- prediction[filtered.mask,]
-    filtered.mask[which(filtered.mask)] <- ResolveUmisDependencies(as.character(filt.predictions$Base),
-                                                                   as.character(filt.predictions$Target),
-                                                                   filt.predictions$MaxRpU * 10000 + filt.predictions$MinRpU) # TODO: use score for order
+    ord <- order(-filt.predictions$MaxRpU, filt.predictions$MinRpU, filt.predictions$Quality)
+    filtered.mask[which(filtered.mask)] <- ResolveUmiDependencies(as.character(filt.predictions$Base),
+                                                                  as.character(filt.predictions$Target),
+                                                                  ord) # TODO: use score for order
   }
 
   not.filtered.umis <- base::setdiff(names(cur.gene), classifier.df$Base[filtered.mask])

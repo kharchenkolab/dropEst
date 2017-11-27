@@ -111,16 +111,19 @@ TrainNBNegative <- function(train.data, distribution.smooth, nucleotide.pairs.nu
 TrainNBClassifier <- function(reads.per.umi.per.cb, distribution.smooth, correction.info,
                               umi.probabilities, quality.quants.num=15, quality.smooth=0.01, gene.size.quants.num=5,
                               error.prior.prob=0.001) {
+  kNucleotides <- c('A', 'T', 'G', 'C')
+
   umis.per.gene <- sapply(reads.per.umi.per.cb, length)
   paired.rpus <- reads.per.umi.per.cb[umis.per.gene == 2]
-  train.data <- PrepareClassifierTrainingData(paired.rpus)
-  train.data <- train.data %>% dplyr::filter(ED == 1) %>% dplyr::select(-ED)
+  is.pair.adjacent <- lapply(paired.rpus, function(g) sapply(SubsetAdjacentUmis(names(g)), length)) %>% sapply(max)
+
+  train.data <- PrepareClassifierTrainingData(paired.rpus[is.pair.adjacent > 0])
 
   if (nrow(train.data) == 0)
     stop('Data has no training samples with UMI errors')
 
   # Quality estimation
-  quality.vals <- list(negative=train.data$Quality, common=unlist(lapply(paired.rpus, sapply, `[[`, 2))) # TODO: try to use reads.per.umi.per.cb instead of paired.rpus?
+  quality.vals <- list(negative=train.data$Quality, common=unlist(lapply(reads.per.umi.per.cb[umis.per.gene <= 2], sapply, `[[`, 2)))
   quant.borders <- GetQualityQuantBorders(quality.vals, quality.quants.num, distribution.smooth)
 
   quantized.quality.data <- lapply(quality.vals, Quantize, quant.borders)
@@ -137,7 +140,13 @@ TrainNBClassifier <- function(reads.per.umi.per.cb, distribution.smooth, correct
   # Distribution over all data
   rpu.probs.by.gene.size.info <- GetRpuProbsByGeneSize(reads.per.umi.per.cb, gene.size.quants.num, distribution.smooth, log.probs=T)
 
-  clf.common <- list(RpuProbsByGeneSize=rpu.probs.by.gene.size.info$distributions,
+  nucl.freqs <- names(umi.probabilities) %>% sapply(strsplit, '') %>% lapply(table) %>%
+    lapply(function(tb) c(setNames(rep(0, length(kNucleotides) - length(tb)), setdiff(kNucleotides, names(tb))), tb)) %>%
+    lapply(`[`, kNucleotides)
+
+  nucl.probs <- mapply(`*`, nucl.freqs, umi.probabilities) %>% rowSums() %>% (function(x) x / sum(x)) %>% log()
+
+  clf.common <- list(RpuProbsByGeneSize=rpu.probs.by.gene.size.info$distributions, NucleotideProbs=nucl.probs,
                      RpuQuantBorders=rpu.probs.by.gene.size.info$quant.borders, Quality=quality.probs$common)
 
   return(list(Negative=clf.neg, Common=clf.common, QualityQuantBorders=quant.borders))
@@ -187,13 +196,16 @@ PredictNew <- function(classifier, classifier.df) { #TODO: not export
   classifier.df$RealQualityProb <- classifier$Common$Quality[quantized.quality]
   classifier.df$ErrorQualityProb <- classifier$Negative$Quality[quantized.quality]
 
-  classifier.df <- classifier.df %>% dplyr::group_by(MaxRpU) %>%
+  classifier.df <- classifier.df[order(classifier.df$Target, classifier.df$MinRpU, classifier.df$Quality, classifier.df$Base),]
+  classifier.df <- classifier.df %>%
+    dplyr::group_by(Target, MaxRpU) %>%
     dplyr::mutate(
       RealProb = classifier$RpU$Distribution[MinRpU] - log(sum(exp(classifier$RpU$Distribution[1:unique(MaxRpU)]))) +
-        RealQualityProb,
+        RealQualityProb + classifier$Common$NucleotideProbs[NucleotideLarge] + UmiProb,
       ErrorProb = dbetabinom(cumsum(MinRpU), size=cumsum(MinRpU)+MaxRpU, log=T) -
-        log(1 - dbetabinom(0, size=cumsum(MinRpU)+MaxRpU)) + ErrorQualityProb
-      )
+        log(1 - dbetabinom(0, size=cumsum(MinRpU)+MaxRpU)) +
+        ErrorQualityProb + classifier$Negative$Nucleotides[Nucleotides + 1] + classifier$Negative$Position[Position + 1]
+    )
 
   # TODO: order by target and score
   classifier.df <- classifier.df[order(classifier.df$Target, classifier.df$MinRpU, classifier.df$Quality, classifier.df$Base),]
@@ -201,5 +213,5 @@ PredictNew <- function(classifier, classifier.df) { #TODO: not export
   classifier.df <- classifier.df %>% dplyr::group_by(Target, MaxRpU) %>%
     dplyr::mutate(IsMerged=1:n() <= errorsNumMle(divSum(classifier$RpU$ErrNumRL[, MaxRpU][1:(n() + 1)]), ErrorProb, RealProb))
 
-  return(classifier.df[, c('Base', 'Target', 'MaxRpU', 'MinRpU', 'IsMerged')])
+  return(classifier.df)
 }
