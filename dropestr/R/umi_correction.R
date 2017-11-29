@@ -59,7 +59,7 @@ PrepareUmiCorrectionInfoWrapper <- function(reads.per.umi.per.cb, umi.probabilit
   return(correction.info)
 }
 
-CorrectUmiSequenceErrorsClassic <- function(reads.per.umi.per.cb, mult, correction.info, mc.cores, verbosity.level = 0) {
+CorrectUmiSequenceErrorsClassic <- function(correction.info, mult, mc.cores, verbosity.level = 0) {
   filt.genes <- plapply(correction.info$rpus.with.inds, function(gene)
     FilterUmisInGeneClassic(gene$rpus, correction.info$neighbours.per.umi[gene$indexes + 1], mult=mult), mc.cores=mc.cores)
 
@@ -201,7 +201,7 @@ GetUmiProbabilitiesIndex <- function(umi.probs, umi.tolerance) { #TODO: not expo
 
 # Algorithm:
 FilterUmisInGeneOneStep <- function(cur.reads.per.umi, neighbours.per.umi, dp.matrices, max.neighbours.num, neighbours.prob.index,
-                                    predictions, not.filtered.umis, classifier, collisions.info, cur.gene.size, size.adj) {
+                                    predictions, not.filtered.umis, classifier, cur.gene.size, size.adj) {
   small.neighb.num <- ValueCountsC(as.character(predictions$Target))
   small.neighb.num <- small.neighb.num[sort(names(small.neighb.num))]
 
@@ -264,7 +264,7 @@ FilterUmisInGene <- function(cur.gene, neighbours.per.umi, classifier, neighbour
 
     not.filtered.umis <- FilterUmisInGeneOneStep(cur.reads.per.umi, neighbours.per.umi, dp.matrices, max.neighbours.num, neighbours.prob.index,
                                                  classifier.df[c('Base', 'Target', 'MergeScore')], not.filtered.umis,
-                                                 classifier, collisions.info, length(filt.reads.per.umi), size.adj)
+                                                 classifier, length(filt.reads.per.umi), size.adj)
 
     # Next iteration
     filt.index <- FilterPredictions(not.filtered.umis, as.character(classifier.df$Base), as.character(classifier.df$Target))
@@ -287,21 +287,39 @@ FilterUmisInGene <- function(cur.gene, neighbours.per.umi, classifier, neighbour
   return(cur.gene[names(filt.reads.per.umi)])
 }
 
+EstimateSmallerNeighbourProbs <- function(cur.reads.per.umi, neighbours.per.umi, dp.matrices, neighbours.prob.index,
+                                          target.umis, size.adj) {
+  small.neighb.num <- ValueCountsC(as.character(target.umis))
+  small.neighb.num <- small.neighb.num[sort(names(small.neighb.num))]
+
+  cur.n.p.i <- neighbours.prob.index[names(cur.reads.per.umi)]
+
+  nn <- GetAdjacentUmisNum(cur.reads.per.umi, cur.reads.per.umi, neighbours.per.umi, total=F, larger=T, smaller=F)
+  larger.nn <- nn$Larger[names(cur.reads.per.umi)]
+
+  neighbour.distrs <- GetSmallerNeighboursDistributionsBySizes(dp.matrices, larger.nn, cur.n.p.i, size.adj, 3 * nchar(names(cur.reads.per.umi)[1]),
+                                                               return_raw=T)
+  return(list(Probs=neighbour.distrs, LargerNum=larger.nn))
+}
+
 #' @export
-FilterUmisInGeneNew <- function(cur.gene, umi.probabilities.map, classifier) {
+FilterUmisInGeneNew <- function(cur.gene, umi.probabilities.map, classifier, neighbours.per.umi, dp.matrices,
+                                neighbours.prob.index, collisions.info) {
   if (length(cur.gene) == 1)
     return(cur.gene)
 
-  umi.probabilities <- umi.probabilities.map$at(names(cur.gene))
+  tryCatch(umi.probabilities <- umi.probabilities.map$at(names(cur.gene)), error=function(x) stop(paste0("Error: ", x$message)))
 
   umi.probs.normalizers <- lapply(names(cur.gene), GetAdjacentUmis)%>% lapply(umi.probabilities.map$at) %>%
     sapply(sum) %>% setNames(names(cur.gene))
 
   classifier.df <- PrepareClassifierData(cur.gene, umi.probabilities, umi.probs.normalizers)
+
   if (nrow(classifier.df) == 0)
     return(cur.gene)
 
-  prediction <- PredictNew(classifier, classifier.df)
+  size.adj <- AdjustCollisions(length(cur.gene), collisions.info)
+  prediction <- PredictNew(classifier, classifier.df, cur.gene, neighbours.per.umi, dp.matrices, neighbours.prob.index, size.adj)
 
   filtered.mask <- prediction$IsMerged
   if (any(filtered.mask)) {

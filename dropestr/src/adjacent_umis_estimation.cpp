@@ -173,9 +173,6 @@ List FillAdjacentUmisData(const NumericVector &umi_probabilites, bool adjacent_o
 // [[Rcpp::export]]
 List GetAdjacentUmisNum(const IntegerVector &reads_per_umi_from, const IntegerVector &reads_per_umi_to,
                           const List &neighbourhood, bool total = true, bool larger = false, bool smaller = false) {
-  // if (smaller && larger)
-  //   stop("You can't use both smaller and larger");
-
   si_map_t total_neighbours_num, smaller_neighbours_num, larger_neighbours_num;
 
   auto const &umis = as<StringVector>(reads_per_umi_from.names());
@@ -287,7 +284,8 @@ void fillCumSumRatio(int max_neighbour_num, int smaller_nn, int larger_nn, int u
 // [[Rcpp::export]]
 NumericMatrix GetSmallerNeighboursDistributionsBySizes(const List &dp_matrices, const IntegerVector &larger_neighbours_num,
                                                        const s_vec_t &neighbour_prob_inds, int size_adj, int max_neighbour_num,
-                                                       const IntegerVector &smaller_neighbours_num = IntegerVector(), bool log_probs=false) {
+                                                       const IntegerVector &smaller_neighbours_num = IntegerVector(), bool log_probs=false,
+                                                       bool return_raw=false) {
   if (size_adj == 0)
     stop("Zero gene size");
 
@@ -320,12 +318,20 @@ NumericMatrix GetSmallerNeighboursDistributionsBySizes(const List &dp_matrices, 
       prob_sum = 1;
     }
 
+    if (return_raw) {
+      for (int nn = larger_nn; nn <= max_neighbour_num; ++nn) {
+        res(nn - larger_nn, umi_ind) = distr[nn] / prob_sum;
+      }
+
+      continue;
+    }
+
     if (smaller_neighbours_num.size() != 0) {
       fillCumSumRatio(max_neighbour_num, smaller_neighbours_num.at(umi_ind), larger_nn, umi_ind, distr / prob_sum, res, log_probs);
+      continue;
     }
-    else {
-      fillReverseCumSum(max_neighbour_num, larger_nn, umi_ind, distr / prob_sum, res);
-    }
+
+    fillReverseCumSum(max_neighbour_num, larger_nn, umi_ind, distr / prob_sum, res);
   }
 
   colnames(res) = as<StringVector>(larger_neighbours_num.names());
@@ -334,12 +340,16 @@ NumericMatrix GetSmallerNeighboursDistributionsBySizes(const List &dp_matrices, 
 }
 
 // [[Rcpp::export]]
-NumericVector GetSmallerNeighbourProbabilities(const NumericMatrix &small_neighs_dist, const IntegerVector &neighb_per_umi) {
-  NumericVector res(sum(neighb_per_umi));
+NumericVector GetSmallerNeighbourProbabilities(const NumericMatrix &small_neighs_dist, const IntegerVector &neighb_per_umi,
+                                               bool return_zero_neighbours=false) {
+  size_t vec_length = return_zero_neighbours ? (sum(neighb_per_umi) + neighb_per_umi.size()) : sum(neighb_per_umi);
+  size_t start_ind = return_zero_neighbours ? 0 : 1;
+
+  NumericVector res(vec_length);
   int res_ind = 0;
-  for (int umi_ind = 0; umi_ind < neighb_per_umi.size(); ++umi_ind) {
+  for (size_t umi_ind = 0; umi_ind < neighb_per_umi.size(); ++umi_ind) {
     int neighb_num = neighb_per_umi[umi_ind];
-    for (int neighb_ind = 1; neighb_ind <= neighb_num; ++neighb_ind) {
+    for (size_t neighb_ind = start_ind; neighb_ind <= neighb_num; ++neighb_ind) {
       res[res_ind++] = small_neighs_dist(neighb_ind, umi_ind);
     }
   }

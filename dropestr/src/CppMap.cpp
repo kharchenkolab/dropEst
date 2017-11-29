@@ -23,7 +23,7 @@ void CppMap::set(const std::string &key, double value) {
   try {
     this->_data[key] = value;
   }
-  catch(std::runtime_error err) {
+  catch(std::exception err) {
     Rcpp::stop("Error: " + std::string(err.what()));
   }
 }

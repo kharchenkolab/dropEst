@@ -58,17 +58,20 @@ std::unordered_map<std::string, s_vec_t> SubsetAdjacentUmis(const s_vec_t &umis)
 template<class T>
 Rcpp::XPtr<T> UnwrapRobject(const SEXP& sexp){
   Rcpp::RObject ro(sexp);
+  SEXP res_ev = sexp;
+
   if(ro.isObject()) {
-    Rcpp::Language call("as.environment",sexp);
+    Rcpp::Language call("as.environment", sexp);
     SEXP ev = call.eval();
-    Rcpp::Language call1("get",".pointer",-1,ev);
-    SEXP ev1 = call1.eval();
-    Rcpp::XPtr<T> xp(ev1);
-    return xp;
-  } else {
-    Rcpp::XPtr<T> xp(sexp);
-    return xp;
+    Rcpp::Language call1("get",".pointer",-1, ev);
+    res_ev = call1.eval();
   }
+
+  Rcpp::XPtr<T> xp(res_ev);
+  if (xp.get() == nullptr)
+    Rcpp::stop("Trying to unwrap nullptr");
+
+  return xp;
 }
 
 template<class T>

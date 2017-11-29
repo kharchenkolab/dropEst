@@ -20,81 +20,13 @@ library(reshape2)
 
 source("./Functions/PlotFuncs.R")
 source("./Functions/Functions.R")
+source("./Functions/NewClassification.R")
 
 knitr::opts_chunk$set(fig.width=5, fig.height=3, echo=FALSE, warning=FALSE, message=FALSE)
 
 theme_set(theme_base)
 kPlotsFolder <- '~/Data/Plots/Paper/Review/UmiErrors/'
 kDataPath <- '/d0-mendel/home/viktor_petukhov/Data/10x/aml035_post_transplant/est_10_20_umi_quality/'
-```
-
-```{r}
-ErrorNumProb <- function(error.num, reads.num, error.prob, p.collisions) {
-  if (error.num > reads.num)
-    return(0)
-  
-  cell <- function(i) {
-    dbinom(i, size=reads.num, prob=error.prob) * p.collisions[error.num + 1, i + 1]
-  }
-  return(sum(sapply(error.num:reads.num, cell)))
-}
-
-ErrorProbsGivenNumOfReadsLarge <- function(max.reads.num, error.prob, umi.num) {
-  p.collisions <- FillDpMatrix(1, umi.num + 1, max.reads.num + 1)
-  probs <- sapply(1:max.reads.num, function(r) sapply(0:umi.num, function(e) 
-    ErrorNumProb(e, r, error.prob, p.collisions)))
-  
-  colnames(probs) <- paste(1:ncol(probs))
-  rownames(probs) <- paste(0:(nrow(probs) - 1))
-  return(probs)
-}
-
-EstimateReadsBetaBinomial <- function(reads.small, reads.large, error.prob) {
-  llBetabinom <- function(theta) {
-    -sum(emdbook::dbetabinom(reads.small, prob=error.prob, size=reads.large + reads.small, theta=theta, log=TRUE))
-  }
-  
-  thetas.list <- seq(5, 100, 10)
-  for (theta in thetas.list) {
-    params <- try(suppressWarnings(as.list(bbmle::mle2(llBetabinom, start=list(theta=theta))@fullcoef)), silent=T)
-    if (class(params) != 'try-error')
-      break
-  }
-  
-  if (class(params) == 'try-error') {
-    params <- try(suppressWarnings(bbmle::mle2(llBetabinom, start=list(theta=20), method='Nelder-Mead')@fullcoef), silent=T)
-  }
-  
-  if (class(params) == 'try-error') {
-    stop("Unable to estimate distribution parameters: " + str(theta))
-  }
-  
-  return(params$theta)
-}
-
-ReadsPerUmiDataset <- function(reads.per.umi.per.cb, max.umis.per.cb=4) { # TODO: merge it with TrainNBClassifier
-  umis.per.gene <- sapply(reads.per.umi.per.cb, length)
-  reads.large.all <- unlist(ExtractReadsPerUmi(reads.per.umi.per.cb[umis.per.gene == 1]))
-  reads.small.all <- rep(0, length(reads.large.all))
-  
-  for (i in 2:max.umis.per.cb) {
-    rpus <- ExtractReadsPerUmi(reads.per.umi.per.cb[umis.per.gene == i])
-    adj.umis <- lapply(rpus, function(g) sapply(SubsetAdjacentUmis(names(g)), length))
-    nn <- setNames(sapply(adj.umis, max), names(sapply(adj.umis, which.max)))
-    
-    selected.inds <- which(nn == i - 1)
-    selected.inds <- selected.inds[sapply(adj.umis[selected.inds], which.max) == 
-                                     sapply(rpus[selected.inds], which.max)]
-    
-    reads.small <- mapply(function(r, n) sum(r[names(r) != n]), rpus[selected.inds], names(selected.inds))
-    reads.large <- mapply(function(r, n) r[[n]], rpus[selected.inds], names(selected.inds))
-    
-    reads.small.all <- c(reads.small.all, reads.small)
-    reads.large.all <- c(reads.large.all, reads.large)
-  }
-  
-  return(data.frame(Large=reads.large.all, Small=reads.small.all))
-}
 ```
 
 ```{r}
@@ -116,30 +48,31 @@ raw <- readRDS(paste0(kDataPath, 'raw.rds'))
 trimmed <- readRDS(paste0(kDataPath, 'trimmed_6.rds'))
 ```
 
+```{r}
+raw_corrected_rpus <- CorrectUmiSequenceErrorsClassic(raw$correction_info, mult=1, mc.cores=30)
+```
+
 # Reads per UMI
 ```{r}
-sum_rpus_small <- sum(reads_small_all)
-sum_rpus_large <- sum(reads_large_all)
+reads_per_umi_train <- ReadsPerUmiDataset(trimmed$reads.per.umi.per.cb, max.umis.per.cb=4, mc.cores=10)
+sum_rpus <- colSums(reads_per_umi_train)
 
-read_error_prob <- sum_rpus_small / (sum_rpus_large + sum_rpus_small)
-read_error_prob
+(read_error_prob <- sum_rpus['Small'] / sum(sum_rpus))
+(theta <- EstimateReadsBetaBinomial(reads_per_umi_train$Small, reads_per_umi_train$Large, read_error_prob))
 ```
 
 ```{r}
-reads_per_umi_train <- ReadsPerUmiDataset(trimmed$reads.per.umi.per.cb)
-theta <- EstimateReadsBetaBinomial(reads_per_umi_train$Small, reads_per_umi_train$Large, read_error_prob)
-reads_num <- 3
+reads_num <- 10
 ggplot() + 
-  geom_histogram(aes(x=reads_small_all[(reads_large_all + reads_small_all) == reads_num], y=..count.. / sum(..count..), color='Observed')) +
+  geom_histogram(aes(x=reads_per_umi_train %>% filter(Large + Small == reads_num) %>% .$Small, y=..count.. / sum(..count..), color='Observed')) +
   geom_bar(aes(x=0:10, y=emdbook::dbetabinom(0:10, size=reads_num, prob=read_error_prob, theta=theta), color='beta'), stat='identity', width=0.5, alpha=0.5)
 ```
 
 ```{r}
 rpus_extracted <- ExtractReadsPerUmi(trimmed$reads.per.umi.per.cb, mc.cores=10)
-reads_num <- max(rpus_extracted %>% sapply(max))
-umi_num <- nchar(names(trimmed$umi.probabilities)[1]) * 3 - 1
+reads_num <- (max(rpus_extracted %>% sapply(max)) * 1.5) %>% round()
+umi_num <- nchar(names(trimmed$umi.probabilities)[1]) * 3
 probs_given_reads_large <- ErrorProbsGivenNumOfReadsLarge(reads_num, read_error_prob, umi_num)
-
 
 rpu_distribution <- SmoothDistribution(unlist(rpus_extracted) - 1, 10, log.probs=F)
 ```
@@ -147,47 +80,205 @@ rpu_distribution <- SmoothDistribution(unlist(rpus_extracted) - 1, 10, log.probs
 ```{r}
 classifier <- TrainNBClassifier(trimmed$reads.per.umi.per.cb, 50, trimmed$correction.info, trimmed$umi.probabilities)
 classifier$RpU <- list(Distribution=log(rpu_distribution), NegDistParams=list(Theta=theta, Prob=read_error_prob), ErrNumRL=probs_given_reads_large)
+classifier$MaxAdjacentUmisNum <- names(trimmed$umi.probabilities)[1] %>% nchar() * 3
 ```
 
 ```{r}
-classifier_df <- data.frame(Base=names(trimmed$umi.probabilities)[1:10], Target='AAAAAA', Quality = 52, MinRpU=1, MaxRpU=25)
+classifier_df <- data.frame(Base=names(trimmed$umi.probabilities)[1:10], Target='AAAAAA', Quality = 52, MinRpU=1, MaxRpU=20)
 PredictNew(classifier, classifier_df)
 ```
 
 ```{r}
-library(Rcpp)
-# tprobs <- setNames(1:100, paste0(1:100))
-umi_proobabilities_map <- new(CppMap, names(trimmed$umi.probabilities), as.vector(trimmed$umi.probabilities))
+umi_probabilities_map <- new(CppMap, names(trimmed$umi.probabilities), as.vector(trimmed$umi.probabilities))
 ```
 
 ```{r}
-rpus_filt <- mclapply(trimmed$reads.per.umi.per.cb, FilterUmisInGeneNew, umi_proobabilities_map, 
-                      classifier, mc.cores=30)
+rpus_filt <- lapply(trimmed$reads.per.umi.per.cb[1:1000], FilterUmisInGeneNew, umi_probabilities_map, 
+                    classifier, trimmed$correction.info$neighbours.per.umi, trimmed$correction.info$dp.matrices, 
+                    trimmed$correction.info$neighb.prob.index, trimmed$collisions.info)
 
-rpus_filt <- lapply(trimmed$reads.per.umi.per.cb[1:1000], FilterUmisInGeneNew, umi_proobabilities_map, 
-                    classifier)
-
-r0 <- FilterUmisInGeneNew(trimmed$reads.per.umi.per.cb[trimmed$umis.per.gene == 50][[2]], umi_proobabilities_map, classifier)
+rpus_filt <- mclapply(trimmed$reads.per.umi.per.cb, FilterUmisInGeneNew, umi_probabilities_map, 
+                      classifier, trimmed$correction.info$neighbours.per.umi, trimmed$correction.info$dp.matrices, 
+                      trimmed$correction.info$neighb.prob.index, trimmed$collisions.info, mc.cores=30)
 
 trimmed$filt_cells$NB <- trimmed$collisions.info[sapply(rpus_filt, length)]
 ```
 
-
 ```{r}
-ggs <- PlotTrimmedCorrections(trimmed, raw, 6, raster=F)
-ggs$large + theme_pdf()
+umi_probabilities_map <- new(CppMap, names(trimmed$umi.probabilities), as.vector(trimmed$umi.probabilities))
+# gene0 <- trimmed$reads.per.umi.per.cb[trimmed$umis.per.gene == 50][[2]]
+gene0 <- trimmed$reads.per.umi.per.cb[trimmed$umis.per.gene >= 2000][[2]]
+r0 <- FilterUmisInGeneNew(gene0, umi_probabilities_map, classifier, trimmed$correction.info$neighbours.per.umi, 
+                          trimmed$correction.info$dp.matrices, trimmed$correction.info$neighb.prob.index, trimmed$collisions.info)
 ```
 
+
+# Validation plots
 ```{r}
+ggs <- PlotTrimmedCorrections(trimmed, raw, 6, raster=F)
+ggs$large + annotation_logticks(sides='b') + theme_pdf()
 ggs$small + theme_pdf()
 ```
 
 ```{r}
 ggs <- PlotTrimmedCorrections(trimmed, raw, 6, raster=F)
-ggs$large + theme_pdf()
+ggs$large + annotation_logticks(sides='b') + theme_pdf()
+ggs$small + theme_pdf()
 ```
 
 ```{r}
+ggs <- PlotTrimmedCorrections(trimmed, raw, 6, raster=F)
+ggs$large + annotation_logticks(sides='b') + theme_pdf()
 ggs$small + theme_pdf()
+```
+
+```{r}
+ggs <- PlotTrimmedCorrections(trimmed, raw, 6, raster=F)
+ggs$large + annotation_logticks(sides='b') + theme_pdf()
+ggs$small + theme_pdf()
+```
+
+# Comparison with answers
+```{r}
+length(raw_corrected_rpus[trimmed$umis.per.gene >= 2000][[2]])
+real_umis <- names(raw_corrected_rpus[trimmed$umis.per.gene >= 2000][[2]]) %>% substr(start=1, stop=6) %>% unique()
+c(length(gene0), length(real_umis))
+```
+
+```{r}
+tryCatch(umi_probabilities <- umi_probabilities_map$at(names(gene0)), error=function(x) stop(paste0("Error: ", x$message)))
+
+normalizers <- lapply(names(gene0), GetAdjacentUmis)%>% lapply(umi_probabilities_map$at) %>%
+  sapply(sum) %>% setNames(names(gene0))
+
+classifier_df <- PredictNew(classifier, PrepareClassifierData(gene0, umi_probabilities, normalizers), gene0, 
+                            trimmed$correction.info$neighbours.per.umi, trimmed$correction.info$dp.matrices, 
+                            trimmed$correction.info$neighb.prob.index, trimmed$collisions.info[length(gene0)])
+
+classifier_df$IsErroneous <- !(classifier_df$Base %in% real_umis)
+```
+
+```{r}
+c(sum(classifier_df$IsErroneous & classifier_df$IsMerged), 
+  sum(classifier_df$IsErroneous & !classifier_df$IsMerged),
+  sum(!classifier_df$IsErroneous & classifier_df$IsMerged))
+```
+
+```{r}
+dfs <- setNames(split(classifier_df, classifier_df$IsErroneous), c('Real', 'Error'))
+ggplot(mapping=aes(y=..count.. / sum(..count..))) +
+  geom_histogram(aes(dfs$Real$MaxRpU, color='Real'), bins=100, alpha=0.6) + 
+  geom_histogram(aes(dfs$Error$MaxRpU, color='Error'), bins=100, alpha=0.6) + 
+  # geom_histogram(aes(dfs$Error$MaxRpU + dfs$Error$MinRpU, color='Sum'), bins=100, alpha=0.4) + 
+  geom_histogram(aes(reads_per_umi_train$Large, color='Total'), bins=100, alpha=0.4) + 
+  theme_pdf(legend.pos=c(1, 1))
+```
+
+```{r}
+ggplot(mapping=aes(y=..count.. / sum(..count..))) +
+  geom_histogram(aes(dfs$Real$MinRpU, fill='Real'), bins=100, alpha=0.6) + 
+  geom_histogram(aes(dfs$Error$MinRpU, fill='Error'), bins=100, alpha=0.6) + 
+  theme_pdf(legend.pos=c(1, 1))
+```
+
+```{r}
+ggplot(mapping=aes(y=..count.. / sum(..count..))) +
+  geom_histogram(aes(dfs$Real$Quality, fill='Real'), bins=100, alpha=0.6) + 
+  geom_histogram(aes(dfs$Error$Quality, fill='Error'), bins=100, alpha=0.6) + 
+  theme_pdf(legend.pos=c(1, 1))
+```
+
+```{r}
+ggplot(mapping=aes(y=..count.. / sum(..count..))) +
+  geom_histogram(aes(dfs$Real$Nucleotides, fill='Real'), bins=100, alpha=0.6) + 
+  geom_histogram(aes(dfs$Error$Nucleotides, fill='Error'), bins=100, alpha=0.6) + 
+  theme_pdf(legend.pos=c(1, 1))
+
+ggplot(mapping=aes(y=..count.. / sum(..count..))) +
+  geom_histogram(aes(dfs$Real$Position, fill='Real'), bins=100, alpha=0.6) + 
+  geom_histogram(aes(dfs$Error$Position, fill='Error'), bins=100, alpha=0.6) + 
+  theme_pdf(legend.pos=c(1, 1))
+```
+
+```{r}
+extractAdjacentUmisNum <- function(x) names(x) %>% substr(1, 6) %>% SubsetAdjacentUmis() %>% sapply(length)
+not_single_raw_rpus <- raw_corrected_rpus[sapply(raw_corrected_rpus, length) > 1]
+
+adj_umi_n_per_gene <- mclapply(not_single_raw_rpus, extractAdjacentUmisNum, mc.cores=10)
+```
+
+```{r}
+adj_df <- mclapply(adj_umi_n_per_gene, function(g) tibble(ProbId=trimmed$correction.info$neighb.prob.index[names(g)], AdjNum=g, GeneSize=length(g)), mc.cores=30)
+adj_df <- adj_df %>% bind_rows()
+```
+
+```{r}
+# (plot_gs <- min(adj_df$GeneSize[adj_df$GeneSize > 200]))
+plot_gs <- 30
+(s_n <- adj_df %>% filter(GeneSize == plot_gs) %>% .$ProbId %>% table())
+(plot_pi <- names(which.max(s_n)))
+```
+
+```{r}
+max_adj_num <- min(18, plot_gs)
+ggplot() +
+  geom_histogram(data=(adj_df %>% filter(GeneSize == plot_gs, ProbId == plot_pi)), 
+                 mapping=aes(x=AdjNum, y = ..count.. / sum(..count..), fill='Observed'), bins=50) +
+  geom_bar(aes(x=0:max_adj_num, y=trimmed$correction.info$dp.matrices[[plot_pi]][1:(max_adj_num + 1), trimmed$collisions.info[plot_gs]], fill='Estimated'), 
+           stat='identity', width=0.3, alpha=0.6) +
+  theme_pdf(legend.pos=c(1, 1))
+```
+
+## Sampling
+```{r}
+# sampled_pairs <- mclapply(1:100000, function(i) sample(names(trimmed$umi.probabilities), size=2, replace=T, prob=trimmed$umi.probabilities), mc.cores=10)
+sampled_pairs <- mclapply(1:50000, function(i) sample(names(raw$umi_probabilities), size=2, replace=T, prob=raw$umi_probabilities), mc.cores=30)
+sampled_pairs <- lapply(sampled_pairs, substr, 1, 6)
+  
+sampled_adj_umi_n <- mclapply(sampled_pairs, function(x) SubsetAdjacentUmis(x) %>% sapply(length), mc.cores=5)
+sampled_adj_df <- mclapply(sampled_adj_umi_n, function(g) tibble(ProbId=trimmed$correction.info$neighb.prob.index[names(g)], AdjNum=g, GeneSize=length(g)), mc.cores=30) %>% bind_rows()
+sampled_adj_df <- sampled_adj_df %>% filter(GeneSize == 2)
+
+trimmed$correction.info$dp.matrices[[plot_pi]][1:2, 2]
+table(sampled_adj_df$AdjNum) / nrow(sampled_adj_df)
+```
+
+```{r}
+max_adj_num <- 2
+ggplot() +
+  geom_histogram(data=(adj_df %>% filter(GeneSize == 2, ProbId == plot_pi)), 
+                 mapping=aes(x=AdjNum, y = ..count.. / sum(..count..), fill='Observed'), bins=50) +
+  geom_histogram(data=(sampled_adj_df %>% filter(ProbId == plot_pi)), 
+                 mapping=aes(x=AdjNum, y = ..count.. / sum(..count..), fill='Sampling'), bins=50, alpha=0.7) +
+  geom_bar(aes(x=0:max_adj_num, y=trimmed$correction.info$dp.matrices[[plot_pi]][1:(max_adj_num + 1), trimmed$collisions.info[2]], fill='Estimated'), 
+           stat='identity', width=0.3, alpha=0.6) +
+  theme_pdf(legend.pos=c(1, 1))
+```
+
+## Raw data analysis
+```{r}
+raw_inds <- which(sapply(raw_corrected_rpus, length) > 1)
+
+pair_mask <- sapply(adj_umi_n_per_gene, length) == 2
+adj_mask <- adj_umi_n_per_gene[pair_mask] %>% sapply(max) == 1
+
+raw_inds <- raw_inds[pair_mask][adj_mask]
+sum(adj_mask) / sum(pair_mask)
+```
+
+```{r}
+# paired_raw_rpus <- ExtractReadsPerUmi(raw_corrected_rpus[raw_inds])
+# paired_raw_rpus <- paired_raw_rpus[sapply(paired_raw_rpus, length) == 2]
+
+paired_raw_rpus <- ExtractReadsPerUmi(raw_corrected_rpus[sapply(raw_corrected_rpus, length) == 2])
+
+edit_distances <- lapply(paired_raw_rpus, names) %>% lapply(sapply, strsplit, '') %>% sapply(function(x) sum(x[[1]] != x[[2]]))
+diff_positions <- lapply(paired_raw_rpus, names) %>% lapply(sapply, strsplit, '') %>% lapply(function(x) which(x[[1]] != x[[2]]))
+
+table(unlist(diff_positions[edit_distances > 1 & edit_distances < 4])) %>% (function(x) x / sum(x))
+```
+
+```{r}
+table(edit_distances) / length(edit_distances)
 ```
 

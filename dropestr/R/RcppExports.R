@@ -40,12 +40,12 @@ FillDpMatrix <- function(prior_prob, neighbours_num, max_umi_per_cell) {
     .Call('_dropestr_FillDpMatrix', PACKAGE = 'dropestr', prior_prob, neighbours_num, max_umi_per_cell)
 }
 
-GetSmallerNeighboursDistributionsBySizes <- function(dp_matrices, larger_neighbours_num, neighbour_prob_inds, size_adj, max_neighbour_num, smaller_neighbours_num = integer(), log_probs = FALSE) {
-    .Call('_dropestr_GetSmallerNeighboursDistributionsBySizes', PACKAGE = 'dropestr', dp_matrices, larger_neighbours_num, neighbour_prob_inds, size_adj, max_neighbour_num, smaller_neighbours_num, log_probs)
+GetSmallerNeighboursDistributionsBySizes <- function(dp_matrices, larger_neighbours_num, neighbour_prob_inds, size_adj, max_neighbour_num, smaller_neighbours_num = integer(), log_probs = FALSE, return_raw = FALSE) {
+    .Call('_dropestr_GetSmallerNeighboursDistributionsBySizes', PACKAGE = 'dropestr', dp_matrices, larger_neighbours_num, neighbour_prob_inds, size_adj, max_neighbour_num, smaller_neighbours_num, log_probs, return_raw)
 }
 
-GetSmallerNeighbourProbabilities <- function(small_neighs_dist, neighb_per_umi) {
-    .Call('_dropestr_GetSmallerNeighbourProbabilities', PACKAGE = 'dropestr', small_neighs_dist, neighb_per_umi)
+GetSmallerNeighbourProbabilities <- function(small_neighs_dist, neighb_per_umi, return_zero_neighbours = FALSE) {
+    .Call('_dropestr_GetSmallerNeighbourProbabilities', PACKAGE = 'dropestr', small_neighs_dist, neighb_per_umi, return_zero_neighbours)
 }
 
 FilterUmisInGeneClassic <- function(reads_per_umi, neighbourhood, mult = 1, return_data = FALSE) {
