@@ -115,19 +115,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// GetSmallerNeighbourProbabilities
-NumericVector GetSmallerNeighbourProbabilities(const NumericMatrix& small_neighs_dist, const IntegerVector& neighb_per_umi, bool return_zero_neighbours);
-RcppExport SEXP _dropestr_GetSmallerNeighbourProbabilities(SEXP small_neighs_distSEXP, SEXP neighb_per_umiSEXP, SEXP return_zero_neighboursSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const NumericMatrix& >::type small_neighs_dist(small_neighs_distSEXP);
-    Rcpp::traits::input_parameter< const IntegerVector& >::type neighb_per_umi(neighb_per_umiSEXP);
-    Rcpp::traits::input_parameter< bool >::type return_zero_neighbours(return_zero_neighboursSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetSmallerNeighbourProbabilities(small_neighs_dist, neighb_per_umi, return_zero_neighbours));
-    return rcpp_result_gen;
-END_RCPP
-}
 // FilterUmisInGeneClassic
 List FilterUmisInGeneClassic(const List& reads_per_umi, const std::vector<s_vec_t>& neighbourhood, double mult, bool return_data);
 RcppExport SEXP _dropestr_FilterUmisInGeneClassic(SEXP reads_per_umiSEXP, SEXP neighbourhoodSEXP, SEXP multSEXP, SEXP return_dataSEXP) {
@@ -404,7 +391,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dropestr_GetAdjacentUmisNum", (DL_FUNC) &_dropestr_GetAdjacentUmisNum, 6},
     {"_dropestr_FillDpMatrix", (DL_FUNC) &_dropestr_FillDpMatrix, 3},
     {"_dropestr_GetSmallerNeighboursDistributionsBySizes", (DL_FUNC) &_dropestr_GetSmallerNeighboursDistributionsBySizes, 8},
-    {"_dropestr_GetSmallerNeighbourProbabilities", (DL_FUNC) &_dropestr_GetSmallerNeighbourProbabilities, 3},
     {"_dropestr_FilterUmisInGeneClassic", (DL_FUNC) &_dropestr_FilterUmisInGeneClassic, 4},
     {"_dropestr_Quantize", (DL_FUNC) &_dropestr_Quantize, 2},
     {"_dropestr_PredictLeftPart", (DL_FUNC) &_dropestr_PredictLeftPart, 3},

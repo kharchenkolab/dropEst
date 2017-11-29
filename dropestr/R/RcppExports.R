@@ -44,10 +44,6 @@ GetSmallerNeighboursDistributionsBySizes <- function(dp_matrices, larger_neighbo
     .Call('_dropestr_GetSmallerNeighboursDistributionsBySizes', PACKAGE = 'dropestr', dp_matrices, larger_neighbours_num, neighbour_prob_inds, size_adj, max_neighbour_num, smaller_neighbours_num, log_probs, return_raw)
 }
 
-GetSmallerNeighbourProbabilities <- function(small_neighs_dist, neighb_per_umi, return_zero_neighbours = FALSE) {
-    .Call('_dropestr_GetSmallerNeighbourProbabilities', PACKAGE = 'dropestr', small_neighs_dist, neighb_per_umi, return_zero_neighbours)
-}
-
 FilterUmisInGeneClassic <- function(reads_per_umi, neighbourhood, mult = 1, return_data = FALSE) {
     .Call('_dropestr_FilterUmisInGeneClassic', PACKAGE = 'dropestr', reads_per_umi, neighbourhood, mult, return_data)
 }
@@ -69,7 +65,7 @@ FilterPredictions <- function(not_filtered_umis, base_umis, target_umis) {
     .Call('_dropestr_FilterPredictions', PACKAGE = 'dropestr', not_filtered_umis, base_umis, target_umis)
 }
 
-PrepareClassifierData <- function(reads_per_umi, umi_probabilities, probability_normalizers = numeric()) {
+PrepareClassifierData <- function(reads_per_umi, umi_probabilities, probability_normalizers) {
     .Call('_dropestr_PrepareClassifierData', PACKAGE = 'dropestr', reads_per_umi, umi_probabilities, probability_normalizers)
 }
 

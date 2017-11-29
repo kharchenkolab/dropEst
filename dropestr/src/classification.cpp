@@ -100,8 +100,8 @@ FilterPredictions(const s_vec_t &not_filtered_umis, const s_vec_t &base_umis, co
 
 // [[Rcpp::export]]
 DataFrame
-PrepareClassifierData(const List &reads_per_umi, const NumericVector &umi_probabilities,
-                      const NumericVector &probability_normalizers = NumericVector()) {
+PrepareClassifierData(const List &reads_per_umi, const NumericVector &umi_probabilities, // TODO: remove 2 and 3 parameters
+                      const NumericVector &probability_normalizers) {
   auto rpu_data_map = parseList(reads_per_umi);
   ClassifierData res_data(parseVector(umi_probabilities), parseVector(probability_normalizers));
 

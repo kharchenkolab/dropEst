@@ -17,10 +17,10 @@ library(ggrastr)
 library(dplyr)
 library(parallel)
 library(reshape2)
+library(profvis)
 
 source("./Functions/PlotFuncs.R")
 source("./Functions/Functions.R")
-source("./Functions/NewClassification.R")
 
 knitr::opts_chunk$set(fig.width=5, fig.height=3, echo=FALSE, warning=FALSE, message=FALSE)
 
@@ -54,14 +54,6 @@ raw_corrected_rpus <- CorrectUmiSequenceErrorsClassic(raw$correction_info, mult=
 
 # Reads per UMI
 ```{r}
-reads_per_umi_train <- ReadsPerUmiDataset(trimmed$reads.per.umi.per.cb, max.umis.per.cb=4, mc.cores=10)
-sum_rpus <- colSums(reads_per_umi_train)
-
-(read_error_prob <- sum_rpus['Small'] / sum(sum_rpus))
-(theta <- EstimateReadsBetaBinomial(reads_per_umi_train$Small, reads_per_umi_train$Large, read_error_prob))
-```
-
-```{r}
 reads_num <- 10
 ggplot() + 
   geom_histogram(aes(x=reads_per_umi_train %>% filter(Large + Small == reads_num) %>% .$Small, y=..count.. / sum(..count..), color='Observed')) +
@@ -69,23 +61,7 @@ ggplot() +
 ```
 
 ```{r}
-rpus_extracted <- ExtractReadsPerUmi(trimmed$reads.per.umi.per.cb, mc.cores=10)
-reads_num <- (max(rpus_extracted %>% sapply(max)) * 1.5) %>% round()
-umi_num <- nchar(names(trimmed$umi.probabilities)[1]) * 3
-probs_given_reads_large <- ErrorProbsGivenNumOfReadsLarge(reads_num, read_error_prob, umi_num)
-
-rpu_distribution <- SmoothDistribution(unlist(rpus_extracted) - 1, 10, log.probs=F)
-```
-
-```{r}
-classifier <- TrainNBClassifier(trimmed$reads.per.umi.per.cb, 50, trimmed$correction.info, trimmed$umi.probabilities)
-classifier$RpU <- list(Distribution=log(rpu_distribution), NegDistParams=list(Theta=theta, Prob=read_error_prob), ErrNumRL=probs_given_reads_large)
-classifier$MaxAdjacentUmisNum <- names(trimmed$umi.probabilities)[1] %>% nchar() * 3
-```
-
-```{r}
-classifier_df <- data.frame(Base=names(trimmed$umi.probabilities)[1:10], Target='AAAAAA', Quality = 52, MinRpU=1, MaxRpU=20)
-PredictNew(classifier, classifier_df)
+classifier <- TrainNBClassifier(trimmed$reads.per.umi.per.cb, 50, trimmed$umi.probabilities, mc.cores=30)
 ```
 
 ```{r}
@@ -93,11 +69,39 @@ umi_probabilities_map <- new(CppMap, names(trimmed$umi.probabilities), as.vector
 ```
 
 ```{r}
-rpus_filt <- lapply(trimmed$reads.per.umi.per.cb[1:1000], FilterUmisInGeneNew, umi_probabilities_map, 
+# f_inds <- which(sapply(rpus_filt, class) == 'try-error')
+# f_inds <- f_inds[which(sapply(rpus_filt, class) == 'try-error')]
+# 
+# rpus_filt <- lapply(trimmed$reads.per.umi.per.cb[f_inds], FilterUmisInGene, umi_probabilities_map, 
+#                     classifier, trimmed$correction.info$neighbours.per.umi, trimmed$correction.info$dp.matrices, 
+#                     trimmed$correction.info$neighb.prob.index, trimmed$collisions.info)
+# 
+# rpus_filt <- mclapply(trimmed$reads.per.umi.per.cb[f_inds], FilterUmisInGene, umi_probabilities_map, 
+#                       classifier, trimmed$correction.info$neighbours.per.umi, trimmed$correction.info$dp.matrices, 
+#                       trimmed$correction.info$neighb.prob.index, trimmed$collisions.info, mc.cores=30)
+# 
+# rpus_filt <- mclapply(trimmed$reads.per.umi.per.cb[1:10000], FilterUmisInGene, umi_probabilities_map, 
+#                       classifier, trimmed$correction.info$neighbours.per.umi, trimmed$correction.info$dp.matrices, 
+#                       trimmed$correction.info$neighb.prob.index, trimmed$collisions.info, mc.cores=30)
+```
+
+```{r}
+pv <- profvis(rpus_filt <- lapply(trimmed$reads.per.umi.per.cb[1:1000], FilterUmisInGene, umi_probabilities_map, 
+                    classifier, trimmed$correction.info$neighbours.per.umi, trimmed$correction.info$dp.matrices, 
+                    trimmed$correction.info$neighb.prob.index, trimmed$collisions.info))
+```
+
+```{r}
+rpus_filt <- CorrectUmiSequenceErrorsBayesian(trimmed$reads.per.umi.per.cb, trimmed$umi.probabilities,
+                                              trimmed$collisions.info, trimmed$correction.info, mc.cores=30)
+```
+
+```{r}
+rpus_filt <- lapply(trimmed$reads.per.umi.per.cb[1:1000], FilterUmisInGene, umi_probabilities_map, 
                     classifier, trimmed$correction.info$neighbours.per.umi, trimmed$correction.info$dp.matrices, 
                     trimmed$correction.info$neighb.prob.index, trimmed$collisions.info)
 
-rpus_filt <- mclapply(trimmed$reads.per.umi.per.cb, FilterUmisInGeneNew, umi_probabilities_map, 
+rpus_filt <- mclapply(trimmed$reads.per.umi.per.cb, FilterUmisInGene, umi_probabilities_map, 
                       classifier, trimmed$correction.info$neighbours.per.umi, trimmed$correction.info$dp.matrices, 
                       trimmed$correction.info$neighb.prob.index, trimmed$collisions.info, mc.cores=30)
 
@@ -108,24 +112,18 @@ trimmed$filt_cells$NB <- trimmed$collisions.info[sapply(rpus_filt, length)]
 umi_probabilities_map <- new(CppMap, names(trimmed$umi.probabilities), as.vector(trimmed$umi.probabilities))
 # gene0 <- trimmed$reads.per.umi.per.cb[trimmed$umis.per.gene == 50][[2]]
 gene0 <- trimmed$reads.per.umi.per.cb[trimmed$umis.per.gene >= 2000][[2]]
-r0 <- FilterUmisInGeneNew(gene0, umi_probabilities_map, classifier, trimmed$correction.info$neighbours.per.umi, 
-                          trimmed$correction.info$dp.matrices, trimmed$correction.info$neighb.prob.index, trimmed$collisions.info)
+r0 <- FilterUmisInGene(gene0, umi_probabilities_map, classifier, trimmed$correction.info$neighbours.per.umi, 
+                       trimmed$correction.info$dp.matrices, trimmed$correction.info$neighb.prob.index, 
+                       trimmed$collisions.info, verbose=T)
 ```
 
+```{r}
+pv <- profvis(r0 <- FilterUmisInGene(gene0, umi_probabilities_map, classifier, trimmed$correction.info$neighbours.per.umi, 
+                       trimmed$correction.info$dp.matrices, trimmed$correction.info$neighb.prob.index, 
+                       trimmed$collisions.info, verbose=T))
+```
 
 # Validation plots
-```{r}
-ggs <- PlotTrimmedCorrections(trimmed, raw, 6, raster=F)
-ggs$large + annotation_logticks(sides='b') + theme_pdf()
-ggs$small + theme_pdf()
-```
-
-```{r}
-ggs <- PlotTrimmedCorrections(trimmed, raw, 6, raster=F)
-ggs$large + annotation_logticks(sides='b') + theme_pdf()
-ggs$small + theme_pdf()
-```
-
 ```{r}
 ggs <- PlotTrimmedCorrections(trimmed, raw, 6, raster=F)
 ggs$large + annotation_logticks(sides='b') + theme_pdf()

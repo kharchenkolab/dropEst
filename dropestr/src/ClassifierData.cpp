@@ -10,15 +10,17 @@ using namespace Rcpp;
 ClassifierData::ClassifierData(const sd_map_t &umi_probabilities, const sd_map_t &probability_normalizers)
   : _umi_probabilities_map(umi_probabilities)
   , _probability_normalizers(probability_normalizers)
-  , _save_probs(!_umi_probabilities_map.empty())
-{}
+  , _save_probs(!umi_probabilities.empty()) {
+  if (umi_probabilities.size() != probability_normalizers.size())
+    stop("umi_probabilities and probability_normalizers must have the same size");
+}
 
 ClassifierData::ClassifierRow ClassifierData::fill_row(const UmiInfo &umi_small, const UmiInfo &umi_large, double umi_prob) {
   if (umi_small.umi().length() != umi_large.umi().length())
     stop("UMIs must have the same length");
 
   int diff_pos = -1;
-  std::string nuc_diff = "NN";
+  std::string nuc_diff;
   for (int i = 0; i < umi_small.umi().length(); ++i) {
     char n1 = umi_small.umi()[i], n2 = umi_large.umi()[i];
     if (n1 == n2)
@@ -47,12 +49,11 @@ bool ClassifierData::add_umis(const UmiInfo &umi1, const UmiInfo &umi2) {
 
   double umi_prob = -1;
   if (this->_save_probs) {
-    umi_prob = this->_umi_probabilities_map.at(umi_small.umi());
-    if (!this->_probability_normalizers.empty()) {
-      umi_prob /= this->_probability_normalizers.at(umi_large.umi());
-    }
+    umi_prob = this->_umi_probabilities_map.at(umi_small.umi()) / this->_probability_normalizers.at(umi_large.umi());
   }
+
   this->_data.push_back(this->fill_row(umi_small, umi_large, umi_prob));
+
   return true;
 }
 

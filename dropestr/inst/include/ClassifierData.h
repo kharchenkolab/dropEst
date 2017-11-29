@@ -49,6 +49,7 @@ private:
   const sd_map_t _umi_probabilities_map;
   const sd_map_t _probability_normalizers;
   const bool _save_probs;
+
   std::vector<ClassifierRow> _data;
   pairs_set _presented_umi_pairs;
 

@@ -340,24 +340,6 @@ NumericMatrix GetSmallerNeighboursDistributionsBySizes(const List &dp_matrices, 
 }
 
 // [[Rcpp::export]]
-NumericVector GetSmallerNeighbourProbabilities(const NumericMatrix &small_neighs_dist, const IntegerVector &neighb_per_umi,
-                                               bool return_zero_neighbours=false) {
-  size_t vec_length = return_zero_neighbours ? (sum(neighb_per_umi) + neighb_per_umi.size()) : sum(neighb_per_umi);
-  size_t start_ind = return_zero_neighbours ? 0 : 1;
-
-  NumericVector res(vec_length);
-  int res_ind = 0;
-  for (size_t umi_ind = 0; umi_ind < neighb_per_umi.size(); ++umi_ind) {
-    int neighb_num = neighb_per_umi[umi_ind];
-    for (size_t neighb_ind = start_ind; neighb_ind <= neighb_num; ++neighb_ind) {
-      res[res_ind++] = small_neighs_dist(neighb_ind, umi_ind);
-    }
-  }
-
-  return res;
-}
-
-// [[Rcpp::export]]
 List FilterUmisInGeneClassic(const List &reads_per_umi, const std::vector<s_vec_t> &neighbourhood, double mult=1, bool return_data=false) { // TODO: remove return_data
   if (neighbourhood.size() != reads_per_umi.size())
     stop("Vectors must have equal size");
