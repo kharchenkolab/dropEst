@@ -106,7 +106,7 @@ PrepareClassifierData(const List &reads_per_umi, const NumericVector &umi_probab
   ClassifierData res_data(parseVector(umi_probabilities), parseVector(probability_normalizers));
 
   try {
-    auto neighbourhood = SubsetAdjacentUmis(as<s_vec_t>(reads_per_umi.names()));
+    auto neighbourhood = SubsetAdjacentUmis(as<s_vec_t>(reads_per_umi.names())); // TODO: now it accepts only paired UMIs
     for (auto const &it : neighbourhood) {
       const auto &umi1_info = UmiInfo(it.first, rpu_data_map.at(it.first));
       for (auto const &umi2 : it.second) {

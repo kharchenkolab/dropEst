@@ -46,8 +46,7 @@ PrepareUmiCorrectionInfoWrapper <- function(reads.per.umi.per.cb, umi.probabilit
     correction.info$neighbours.per.umi <- FillAdjacentUmisData(umi.probabilities, adjacent_only=T, show_progress=(verbosity.level > 1))[names(umi.probabilities)]
     correction.info$rpus.with.inds <- AddIndexesToRpU(reads.per.umi.per.cb, names(umi.probabilities))
   } else {
-    correction.info <- PrepareUmiCorrectionInfo(umi.probabilities, max.umi.per.gene, reads.per.umi.per.cb,
-                                                quants.num=probability.quants.num,
+    correction.info <- PrepareUmiCorrectionInfo(umi.probabilities, max.umi.per.gene, quants.num=probability.quants.num,
                                                 verbosity.level=if (verbosity.level > 1) verbosity.level else 0)
   }
 
@@ -60,6 +59,9 @@ PrepareUmiCorrectionInfoWrapper <- function(reads.per.umi.per.cb, umi.probabilit
 }
 
 CorrectUmiSequenceErrorsClassic <- function(correction.info, mult, mc.cores, verbosity.level = 0) {
+  if (length(correction.info$rpus.with.inds) == 0)
+    warning("Empty data for classic UMI correction")
+
   filt.genes <- plapply(correction.info$rpus.with.inds, function(gene)
     FilterUmisInGeneClassic(gene$rpus, correction.info$neighbours.per.umi[gene$indexes + 1], mult=mult), mc.cores=mc.cores)
 
@@ -206,7 +208,7 @@ FilterUmisInGene <- function(cur.gene, umi.probabilities.map, classifier, neighb
   umi.probs.normalizers <- lapply(names(cur.gene), GetAdjacentUmis)%>% lapply(umi.probabilities.map$at) %>%
     sapply(sum) %>% setNames(names(cur.gene))
 
-  classifier.df <- PrepareClassifierData(cur.gene, umi.probabilities, umi.probs.normalizers) #
+  classifier.df <- PrepareClassifierData(cur.gene, umi.probabilities, umi.probs.normalizers)
 
   if (nrow(classifier.df) == 0)
     return(cur.gene)
@@ -253,8 +255,7 @@ FilterUmisInGene <- function(cur.gene, umi.probabilities.map, classifier, neighb
 }
 
 #' @export
-PrepareUmiCorrectionInfo <- function(umi.probabilities, max.umi.per.gene, reads.per.umi.per.cb, quants.num=50,
-                                     verbosity.level=0) {
+PrepareUmiCorrectionInfo <- function(umi.probabilities, max.umi.per.gene, quants.num=50, verbosity.level=0) {
   if (verbosity.level > 0) {
     cat("Filling info about adjacent UMIs...")
   }
@@ -314,27 +315,28 @@ TrimAndCorrect <- function(reads.per.umi.per.cb.info, umi.trim.length, mc.cores.
   trimmed$correction.info <- PrepareUmiCorrectionInfoWrapper(trimmed$reads.per.umi.per.cb, trimmed$umi.probabilities,
                                                              method='Bayesian', verbosity.level=verbosity.level,
                                                              max.umi.per.gene=max.umi.per.gene.adj)
+  trimmed$correction.info$rpus.with.inds <- AddIndexesToRpU(trimmed$reads.per.umi.per.cb, names(trimmed$umi.probabilities))
 
   if (prepare.only)
     return(trimmed)
 
   filt_cells <- list()
-  filt_cells$NB <- CorrectUmiSequenceErrors(trimmed.reads.per.umi.per.cb, umi.probabilities=trimmed$umi.probabilities,
-                                            collisions.info=trimmed$collisions.info, correction.info=trimmed$correction.info,
-                                            mc.cores=mc.cores.large, return='umis', verbosity.level=verbosity.level)
+  filt_cells$Bayesian <- CorrectUmiSequenceErrors(trimmed.reads.per.umi.per.cb, umi.probabilities=trimmed$umi.probabilities,
+                                                  collisions.info=trimmed$collisions.info, correction.info=trimmed$correction.info,
+                                                  mc.cores=mc.cores.large, return='umis', verbosity.level=verbosity.level)
 
-  filt_cells$Simple1 <- CorrectUmiSequenceErrors(trimmed.reads.per.umi.per.cb, umi.probabilities=trimmed$umi.probabilities,
-                                                 collisions.info=trimmed$collisions.info,  correction.info=trimmed$correction.info,
-                                                 mc.cores=mc.cores.small, verbosity.level=verbosity.level, return='umis',
-                                                 mult=1, method='Classic')
-  filt_cells$Simple1.1 <- CorrectUmiSequenceErrors(trimmed.reads.per.umi.per.cb, umi.probabilities=trimmed$umi.probabilities,
-                                                   collisions.info=trimmed$collisions.info, correction.info=trimmed$correction.info,
-                                                   mc.cores=mc.cores.small, verbosity.level=verbosity.level, return='umis',
-                                                   mult=1 + 1e-5, method='Classic')
-  filt_cells$Simple2 <- CorrectUmiSequenceErrors(trimmed.reads.per.umi.per.cb, umi.probabilities=trimmed$umi.probabilities,
-                                                 collisions.info=trimmed$collisions.info, correction.info=trimmed$correction.info,
-                                                 mc.cores=mc.cores.small, verbosity.level=verbosity.level, return='umis',
-                                                 mult=2, method='Classic')
+  filt_cells$Classic1 <- CorrectUmiSequenceErrors(trimmed.reads.per.umi.per.cb, umi.probabilities=trimmed$umi.probabilities,
+                                                  collisions.info=trimmed$collisions.info,  correction.info=trimmed$correction.info,
+                                                  mc.cores=mc.cores.small, verbosity.level=verbosity.level, return='umis',
+                                                  mult=1, method='Classic')
+  filt_cells$Classic1.1 <- CorrectUmiSequenceErrors(trimmed.reads.per.umi.per.cb, umi.probabilities=trimmed$umi.probabilities,
+                                                    collisions.info=trimmed$collisions.info, correction.info=trimmed$correction.info,
+                                                    mc.cores=mc.cores.small, verbosity.level=verbosity.level, return='umis',
+                                                    mult=1 + 1e-5, method='Classic')
+  filt_cells$Classic2 <- CorrectUmiSequenceErrors(trimmed.reads.per.umi.per.cb, umi.probabilities=trimmed$umi.probabilities,
+                                                  collisions.info=trimmed$collisions.info, correction.info=trimmed$correction.info,
+                                                  mc.cores=mc.cores.small, verbosity.level=verbosity.level, return='umis',
+                                                  mult=2, method='Classic')
 
   trimmed$filt_cells <- filt_cells
   return(trimmed)

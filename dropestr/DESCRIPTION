@@ -34,3 +34,4 @@ LinkingTo:
   RcppProgress,
   RcppEigen
 VignetteBuilder: knitr
+SystemRequirements: C++11

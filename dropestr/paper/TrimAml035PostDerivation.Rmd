@@ -93,7 +93,8 @@ pv <- profvis(rpus_filt <- lapply(trimmed$reads.per.umi.per.cb[1:1000], FilterUm
 
 ```{r}
 rpus_filt <- CorrectUmiSequenceErrorsBayesian(trimmed$reads.per.umi.per.cb, trimmed$umi.probabilities,
-                                              trimmed$collisions.info, trimmed$correction.info, mc.cores=30)
+                                              trimmed$collisions.info, trimmed$correction.info, 
+                                              distribution.smooth=50, quality.quants.num=15, mc.cores=30)
 ```
 
 ```{r}
@@ -124,12 +125,6 @@ pv <- profvis(r0 <- FilterUmisInGene(gene0, umi_probabilities_map, classifier, t
 ```
 
 # Validation plots
-```{r}
-ggs <- PlotTrimmedCorrections(trimmed, raw, 6, raster=F)
-ggs$large + annotation_logticks(sides='b') + theme_pdf()
-ggs$small + theme_pdf()
-```
-
 ```{r}
 ggs <- PlotTrimmedCorrections(trimmed, raw, 6, raster=F)
 ggs$large + annotation_logticks(sides='b') + theme_pdf()

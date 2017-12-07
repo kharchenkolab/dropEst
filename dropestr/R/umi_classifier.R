@@ -2,16 +2,15 @@ ErrorNumProb <- function(error.num, reads.num, error.prob, p.collisions) {
   if (error.num > reads.num)
     return(0)
 
-  cell <- function(i) {
-    dbinom(i, size=reads.num, prob=error.prob) * p.collisions[error.num + 1, i + 1]
-  }
-  return(sum(sapply(error.num:reads.num, cell)))
+  ids <- error.num:reads.num
+  return(sum(dbinom(ids, size=reads.num, prob=error.prob) * p.collisions[error.num + 1, ids + 1]))
 }
 
-ErrorProbsGivenNumOfReadsLarge <- function(max.reads.num, error.prob, umi.num) {
+ErrorProbsGivenNumOfReadsLarge <- function(max.reads.num, error.prob, umi.num, mc.cores) { # TODO: optimize
   p.collisions <- FillDpMatrix(1, umi.num + 1, max.reads.num + 1)
-  probs <- sapply(1:max.reads.num, function(r) sapply(0:umi.num, function(e)
-    ErrorNumProb(e, r, error.prob, p.collisions)))
+  probs <- plapply(1:max.reads.num, function(r) sapply(0:umi.num, function(e)
+    ErrorNumProb(e, r, error.prob, p.collisions)), mc.cores=mc.cores)
+  probs <- unlist(probs) %>% matrix(nrow=length(probs[[1]]))
 
   colnames(probs) <- paste(1:ncol(probs))
   rownames(probs) <- paste(0:(nrow(probs) - 1))
@@ -132,7 +131,7 @@ SmoothDistribution <- function(values, smooth, max.value=NULL, smooth.probs=FALS
 }
 
 TrainNBNegative <- function(train.data, rpus.extracted, distribution.smooth, nucleotide.pairs.number,
-                            umi.length, quality.prior, adj.umi.num) {
+                            umi.length, quality.prior, adj.umi.num, mc.cores) {
   params.neg <- list()
 
   reads.per.umi.train <- ReadsPerUmiDataset(rpus.extracted, max.umis.per.cb=4)
@@ -142,13 +141,13 @@ TrainNBNegative <- function(train.data, rpus.extracted, distribution.smooth, nuc
   read.error.theta <- EstimateReadsBetaBinomial(reads.per.umi.train$Small, reads.per.umi.train$Large, read.error.prob)
 
   max.reads.num <- (max(rpus.extracted %>% sapply(max)) * 1.5) %>% round()
-  probs.given.reads.large <- ErrorProbsGivenNumOfReadsLarge(max.reads.num, read.error.prob, adj.umi.num)
+  probs.given.reads.large <- ErrorProbsGivenNumOfReadsLarge(max.reads.num, read.error.prob, adj.umi.num, mc.cores=mc.cores)
 
   params.neg$MinRpUParams <- list(Theta=read.error.theta, Prob=read.error.prob)
   params.neg$ErrorNumProbsRL <- probs.given.reads.large
 
-  params.neg$Position <- SmoothDistribution(train.data$Position, distribution.smooth, umi.length, log.probs=T) # TODO: remove
-  params.neg$Nucleotides <- SmoothDistribution(train.data$Nucleotides, distribution.smooth, nucleotide.pairs.number, log.probs=T)
+  # params.neg$Position <- SmoothDistribution(train.data$Position, distribution.smooth, umi.length, log.probs=T) # TODO: remove?
+  # params.neg$Nucleotides <- SmoothDistribution(train.data$Nucleotides, distribution.smooth, nucleotide.pairs.number, log.probs=T)
   params.neg$Quality <- quality.prior
 
   return(params.neg)
@@ -157,11 +156,12 @@ TrainNBNegative <- function(train.data, rpus.extracted, distribution.smooth, nuc
 #' @export
 TrainNBClassifier <- function(reads.per.umi.per.cb, distribution.smooth, umi.probabilities, quality.quants.num=15,
                               quality.smooth=0.01, mc.cores=1) {
-  kNucleotides <- c('A', 'T', 'G', 'C')
+  # kNucleotides <- c('A', 'T', 'G', 'C')
 
   umis.per.gene <- sapply(reads.per.umi.per.cb, length)
   paired.rpus <- reads.per.umi.per.cb[umis.per.gene == 2]
-  is.pair.adjacent <- lapply(paired.rpus, function(g) sapply(SubsetAdjacentUmis(names(g)), length)) %>% sapply(max)
+  is.pair.adjacent <- plapply(paired.rpus, function(g) names(g) %>% SubsetAdjacentUmis() %>% sapply(length), mc.cores=mc.cores) %>%
+    sapply(max)
 
   train.data <- PrepareClassifierTrainingData(paired.rpus[is.pair.adjacent > 0])
 
@@ -169,7 +169,7 @@ TrainNBClassifier <- function(reads.per.umi.per.cb, distribution.smooth, umi.pro
     stop('Data has no training samples with UMI errors')
 
   # Quality estimation
-  quality.vals <- list(negative=train.data$Quality, common=unlist(lapply(reads.per.umi.per.cb[umis.per.gene <= 2], sapply, `[[`, 2)))
+  quality.vals <- list(negative=train.data$Quality, common=unlist(plapply(reads.per.umi.per.cb[umis.per.gene <= 2], sapply, `[[`, 2, mc.cores=mc.cores)))
   quant.borders <- GetQualityQuantBorders(quality.vals, quality.quants.num, distribution.smooth)
 
   quantized.quality.data <- lapply(quality.vals, Quantize, quant.borders)
@@ -185,16 +185,17 @@ TrainNBClassifier <- function(reads.per.umi.per.cb, distribution.smooth, umi.pro
   clf.neg <- TrainNBNegative(train.data, rpus.extracted, distribution.smooth=distribution.smooth,
                              nucleotide.pairs.number=NumberOfNucleotidePairs(),
                              umi.length=nchar(names(reads.per.umi.per.cb[[1]])[1]), quality.prior=quality.probs$negative,
-                             adj.umi.num=adj.umi.num)
+                             adj.umi.num=adj.umi.num, mc.cores=mc.cores)
 
   # Distribution over all data
-  nucl.freqs <- names(umi.probabilities) %>% sapply(strsplit, '') %>% lapply(table) %>% # TODO: remove
-    lapply(function(tb) c(setNames(rep(0, length(kNucleotides) - length(tb)), setdiff(kNucleotides, names(tb))), tb)) %>%
-    lapply(`[`, kNucleotides)
+  # nucl.freqs <- names(umi.probabilities) %>% sapply(strsplit, '') %>% lapply(table) %>% # TODO: remove?
+  #   lapply(function(tb) c(setNames(rep(0, length(kNucleotides) - length(tb)), setdiff(kNucleotides, names(tb))), tb)) %>%
+  #   lapply(`[`, kNucleotides)
+  #
+  # nucl.probs <- mapply(`*`, nucl.freqs, umi.probabilities) %>% rowSums() %>% (function(x) x / sum(x)) %>% log()
 
-  nucl.probs <- mapply(`*`, nucl.freqs, umi.probabilities) %>% rowSums() %>% (function(x) x / sum(x)) %>% log()
-
-  clf.common <- list(NucleotideProbs=nucl.probs, Quality=quality.probs$common, RpUDistribution=log(rpu.distribution))
+  # clf.common <- list(NucleotideProbs=nucl.probs, Quality=quality.probs$common, RpUDistribution=log(rpu.distribution))
+  clf.common <- list(Quality=quality.probs$common, RpUDistribution=log(rpu.distribution))
 
   return(list(Negative=clf.neg, Common=clf.common, QualityQuantBorders=quant.borders, MaxAdjacentUmisNum=adj.umi.num))
 }
@@ -216,7 +217,7 @@ PredictBayesian <- function(classifier, classifier.df, cur.gene, neighbours.per.
   divSum <- function(x) x / sum(x)
   dbetabinom <- function(...) emdbook::dbetabinom(..., prob=classifier$Negative$MinRpUParams$Prob, theta=classifier$Negative$MinRpUParams$Theta)
 
-  quantized.quality <- Quantize(classifier.df$Quality, classifier$QualityQuantBorders) + 1
+  quantized.quality <- Quantize(classifier.df$Quality, classifier$QualityQuantBorders) + 1 # TODO: move out of the loop
   classifier.df$RealQualityProb <- classifier$Common$Quality[quantized.quality]
   classifier.df$ErrorQualityProb <- classifier$Negative$Quality[quantized.quality]
 

@@ -1,6 +1,9 @@
 #' @importFrom dplyr %>%
 NULL
 
+#' @importFrom Rcpp sourceCpp evalCpp cpp_object_initializer
+NULL
+
 #' Calculate derivative of an tabular function.
 #'
 #' @param x vector of x values, where the function was calculated.
