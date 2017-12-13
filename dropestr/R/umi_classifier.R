@@ -17,9 +17,11 @@ ErrorProbsGivenNumOfReadsLarge <- function(max.reads.num, error.prob, umi.num, m
   return(probs)
 }
 
-ErrorProbsGivenRlRs <- function(probs.given.rl, reads.small.vec, reads.large) {
-  sum.reads.large <- pmin(reads.large + c(0, cumsum(reads.small.vec)), ncol(probs.given.rl))
-  probs.subset <- probs.given.rl[1:(length(reads.small.vec) + 1), sum.reads.large]
+ErrorProbsGivenRlRs <- function(probs.given.rl, reads.small.cumsum, reads.large) {
+  sum.reads.large <- reads.large + c(0, reads.small.cumsum)
+  sum.reads.large[sum.reads.large > ncol(probs.given.rl)] <- ncol(probs.given.rl)
+
+  probs.subset <- probs.given.rl[1:(length(reads.small.cumsum) + 1), sum.reads.large]
   return(diag(probs.subset) / colSums(probs.subset))
 }
 
@@ -146,8 +148,8 @@ TrainNBNegative <- function(train.data, rpus.extracted, distribution.smooth, nuc
   params.neg$MinRpUParams <- list(Theta=read.error.theta, Prob=read.error.prob)
   params.neg$ErrorNumProbsRL <- probs.given.reads.large
 
-  # params.neg$Position <- SmoothDistribution(train.data$Position, distribution.smooth, umi.length, log.probs=T) # TODO: remove?
-  # params.neg$Nucleotides <- SmoothDistribution(train.data$Nucleotides, distribution.smooth, nucleotide.pairs.number, log.probs=T)
+  params.neg$Position <- SmoothDistribution(train.data$Position, distribution.smooth, umi.length, log.probs=T) # TODO: remove?
+  params.neg$Nucleotides <- SmoothDistribution(train.data$Nucleotides, distribution.smooth, nucleotide.pairs.number, log.probs=T)
   params.neg$Quality <- quality.prior
 
   return(params.neg)
@@ -156,7 +158,7 @@ TrainNBNegative <- function(train.data, rpus.extracted, distribution.smooth, nuc
 #' @export
 TrainNBClassifier <- function(reads.per.umi.per.cb, distribution.smooth, umi.probabilities, quality.quants.num=15,
                               quality.smooth=0.01, mc.cores=1) {
-  # kNucleotides <- c('A', 'T', 'G', 'C')
+  kNucleotides <- c('A', 'T', 'G', 'C')
 
   umis.per.gene <- sapply(reads.per.umi.per.cb, length)
   paired.rpus <- reads.per.umi.per.cb[umis.per.gene == 2]
@@ -188,71 +190,78 @@ TrainNBClassifier <- function(reads.per.umi.per.cb, distribution.smooth, umi.pro
                              adj.umi.num=adj.umi.num, mc.cores=mc.cores)
 
   # Distribution over all data
-  # nucl.freqs <- names(umi.probabilities) %>% sapply(strsplit, '') %>% lapply(table) %>% # TODO: remove?
-  #   lapply(function(tb) c(setNames(rep(0, length(kNucleotides) - length(tb)), setdiff(kNucleotides, names(tb))), tb)) %>%
-  #   lapply(`[`, kNucleotides)
-  #
-  # nucl.probs <- mapply(`*`, nucl.freqs, umi.probabilities) %>% rowSums() %>% (function(x) x / sum(x)) %>% log()
+  nucl.freqs <- names(umi.probabilities) %>% sapply(strsplit, '') %>% lapply(table) %>% # TODO: remove?
+    lapply(function(tb) c(setNames(rep(0, length(kNucleotides) - length(tb)), setdiff(kNucleotides, names(tb))), tb)) %>%
+    lapply(`[`, kNucleotides)
 
-  # clf.common <- list(NucleotideProbs=nucl.probs, Quality=quality.probs$common, RpUDistribution=log(rpu.distribution))
-  clf.common <- list(Quality=quality.probs$common, RpUDistribution=log(rpu.distribution))
+  nucl.probs <- mapply(`*`, nucl.freqs, umi.probabilities) %>% rowSums() %>% (function(x) x / sum(x)) %>% log()
+
+  clf.common <- list(NucleotideProbs=nucl.probs, Quality=quality.probs$common, RpUDistribution=log(rpu.distribution))
+  # clf.common <- list(Quality=quality.probs$common, RpUDistribution=log(rpu.distribution))
 
   return(list(Negative=clf.neg, Common=clf.common, QualityQuantBorders=quant.borders, MaxAdjacentUmisNum=adj.umi.num))
 }
 
-EstimateSmallerNeighbourProbs <- function(cur.reads.per.umi, neighbours.per.umi, dp.matrices, neighbours.prob.index,
+EstimateSmallerNeighbourProbs <- function(reads.per.umi.from, reads.per.umi.to, dp.matrices, neighbours.prob.index,
                                           size.adj, max.adj.num) {
-  cur.n.p.i <- neighbours.prob.index[names(cur.reads.per.umi)]
-
-  nn <- GetAdjacentUmisNum(cur.reads.per.umi, cur.reads.per.umi, neighbours.per.umi, total=F, larger=T, smaller=F)
-  larger.nn <- nn$Larger[names(cur.reads.per.umi)]
+  cur.n.p.i <- neighbours.prob.index[names(reads.per.umi.from)]
+  larger.nn <- GetAdjacentUmisNum(reads.per.umi.from, reads.per.umi.to)$Larger
 
   neighbour.distrs <- GetSmallerNeighboursDistributionsBySizes(dp.matrices, larger.nn, cur.n.p.i, size.adj, max.adj.num,
                                                                return_raw=T)
+
+  neighbour.distrs[1, colSums(neighbour.distrs) < 1e-6] <- 1
   return(list(Probs=neighbour.distrs, LargerNum=larger.nn))
 }
 
+ClassifierDfOrder <- function(classifier.df) {
+  # TODO: order by target and score
+  return(order(classifier.df$Target, classifier.df$MinRpU, classifier.df$Quality, classifier.df$Base))
+}
+
 #' @export
-PredictBayesian <- function(classifier, classifier.df, cur.gene, neighbours.per.umi, dp.matrices, neighbours.prob.index, size.adj) { #TODO: not export
+PredictBayesian <- function(classifier, classifier.df, filt.gene, dp.matrices, neighbours.prob.index, size.adj) { #TODO: not export
   divSum <- function(x) x / sum(x)
   dbetabinom <- function(...) emdbook::dbetabinom(..., prob=classifier$Negative$MinRpUParams$Prob, theta=classifier$Negative$MinRpUParams$Theta)
 
-  quantized.quality <- Quantize(classifier.df$Quality, classifier$QualityQuantBorders) + 1 # TODO: move out of the loop
-  classifier.df$RealQualityProb <- classifier$Common$Quality[quantized.quality]
-  classifier.df$ErrorQualityProb <- classifier$Negative$Quality[quantized.quality]
-
-  classifier.df <- classifier.df[order(classifier.df$Target, classifier.df$MinRpU, classifier.df$Quality, classifier.df$Base),]
-  neighbour.info <- EstimateSmallerNeighbourProbs(ExtractReadsPerUmi(cur.gene, one.gene=T), neighbours.per.umi,
-                                                  dp.matrices, neighbours.prob.index, size.adj, classifier$MaxAdjacentUmisNum)
+  classifier.df <- classifier.df[ClassifierDfOrder(classifier.df),]
+  rpus <- ExtractReadsPerUmi(filt.gene, one.gene=T)
+  neighbour.info <- EstimateSmallerNeighbourProbs(rpus, rpus, dp.matrices, neighbours.prob.index, size.adj,
+                                                  classifier$MaxAdjacentUmisNum)
 
   classifier.df$LargerNum <- neighbour.info$LargerNum[as.character(classifier.df$Target)]
+  classifier.df$MinRpUCS <- split(classifier.df$MinRpU, classifier.df$Target) %>% lapply(cumsum) %>% unlist()
 
-  classifier.df <- classifier.df %>%
-    dplyr::group_by(Target, MaxRpU) %>%
-    dplyr::mutate(
-      RealProb = classifier$Common$RpUDistribution[MinRpU] - log(sum(exp(classifier$Common$RpUDistribution[1:unique(MaxRpU)]))) +
-        # RealQualityProb + classifier$Common$NucleotideProbs[NucleotideLarge] + UmiProb,
-        RealQualityProb,
-      ErrorProb = dbetabinom(cumsum(MinRpU), size=cumsum(MinRpU)+MaxRpU, log=T) -
-        log(1 - dbetabinom(0, size=cumsum(MinRpU)+MaxRpU)) +
-        # ErrorQualityProb + classifier$Negative$Nucleotides[Nucleotides + 1] + classifier$Negative$Position[Position + 1]
-        ErrorQualityProb
-    ) %>% dplyr::ungroup()
+  max.rpus <- unique(classifier.df$MaxRpU)
+  max.rpu.probs <- list()
+  max.rpu.probs[max.rpus] <- sapply(max.rpus, function(r) log(sum(exp(classifier$Common$RpUDistribution[1:r]))))
+  classifier.df$MaxRpUProb <- unlist(max.rpu.probs[classifier.df$MaxRpU])
 
-  # TODO: order by target and score
-  classifier.df <- classifier.df[order(classifier.df$Target, classifier.df$MinRpU, classifier.df$Quality, classifier.df$Base),]
+  total.rpus <- classifier.df$MinRpUCS + classifier.df$MaxRpU
+  classifier.df$RealProb <- classifier$Common$RpUDistribution[classifier.df$MinRpU] - classifier.df$MaxRpUProb +
+    # classifier.df$RealQualityProb
+    classifier$Common$NucleotideProbs[as.character(classifier.df$NucleotideLarge)] + classifier.df$UmiProb
 
-  classifier.df$TargetId <- classifier.df %>% dplyr::group_by(Target) %>% dplyr::group_indices()
-  targets.order <- (classifier.df %>% dplyr::mutate(Target=as.character(Target)) %>%
-                      dplyr::group_by(Target, TargetId) %>% dplyr::arrange(TargetId) %>% dplyr::summarise())$Target
-  neighbour.info$Probs <- neighbour.info$Probs[, targets.order, drop=F]
+  classifier.df$ErrorProb <- dbetabinom(classifier.df$MinRpUCS, size=total.rpus, log=T) -
+    log(1 - dbetabinom(0, size=total.rpus)) +
+    # classifier.df$ErrorQualityProb
+    classifier$Negative$Nucleotides[classifier.df$Nucleotides + 1] +
+    classifier$Negative$Position[classifier.df$Position + 1]
 
-  classifier.df <- classifier.df %>% dplyr::group_by(Target, TargetId, MaxRpU, LargerNum) %>%
-    dplyr::mutate(ErrorNumMLE=ErrorsNumMle(ErrorProbsGivenRlRs(classifier$Negative$ErrorNumProbsRL, MinRpU, unique(MaxRpU)),
-                                           divSum(neighbour.info$Probs[1:(n() + 1), unique(TargetId)]),
-                                           log.error.prob=ErrorProb, log.real.prob=RealProb,
-                                           max.adj.num=classifier$MaxAdjacentUmisNum, larger.num=unique(LargerNum)),
-                  IsMerged=1:n() <= ErrorNumMLE) %>% dplyr::ungroup()
+  classifier.df <- classifier.df[ClassifierDfOrder(classifier.df),]
+
+  neighbour.info$Probs <- neighbour.info$Probs[, unique(classifier.df$Target) %>% as.character(), drop=F]
+
+  classifier.dfs <- split(classifier.df[c('MinRpUCS', 'MaxRpU', 'Target', 'ErrorProb', 'RealProb', 'LargerNum')], classifier.df$Target)
+  err.prior.probs <- lapply(classifier.dfs, function(df)
+    ErrorProbsGivenRlRs(classifier$Negative$ErrorNumProbsRL, df$MinRpUCS, df$MaxRpU[1]))
+  real.prior.probs <- lapply(classifier.dfs, function(df)
+    divSum(neighbour.info$Probs[1:(nrow(df) + 1), as.integer(df$Target[1])]))
+
+  classifier.df$IsMerged <- mapply(function(e.p, r.p, df)
+    ErrorsNumMle(e.p, r.p, df$ErrorProb, df$RealProb, max.adj.num=classifier$MaxAdjacentUmisNum,
+                 larger.num=df$LargerNum[1]) >= 1:nrow(df),
+    err.prior.probs, real.prior.probs, classifier.dfs, SIMPLIFY=F) %>% unlist()
 
   return(classifier.df)
 }

@@ -34,36 +34,11 @@ AdjustCollisions <- function(umis.per.gene, collisions.info) { # TODO: remove
   return(collisions.info[umis.per.gene])
 }
 
-#' @export
-PrepareUmiCorrectionInfoWrapper <- function(reads.per.umi.per.cb, umi.probabilities, method, verbosity.level,
-                                            max.umi.per.gene, probability.quants.num=50) {
-  if (verbosity.level > 0) {
-    cat("Preparing UMI correction info.\n")
-  }
-
-  if (method == 'Classic') {
-    correction.info <- list()
-    correction.info$neighbours.per.umi <- FillAdjacentUmisData(umi.probabilities, adjacent_only=T, show_progress=(verbosity.level > 1))[names(umi.probabilities)]
-    correction.info$rpus.with.inds <- AddIndexesToRpU(reads.per.umi.per.cb, names(umi.probabilities))
-  } else {
-    correction.info <- PrepareUmiCorrectionInfo(umi.probabilities, max.umi.per.gene, quants.num=probability.quants.num,
-                                                verbosity.level=if (verbosity.level > 1) verbosity.level else 0)
-  }
-
-  if (verbosity.level > 0) {
-    cat(" Completed.\n")
-    cat("Correcting UMI sequence errors...")
-  }
-
-  return(correction.info)
-}
-
-CorrectUmiSequenceErrorsClassic <- function(correction.info, mult, mc.cores, verbosity.level = 0) {
-  if (length(correction.info$rpus.with.inds) == 0)
+CorrectUmiSequenceErrorsClassic <- function(reads.per.umi.per.cb, mult, mc.cores, verbosity.level = 0) {
+  if (length(reads.per.umi.per.cb) == 0)
     warning("Empty data for classic UMI correction")
 
-  filt.genes <- plapply(correction.info$rpus.with.inds, function(gene)
-    FilterUmisInGeneClassic(gene$rpus, correction.info$neighbours.per.umi[gene$indexes + 1], mult=mult), mc.cores=mc.cores)
+  filt.genes <- plapply(reads.per.umi.per.cb, FilterUmisInGeneClassic, mult=mult, mc.cores=mc.cores)
 
   if (verbosity.level > 0) {
     cat(" Completed.\n")
@@ -99,8 +74,7 @@ CorrectUmiSequenceErrorsBayesian <- function(reads.per.umi.per.cb, umi.probabili
 
   umi.probabilities.map <- new(CppMap, names(umi.probabilities), as.vector(umi.probabilities))
 
-  filt.genes <- plapply(reads.per.umi.per.cb, FilterUmisInGene, umi.probabilities.map, clf,
-                        correction.info$neighbours.per.umi, correction.info$dp.matrices,
+  filt.genes <- plapply(reads.per.umi.per.cb, FilterUmisInGene, umi.probabilities.map, clf, correction.info$dp.matrices,
                         correction.info$neighb.prob.index, collisions.info, mc.cores=mc.cores)
 
   if (verbosity.level > 0) {
@@ -156,21 +130,19 @@ CorrectUmiSequenceErrors <- function(reads.per.umi.per.cb.info, umi.probabilitie
     }
   }
 
-  if (is.null(correction.info)) {
-    max.umi.per.gene.adj <- AdjustGeneExpression(max.umi.per.gene, collisions.info)
-    correction.info <- PrepareUmiCorrectionInfoWrapper(reads.per.umi.per.cb, umi.probabilities=umi.probabilities,
-                                                       method=method, verbosity.level=verbosity.level,
-                                                       max.umi.per.gene=max.umi.per.gene.adj,
-                                                       probability.quants.num=probability.quants.num)
-  }
-
   if (method == 'Bayesian') {
+    if (is.null(correction.info)) {
+      max.umi.per.gene.adj <- collisions.info[max.umi.per.gene]
+      correction.info <- PrepareUmiCorrectionInfo(umi.probabilities, max.umi.per.gene.adj, quants.num=probability.quants.num,
+                                                  verbosity.level=if (verbosity.level > 1) verbosity.level else 0)
+    }
+
     filt.genes <- CorrectUmiSequenceErrorsBayesian(reads.per.umi.per.cb, umi.probabilities=umi.probabilities,
                                                    collisions.info=collisions.info, correction.info=correction.info,
                                                    mc.cores=mc.cores, distribution.smooth=distribution.smooth,
                                                    quality.quants.num=quality.quants.num, verbosity.level=verbosity.level)
   } else {
-    filt.genes <- CorrectUmiSequenceErrorsClassic(correction.info, mult=mult, mc.cores=mc.cores,
+    filt.genes <- CorrectUmiSequenceErrorsClassic(reads.per.umi.per.cb, mult=mult, mc.cores=mc.cores,
                                                   verbosity.level=verbosity.level)
   }
 
@@ -198,8 +170,8 @@ GetUmiProbabilitiesIndex <- function(umi.probs, umi.tolerance) {
 }
 
 #' @export
-FilterUmisInGene <- function(cur.gene, umi.probabilities.map, classifier, neighbours.per.umi, dp.matrices,
-                             neighbours.prob.index, collisions.info, max.iter=100, verbose=FALSE) {
+FilterUmisInGene <- function(cur.gene, umi.probabilities.map, classifier, dp.matrices, neighbours.prob.index,
+                             collisions.info, max.iter=100, verbose=FALSE) {
   if (length(cur.gene) == 1)
     return(cur.gene)
 
@@ -213,31 +185,35 @@ FilterUmisInGene <- function(cur.gene, umi.probabilities.map, classifier, neighb
   if (nrow(classifier.df) == 0)
     return(cur.gene)
 
+  quantized.quality <- Quantize(classifier.df$Quality, classifier$QualityQuantBorders) + 1
+  classifier.df$RealQualityProb <- classifier$Common$Quality[quantized.quality]
+  classifier.df$ErrorQualityProb <- classifier$Negative$Quality[quantized.quality]
+
   not.filtered.umis <- names(cur.gene)
   total.removed <- 0
 
   # Iteration:
   for (step in 1:max.iter) {
-    size.adj <- AdjustGeneExpression(length(not.filtered.umis), collisions.info)
-    prediction <- PredictBayesian(classifier, classifier.df, cur.gene[not.filtered.umis], neighbours.per.umi, dp.matrices,
-                                  neighbours.prob.index, size.adj)
-    filtered.mask <- prediction$IsMerged
+    size.adj <- collisions.info[length(not.filtered.umis)]
+    predictions <- PredictBayesian(classifier, classifier.df, cur.gene[not.filtered.umis], dp.matrices,
+                                   neighbours.prob.index, size.adj)
+    filtered.mask <- predictions$IsMerged
     if (any(filtered.mask)) {
-      filt.predictions <- prediction[filtered.mask,]
-      ord <- order(-filt.predictions$MaxRpU, filt.predictions$MinRpU, filt.predictions$Quality)
-      filtered.mask[which(filtered.mask)] <- ResolveUmiDependencies(as.character(filt.predictions$Base),
-                                                                    as.character(filt.predictions$Target),
-                                                                    ord) # TODO: use score for order
+      filt.predictions <- predictions[filtered.mask,]
+      ord <- order(-filt.predictions$MaxRpU, filt.predictions$MinRpUCS, filt.predictions$Quality) # TODO: use score for order
+      filtered.mask[which(filtered.mask)][ord] <- ResolveUmiDependencies(as.character(filt.predictions$Base)[ord],
+                                                                         as.character(filt.predictions$Target)[ord])
     }
 
-    not.filtered.umis.cur <- base::setdiff(not.filtered.umis, prediction$Base[filtered.mask])
+    not.filtered.umis.cur <- base::setdiff(not.filtered.umis, predictions$Base[filtered.mask])
     current.removed <- length(not.filtered.umis) - length(not.filtered.umis.cur)
     total.removed <- total.removed + current.removed
     not.filtered.umis <- not.filtered.umis.cur
 
-    # Next iteration
     filt.index <- FilterPredictions(not.filtered.umis, as.character(classifier.df$Base), as.character(classifier.df$Target))
     classifier.df <- classifier.df[filt.index,]
+    classifier.df$Target <- droplevels(classifier.df$Target)
+    classifier.df$Base <- droplevels(classifier.df$Base)
 
     if (verbose) {
       cat("Total: ", total.removed, ", current: ", current.removed, "\n")
@@ -265,8 +241,6 @@ PrepareUmiCorrectionInfo <- function(umi.probabilities, max.umi.per.gene, quants
     cat(" Completed.\n")
   }
 
-  neighbours.per.umi <- neighbours.info$adjacent.umis[names(umi.probabilities)]
-
   neighbour.probs <- neighbours.info$probabilities[names(umi.probabilities)]
 
   quant.size <- max(neighbour.probs) / quants.num
@@ -282,8 +256,7 @@ PrepareUmiCorrectionInfo <- function(umi.probabilities, max.umi.per.gene, quants
     cat(" Completed.\n\n")
   }
 
-  return(list(neighbours.per.umi=neighbours.per.umi, neighb.prob.index=neighb.prob.index,
-              dp.matrices=dp.matrices))
+  return(list(neighb.prob.index=neighb.prob.index, dp.matrices=dp.matrices))
 }
 
 #' @export
@@ -310,12 +283,10 @@ TrimAndCorrect <- function(reads.per.umi.per.cb.info, umi.trim.length, mc.cores.
   max.umi.per.gene <- max(trimmed$umis.per.gene)
 
   trimmed$collisions.info <- FillCollisionsAdjustmentInfo(trimmed$umi.probabilities, max.umi.per.gene)
-  max.umi.per.gene.adj <- AdjustGeneExpression(max.umi.per.gene, trimmed$collisions.info)
+  max.umi.per.gene.adj <- trimmed$collisions.info[max.umi.per.gene]
 
-  trimmed$correction.info <- PrepareUmiCorrectionInfoWrapper(trimmed$reads.per.umi.per.cb, trimmed$umi.probabilities,
-                                                             method='Bayesian', verbosity.level=verbosity.level,
-                                                             max.umi.per.gene=max.umi.per.gene.adj)
-  trimmed$correction.info$rpus.with.inds <- AddIndexesToRpU(trimmed$reads.per.umi.per.cb, names(trimmed$umi.probabilities))
+  trimmed$correction.info <- PrepareUmiCorrectionInfo(trimmed$umi.probabilities, max.umi.per.gene.adj,
+                                                      verbosity.level=if (verbosity.level > 1) verbosity.level else 0)
 
   if (prepare.only)
     return(trimmed)

@@ -10,8 +10,8 @@ GetCrossmergedMask <- function(base_umis, target_umis) {
     .Call('_dropestr_GetCrossmergedMask', PACKAGE = 'dropestr', base_umis, target_umis)
 }
 
-ResolveUmiDependencies <- function(base_umis, target_umis, score, verbose = FALSE) {
-    .Call('_dropestr_ResolveUmiDependencies', PACKAGE = 'dropestr', base_umis, target_umis, score, verbose)
+ResolveUmiDependencies <- function(base_umis, target_umis, verbose = FALSE) {
+    .Call('_dropestr_ResolveUmiDependencies', PACKAGE = 'dropestr', base_umis, target_umis, verbose)
 }
 
 SubsetAdjacentUmis <- function(umis) {
@@ -31,8 +31,8 @@ FillAdjacentUmisData <- function(umi_probabilites, adjacent_only = FALSE, show_p
 }
 
 #' @export
-GetAdjacentUmisNum <- function(reads_per_umi_from, reads_per_umi_to, neighbourhood, total = TRUE, larger = FALSE, smaller = FALSE) {
-    .Call('_dropestr_GetAdjacentUmisNum', PACKAGE = 'dropestr', reads_per_umi_from, reads_per_umi_to, neighbourhood, total, larger, smaller)
+GetAdjacentUmisNum <- function(reads_per_umi_from, reads_per_umi_to) {
+    .Call('_dropestr_GetAdjacentUmisNum', PACKAGE = 'dropestr', reads_per_umi_from, reads_per_umi_to)
 }
 
 #' @export
@@ -44,8 +44,8 @@ GetSmallerNeighboursDistributionsBySizes <- function(dp_matrices, larger_neighbo
     .Call('_dropestr_GetSmallerNeighboursDistributionsBySizes', PACKAGE = 'dropestr', dp_matrices, larger_neighbours_num, neighbour_prob_inds, size_adj, max_neighbour_num, smaller_neighbours_num, log_probs, return_raw)
 }
 
-FilterUmisInGeneClassic <- function(reads_per_umi, neighbourhood, mult = 1, return_data = FALSE) {
-    .Call('_dropestr_FilterUmisInGeneClassic', PACKAGE = 'dropestr', reads_per_umi, neighbourhood, mult, return_data)
+FilterUmisInGeneClassic <- function(reads_per_umi, mult = 1) {
+    .Call('_dropestr_FilterUmisInGeneClassic', PACKAGE = 'dropestr', reads_per_umi, mult)
 }
 
 #' @export
@@ -86,18 +86,6 @@ AdjustGeneExpressionClassic <- function(value, umis_number) {
     .Call('_dropestr_AdjustGeneExpressionClassic', PACKAGE = 'dropestr', value, umis_number)
 }
 
-#' Adjust gene expression value for collisions.
-#'
-#' @param value gene expression value.
-#' @param adjusted_sizes vector of adjusted gene sizes for *observed_sizes*.
-#' @param observed_sizes vector of quantized ordered obseved gene sizes.
-#' @return Adjusted gene expression value.
-#'
-#' @export
-AdjustGeneExpression <- function(value, adjusted_expressions) {
-    .Call('_dropestr_AdjustGeneExpression', PACKAGE = 'dropestr', value, adjusted_expressions)
-}
-
 DeadjustGeneExpression <- function(gene_expression, adjusted_expressions) {
     .Call('_dropestr_DeadjustGeneExpression', PACKAGE = 'dropestr', gene_expression, adjusted_expressions)
 }
@@ -118,11 +106,6 @@ BuildCountMatrix <- function(reads_per_umi_per_cell) {
 #' @export
 TrimUmis <- function(rpu_per_cell, trim_length, reverse = FALSE) {
     .Call('_dropestr_TrimUmis', PACKAGE = 'dropestr', rpu_per_cell, trim_length, reverse)
-}
-
-#' @export
-AddIndexesToRpU <- function(reads_per_umi_per_cb, umis) {
-    .Call('_dropestr_AddIndexesToRpU', PACKAGE = 'dropestr', reads_per_umi_per_cb, umis)
 }
 
 #' Estimate a distribution of observed UMI probabilities.

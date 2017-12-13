@@ -31,16 +31,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // ResolveUmiDependencies
-std::vector<bool> ResolveUmiDependencies(const s_vec_t& base_umis, const s_vec_t& target_umis, const std::vector<double>& score, bool verbose);
-RcppExport SEXP _dropestr_ResolveUmiDependencies(SEXP base_umisSEXP, SEXP target_umisSEXP, SEXP scoreSEXP, SEXP verboseSEXP) {
+std::vector<bool> ResolveUmiDependencies(const s_vec_t& base_umis, const s_vec_t& target_umis, bool verbose);
+RcppExport SEXP _dropestr_ResolveUmiDependencies(SEXP base_umisSEXP, SEXP target_umisSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const s_vec_t& >::type base_umis(base_umisSEXP);
     Rcpp::traits::input_parameter< const s_vec_t& >::type target_umis(target_umisSEXP);
-    Rcpp::traits::input_parameter< const std::vector<double>& >::type score(scoreSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(ResolveUmiDependencies(base_umis, target_umis, score, verbose));
+    rcpp_result_gen = Rcpp::wrap(ResolveUmiDependencies(base_umis, target_umis, verbose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -69,18 +68,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // GetAdjacentUmisNum
-List GetAdjacentUmisNum(const IntegerVector& reads_per_umi_from, const IntegerVector& reads_per_umi_to, const List& neighbourhood, bool total, bool larger, bool smaller);
-RcppExport SEXP _dropestr_GetAdjacentUmisNum(SEXP reads_per_umi_fromSEXP, SEXP reads_per_umi_toSEXP, SEXP neighbourhoodSEXP, SEXP totalSEXP, SEXP largerSEXP, SEXP smallerSEXP) {
+List GetAdjacentUmisNum(const IntegerVector& reads_per_umi_from, const IntegerVector& reads_per_umi_to);
+RcppExport SEXP _dropestr_GetAdjacentUmisNum(SEXP reads_per_umi_fromSEXP, SEXP reads_per_umi_toSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const IntegerVector& >::type reads_per_umi_from(reads_per_umi_fromSEXP);
     Rcpp::traits::input_parameter< const IntegerVector& >::type reads_per_umi_to(reads_per_umi_toSEXP);
-    Rcpp::traits::input_parameter< const List& >::type neighbourhood(neighbourhoodSEXP);
-    Rcpp::traits::input_parameter< bool >::type total(totalSEXP);
-    Rcpp::traits::input_parameter< bool >::type larger(largerSEXP);
-    Rcpp::traits::input_parameter< bool >::type smaller(smallerSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetAdjacentUmisNum(reads_per_umi_from, reads_per_umi_to, neighbourhood, total, larger, smaller));
+    rcpp_result_gen = Rcpp::wrap(GetAdjacentUmisNum(reads_per_umi_from, reads_per_umi_to));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -116,16 +111,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // FilterUmisInGeneClassic
-List FilterUmisInGeneClassic(const List& reads_per_umi, const std::vector<s_vec_t>& neighbourhood, double mult, bool return_data);
-RcppExport SEXP _dropestr_FilterUmisInGeneClassic(SEXP reads_per_umiSEXP, SEXP neighbourhoodSEXP, SEXP multSEXP, SEXP return_dataSEXP) {
+List FilterUmisInGeneClassic(const List& reads_per_umi, double mult);
+RcppExport SEXP _dropestr_FilterUmisInGeneClassic(SEXP reads_per_umiSEXP, SEXP multSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const List& >::type reads_per_umi(reads_per_umiSEXP);
-    Rcpp::traits::input_parameter< const std::vector<s_vec_t>& >::type neighbourhood(neighbourhoodSEXP);
     Rcpp::traits::input_parameter< double >::type mult(multSEXP);
-    Rcpp::traits::input_parameter< bool >::type return_data(return_dataSEXP);
-    rcpp_result_gen = Rcpp::wrap(FilterUmisInGeneClassic(reads_per_umi, neighbourhood, mult, return_data));
+    rcpp_result_gen = Rcpp::wrap(FilterUmisInGeneClassic(reads_per_umi, mult));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -239,18 +232,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// AdjustGeneExpression
-unsigned AdjustGeneExpression(unsigned value, const std::vector<unsigned>& adjusted_expressions);
-RcppExport SEXP _dropestr_AdjustGeneExpression(SEXP valueSEXP, SEXP adjusted_expressionsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< unsigned >::type value(valueSEXP);
-    Rcpp::traits::input_parameter< const std::vector<unsigned>& >::type adjusted_expressions(adjusted_expressionsSEXP);
-    rcpp_result_gen = Rcpp::wrap(AdjustGeneExpression(value, adjusted_expressions));
-    return rcpp_result_gen;
-END_RCPP
-}
 // DeadjustGeneExpression
 unsigned DeadjustGeneExpression(double gene_expression, const std::vector<unsigned>& adjusted_expressions);
 RcppExport SEXP _dropestr_DeadjustGeneExpression(SEXP gene_expressionSEXP, SEXP adjusted_expressionsSEXP) {
@@ -307,18 +288,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type trim_length(trim_lengthSEXP);
     Rcpp::traits::input_parameter< bool >::type reverse(reverseSEXP);
     rcpp_result_gen = Rcpp::wrap(TrimUmis(rpu_per_cell, trim_length, reverse));
-    return rcpp_result_gen;
-END_RCPP
-}
-// AddIndexesToRpU
-List AddIndexesToRpU(const List& reads_per_umi_per_cb, const std::vector<std::string>& umis);
-RcppExport SEXP _dropestr_AddIndexesToRpU(SEXP reads_per_umi_per_cbSEXP, SEXP umisSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const List& >::type reads_per_umi_per_cb(reads_per_umi_per_cbSEXP);
-    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type umis(umisSEXP);
-    rcpp_result_gen = Rcpp::wrap(AddIndexesToRpU(reads_per_umi_per_cb, umis));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -385,13 +354,13 @@ RcppExport SEXP _rcpp_module_boot_CppMapModule();
 static const R_CallMethodDef CallEntries[] = {
     {"_dropestr_GetAdjacentUmis", (DL_FUNC) &_dropestr_GetAdjacentUmis, 1},
     {"_dropestr_GetCrossmergedMask", (DL_FUNC) &_dropestr_GetCrossmergedMask, 2},
-    {"_dropestr_ResolveUmiDependencies", (DL_FUNC) &_dropestr_ResolveUmiDependencies, 4},
+    {"_dropestr_ResolveUmiDependencies", (DL_FUNC) &_dropestr_ResolveUmiDependencies, 3},
     {"_dropestr_SubsetAdjacentUmis", (DL_FUNC) &_dropestr_SubsetAdjacentUmis, 1},
     {"_dropestr_FillAdjacentUmisData", (DL_FUNC) &_dropestr_FillAdjacentUmisData, 3},
-    {"_dropestr_GetAdjacentUmisNum", (DL_FUNC) &_dropestr_GetAdjacentUmisNum, 6},
+    {"_dropestr_GetAdjacentUmisNum", (DL_FUNC) &_dropestr_GetAdjacentUmisNum, 2},
     {"_dropestr_FillDpMatrix", (DL_FUNC) &_dropestr_FillDpMatrix, 3},
     {"_dropestr_GetSmallerNeighboursDistributionsBySizes", (DL_FUNC) &_dropestr_GetSmallerNeighboursDistributionsBySizes, 8},
-    {"_dropestr_FilterUmisInGeneClassic", (DL_FUNC) &_dropestr_FilterUmisInGeneClassic, 4},
+    {"_dropestr_FilterUmisInGeneClassic", (DL_FUNC) &_dropestr_FilterUmisInGeneClassic, 2},
     {"_dropestr_Quantize", (DL_FUNC) &_dropestr_Quantize, 2},
     {"_dropestr_PredictLeftPart", (DL_FUNC) &_dropestr_PredictLeftPart, 3},
     {"_dropestr_ArrangePredictions", (DL_FUNC) &_dropestr_ArrangePredictions, 2},
@@ -401,13 +370,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dropestr_GetTrimCollisionsNum", (DL_FUNC) &_dropestr_GetTrimCollisionsNum, 2},
     {"_dropestr_FillCollisionsAdjustmentInfo", (DL_FUNC) &_dropestr_FillCollisionsAdjustmentInfo, 2},
     {"_dropestr_AdjustGeneExpressionClassic", (DL_FUNC) &_dropestr_AdjustGeneExpressionClassic, 2},
-    {"_dropestr_AdjustGeneExpression", (DL_FUNC) &_dropestr_AdjustGeneExpression, 2},
     {"_dropestr_DeadjustGeneExpression", (DL_FUNC) &_dropestr_DeadjustGeneExpression, 2},
     {"_dropestr_ValueCountsC", (DL_FUNC) &_dropestr_ValueCountsC, 1},
     {"_dropestr_ValueCounts", (DL_FUNC) &_dropestr_ValueCounts, 2},
     {"_dropestr_BuildCountMatrix", (DL_FUNC) &_dropestr_BuildCountMatrix, 1},
     {"_dropestr_TrimUmis", (DL_FUNC) &_dropestr_TrimUmis, 3},
-    {"_dropestr_AddIndexesToRpU", (DL_FUNC) &_dropestr_AddIndexesToRpU, 2},
     {"_dropestr_GetUmisDistribution", (DL_FUNC) &_dropestr_GetUmisDistribution, 2},
     {"_dropestr_GetUmisList", (DL_FUNC) &_dropestr_GetUmisList, 1},
     {"_dropestr_ConcatLists", (DL_FUNC) &_dropestr_ConcatLists, 1},

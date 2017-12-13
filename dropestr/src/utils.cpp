@@ -51,29 +51,6 @@ List TrimUmis(const List &rpu_per_cell, int trim_length, bool reverse=false) {
   return umis_info_trimmed.to_list();
 }
 
-//' @export
-// [[Rcpp::export]]
-List AddIndexesToRpU(const List &reads_per_umi_per_cb, const std::vector<std::string> &umis) { // TODO: not export
-  si_map_t umi_inds;
-  for (int i = 0; i < umis.size(); ++i) {
-    umi_inds.emplace(umis[i], i);
-  }
-
-  List res(reads_per_umi_per_cb.size());
-  for (int rpu_ind = 0; rpu_ind < reads_per_umi_per_cb.size(); ++rpu_ind) {
-    auto const &rpus = as<List>(reads_per_umi_per_cb[rpu_ind]);
-    auto const cur_umis = GeneInfo(rpus).umis;
-    IntegerVector indexes(cur_umis.size());
-    for (int umi_ind = 0; umi_ind < indexes.size(); ++umi_ind) {
-      indexes[umi_ind] = umi_inds.at(cur_umis[umi_ind]);
-    }
-
-    res[rpu_ind] = List::create(_["rpus"] = rpus, _["indexes"] = indexes);
-  }
-
-  return res;
-}
-
 //' Estimate a distribution of observed UMI probabilities.
 //'
 //' @param umis_per_gene_per_cell list of vectors: number of UMIs per gene per cell (zeros can be omitted).

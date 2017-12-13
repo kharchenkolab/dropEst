@@ -107,22 +107,6 @@ int AdjustGeneExpressionClassic(int value, int umis_number) {
   return int(std::round(-std::log(1 - value / double(umis_number)) * umis_number));
 }
 
-//' Adjust gene expression value for collisions.
-//'
-//' @param value gene expression value.
-//' @param adjusted_sizes vector of adjusted gene sizes for *observed_sizes*.
-//' @param observed_sizes vector of quantized ordered obseved gene sizes.
-//' @return Adjusted gene expression value.
-//'
-//' @export
-// [[Rcpp::export]]
-unsigned AdjustGeneExpression(unsigned value, const std::vector<unsigned> &adjusted_expressions) {
-  if (value > adjusted_expressions.size())
-    stop("Too large value of gene expression: " + std::to_string(value) + ", max acceptable is " + std::to_string(adjusted_expressions.size()));
-
-  return adjusted_expressions[value - 1];
-}
-
 // [[Rcpp::export]]
 unsigned DeadjustGeneExpression(double gene_expression, const std::vector<unsigned> &adjusted_expressions) {
   if (adjusted_expressions.empty())

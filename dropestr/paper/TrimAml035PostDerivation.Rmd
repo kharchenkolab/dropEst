@@ -49,7 +49,7 @@ trimmed <- readRDS(paste0(kDataPath, 'trimmed_6.rds'))
 ```
 
 ```{r}
-raw_corrected_rpus <- CorrectUmiSequenceErrorsClassic(raw$correction_info, mult=1, mc.cores=30)
+raw_corrected_rpus <- CorrectUmiSequenceErrorsClassic(reads_per_umi_per_cell$reads_per_umi, mult=1, mc.cores=30)
 ```
 
 # Reads per UMI
@@ -72,23 +72,23 @@ umi_probabilities_map <- new(CppMap, names(trimmed$umi.probabilities), as.vector
 # f_inds <- which(sapply(rpus_filt, class) == 'try-error')
 # f_inds <- f_inds[which(sapply(rpus_filt, class) == 'try-error')]
 # 
-# rpus_filt <- lapply(trimmed$reads.per.umi.per.cb[f_inds], FilterUmisInGene, umi_probabilities_map, 
-#                     classifier, trimmed$correction.info$neighbours.per.umi, trimmed$correction.info$dp.matrices, 
-#                     trimmed$correction.info$neighb.prob.index, trimmed$collisions.info)
+# rpus_filt <- lapply(trimmed$reads.per.umi.per.cb[f_inds], FilterUmisInGene, umi_probabilities_map,
+#                     classifier, trimmed$correction.info$dp.matrices, trimmed$correction.info$neighb.prob.index, 
+#                     trimmed$collisions.info)
 # 
-# rpus_filt <- mclapply(trimmed$reads.per.umi.per.cb[f_inds], FilterUmisInGene, umi_probabilities_map, 
-#                       classifier, trimmed$correction.info$neighbours.per.umi, trimmed$correction.info$dp.matrices, 
-#                       trimmed$correction.info$neighb.prob.index, trimmed$collisions.info, mc.cores=30)
+# rpus_filt <- mclapply(trimmed$reads.per.umi.per.cb[f_inds], FilterUmisInGene, umi_probabilities_map,
+#                       classifier, trimmed$correction.info$dp.matrices, trimmed$correction.info$neighb.prob.index, 
+#                       trimmed$collisions.info, mc.cores=30)
 # 
-# rpus_filt <- mclapply(trimmed$reads.per.umi.per.cb[1:10000], FilterUmisInGene, umi_probabilities_map, 
-#                       classifier, trimmed$correction.info$neighbours.per.umi, trimmed$correction.info$dp.matrices, 
-#                       trimmed$correction.info$neighb.prob.index, trimmed$collisions.info, mc.cores=30)
+# rpus_filt <- mclapply(trimmed$reads.per.umi.per.cb[1:10000], FilterUmisInGene, umi_probabilities_map,
+#                       classifier, trimmed$correction.info$dp.matrices, trimmed$correction.info$neighb.prob.index, 
+#                       trimmed$collisions.info, mc.cores=30)
 ```
 
 ```{r}
 pv <- profvis(rpus_filt <- lapply(trimmed$reads.per.umi.per.cb[1:1000], FilterUmisInGene, umi_probabilities_map, 
-                    classifier, trimmed$correction.info$neighbours.per.umi, trimmed$correction.info$dp.matrices, 
-                    trimmed$correction.info$neighb.prob.index, trimmed$collisions.info))
+                                  classifier, trimmed$correction.info$dp.matrices, trimmed$correction.info$neighb.prob.index, 
+                                  trimmed$collisions.info))
 ```
 
 ```{r}
@@ -99,12 +99,12 @@ rpus_filt <- CorrectUmiSequenceErrorsBayesian(trimmed$reads.per.umi.per.cb, trim
 
 ```{r}
 rpus_filt <- lapply(trimmed$reads.per.umi.per.cb[1:1000], FilterUmisInGene, umi_probabilities_map, 
-                    classifier, trimmed$correction.info$neighbours.per.umi, trimmed$correction.info$dp.matrices, 
-                    trimmed$correction.info$neighb.prob.index, trimmed$collisions.info)
+                    classifier, trimmed$correction.info$dp.matrices, trimmed$correction.info$neighb.prob.index, 
+                    trimmed$collisions.info)
 
 rpus_filt <- mclapply(trimmed$reads.per.umi.per.cb, FilterUmisInGene, umi_probabilities_map, 
-                      classifier, trimmed$correction.info$neighbours.per.umi, trimmed$correction.info$dp.matrices, 
-                      trimmed$correction.info$neighb.prob.index, trimmed$collisions.info, mc.cores=30)
+                      classifier, trimmed$correction.info$dp.matrices, trimmed$correction.info$neighb.prob.index, 
+                      trimmed$collisions.info, mc.cores=30)
 
 trimmed$filt_cells$NB <- trimmed$collisions.info[sapply(rpus_filt, length)]
 ```
@@ -113,15 +113,13 @@ trimmed$filt_cells$NB <- trimmed$collisions.info[sapply(rpus_filt, length)]
 umi_probabilities_map <- new(CppMap, names(trimmed$umi.probabilities), as.vector(trimmed$umi.probabilities))
 # gene0 <- trimmed$reads.per.umi.per.cb[trimmed$umis.per.gene == 50][[2]]
 gene0 <- trimmed$reads.per.umi.per.cb[trimmed$umis.per.gene >= 2000][[2]]
-r0 <- FilterUmisInGene(gene0, umi_probabilities_map, classifier, trimmed$correction.info$neighbours.per.umi, 
-                       trimmed$correction.info$dp.matrices, trimmed$correction.info$neighb.prob.index, 
-                       trimmed$collisions.info, verbose=T)
+r0 <- FilterUmisInGene(gene0, umi_probabilities_map, classifier, trimmed$correction.info$dp.matrices, 
+                       trimmed$correction.info$neighb.prob.index, trimmed$collisions.info, verbose=T)
 ```
 
 ```{r}
-pv <- profvis(r0 <- FilterUmisInGene(gene0, umi_probabilities_map, classifier, trimmed$correction.info$neighbours.per.umi, 
-                       trimmed$correction.info$dp.matrices, trimmed$correction.info$neighb.prob.index, 
-                       trimmed$collisions.info, verbose=T))
+pv <- profvis(r0 <- FilterUmisInGene(gene0, umi_probabilities_map, classifier, trimmed$correction.info$dp.matrices, 
+                                     trimmed$correction.info$neighb.prob.index, trimmed$collisions.info, verbose=T))
 ```
 
 # Validation plots
