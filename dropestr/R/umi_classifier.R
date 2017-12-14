@@ -239,14 +239,14 @@ PredictBayesian <- function(classifier, classifier.df, filt.gene, dp.matrices, n
 
   total.rpus <- classifier.df$MinRpUCS + classifier.df$MaxRpU
   classifier.df$RealProb <- classifier$Common$RpUDistribution[classifier.df$MinRpU] - classifier.df$MaxRpUProb +
-    # classifier.df$RealQualityProb
-    classifier$Common$NucleotideProbs[as.character(classifier.df$NucleotideLarge)] + classifier.df$UmiProb
+    classifier.df$RealQualityProb
+    # classifier$Common$NucleotideProbs[as.character(classifier.df$NucleotideLarge)] + classifier.df$UmiProb
 
   classifier.df$ErrorProb <- dbetabinom(classifier.df$MinRpUCS, size=total.rpus, log=T) -
     log(1 - dbetabinom(0, size=total.rpus)) +
-    # classifier.df$ErrorQualityProb
-    classifier$Negative$Nucleotides[classifier.df$Nucleotides + 1] +
-    classifier$Negative$Position[classifier.df$Position + 1]
+    classifier.df$ErrorQualityProb
+    # classifier$Negative$Nucleotides[classifier.df$Nucleotides + 1] +
+    # classifier$Negative$Position[classifier.df$Position + 1]
 
   classifier.df <- classifier.df[ClassifierDfOrder(classifier.df),]
 
