@@ -65,26 +65,12 @@ GetPagoda <- function(cm, n.cores=10, clustering.type='infomap', embeding.type='
 
 ```{r}
 holder <- readRDS(paste0(kDataPath, 'bmmc.rds'))
-print(holder$reads_per_umi_per_cell$reads_per_umi[[1]])
+if (is.null(holder$reads_per_umi_per_cell$reads_per_umi[[1]][[1]][[2]])) stop("Quality must be provided")
+
 umi_distribution <- GetUmisDistribution(holder$reads_per_umi_per_cell$reads_per_umi)
 umi_probs <- umi_distribution / sum(umi_distribution)
 collisions_info <- FillCollisionsAdjustmentInfo(umi_probs, max(holder$cm))
 length(holder$reads_per_umi_per_cell$reads_per_umi)
-```
-
-```{r}
-# max_upg <- AdjustGeneExpression(max(upg), collisions_info)
-# correction_info <- PrepareUmiCorrectionInfoWrapper(holder$reads_per_umi_per_cell$reads_per_umi, umi.probabilities=umi_probs,
-#                                                    method='Bayesian', verbosity.level=1, max.umi.per.gene=max_upg)
-# 
-# rpus <- ExtractReadsPerUmi(holder$reads_per_umi_per_cell$reads_per_umi[upg > 1])
-# neighbours_num <- sapply(rpus, function(rpu) GetAdjacentUmisNum(rpu, rpu)$Total)
-# estimated_nn <- EstimatedNumberOfAdjacentUmisByGeneSize(correction_info$dp.matrices, correction_info$neighb.prob.index, umi_probs)
-# 
-# estimated_nn_total <- sum(estimated_nn[collisions_info[upg]] * upg)
-# observed_nn_total <- sum(sapply(neighbours_num, sum))
-# 
-# (observed_nn_total - estimated_nn_total) / sum(upg[upg > 1]^2 - upg[upg > 1])
 ```
 
 ```{r}
@@ -115,61 +101,8 @@ corrected_cms$raw@x <- collisions_info[corrected_cms$raw@x]
 saveRDS(corrected_cms, paste0(kDataPath, 'cms2.rds'))
 ```
 
-# Hand-working trash
-```{r}
-classifier <- TrainNBClassifier(holder$reads_per_umi_per_cell$reads_per_umi, 50, umi_probs, mc.cores=30)
-```
-
-```{r}
-cell_id <- which(holder$reads_per_umi_per_cell$cells == 'GTGGTAACCCCAAA-1')
-gene_id <- which(holder$reads_per_umi_per_cell$genes == 'ENSG00000145741')
-
-rpu_id <- which((holder$reads_per_umi_per_cell$cell_indexes == cell_id - 1) & (holder$reads_per_umi_per_cell$gene_indexes == gene_id - 1))
-holder$reads_per_umi_per_cell$reads_per_umi[[rpu_id]]
-holder$cm['ENSG00000145741', 'GTGGTAACCCCAAA-1']
-```
-
-```{r}
-t_id <- 1514363
-t_cb <- holder$reads_per_umi_per_cell$cells[holder$reads_per_umi_per_cell$cell_indexes[[t_id]] + 1]
-t_gene <- holder$reads_per_umi_per_cell$genes[holder$reads_per_umi_per_cell$gene_indexes[[t_id]] + 1]
-c(holder$cm[t_gene, t_cb], length(holder$reads_per_umi_per_cell$reads_per_umi[[t_id]]))
-c(t_gene, t_cb)
-```
-
-```{r}
-corrected_cms$raw['ENSG00000145741', 'GTGGTAACCCCAAA-1']
-holder$cm['ENSG00000145741', 'GTGGTAACCCCAAA-1']
-```
-
-```{r}
-umi_prob_map <- new(CppMap, names(umi_probs), as.vector(umi_probs))
-FilterUmisInGene(holder$reads_per_umi_per_cell$reads_per_umi[[rpu_id]], umi_prob_map, classifier, 
-                 correction_info$dp.matrices, correction_info$neighb.prob.index, collisions_info, verbose=T) %>% length()
-```
-
-```{r}
-corrected_cms <- readRDS(paste0(kDataPath, 'cms2.rds'))
-real_genes <- rownames(corrected_cms$raw)[grep("^[^;]+$", rownames(corrected_cms$raw))]
-corrected_cms <- lapply(corrected_cms, function(cm) cm[real_genes,])
-```
-
-```{r}
-kRealCellsNum <- 2000
-umis_per_cb <- sort(Matrix::colSums(corrected_cms$raw), decreasing=T)
-corrected_cms <- lapply(corrected_cms, function(cm) cm[, names(umis_per_cb)[1:kRealCellsNum]])
-
-cells_per_gene <- Matrix::rowSums(corrected_cms$raw > 0)
-corrected_cms <- lapply(corrected_cms, function(cm) cm[names(cells_per_gene)[cells_per_gene > 50], ])
-```
-
-```{r, message=FALSE, warning=FALSE}
-umis_per_gene <- lapply(corrected_cms, function(cm) cm[corrected_cms$raw > 1])
-umis_per_gene <- as.data.frame(lapply(umis_per_gene, sort, decreasing=T))
-```
-
 # Analysis
-```{r}
+```{r, message=FALSE, warning=FALSE}
 kClusteringType <- 'infomap'
 r <- GetPagoda(corrected_cms$raw, n.cores=25, clustering.type=kClusteringType, embeding.type='tSNE', verbose=F)
 clusters <- r$clusters$PCA[[kClusteringType]]
@@ -179,18 +112,19 @@ r_s1 <- GetPagoda(corrected_cms$simple1, n.cores=25, clustering.type=kClustering
 ```
 
 ```{r}
+kMinCellsPerCluster <- 50
 PlotPagodaEmbeding(r_s1, embeding.type='tSNE', clustering.type=kClusteringType, mark.clusters=T, 
-                   show.legend=F, min.cluster.size=0, size=0.5, alpha=0.5, show.ticks=F, plot.na=T) + 
+                   show.legend=F, min.cluster.size=kMinCellsPerCluster, size=0.5, alpha=0.5, show.ticks=F, plot.na=T) + 
   scale_color_hue(l=55)
 
 PlotPagodaEmbeding(r, embeding.type='tSNE', clustering.type=kClusteringType, mark.clusters=T, 
-                   show.legend=F, min.cluster.size=50, size=0.5, alpha=0.5, show.ticks=F, plot.na=T) + 
+                   show.legend=F, min.cluster.size=kMinCellsPerCluster, size=0.5, alpha=0.5, show.ticks=F, plot.na=T) + 
   scale_color_hue(l=55)
 ```
 
 ## Full
 ```{r}
-(real_clusters <- which(table(clusters) > 50))
+real_clusters <- which(table(clusters) > kMinCellsPerCluster)
 ```
 
 ```{r}
@@ -203,30 +137,6 @@ for (n in names(corrected_cms)) {
 norm_cms <- lapply(rs, function(r) t(r$counts))
 ```
 
-## Correlations
-```{r}
-run_cms <- lapply(corrected_cms, as.matrix)
-names(run_cms)
-```
-
-```{r}
-correlations_by_clust <- EvaluateCmsCorrelation(clusters, real_clusters, run_cms, n.cores=7, n.cores.inner=5)
-head(correlations_by_clust)
-```
-
-```{r, fig.width=10, fig.height=10, message=FALSE, warning=FALSE, error=FALSE}
-xlims <- c(0.3, 0.8)
-gg <- ggplot(correlations_by_clust %>% filter(ClusterNumber < 5)) + 
-  geom_density(aes(x=Correlation, color=CorrectionType), size=1.3) + 
-  scale_color_manual(name='Correction type', values=alpha(scales::hue_pal()(7), 0.6)) + 
-  scale_x_continuous(expand=c(0, 0), limits=xlims, name='Spearman correlation') + 
-  scale_y_continuous(expand=c(0, 0), limits=c(0, 15), name='Density') +
-  theme_pdf(legend.pos=c(0, 1)) +
-  facet_wrap(~ClusterNumber, ncol=2)
-
-gg
-```
-
 ## Target correlations
 ```{r}
 correlations_info <- lapply(real_clusters, TargetClusterCorrelation, clusters, corrected_cms, 
@@ -237,8 +147,6 @@ correlations <- correlations %>% arrange(Correction, Barcode1, Barcode2)
 
 raw_correlations <- correlations %>% filter(Correction == 'raw') %>% .$Correlation
 correlations <- correlations %>% group_by(Correction) %>% mutate(Diff = (Correlation - raw_correlations) / raw_correlations)
-
-head(correlations)
 ```
 
 ```{r, fig.width=6, fig.height=7}
@@ -250,7 +158,6 @@ gg1 <- ggplot(plot_df, aes(x=Diff, color=Correction)) +
 
 gg2 <- ggplot(correlations, aes(x=Correlation, color=Correction), guides=F) +
   geom_density() +
-  # facet_wrap(~Cluster) +
   xlim(0.5, 1.0) +
   theme_pdf(legend.pos=c(0, 1))
 
@@ -258,38 +165,16 @@ cowplot::plot_grid(gg1, gg2, nrow=2, align='v')
 # ggsave(paste0(kPlotDir, 'correlation_with_umi_probs.pdf'))
 ```
 
+```{r, fig.width=7, fig.height=7}
+gg2 + facet_wrap(~Cluster) + xlim(0, 1)
+```
+
 ### Analysis
-Largest correction:
-```{r}
-# s1_correlations <- correlations %>% filter(Correction == 'simple1')
-s1_correlations <- correlations %>% filter(Correction == 'simple1', Correlation > 0.5)
-(t_row <- s1_correlations[s1_correlations %>% .$Diff %>% which.max(), ])
-barcodes <- unlist(t_row[, c('Barcode1', 'Barcode2')])
-
-correlations %>% filter(Barcode1 == barcodes[1], Barcode2 == barcodes[2])
-```
-
-```{r}
-sapply(plot_dfs, function(df) cor(df$Barcode1, df$Barcode2, method='spearman'))
-```
-
-```{r}
-plot_dfs <- lapply(corrected_cms, function(cm) as.matrix(cm[correlations_info$`4`$genes, barcodes]) %>% as.data.frame() %>% 
-                      `colnames<-`(c('Barcode1', 'Barcode2')) %>% 
-                     mutate(Barcode1R = rank(Barcode1), Barcode2R = rank(Barcode2)))
-
-# plot_df <- plot_dfs %>% bind_rows(.id='Correction') %>% filter(Correction == 'raw' | Correction == 'bayesian' | Correction == 'simple1')
-plot_df <- plot_dfs %>% bind_rows(.id='Correction') %>% filter(Correction == 'bayesian' | Correction == 'simple1')
-
-ggplot(plot_df, aes(x=Barcode1R, y=Barcode2R, color=Correction)) + 
-  geom_jitter(alpha=0.5, width=3, height=3, size=1) + 
-  geom_smooth(method=lm) +
-  # facet_wrap(~ Correction) +
-  theme_pdf(legend.pos=c(0, 1))
-```
-
 ```{r, message=FALSE}
-heatmap_dfs <- lapply(plot_dfs, function(df) data.frame(Barcode1=pmin(df$Barcode1, 12), Barcode2=pmin(df$Barcode2, 12)) %>% 
+heatmap_dfs <- lapply(corrected_cms, function(cm) as.matrix(cm[correlations_info$`4`$genes, barcodes]) %>% as.data.frame() %>% 
+                     `colnames<-`(c('Barcode1', 'Barcode2')) %>% mutate(Barcode1R = rank(Barcode1), Barcode2R = rank(Barcode2)))
+
+heatmap_dfs <- lapply(heatmap_dfs, function(df) data.frame(Barcode1=pmin(df$Barcode1, 12), Barcode2=pmin(df$Barcode2, 12)) %>% 
                         dcast(Barcode1 ~ Barcode2) %>% melt(variable.name='Barcode2', id.vars='Barcode1', value.name='Expression') %>%
                         mutate(Barcode1=as.integer(Barcode1), Barcode2=as.integer(Barcode2)))
 
@@ -302,7 +187,7 @@ for (n in names(heatmap_dfs)) {
 
 
 ### Target correlations 2
-```{r}
+```{r, warning=FALSE}
 correlations_info <- lapply(real_clusters, TargetClusterCorrelation, clusters, corrected_cms, 
                             correction.threshold=0.05, expression.total.threshold=10)
 correlations <- lapply(correlations_info, `[[`, 'correlations')
@@ -316,19 +201,17 @@ lapply(correlations_info, `[[`, 'genes') %>% sapply(length)
 head(correlations)
 ```
 
-```{r, fig.width=6, fig.height=7}
+```{r, fig.width=6, fig.height=7, message=FALSE, warning=FALSE}
 plot_clusters <- lapply(correlations_info, `[[`, 'genes') %>% sapply(length) %>% (function(x) which(x > 80))
 plot_df <- correlations %>% filter(Cluster %in% plot_clusters)
 gg1 <- ggplot(plot_df %>% filter(Correction != 'raw'), aes(x=Diff, color=Correction)) + 
-  geom_density() + xlim(-0.2, 0.2) + theme_pdf(legend.pos=c(0, 1))
+  geom_density() + xlim(-0.3, 0.3) + theme_pdf(legend.pos=c(1, 1))
 
 gg2 <- ggplot(plot_df, aes(x=Correlation, color=Correction), guides=F) +
   geom_density() +
-  # facet_wrap(~Cluster) +
-  xlim(0.3, 0.9) + theme_pdf(legend.pos=c(0, 1))
+  xlim(0.0, 0.9) + theme_pdf(legend.pos=c(1, 1))
 
 cowplot::plot_grid(gg1, gg2, nrow=2, align='v')
-# ggsave(paste0(kPlotDir, 'correlation_with_umi_probs.pdf'))
 ```
 
 ## Variation
@@ -352,12 +235,6 @@ ggplot(plot_df, aes(x=Mean, y=Variation, color=Correction)) +
   geom_point(alpha=0.8, size=1) + 
   geom_smooth(method='lm') +
   scale_x_log10() + scale_y_log10() + theme_pdf(legend.pos=c(1, 0))
-```
-
-Shapiro-Wilk normality test:
-```{r}
-plot_df <- var_df %>% group_by(Cluster, Gene, Correction) %>% summarise(PValue=shapiro.test(Expression)$p.value)
-ggplot(plot_df, aes(x=PValue, color=Correction)) + geom_density() + scale_x_log10() + theme_pdf(legend.pos=c(0, 1))
 ```
 
 ## Difference between clusters
@@ -388,207 +265,6 @@ for (n in names(expr_mats)) {
   pheatmap(log10(1 + expr_mats[[n]]), show_rownames=F, breaks=breaks, cluster_cols=clust_col, cluster_rows=clust_row, main=n)
 }
 ```
-
-
-## Old claculations
-```{r}
-c(sum(corrected_cms$raw == 2), sum(corrected_cms$raw == 2 & corrected_cms$simple1 == 1), sum(corrected_cms$raw == 2 & corrected_cms$bayesian == 1))
-c(sum(corrected_cms$raw > corrected_cms$simple1), sum(corrected_cms$bayesian > corrected_cms$simple1), sum(corrected_cms$simple1.1 > corrected_cms$simple1))
-```
-
-```{r}
-correlations_s1 <- correlations %>% filter(Correction == 'simple1') %>% rename(Simple1Diff = Diff)
-correlations_s1$BayesianDiff <- correlations %>% filter(Correction == 'bayesian') %>% .$Diff
-
-barcodes1 <- correlations_s1 %>% filter(Simple1Diff > BayesianDiff, Simple1Diff > 0.1) %>% .$Barcode1 %>% unique()
-barcodes2 <- correlations_s1 %>% filter(Simple1Diff > BayesianDiff, Simple1Diff > 0.1) %>% .$Barcode2 %>% unique()
-```
-
-```{r}
-nbins <- 50
-qplot(pmin(umis_per_cb[barcodes1], umis_per_cb[barcodes2]), fill='Minimum', bins=nbins) + 
-  geom_histogram(aes(umis_per_cb[barcodes1], fill='Barcode1'), alpha=0.6, bins=nbins) +
-  geom_histogram(aes(umis_per_cb[barcodes2], fill='Barcode2'), alpha=0.5, bins=nbins) +
-  xlim(0, 5000) +
-  theme_pdf(legend.pos=c(1, 1))
-```
-
-```{r}
-correction_sizes <- lapply(corrected_cms, function(cm) Matrix::rowSums(corrected_cms$raw - cm) / Matrix::rowSums(corrected_cms$raw))
-correction_sizes$raw <- NULL
-```
-
-```{r}
-
-correction_sizes$bayesian[correlations_s1$Barcode1] + correction_sizes$bayesian[correlations_s1$Barcode2]
-```
-
-
-## Comparison
-```{r}
-normalizing_genes <- rownames(corrected_cms$raw)[apply(corrected_cms$raw, 2, which.max)] %>% unique()
-```
-
-```{r}
-correction_size <- corrected_cms$raw - corrected_cms$simple2[rownames(corrected_cms$raw), colnames(corrected_cms$raw)]
-compared_gens <- names(which(sort(Matrix::rowSums(correction_size) / Matrix::rowSums(corrected_cms$raw), decreasing=T) > 0.5))
-tested_gene <- compared_gens[1]
-```
-
-```{r}
-raw_cell <- sort(corrected_cms$raw[tested_gene, ], decreasing=T) %>% (function(x) x[x > 1])
-corrected_cells <- as.data.frame(lapply(corrected_cms, function(cm) cm[tested_gene, names(raw_cell)])) %>% 
-  mutate(Barcode=names(raw_cell), Cluster=clusters[Barcode])
-```
-
-```{r}
-diff_cells <- corrected_cells %>% filter(simple1 != raw)
-table(diff_cells$Cluster)
-tested_clust <- 2
-```
-
-```{r}
-ggplot(melt(cbind(umis_per_gene[, c('raw', 'bayesian')], Id=1:nrow(umis_per_gene)), id.vars='Id')) + 
-  geom_line(aes(x=Id, y=value, linetype=variable, color=variable), alpha=0.7, size=2) + scale_y_log10() + theme_pdf(legend.pos=c(1, 1))
-```
-
-```{r}
-plot_df <- lapply(norm_cms, function(cm) cm[tested_gene, ][clusters == tested_clust] %>% (function(x) x[x > 0])) %>% 
-  as.data.frame()
-
-ggplot(melt(plot_df)) + geom_boxplot_jitter(aes(x=variable, y=value), outlier.jitter.width=0.1)
-```
-
-```{r}
-sapply(corrected_cms, function(cm) cm[tested_gene, 'AGCGATACAGCAAA-1'])
-```
-
-```{r}
-plot_df
-```
-
-## Corrections df
-```{r}
-real_cells <- names(clusters)[clusters %in% real_clusters]
-large_genes <- rownames(corrected_cms$raw)[Matrix::rowSums(corrected_cms$raw[, real_cells] > 0) > 100]
-
-dfs <- lapply(corrected_cms, function(cm) as.matrix(cm)[, real_cells] %>% melt() %>% set_colnames(c('Gene', 'Barcode', 'Expression')))
-norm_dfs <- lapply(norm_cms, function(cm) as.matrix(cm)[, real_cells] %>% melt() %>% set_colnames(c('Gene', 'Barcode', 'Expression')))
-
-corrections_df <- cbind(dfs$bayesian, Raw=dfs$raw$Expression, Simple2=dfs$simple2$Expression, Simple=dfs$simple1$Expression,
-                        BayesianNorm=norm_dfs$bayesian$Expression, RawNorm=norm_dfs$raw$Expression, 
-                        Simple2Norm=norm_dfs$simple2$Expression) %>% 
-  rename(Bayesian=Expression) %>% mutate(Cluster = as.integer(clusters[as.character(Barcode)])) %>%
-  mutate(IsCorrected = (Bayesian < Raw) | (Simple2 < Raw))
-head(corrections_df)
-```
-
-```{r}
-t_df <- corrections_df %>% filter(Raw <= 10, Simple != Raw)
-c(mean(t_df$Simple < t_df$Simple2), mean(t_df$Simple < t_df$Bayesian))
-c(mean(t_df$Bayesian < t_df$Simple2), mean(t_df$Simple2 < t_df$Bayesian))
-```
-
-
-```{r}
-gg <- ggplot(corrections_df %>% filter(IsCorrected)) + 
-  geom_jitter(aes(x=Raw, y=(Bayesian - Raw) / Raw, color='Bayesian'), size=0.3, alpha=0.05, height=0.05, width=0.02) +
-  geom_jitter(aes(x=Raw, y=(Simple2 - Raw) / Raw, color='Simple2'), size=0.3, alpha=0.05, height=0.05, width=0.02) + 
-  scale_x_log10() + annotation_logticks(sides='b') +
-  labs(x='Expression without correction (jitter)', y='Relative expression change (jitter)') +
-  theme_pdf(legend.pos=c(0, 0))
-
-gg
-```
-
-```{r}
-gg <- ggplot(corrections_df %>% filter(IsCorrected)) + 
-  geom_point(aes(x=Raw, y=Raw - Simple2, color='Simple2'), size=0.5, alpha=0.05) + 
-  geom_point(aes(x=Raw, y=Raw - Bayesian, color='Bayesian'), size=0.5, alpha=0.05) +
-  scale_x_log10() + scale_y_log10() + annotation_logticks() +
-  labs(x='Expression without correction', y='Expression decrease') +
-  theme_pdf(legend.pos=c(0, 0))
-
-gg
-```
-
-### Fold change
-```{r}
-corr_summ <- corrections_df %>% group_by(Gene, Cluster) %>%
-  summarise(MeanBayesianCorrection = sum(Raw - Bayesian) / sum(Raw),
-            MeanSimple2Correction = sum(Raw - Simple2) / sum(Raw),
-            ExpressionFrac = mean(Raw > 0),
-            ExpressionSum = sum(Raw > 0),
-            MeanRaw = mean(RawNorm, trim=0.2)) %>%
-  filter(MeanRaw > 0)
-
-corr_summ
-```
-
-```{r}
-corr_summ %>% filter(ExpressionFrac > 0.5, ExpressionSum > 100, MeanSimple2Correction > 0.2) %>% .$Cluster %>% table()
-```
-
-```{r}
-tested_cluster <- 7
-tested_genes <- corr_summ %>% filter(ExpressionFrac > 0.5, ExpressionSum > 100, MeanBayesianCorrection > 0.2, Cluster == tested_cluster) %>% 
-  arrange(-MeanBayesianCorrection) %>% .$Gene %>% as.character() %>% unique()
-
-tested_genes_not_cor <- corr_summ %>% filter(ExpressionFrac > 0.5, ExpressionSum > 100, MeanBayesianCorrection < 0.05, Cluster == tested_cluster) %>% 
-  arrange(MeanBayesianCorrection) %>% .$Gene %>% as.character() %>% unique()
-```
-
-```{r}
-corrections_df %>% filter(Cluster == tested_cluster, Gene %in% c(gene1, gene2)) %>% arrange(as.character(Gene), as.character(Barcode))
-```
-
-```{r}
-gene1 <- tested_genes[1]
-gene2 <- tested_genes_not_cor[1]
-fold_df <- corrections_df %>% filter(Cluster == tested_cluster, Gene %in% c(gene1, gene2)) %>% group_by(Barcode) %>% 
-  filter(all(RawNorm > 0.1)) %>% arrange(Barcode, Gene) %>% 
-  summarise(FoldBayesian = log10(BayesianNorm[1] / BayesianNorm[2]), 
-            FoldRaw = log10(RawNorm[1] / RawNorm[2]), 
-            FoldSimple2 = log10(Simple2Norm[1] / Simple2Norm[2]))
-
-nrow(fold_df)
-fold_df
-```
-
-```{r}
-getRatios <- function(corrections.df, tested.cluster,gene1, gene2) {
-  res <- corrections.df %>% filter(Cluster == tested.cluster, Gene %in% c(gene1, gene2)) %>% 
-    group_by(Barcode) %>% filter(all(RawNorm > 0.1)) %>% arrange(Barcode, Gene) %>% 
-  summarise(FoldBayesian = log10(BayesianNorm[1] / BayesianNorm[2]), 
-            FoldRaw = log10(RawNorm[1] / RawNorm[2]), 
-            FoldSimple2 = log10(Simple2Norm[1] / Simple2Norm[2]))
-  
-  res <- res %>% select(-Barcode) %>% melt(variable.name='Type') %>% group_by(Type) %>% 
-  summarise(Mean=mean(value), TMean = mean(value, trim=0.2), SD=sd(value), 
-            MAD=mad(value)) %>% mutate(Gene1=gene1, Gene2=gene2) %>%
-  select(Gene1, Gene2, Type:MAD)
-  
-  return(res)
-}
-```
-
-```{r}
-ratio_sds <- mclapply(tested_genes, function(gene1) lapply(tested_genes_not_cor, function(gene2) getRatios(corrections_df, tested_cluster, gene1, gene2)), mc.cores=30)
-# ratio_sds <- mclapply(tested_genes_not_cor, function(gene2) getRatios(corrections_df, tested_cluster, gene1, gene2), mc.cores=10)
-ratio_sds <- unlist(ratio_sds, recursive=F)
-ratio_sds <- Reduce(rbind, ratio_sds) %>% as.data.frame()
-
-ggplot(melt(ratio_sds)) + geom_density(aes(x=value, color=variable))
-```
-
-```{r}
-ggplot(fold_df) + 
-  geom_histogram(aes(x=FoldRaw, fill='Raw'), alpha=0.6) +
-  geom_histogram(aes(x=FoldBayesian, fill='Bayesian'), alpha=0.6) +
-  geom_histogram(aes(x=FoldSimple2, fill='Simple2'), alpha=0.6) + theme_pdf(legend.pos=c(1, 1)) +
-  labs(x='Ratio between two genes', y='#Cells')
-```
-
 
 ## Edit distances
 ```{r}
