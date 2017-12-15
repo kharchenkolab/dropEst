@@ -10,6 +10,7 @@ output:
 ---
 
 ```{r, include=FALSE}
+library(dropestr)
 library(ggplot2)
 library(ggsci)
 library(ggpubr)
@@ -17,8 +18,8 @@ library(ggrastr)
 library(dplyr)
 library(Matrix)
 library(parallel)
+library(pagoda2)
 library(reshape2)
-library(pheatmap)
 
 source("./Functions/Functions.R")
 source("./Functions/PlotFuncs.R")
@@ -32,10 +33,39 @@ kPlotDir <- '~/Data/Plots/Paper/Review/UmiErrors/'
 kDataPath <- '/d0-mendel/home/viktor_petukhov/Data/10x/frozen_bmmc_healthy_donor1/est_11_10_umi_quality/'
 ```
 
+```{Rcpp}
+#include <Rcpp.h>
+#include <vector>
+#include <string>
+
+// [[Rcpp::export]]
+std::vector<int> pairwise_hamming(const std::vector<std::string> &strs) {
+  std::vector<int> distances;
+  for (int i = 0; i < strs.size(); ++i) {
+    for (int j = i + 1; j < strs.size(); ++j) {
+      const std::string &str1 = strs[i];
+      const std::string &str2 = strs[j];
+      if (str1.length() != str2.length())
+        Rcpp::stop("Strings must have the same length");
+      
+      int ed = 0;
+      for (int c_id = 0; c_id < str1.length(); ++c_id) {
+        if (str1[c_id] != str2[c_id]) {
+          ed++;
+        }
+      }
+      distances.push_back(ed);
+    }
+  }
+  
+  return distances;
+}
+```
+
 ```{r}
 GetPagoda <- function(cm, n.cores=10, clustering.type='infomap', embeding.type='tSNE', verbose=TRUE) {
   library(pagoda2)
-  r <- Pagoda2$new(cm, modelType='plain', trim=5, n.cores=n.cores)
+  r <- Pagoda2$new(cm, modelType='plain', trim=5, n.cores=n.cores, verbose=verbose)
   r$adjustVariance(plot=F, do.par=F, gam.k=10, verbose=verbose)
 
   r$calculatePcaReduction(nPcs=100, n.odgenes=1000, maxit=1000)
@@ -64,36 +94,36 @@ if (length(holder$reads_per_umi_per_cell$reads_per_umi[[1]][[1]]) != 2) stop("Qu
 
 umi_distribution <- GetUmisDistribution(holder$reads_per_umi_per_cell$reads_per_umi)
 umi_probs <- umi_distribution / sum(umi_distribution)
-collisions_info <- FillCollisionsAdjustmentInfo(umi_probs, max(holder$cm))
-length(holder$reads_per_umi_per_cell$reads_per_umi)
+# collisions_info <- FillCollisionsAdjustmentInfo(umi_probs, max(holder$cm))
+# length(holder$reads_per_umi_per_cell$reads_per_umi)
 ```
 
 ```{r}
-corrected_cms <- list()
-max_upg <- sapply(holder$reads_per_umi_per_cell$reads_per_umi, length) %>% max()
-max_upg <- collisions_info[max_upg]
-correction_info <- PrepareUmiCorrectionInfo(umi_probs, max_upg, verbosity.level=1)
-
-corrected_cms$bayesian <- CorrectUmiSequenceErrors(holder$reads_per_umi_per_cell, method='Bayesian', return='matrix', 
-                                                   collisions.info=collisions_info, umi.probabilities=umi_probs, 
-                                                   correction.info=correction_info, verbosity.level=2, mc.cores=30)
-
-corrected_cms$cluster <- CorrectUmiSequenceErrors(holder$reads_per_umi_per_cell, method='Classic', return='matrix',
-                                                  collisions.info=collisions_info, umi.probabilities=umi_probs, 
-                                                  verbosity.level=2, mc.cores=30)
-
-corrected_cms$`cluster-neq` <- CorrectUmiSequenceErrors(holder$reads_per_umi_per_cell, method='Classic', return='matrix',
-                                                    mult=1+1e-4, collisions.info=collisions_info, umi.probabilities=umi_probs, 
-                                                    verbosity.level=2, mc.cores=30)
-
-corrected_cms$directional <- CorrectUmiSequenceErrors(holder$reads_per_umi_per_cell, method='Classic', return='matrix',
-                                                  mult=2, collisions.info=collisions_info, umi.probabilities=umi_probs, 
-                                                  verbosity.level=2, mc.cores=30)
-
-corrected_cms$raw <- holder$cm
-corrected_cms$raw@x <- collisions_info[corrected_cms$raw@x]
-
-saveRDS(corrected_cms, paste0(kDataPath, 'cms2.rds'))
+# corrected_cms <- list()
+# max_upg <- sapply(holder$reads_per_umi_per_cell$reads_per_umi, length) %>% max()
+# max_upg <- collisions_info[max_upg]
+# correction_info <- PrepareUmiCorrectionInfo(umi_probs, max_upg, verbosity.level=1)
+# 
+# corrected_cms$bayesian <- CorrectUmiSequenceErrors(holder$reads_per_umi_per_cell, method='Bayesian', return='matrix', 
+#                                                    collisions.info=collisions_info, umi.probabilities=umi_probs, 
+#                                                    correction.info=correction_info, verbosity.level=2, mc.cores=30)
+# 
+# corrected_cms$cluster <- CorrectUmiSequenceErrors(holder$reads_per_umi_per_cell, method='Classic', return='matrix',
+#                                                   collisions.info=collisions_info, umi.probabilities=umi_probs, 
+#                                                   verbosity.level=2, mc.cores=30)
+# 
+# corrected_cms$`cluster-neq` <- CorrectUmiSequenceErrors(holder$reads_per_umi_per_cell, method='Classic', return='matrix',
+#                                                     mult=1+1e-4, collisions.info=collisions_info, umi.probabilities=umi_probs, 
+#                                                     verbosity.level=2, mc.cores=30)
+# 
+# corrected_cms$directional <- CorrectUmiSequenceErrors(holder$reads_per_umi_per_cell, method='Classic', return='matrix',
+#                                                   mult=2, collisions.info=collisions_info, umi.probabilities=umi_probs, 
+#                                                   verbosity.level=2, mc.cores=30)
+# 
+# corrected_cms$raw <- holder$cm
+# corrected_cms$raw@x <- collisions_info[corrected_cms$raw@x]
+# 
+# saveRDS(corrected_cms, paste0(kDataPath, 'cms2.rds'))
 ```
 
 ```{r}
@@ -106,27 +136,36 @@ corrected_cms <- lapply(corrected_cms, function(cm) cm[grep("^[^;]+$", rownames(
 names(corrected_cms) <- c('Bayesian', 'cluster', 'cluster-neq', 'directional', 'raw')
 ```
 
+```{r}
+# umis_per_gene <- lapply(corrected_cms, function(cm) cm@x)
+# umis_per_gene <- lapply(umis_per_gene, function(x) x[umis_per_gene$raw > 1]) %>% as.data.frame()
+# ggplot(melt(umis_per_gene, id.vars='raw')) +
+#   geom_point_rast(aes(x = raw, y = raw - value, color = variable, size = 1, alpha=0.05)) +
+#   scale_x_log10() + annotation_logticks() +
+#   theme_pdf(legend.pos = c(0, 1))
+```
+
+Create pagoda object for raw data:
 ```{r, message=FALSE, warning=FALSE}
 kClusteringType <- 'infomap'
 r <- GetPagoda(corrected_cms$raw, n.cores=25, clustering.type=kClusteringType, embeding.type='tSNE', verbose=F)
 clusters <- r$clusters$PCA[[kClusteringType]]
 
-r_s1 <- GetPagoda(corrected_cms$cluster, n.cores=25, clustering.type=kClusteringType, embeding.type='tSNE', verbose=F)
+# r_s1 <- GetPagoda(corrected_cms$cluster, n.cores=25, clustering.type=kClusteringType, embeding.type='tSNE', verbose=F)
 # clusters <- r_s1$clusters$PCA[[kClusteringType]]
 ```
 
 ```{r}
 kMinCellsPerCluster <- 50
-PlotPagodaEmbeding(r_s1, embeding.type='tSNE', clustering.type=kClusteringType, mark.clusters=T, 
-                   show.legend=F, min.cluster.size=kMinCellsPerCluster, size=0.5, alpha=0.5, show.ticks=F, plot.na=T) + 
-  scale_color_hue(l=55)
+# PlotPagodaEmbeding(r_s1, embeding.type='tSNE', clustering.type=kClusteringType, mark.clusters=T, 
+#                    show.legend=F, min.cluster.size=kMinCellsPerCluster, size=0.5, alpha=0.5, show.ticks=F, plot.na=T) + 
+#   scale_color_hue(l=55)
 
 PlotPagodaEmbeding(r, embeding.type='tSNE', clustering.type=kClusteringType, mark.clusters=T, 
                    show.legend=F, min.cluster.size=kMinCellsPerCluster, size=0.5, alpha=0.5, show.ticks=F, plot.na=T) + 
   scale_color_hue(l=55)
 ```
 
-## Full
 ```{r}
 real_clusters <- which(table(clusters) > kMinCellsPerCluster)
 ```
@@ -134,7 +173,7 @@ real_clusters <- which(table(clusters) > kMinCellsPerCluster)
 ```{r}
 rs <- list()
 for (n in names(corrected_cms)) {
-  rs[[n]] <- Pagoda2$new(corrected_cms[[n]], modelType='plain', trim=5, n.cores=5)
+  sink("/dev/null"); rs[[n]] <- Pagoda2$new(corrected_cms[[n]], modelType='plain', trim=5, n.cores=5, verbose=F); sink()
   # rs[[n]]$adjustVariance(plot=F, do.par=F, gam.k=10)
 }
 
@@ -151,7 +190,7 @@ correlations <- lapply(correlations_info, `[[`, 'correlations') %>% bind_rows() 
   mutate(Diff = (Correlation - CorrelationRaw) / CorrelationRaw)
 ```
 
-Correlation change accumulated by all clusters:
+Correlation change accumulated by all clusters:  
 ```{r, fig.width=6, fig.height=6, warning=FALSE, message=FALSE}
 plot_df <- correlations %>% filter(Correction != 'raw')
 gg1 <- ggplot(plot_df, aes(x=Diff, color=Correction)) + 
@@ -169,7 +208,7 @@ gg2 <- ggplot(correlations, aes(x=Correlation, color=Correction), guides=F) +
 cowplot::plot_grid(gg1, gg2, nrow=2, align='v')
 ```
 
-Correlation distribution by each cluster (just to ensure that nothing weird happens):
+Correlation distribution by each cluster (just to ensure that nothing weird happens):  
 ```{r, fig.width=7, fig.height=7, warning=FALSE, message=FALSE}
 gg2 + facet_wrap(~Cluster) + scale_x_continuous(limits=c(0, 1), breaks=c(0, 0.5, 1)) + 
   theme(strip.text.x=element_text(margin=margin(t=1, b=1, unit='pt'))) +
@@ -210,7 +249,8 @@ Number of genes per cluster:
 lapply(correlations_info, `[[`, 'genes') %>% sapply(length)
 ```
 
-Let's remove all clusters with less than 80 genes. 
+Let's remove all clusters with less than 80 genes.  
+
 ```{r, fig.width=6, fig.height=7, message=FALSE, warning=FALSE}
 plot_clusters <- lapply(correlations_info, `[[`, 'genes') %>% sapply(length) %>% (function(x) which(x > 80))
 plot_df <- correlations %>% filter(Cluster %in% plot_clusters)
@@ -240,7 +280,8 @@ These results looks too weird to rely on them.
 ## Variation
 Variation of a single gene expression within fixed cluster (after normalization) is another possible measure. 
 It allows us to increase gene filtration thresholds, as now we analyze single genes, but not gene vectors. Here we used
-only genes with the correction size > 10% and median normalized expression > 10. 
+only genes with the correction size > 10% and median normalized expression > 10.  
+
 ```{r}
 var_dfs <- lapply(real_clusters, function(cl) 
   ExpressedGenesVariation(norm_cms, clusters, cluster.num=cl, mean.correction.threshold=0.1, 
@@ -257,7 +298,7 @@ ggplot(plot_df) + geom_density(aes(x=VariationDiff, color=Correction)) +
   theme_pdf(legend.pos=c(1, 1))
 ```
 
-Dependency between mean and variation:
+Dependency between mean and variation:  
 ```{r}
 ggplot(plot_df, aes(x=Mean, y=Variation, color=Correction)) + 
   geom_point(alpha=0.8, size=1) + 
@@ -281,12 +322,13 @@ GetOverexpressedGenes <- function(cm.raw, clusters, cluster.num, median.expressi
 
 overexpressed_genes <- lapply(norm_cms, function(cm) lapply(real_clusters, function(cl) GetOverexpressedGenes(cm, clusters, cl, median.expression.threshold=5)))
 overexpressed_genes <- Reduce(union, lapply(overexpressed_genes, function(g) Reduce(union, g)))
-length(overexpressed_genes)
+# length(overexpressed_genes)
 ```
 
 Another measure is ability to distinguish differentially expressed genes. To fild highly expressed genes we estimated mean
 normalized gene expression level within each cluster (10% trimmed mean was used). Genes with me expression > 5 for at least 
 one cluster were considered as highly-expressed.
+
 ```{r, fig.width=8, fig.height=8}
 expr_mats <- lapply(norm_cms, function(cm) sapply(real_clusters, function(cl) cm[overexpressed_genes, names(clusters)[clusters == cl]] %>% apply(1, mean, trim=0.2)))
 clust_row <- hclust(dist(expr_mats$raw))
@@ -328,6 +370,7 @@ tested_clusters
 ```
 
 Dependency between 10% trimmed mean and interquartile range for data, aggreagted by genes and clusters:
+
 ```{r}
 tested_df <- lapply(tested_genes, function(g) lapply(tested_clusters, function(cl) 
   lapply(norm_cms, `[`, g, names(clusters)[clusters == cl]) %>% as.data.frame()) %>% setNames(tested_clusters) %>% bind_rows(.id='Cluster')) %>% 
@@ -346,6 +389,7 @@ ggplot(tested_df, aes(x=Mean, y=Variation, color=Correction)) +
 
 This plot is quite similar to the previous one of this type.  
 Here is the same plot by genes, expression is averaged by cells within each cluster:
+
 ```{r}
 plot_df <- tested_df %>% group_by(Correction, Gene) %>% 
   summarise(Variation = IQR(Mean), Mean = mean(Mean, trim=0.1))
@@ -359,6 +403,7 @@ ggplot(plot_df, aes(x=Mean, y=Variation, color=Correction)) +
 These lines have almost the same slope. Thus, no difference can be shown.
 
 ## Edit distances
+Comparison of edit distances with the expected distribution, similar to UMI Tools paper.
 ```{r}
 SampleNoReps <- function(size, ids, probs) {
   umis <- unique(sample(ids, size=size, prob=probs, replace=T))
@@ -368,15 +413,60 @@ SampleNoReps <- function(size, ids, probs) {
   
   return(umis[1:size])
 }
+
+ed_probs <- sapply(1:100, function(i) SampleNoReps(1000, names(umi_probs), umi_probs) %>% pairwise_hamming()) %>% 
+  dropestr::ValueCounts(return_probs=T)
+ed_probs <- ed_probs[paste0(1:5)]
 ```
 
 ```{r}
-gene_sizes <- seq(2, 500, 10)
-probs_by_size <- mclapply(gene_sizes, function(s) sapply(1:100, function(i) 
-  SampleNoReps(s, names(umi_probs), umi_probs) %>% 
-    stringdist::stringdistmatrix(method='hamming') %>% as.vector()) %>% 
-    dropestr::ValueCounts(return_probs=T), mc.cores=20, mc.allow.recursive=F)
-
-probs_by_size[[1]] <- c(`1`=0, probs_by_size[[1]])
+# corrected_reads <- list()
+# corrected_reads$bayesian <- CorrectUmiSequenceErrors(holder$reads_per_umi_per_cell, method='Bayesian', return='reads', 
+#                                                    collisions.info=collisions_info, umi.probabilities=umi_probs, 
+#                                                    verbosity.level=2, mc.cores=30)
+# 
+# corrected_reads$cluster <- CorrectUmiSequenceErrors(holder$reads_per_umi_per_cell, method='Classic', return='reads',
+#                                                   collisions.info=collisions_info, umi.probabilities=umi_probs, 
+#                                                   verbosity.level=2, mc.cores=30)
+# 
+# corrected_reads$`cluster-neq` <- CorrectUmiSequenceErrors(holder$reads_per_umi_per_cell, method='Classic', return='reads',
+#                                                     mult=1+1e-4, collisions.info=collisions_info, umi.probabilities=umi_probs, 
+#                                                     verbosity.level=2, mc.cores=30)
+# 
+# corrected_reads$directional <- CorrectUmiSequenceErrors(holder$reads_per_umi_per_cell, method='Classic', return='reads',
+#                                                   mult=2, collisions.info=collisions_info, umi.probabilities=umi_probs, 
+#                                                   verbosity.level=2, mc.cores=30)
+# 
+# corrected_reads$raw <- holder$reads_per_umi_per_cell$reads_per_umi
+# umis_per_gene <- mclapply(corrected_reads, lapply, names, mc.cores=5)
+# saveRDS(corrected_reads, paste0(kDataPath, 'corrected_rpus.rds'))
+# saveRDS(umis_per_gene, paste0(kDataPath, 'corrected_umis_per_gene.rds'))
 ```
 
+```{r}
+umis_per_gene <- readRDS(paste0(kDataPath, 'corrected_umis_per_gene.rds'))
+```
+
+```{r}
+obs_eds <- mclapply(umis_per_gene, function(reads) 
+  mclapply(reads, pairwise_hamming, mc.cores=8) %>% unlist(), mc.cores=5)
+
+obs_ed_probs <- mclapply(obs_eds, dropestr::ValueCounts, return_probs=T, mc.cores=5) %>%
+  lapply(`[`, paste0(1:5)) %>% lapply(function(x) {x[is.na(x)] <- 0; setNames(x, paste0(1:5))}) %>% 
+  as.data.frame()
+
+obs_ed_sds <- mclapply(obs_eds, function(x) sd(x) / (length(x) %>% sqrt()), mc.cores=5) %>% unlist()
+```
+
+Here, confidence intervals are negligable and not shown:
+
+```{r}
+plot_df <- (abs(obs_ed_probs - ed_probs) / ed_probs) %>% mutate(EditDistance=1:5) %>% 
+  melt(variable.name = 'Correction', value.name = 'Error', id.vars = 'EditDistance')
+
+ggplot(plot_df) + 
+  geom_bar(aes(x = EditDistance, y = 100 * Error, fill = Correction), color = 'black', position = 'dodge', stat = 'identity') + 
+  labs(x = 'Edit distance', y = 'Relative error, %') +
+  theme_pdf(legend.pos=c(1, 1)) +
+  theme(panel.grid.major=element_blank()) + scale_y_continuous(expand=c(0.0, 0))
+```
