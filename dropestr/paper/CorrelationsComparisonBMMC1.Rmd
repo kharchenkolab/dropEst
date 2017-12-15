@@ -9,11 +9,6 @@ output:
   html_notebook: default
 ---
 
-```{r}
-Sys.setenv("plotly_username"="sussahin")
-Sys.setenv("plotly_api_key"="YeY67mJWmLpvAbp9yE4N")
-```
-
 ```{r, include=FALSE}
 library(ggplot2)
 library(ggsci)
@@ -65,7 +60,7 @@ GetPagoda <- function(cm, n.cores=10, clustering.type='infomap', embeding.type='
 
 ```{r}
 holder <- readRDS(paste0(kDataPath, 'bmmc.rds'))
-if (is.null(holder$reads_per_umi_per_cell$reads_per_umi[[1]][[1]][[2]])) stop("Quality must be provided")
+if (length(holder$reads_per_umi_per_cell$reads_per_umi[[1]][[1]]) != 2) stop("Quality must be provided")
 
 umi_distribution <- GetUmisDistribution(holder$reads_per_umi_per_cell$reads_per_umi)
 umi_probs <- umi_distribution / sum(umi_distribution)
@@ -83,17 +78,17 @@ corrected_cms$bayesian <- CorrectUmiSequenceErrors(holder$reads_per_umi_per_cell
                                                    collisions.info=collisions_info, umi.probabilities=umi_probs, 
                                                    correction.info=correction_info, verbosity.level=2, mc.cores=30)
 
-corrected_cms$simple1 <- CorrectUmiSequenceErrors(holder$reads_per_umi_per_cell, method='Classic', return='matrix',
+corrected_cms$cluster <- CorrectUmiSequenceErrors(holder$reads_per_umi_per_cell, method='Classic', return='matrix',
                                                   collisions.info=collisions_info, umi.probabilities=umi_probs, 
-                                                  verbosity.level=2, mc.cores=15)
+                                                  verbosity.level=2, mc.cores=30)
 
-corrected_cms$simple1.1 <- CorrectUmiSequenceErrors(holder$reads_per_umi_per_cell, method='Classic', return='matrix',
+corrected_cms$`cluster-neq` <- CorrectUmiSequenceErrors(holder$reads_per_umi_per_cell, method='Classic', return='matrix',
                                                     mult=1+1e-4, collisions.info=collisions_info, umi.probabilities=umi_probs, 
-                                                    verbosity.level=2, mc.cores=15)
+                                                    verbosity.level=2, mc.cores=30)
 
-corrected_cms$simple2 <- CorrectUmiSequenceErrors(holder$reads_per_umi_per_cell, method='Classic', return='matrix',
+corrected_cms$directional <- CorrectUmiSequenceErrors(holder$reads_per_umi_per_cell, method='Classic', return='matrix',
                                                   mult=2, collisions.info=collisions_info, umi.probabilities=umi_probs, 
-                                                  verbosity.level=2, mc.cores=15)
+                                                  verbosity.level=2, mc.cores=30)
 
 corrected_cms$raw <- holder$cm
 corrected_cms$raw@x <- collisions_info[corrected_cms$raw@x]
@@ -101,13 +96,22 @@ corrected_cms$raw@x <- collisions_info[corrected_cms$raw@x]
 saveRDS(corrected_cms, paste0(kDataPath, 'cms2.rds'))
 ```
 
+```{r}
+corrected_cms <- readRDS(paste0(kDataPath, 'cms2.rds'))
+```
+
 # Analysis
+```{r}
+corrected_cms <- lapply(corrected_cms, function(cm) cm[grep("^[^;]+$", rownames(cm)), ])
+names(corrected_cms) <- c('Bayesian', 'cluster', 'cluster-neq', 'directional', 'raw')
+```
+
 ```{r, message=FALSE, warning=FALSE}
 kClusteringType <- 'infomap'
 r <- GetPagoda(corrected_cms$raw, n.cores=25, clustering.type=kClusteringType, embeding.type='tSNE', verbose=F)
 clusters <- r$clusters$PCA[[kClusteringType]]
 
-r_s1 <- GetPagoda(corrected_cms$simple1, n.cores=25, clustering.type=kClusteringType, embeding.type='tSNE', verbose=F)
+r_s1 <- GetPagoda(corrected_cms$cluster, n.cores=25, clustering.type=kClusteringType, embeding.type='tSNE', verbose=F)
 # clusters <- r_s1$clusters$PCA[[kClusteringType]]
 ```
 
@@ -138,83 +142,105 @@ norm_cms <- lapply(rs, function(r) t(r$counts))
 ```
 
 ## Target correlations
-```{r}
-correlations_info <- lapply(real_clusters, TargetClusterCorrelation, clusters, corrected_cms, 
-                            correction.threshold=0.2, expression.frac.threshold=0.5)
-correlations <- lapply(correlations_info, `[[`, 'correlations')
-correlations <- bind_rows(correlations) %>% arrange(Correction, Barcode1, Barcode2)
-correlations <- correlations %>% arrange(Correction, Barcode1, Barcode2)
-
-raw_correlations <- correlations %>% filter(Correction == 'raw') %>% .$Correlation
-correlations <- correlations %>% group_by(Correction) %>% mutate(Diff = (Correlation - raw_correlations) / raw_correlations)
+Let's pick genes with large correction (above 20%), which are expressed in at least half of cells in cluster. 
+These genes are selected separately for each cluster.
+```{r, warning=FALSE}
+correlations_info <- mclapply(real_clusters, TargetClusterCorrelation, clusters, corrected_cms, 
+                              correction.threshold=0.2, expression.frac.threshold=0.5, mc.cores=5)
+correlations <- lapply(correlations_info, `[[`, 'correlations') %>% bind_rows() %>% 
+  mutate(Diff = (Correlation - CorrelationRaw) / CorrelationRaw)
 ```
 
-```{r, fig.width=6, fig.height=7}
+Correlation change accumulated by all clusters:
+```{r, fig.width=6, fig.height=6, warning=FALSE, message=FALSE}
 plot_df <- correlations %>% filter(Correction != 'raw')
 gg1 <- ggplot(plot_df, aes(x=Diff, color=Correction)) + 
   geom_density() +
   xlim(-0.1, 0.15) +
+  labs(x='Relative difference in correlation after corrections', y='Density') +
   theme_pdf(legend.pos=c(0, 1))
 
 gg2 <- ggplot(correlations, aes(x=Correlation, color=Correction), guides=F) +
   geom_density() +
   xlim(0.5, 1.0) +
+  labs(x='Spearman correlations', y='Density') +
   theme_pdf(legend.pos=c(0, 1))
 
 cowplot::plot_grid(gg1, gg2, nrow=2, align='v')
-# ggsave(paste0(kPlotDir, 'correlation_with_umi_probs.pdf'))
 ```
 
-```{r, fig.width=7, fig.height=7}
-gg2 + facet_wrap(~Cluster) + xlim(0, 1)
+Correlation distribution by each cluster (just to ensure that nothing weird happens):
+```{r, fig.width=7, fig.height=7, warning=FALSE, message=FALSE}
+gg2 + facet_wrap(~Cluster) + scale_x_continuous(limits=c(0, 1), breaks=c(0, 0.5, 1)) + 
+  theme(strip.text.x=element_text(margin=margin(t=1, b=1, unit='pt'))) +
+  theme_pdf(legend.pos=c(1, 0))
 ```
 
 ### Analysis
-```{r, message=FALSE}
-heatmap_dfs <- lapply(corrected_cms, function(cm) as.matrix(cm[correlations_info$`4`$genes, barcodes]) %>% as.data.frame() %>% 
-                     `colnames<-`(c('Barcode1', 'Barcode2')) %>% mutate(Barcode1R = rank(Barcode1), Barcode2R = rank(Barcode2)))
+To understand the reason of the difference between correlations, we can look at a fixe pair of cells.
+To present these pairs we can plot heatmap, which would be the graphical representation of the contingency table for these cells.
+Numbers above the plots denote Spearman correlation. Here, all expression values above the x/y border were set to the border value.
+```{r, message=FALSE, fig.width=8, fig.height=6}
+cl_correlations <- inner_join(correlations %>% filter(Correction == 'cluster'), 
+                              correlations %>% filter(Correction == 'Bayesian') %>% 
+                                select(Barcode1, Barcode2, CorrelationBayesian=Correlation), by=c('Barcode1', 'Barcode2')) %>%
+  filter(Correlation > 0.5, CorrelationRaw > 0.5)
 
-heatmap_dfs <- lapply(heatmap_dfs, function(df) data.frame(Barcode1=pmin(df$Barcode1, 12), Barcode2=pmin(df$Barcode2, 12)) %>% 
-                        dcast(Barcode1 ~ Barcode2) %>% melt(variable.name='Barcode2', id.vars='Barcode1', value.name='Expression') %>%
-                        mutate(Barcode1=as.integer(Barcode1), Barcode2=as.integer(Barcode2)))
+t_row <- cl_correlations[cl_correlations %>% mutate(Diff = Correlation - CorrelationBayesian) %>% .$Diff %>% which.max(), ]
+barcodes <- unlist(t_row[, c('Barcode1', 'Barcode2')])
+genes <- correlations_info[[paste0(t_row$Cluster)]]$genes
 
-for (n in names(heatmap_dfs)) {
-  print(ggplot(heatmap_dfs[[n]]) + geom_tile(aes(x=Barcode1, y=Barcode2, fill=Expression)) + 
-    scale_x_discrete(expand = c(0, 0)) + scale_y_discrete(expand = c(0, 0)) +
-    labs(x='Cell1', y='Cell2', title=n))
-}
+PlotCorrelationHeatmaps(corrected_cms, correlations, genes, barcodes, 50, labs.step=5)
 ```
 
+We can see that simple decreasing of expression levels for moderately expressed genes leads to the correlation increase.
 
-### Target correlations 2
+### Filtration of lowly expressed genes
+Let's use another filtration criteria. Now we pick only genes with correction above 5% and with trimmed mean (level 10%) 
+of non-normalized expression level above 10.
 ```{r, warning=FALSE}
-correlations_info <- lapply(real_clusters, TargetClusterCorrelation, clusters, corrected_cms, 
-                            correction.threshold=0.05, expression.total.threshold=10)
-correlations <- lapply(correlations_info, `[[`, 'correlations')
-correlations <- bind_rows(correlations) %>% arrange(Correction, Barcode1, Barcode2)
-correlations <- correlations %>% arrange(Correction, Barcode1, Barcode2)
-
-raw_correlations <- correlations %>% filter(Correction == 'raw') %>% .$Correlation
-correlations <- correlations %>% group_by(Correction) %>% mutate(Diff = (Correlation - raw_correlations) / raw_correlations)
-
-lapply(correlations_info, `[[`, 'genes') %>% sapply(length)
-head(correlations)
+correlations_info <- mclapply(real_clusters, TargetClusterCorrelation, clusters, corrected_cms, 
+                            correction.threshold=0.05, expression.total.threshold=10, mc.cores=5)
+correlations <- lapply(correlations_info, `[[`, 'correlations') %>% bind_rows() %>% 
+  mutate(Diff = (Correlation - CorrelationRaw) / CorrelationRaw)
 ```
 
+Number of genes per cluster:
+```{r}
+lapply(correlations_info, `[[`, 'genes') %>% sapply(length)
+```
+
+Let's remove all clusters with less than 80 genes. 
 ```{r, fig.width=6, fig.height=7, message=FALSE, warning=FALSE}
 plot_clusters <- lapply(correlations_info, `[[`, 'genes') %>% sapply(length) %>% (function(x) which(x > 80))
 plot_df <- correlations %>% filter(Cluster %in% plot_clusters)
 gg1 <- ggplot(plot_df %>% filter(Correction != 'raw'), aes(x=Diff, color=Correction)) + 
-  geom_density() + xlim(-0.3, 0.3) + theme_pdf(legend.pos=c(1, 1))
+  geom_density() + xlim(-0.3, 0.3) + 
+  labs(x='Difference in correlations with raw', y='Density') +
+  theme_pdf(legend.pos=c(1, 1))
 
 gg2 <- ggplot(plot_df, aes(x=Correlation, color=Correction), guides=F) +
   geom_density() +
+  labs(x='Spearman correlations', y='Density') +
   xlim(0.0, 0.9) + theme_pdf(legend.pos=c(1, 1))
 
 cowplot::plot_grid(gg1, gg2, nrow=2, align='v')
 ```
 
+```{r, message=FALSE, fig.width=8, fig.height=6}
+cl_correlations <- correlations %>% filter(Correction == 'cluster', Correlation > 0.5, CorrelationRaw > 0.1)
+t_row <- cl_correlations[cl_correlations %>% .$Diff %>% which.max(), ]
+barcodes <- unlist(t_row[, c('Barcode1', 'Barcode2')])
+genes <- correlations_info[[paste0(t_row$Cluster)]]$genes
+PlotCorrelationHeatmaps(corrected_cms, correlations, genes, barcodes, 30, labs.step=5)
+```
+
+These results looks too weird to rely on them.
+
 ## Variation
+Variation of a single gene expression within fixed cluster (after normalization) is another possible measure. 
+It allows us to increase gene filtration thresholds, as now we analyze single genes, but not gene vectors. Here we used
+only genes with the correction size > 10% and median normalized expression > 10. 
 ```{r}
 var_dfs <- lapply(real_clusters, function(cl) 
   ExpressedGenesVariation(norm_cms, clusters, cluster.num=cl, mean.correction.threshold=0.1, 
@@ -226,7 +252,9 @@ plot_df <- var_df %>% group_by(Gene, Correction, Cluster) %>%
             VariationDiff = Variation - VariationRaw, Mean = mean(Expression, trim=0.1))
 
 ggplot(plot_df) + geom_density(aes(x=VariationDiff, color=Correction)) + 
-  xlim(-10, 10) + theme_pdf(legend.pos=c(1, 1))
+  xlim(-10, 10) + 
+  labs(x='Variation difference after the correction', y='Density') +
+  theme_pdf(legend.pos=c(1, 1))
 ```
 
 Dependency between mean and variation:
@@ -234,8 +262,12 @@ Dependency between mean and variation:
 ggplot(plot_df, aes(x=Mean, y=Variation, color=Correction)) + 
   geom_point(alpha=0.8, size=1) + 
   geom_smooth(method='lm') +
-  scale_x_log10() + scale_y_log10() + theme_pdf(legend.pos=c(1, 0))
+  scale_x_log10() + scale_y_log10() + 
+  labs(x='Trimmed mean expression (10% trim level)', y='Interquartile range') +
+  theme_pdf(legend.pos=c(0, 1))
 ```
+
+According to this plot, `cluster` and `directional` corrections increase variation coeffitient.
 
 ## Difference between clusters
 ```{r}
@@ -243,7 +275,7 @@ GetOverexpressedGenes <- function(cm.raw, clusters, cluster.num, median.expressi
   cluster.cm <- cm.raw[, names(clusters)[clusters == cluster.num]]
   cluster.cm <- cluster.cm[Matrix::rowSums(cluster.cm) > 0, ] %>% as.matrix()
 
-  med.expression <- apply(cluster.cm, 1, mean, trim=0.2)
+  med.expression <- apply(cluster.cm, 1, mean, trim=0.1)
   return(names(med.expression)[med.expression >= median.expression.threshold])
 }
 
@@ -252,19 +284,79 @@ overexpressed_genes <- Reduce(union, lapply(overexpressed_genes, function(g) Red
 length(overexpressed_genes)
 ```
 
-```{r, fig.height=7, fig.width=8}
+Another measure is ability to distinguish differentially expressed genes. To fild highly expressed genes we estimated mean
+normalized gene expression level within each cluster (10% trimmed mean was used). Genes with me expression > 5 for at least 
+one cluster were considered as highly-expressed.
+```{r, fig.width=8, fig.height=8}
 expr_mats <- lapply(norm_cms, function(cm) sapply(real_clusters, function(cl) cm[overexpressed_genes, names(clusters)[clusters == cl]] %>% apply(1, mean, trim=0.2)))
 clust_row <- hclust(dist(expr_mats$raw))
 clust_col <- hclust(dist(t(expr_mats$raw)))
 
-breaks <- c(seq(0, 2.9, length.out=100), 3)
-# ENSG00000147403
-# ENSG00000156508
-# ENSG00000244734
-for (n in names(expr_mats)) {
-  pheatmap(log10(1 + expr_mats[[n]]), show_rownames=F, breaks=breaks, cluster_cols=clust_col, cluster_rows=clust_row, main=n)
-}
+plot_dfs <- lapply(expr_mats, function(mat) as.data.frame(mat) %>% 
+                     tibble::rownames_to_column('Gene') %>% 
+                     reshape2::melt(id.vars='Gene', variable.name='Cluster', value.name='MeanExpression') %>%
+                     dplyr::mutate(Cluster = factor(Cluster, levels(Cluster)[clust_col$order]),
+                                   Gene = factor(Gene, rownames(mat)[clust_row$order])))
+
+ggs <- lapply(names(plot_dfs), function(n) 
+  ggplot(plot_dfs[[n]]) + geom_tile(aes(x=Cluster, y=Gene, fill=log10(1 + MeanExpression))) + 
+  scale_fill_distiller(palette='RdYlBu', limits=c(0, 3)) +
+  ggtitle(n) +
+  theme(axis.text.y=element_blank(), plot.margin=margin(r=5, t=5, unit='pt')) + rremove('xylab'))
+
+colorbar_guide <- ggplot2::guide_colorbar(direction='horizontal', title.position='top', title='log10(Mean expression)', barwidth=unit(2, 'in'))
+legend <- get_legend(ggs[[1]] + ggplot2::guides(fill = colorbar_guide))
+
+cowplot::plot_grid(plotlist=c(lapply(ggs, `+`, rremove('legend')), list(legend)), align='hv', axis='t')
 ```
+
+```{r}
+tested_genes <- rev(rownames(expr_mats$raw)[clust_row$order])[38:54]
+tested_clusters <- colnames(expr_mats$raw)[clust_col$order][7:ncol(expr_mats$raw)] %>% as.integer()
+```
+
+We can see that a lot of clusters has the same set of highly-expressed genes. Let's choose some such genes and clusters.
+
+Genes:
+```{r}
+tested_genes
+```
+
+Clusters:
+```{r}
+tested_clusters
+```
+
+Dependency between 10% trimmed mean and interquartile range for data, aggreagted by genes and clusters:
+```{r}
+tested_df <- lapply(tested_genes, function(g) lapply(tested_clusters, function(cl) 
+  lapply(norm_cms, `[`, g, names(clusters)[clusters == cl]) %>% as.data.frame()) %>% setNames(tested_clusters) %>% bind_rows(.id='Cluster')) %>% 
+  setNames(tested_genes) %>% bind_rows(.id='Gene') %>% 
+  mutate(Cluster = as.integer(Cluster)) %>%
+  melt(id.vars=c('Gene', 'Cluster'), variable.name='Correction', value.name='Expression') %>% 
+  filter(Expression > 0) %>% 
+  group_by(Gene, Cluster, Correction) %>% 
+  summarise(Mean = mean(Expression, trim=0.1), Variation = IQR(Expression))
+
+ggplot(tested_df, aes(x=Mean, y=Variation, color=Correction)) + 
+  geom_point(alpha=0.7, size=1) + 
+  geom_smooth(method='lm') +
+  theme_pdf(legend.pos=c(0, 1))
+```
+
+This plot is quite similar to the previous one of this type.  
+Here is the same plot by genes, expression is averaged by cells within each cluster:
+```{r}
+plot_df <- tested_df %>% group_by(Correction, Gene) %>% 
+  summarise(Variation = IQR(Mean), Mean = mean(Mean, trim=0.1))
+
+ggplot(plot_df, aes(x=Mean, y=Variation, color=Correction)) + 
+  geom_point(alpha=0.7, size=1) + 
+  geom_smooth(method='lm') +
+  theme_pdf(legend.pos=c(0, 1))
+```
+
+These lines have almost the same slope. Thus, no difference can be shown.
 
 ## Edit distances
 ```{r}
