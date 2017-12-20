@@ -137,6 +137,12 @@ Example command:
 
 While dropTag provides way to demultiplex 10x data, [Cell Ranger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger) is still recommended tool for this. [dropEst](##dropEst) phase can be ran on the Cell Ranger demultiplexed .bam file to obtain data in the format, optimized for the subsequent analysis.
 
+**NOTE.** Sometimes 10x CellRanger isn't able to determine gene, from which a read originated. In this cases it fills gene info with a list of possible genes, separated by semicolon (e.g. 'ENSG00000255508;ENSG00000254772'). These genes **must be filtered out** prior to further analysis:
+```r
+holder <- readRDS('./cell.counts.rds')
+cm <- holder$cm[grep("^[^;]+$", rownames(holder$cm)),]
+```
+
 ### Command line arguments for dropTag
 *  -c, --config filename: xml file with droptag parameters  
 *  -l, --log-prefix prefix: logs prefix
