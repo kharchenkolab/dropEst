@@ -54,7 +54,7 @@ TrainClassifier <- function(tr.data, cells.quality, umi.counts=NULL, trim.low.qu
   if (!is.null(trim.low.quality.rate) && !is.null(umi.counts) && length(lq.cbs) > length(hq.cbs) * trim.low.quality.rate) {
     lq.cbs <- names(sort(umi.counts[lq.cbs], decreasing=T)[1:round(length(hq.cbs) * trim.low.quality.rate)])
   }
-  tr.data <- tr.data[c(hq.cbs, lq.cbs),]
+  tr.data <- tr.data[c(hq.cbs, lq.cbs), , drop=F]
   tr.answers <- c(rep(1, length(hq.cbs)), rep(0, length(lq.cbs)))
   return(TrainKDE(tr.data, tr.answers, prior.probs=prior.probs))
 }

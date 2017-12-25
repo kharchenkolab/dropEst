@@ -4,7 +4,7 @@
 \alias{GetOptimalPcs}
 \title{Perform PCA with the optimal number of principal components.}
 \usage{
-GetOptimalPcs(data, explained.var.required = 0.9, max.pcs = 3)
+GetOptimalPcs(data, explained.var.required = 0.98, max.pcs = 3)
 }
 \arguments{
 \item{data}{data for low-quality cells filtration}

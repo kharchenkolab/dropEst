@@ -97,7 +97,11 @@ PrepareCellsNumberPlot <- function(umi.counts, breaks, estimate.cells.number) {
 #' @return Plot of ggplot type.
 #'
 #' @export
-PlotCellsNumberLine <- function(umi.counts, breaks=100, title=NULL, estimate.cells.number=F, show.legend=T) {
+PlotCellsNumberLine <- function(umi.counts, breaks=100, title=NULL, estimate.cells.number=F,
+                                show.legend=T, gg.base=NULL, plot.label=NULL) {
+  if (is.null(gg.base)) {
+    gg.base <- ggplot2::ggplot()
+  }
   plot.data <- PrepareCellsNumberPlot(umi.counts, breaks, estimate.cells.number=estimate.cells.number)
   plot.df <- plot.data$plot.df
   plot.df$breaks <- sapply(plot.df$breaks, function(val) which.min(as.vector(plot.data$umi.counts > val)))
@@ -109,14 +113,22 @@ PlotCellsNumberLine <- function(umi.counts, breaks=100, title=NULL, estimate.cel
       dplyr::arrange(desc(breaks)) #%>% dplyr::mutate(breaks = round(breaks))
   }
 
-  gg <- ggplot2::ggplot(plot.df, ggplot2::aes(x=breaks, y=y)) + ggplot2::geom_line() +
+  if (is.null(plot.label)) {
+    gg <- gg.base + ggplot2::geom_line(data=plot.df, mapping=ggplot2::aes(x=breaks, y=y))
+  } else {
+    plot.df$PlotLabel <- plot.label
+    gg <- gg.base + ggplot2::geom_line(data=plot.df, mapping=ggplot2::aes(x=breaks, y=y, linetype=PlotLabel))
+  }
+
+  gg <- gg +
     ggplot2::scale_x_continuous(expand = c(0, 0)) +
     ggplot2::scale_y_continuous(limits=c(0, max(plot.df$y * 1.05)), expand = c(0, 0)) +
     ggplot2::labs(x='Cell rank', y=plot.data$y.label) + ggplot2::ggtitle(title)
 
   if (estimate.cells.number) {
     if (show.legend) {
-      gg.theme <- ggplot2::theme(legend.position=c(0.99, 0.99), legend.justification=c(1, 1), legend.background=ggplot2::element_rect(fill=ggplot2::alpha('white', 0.7)))
+      gg.theme <- ggplot2::theme(legend.position=c(0.99, 0.99), legend.justification=c(1, 1),
+                                 legend.background=ggplot2::element_rect(fill=ggplot2::alpha('white', 0.7)))
     } else {
       gg.theme <- ggplot2::theme(legend.position='none')
     }
@@ -126,12 +138,19 @@ PlotCellsNumberLine <- function(umi.counts, breaks=100, title=NULL, estimate.cel
     cell.num.df$n <- length(umi.counts) - plot.data$cell.num$max
     cell.num.df$n[cell.num.df$Quality == 'High'] <- plot.data$cell.num$min
 
-    gg <- gg + ggplot2::geom_area(ggplot2::aes(fill=Quality), alpha=0.4) +
-      ggplot2::geom_label(data=cell.num.df, mapping=ggplot2::aes(x=x, y=-Inf, label=paste0(round(n), '\ncells'), vjust=-1, hjust=0), fill='white', alpha=0.7) +
-      ggplot2::geom_vline(ggplot2::aes(xintercept=plot.data$cell.num$expected), linetype='dashed') + plot.data$fill.scalse +
+    gg <- gg + ggplot2::geom_area(data=plot.df, mapping=ggplot2::aes(x=breaks, y=y, fill=Quality), alpha=0.4) +
+      ggplot2::geom_label(data=cell.num.df, mapping=ggplot2::aes(x=x, y=-Inf, label=paste0(round(n), '\ncells'),
+                                                                 vjust=-1, hjust=0), fill='white', alpha=0.7) +
+      ggplot2::geom_vline(ggplot2::aes(xintercept=plot.data$cell.num$expected), linetype='dashed') +
+      plot.data$fill.scalse +
       gg.theme
   } else {
-    gg <- gg + ggplot2::geom_area(fill='gray', alpha=0.4)
+    if (is.null(plot.label)) {
+      area <- ggplot2::geom_area(data=plot.df, mapping=ggplot2::aes(x=breaks, y=y), fill='gray', alpha=0.4)
+    } else {
+      area <- ggplot2::geom_area(data=plot.df, mapping=ggplot2::aes(x=breaks, y=y, fill=PlotLabel), alpha=0.4)
+    }
+    gg <- gg + area
   }
 
   return(gg)

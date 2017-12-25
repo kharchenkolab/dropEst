@@ -38,6 +38,12 @@ Scale <- function(x, center_func=min, norm_func=max) {
   return(data.frame(Normalize(Center(x, center_func), norm_func)))
 }
 
+RSquaredDiscrete <- function(lst) {
+  sep.var <- sapply(lst, function(v) sum(abs(v - mean(v, trim=0.2)))) %>% sum()
+  total.var <- sapply(lst, function(v) sum(abs(v - mean(unlist(lst), trim=0.2)))) %>% sum()
+  return(1 - sep.var / total.var)
+}
+
 #' Prepare data frame for low-quality cells filtration.
 #'
 #' @description Prepare data frame for low-quality cells filtration.
@@ -54,7 +60,7 @@ Scale <- function(x, center_func=min, norm_func=max) {
 #'
 #' @export
 PrepareLqCellsData <- function(count.matrix, aligned.reads.per.cell, total.umis.per.cell=NULL, total.reads.per.cell=NULL,
-                               intergenic.reads.per.cell=NULL, mitochondrion.fraction=NULL, pcs.number=3) {
+                               intergenic.reads.per.cell=NULL, mitochondrion.fraction=NULL) {
   analyzed.cbs <- colnames(count.matrix)
 
   contains.all.cbs <- sapply(list(aligned.reads.per.cell, total.umis.per.cell, total.reads.per.cell, intergenic.reads.per.cell),
@@ -99,10 +105,7 @@ PrepareLqCellsData <- function(count.matrix, aligned.reads.per.cell, total.umis.
   tech.features <- tech.features[,apply(tech.features, 2, function(col) any(abs(col) > 1e-10))]
   res <- Scale(tech.features)
 
-  if (is.null(pcs.number))
-    return(res)
-
-  return(Scale(GetOptimalPcs(res, max.pcs=pcs.number)$pca.data))
+  return(res)
 }
 
 #' @describeIn PrepareLqCellsData wrapper for the data, obtained with the dropEst pipeline.
@@ -110,7 +113,7 @@ PrepareLqCellsData <- function(count.matrix, aligned.reads.per.cell, total.umis.
 #' @param merge.targets Targets of CB merge. Used only with total.reads.per.cell provided.
 #'
 #' @export
-PrepareLqCellsDataPipeline <- function(data, total.reads.per.cell=NULL, mitochondrion.genes=NULL, mit.chromosome.name=NULL, pcs.number=3) {
+PrepareLqCellsDataPipeline <- function(data, total.reads.per.cell=NULL, mitochondrion.genes=NULL, mit.chromosome.name=NULL) {
   intergenic.reads.per.cell <- rep(0, length(data$aligned_umis_per_cell))
   names(intergenic.reads.per.cell) <- names(data$aligned_umis_per_cell)
 
@@ -135,7 +138,7 @@ PrepareLqCellsDataPipeline <- function(data, total.reads.per.cell=NULL, mitochon
   }
 
   return(PrepareLqCellsData(data$cm_raw, data$aligned_reads_per_cell, data$aligned_umis_per_cell, total.reads.per.cell,
-                            intergenic.reads.per.cell, mitochondrion.fraction, pcs.number=pcs.number))
+                            intergenic.reads.per.cell, mitochondrion.fraction))
 }
 
 #' Perform PCA with the optimal number of principal components.
@@ -146,14 +149,13 @@ PrepareLqCellsDataPipeline <- function(data, total.reads.per.cell=NULL, mitochon
 #' @return List with the PCA results:
 #'   \item{explained.var}{fraction of the explained variance.}
 #'   \item{pca.data}{transformed data with the optimal number of principal components.}
-GetOptimalPcs <- function(data, explained.var.required=0.9, max.pcs=3) {
+GetOptimalPcs <- function(data, explained.var.required=0.98, max.pcs=3) {
   pc.fracs <- princomp(Scale(data))
   explained.before <- as.vector(c(0, cumsum((pc.fracs$sdev)^2 / sum(pc.fracs$sdev^2)))[1:length(pc.fracs$sdev)])
   important.pcs <- Scale(data.frame(pc.fracs$scores[,1:min(which.min(explained.before < explained.var.required)-1, max.pcs)]))
   return(list(explained.var=explained.before, pca.data=important.pcs))
 }
 
-#' @export
 EstimateCellsQuality <- function(umi.counts, cells.number=NULL) {
   umi.counts <- sort(umi.counts, decreasing=T)
   if (is.null(cells.number)) {
@@ -167,19 +169,13 @@ EstimateCellsQuality <- function(umi.counts, cells.number=NULL) {
   return(as.factor(cells.quality))
 }
 
-#' @export
-FilterMitochondrionCells <- function(mitochondrion.fraction, cells.quality, plot=F, mit.threshold=NULL) {
+GetMitochondrionCells <- function(mitochondrion.fraction, mit.threshold=NULL) {
   if (is.null(mit.threshold)) {
     mit.threshold <- stats::median(mitochondrion.fraction) + 4 * stats::mad(mitochondrion.fraction)
   }
-  mitochondrion.fraction <- mitochondrion.fraction[names(cells.quality)]
 
-  if (plot) {
-    FractionSmoothScatter(mitochondrion.fraction, plot.threshold=mit.threshold)
-  }
-
-  cells.quality[mitochondrion.fraction > mit.threshold] <- 'Low'
-  return(cells.quality)
+  return(mitochondrion.fraction > mit.threshold)
+  # cells.quality[] <- 'Low'
 }
 
 #' Score cells with a KDE classifier.
@@ -189,30 +185,56 @@ FilterMitochondrionCells <- function(mitochondrion.fraction, cells.quality, plot
 #'
 #' @export
 ScorePipelineCells <- function(pipeline.data, filter.high.mit.fraction=F, mitochondrion.genes=NULL,
-                               mit.chromosome.name=NULL, tags.data=NULL, predict.all=FALSE) {
+                               mit.chromosome.name=NULL, mit.threshold=NULL, tags.data=NULL, predict.all=FALSE,
+                               r2.threshold=0.05, pcs.number=3) {
   if (filter.high.mit.fraction && is.null(mitochondrion.genes) && is.null(mit.chromosome.name))
     stop("Either list of mitochondrial genes of a name of mitochondrial chromosome must be provided to filter cells with high mitochondrial fraction")
 
   umi.counts.raw <- sort(Matrix::colSums(pipeline.data$cm_raw), decreasing=T)
   cells.quality <- EstimateCellsQuality(umi.counts.raw)
 
+  if (predict.all) {
+    umi.counts <- umi.counts.raw
+  } else {
+    umi.counts <- sort(Matrix::colSums(pipeline.data$cm), decreasing=T)
+  }
+
+  bc.df <- PrepareLqCellsDataPipeline(pipeline.data, mitochondrion.genes = mitochondrion.genes,
+                                      mit.chromosome.name=mit.chromosome.name, total.reads.per.cell=tags.data$reads_per_cb)
+
+  cells.quality.train <- cells.quality[cells.quality != 'Unknown'] %>% droplevels()
+
+  features.r2 <- lapply(bc.df[names(cells.quality.train), ], split, cells.quality.train) %>% sapply(RSquaredDiscrete)
+  features.r2 <- features.r2[features.r2 > r2.threshold]
+  if (length(features.r2) == 0) {
+    warning("You set too strict r2.threshold or the features, used for quality estimation, are not informative for this dataset.")
+    return(rep(0.5, length(umi.counts)) %>% setNames(names(umi.counts)))
+  }
+
+  bc.df <- bc.df[, names(features.r2)]
+  if (!is.null(pcs.number)) {
+    bc.df <- Scale(GetOptimalPcs(bc.df, max.pcs=pcs.number)$pca.data)
+  }
+
   if (filter.high.mit.fraction) {
     if (!is.null(mitochondrion.genes)) {
       mitochondrion.fraction <- GetGenesetFraction(pipeline.data$cm_raw, mitochondrion.genes)
     } else if (!is.null(mit.chromosome.name)) {
       mitochondrion.fraction <- GetChromosomeFraction(pipeline.data$reads_per_chr_per_cells$Exon, mit.chromosome.name)
+    } else
+      stop("To filter high mitochondriial fraction you must pass either mitochondrion.genes or mit.chromosome.name")
+
+    is.mitochondrial <- GetMitochondrionCells(mitochondrion.fraction, mit.threshold=mit.threshold)
+    if ('MitochondrionFraction' %in% colnames(bc.df)) {
+      cells.quality[is.mitochondrial] <- 'Low'
     }
-    cells.quality <- FilterMitochondrionCells(mitochondrion.fraction, cells.quality)
   }
 
-  bc.df <- PrepareLqCellsDataPipeline(pipeline.data, mitochondrion.genes = mitochondrion.genes,
-                                      mit.chromosome.name=mit.chromosome.name, total.reads.per.cell=tags.data$reads_per_cb)
   clf <- TrainClassifier(bc.df, cells.quality, umi.counts.raw)
-  if (predict.all) {
-    umi.counts <- sort(Matrix::colSums(pipeline.data$cm_raw), decreasing=T)
-  } else {
-    umi.counts <- sort(Matrix::colSums(pipeline.data$cm), decreasing=T)
+  scores <- PredictKDE(clf, bc.df[names(umi.counts),])[,2]
+  if (filter.high.mit.fraction) {
+    scores[is.mitochondrial] <- min(scores)
   }
 
-  return(PredictKDE(clf, bc.df[names(umi.counts),])[,2])
+  return(scores)
 }

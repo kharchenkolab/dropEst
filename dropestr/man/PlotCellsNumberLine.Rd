@@ -5,7 +5,8 @@
 \title{Plot for the estimation of the number of high-quality cells.}
 \usage{
 PlotCellsNumberLine(umi.counts, breaks = 100, title = NULL,
-  estimate.cells.number = F, show.legend = T)
+  estimate.cells.number = F, show.legend = T, gg.base = NULL,
+  plot.label = NULL)
 }
 \arguments{
 \item{umi.counts}{vector with the number of UMIs per cell.}
