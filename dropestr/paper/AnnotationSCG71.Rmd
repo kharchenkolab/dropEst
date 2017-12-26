@@ -1,0 +1,189 @@
+---
+title: "SCG71 annotation"
+output: 
+  html_document:
+    df_print: paged
+    toc: true
+    toc_depth: 2
+---
+
+```{r global_options, include=FALSE}
+library(ggplot2)
+library(ggrastr)
+library(dplyr)
+library(parallel)
+library(reshape2)
+library(pagoda2)
+
+source("./Functions/PagodaWrappers.R")
+
+theme_set(theme_bw() + theme_pdf(show.ticks=F, legend.pos=c(0, 1)))
+set.seed(42)
+
+kDataPath <- '/d0-mendel/home/viktor_petukhov/Data/SCG71/est_11_14_poisson_real/'
+
+PlotGeneFraction <- function(gene, r, mtx) {
+  PlotPagodaEmbeding(r, colors=mtx[, gene], alpha=0.5, size=0.7, show.legend=T, plot.na=F, show.ticks=F) + 
+    ggtitle(gene) +
+    theme(plot.margin=margin(), axis.title.x=element_blank(), axis.title.y=element_blank()) +
+    guides(color=guide_colorbar(title='Expression', direction='horizontal', title.position='top'))
+}
+
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
+```
+
+```{r}
+# holder <- readRDS(paste0(kDataPath, 'SCG71.rds'))
+# # est_cell_num <- dropestr::EstimateCellsNumber(holder$aligned_umis_per_cell)$expected
+# est_cell_num <- 5432
+# cm <- holder$cm_raw[, names(sort(holder$aligned_umis_per_cell, decreasing=T)[1:est_cell_num])]
+# cm <- cm[Matrix::rowSums(cm > 0) > 10, ]
+```
+
+```{r, message=FALSE}
+# pgd <- GetPagoda(cm, n.cores=30, tsne.iters.num=10000)
+# saveRDS(pgd, paste0(kDataPath, 'pagoda.rds'))
+pgd <- readRDS(paste0(kDataPath, 'pagoda.rds'))
+```
+
+```{r}
+clusters <- pgd$clusters$PCA$infomap
+clusters <- clusters[clusters %in% which(table(clusters) > 50)]
+log_mtx <- log10(1e-3 + as.matrix(pgd$counts[names(clusters), ]))
+```
+
+Pagoda embeding:  
+```{r, fig.height=4, fig.width=6}
+PlotPagodaEmbeding(pgd, clusters, show.ticks=F, min.cluster.size=50, size=1, alpha=0.5, 
+                   plot.na=F, nudge_x=1, nudge_y=1)
+```
+
+Heatmap for marker genes:  
+```{r}
+heatmap_genes <- c(
+  'S100a8', 'S100a9',
+  'Cd101', 'Cd80', 'Lyz1', 'Lyz2', 
+  'Ly6e', 'Cd14', 'Cd86', 'Cd52', 'Ly6c1', 'Ly6c2',
+  'Cd79a', 'Cd79b',
+  'Cd74', 'Cd83',
+  'Vpreb3', 'Vpreb1', 'Cd7',
+  'Ccl3', 'Ccl4',
+  'Cldn10')
+
+heatmap_clusters <- data.frame(Cluster=sort(pgd$clusters$PCA$infomap[rownames(log_mtx)]))
+
+pheatmap::pheatmap(t(log_mtx[rownames(heatmap_clusters), heatmap_genes]), annotation_col=heatmap_clusters, 
+                   cluster_rows=F, cluster_cols=F, show_colnames=F)
+```
+
+## Macrophages
+Clusters 2, 3, 4, 13, 14.  
+Hereinafter "Expression" means $log_{10}(1e-3 + 1000*\frac{\#UMI}{TC})$.  
+```{r, fig.height=6, fig.width=8}
+plots <- lapply(c('Cd101', 'Cd80', 'Lyz1', 'Lyz2'), PlotGeneFraction, pgd, log_mtx)
+cowplot::plot_grid(plotlist=plots)
+```
+
+## Cycling
+Cluster 9.
+
+**???***
+
+## Monocytes
+Cluster 1.  
+```{r, fig.height=3, fig.width=8}
+cowplot::plot_grid(plotlist=lapply(c('S100a8', 'S100a9'), PlotGeneFraction, pgd, log_mtx))
+```
+
+## Resident macrophages
+Clusters 6, 8, 12.  
+```{r, fig.height=9, fig.width=8}
+plots <- lapply(c('Ly6e', 'Cd14', 'Cd86', 'Cd52', 'Ly6c1', 'Ly6c2'), PlotGeneFraction, pgd, log_mtx)
+cowplot::plot_grid(plotlist=plots, nrow=3, ncol=2)
+```
+
+## B cells
+```{r, fig.height=3, fig.width=8}
+cowplot::plot_grid(plotlist=lapply(c('Cd79a', 'Cd79b'), PlotGeneFraction, pgd, log_mtx))
+```
+
+### B cells, mature
+Cluster 7.  
+```{r, fig.height=3, fig.width=8}
+cowplot::plot_grid(plotlist=lapply(c('Cd74', 'Cd83'), PlotGeneFraction, pgd, log_mtx))
+```
+
+### B cells, immature
+Clusters 5.  
+```{r, fig.height=3, fig.width=4}
+PlotGeneFraction('Vpreb3', pgd, log_mtx)
+```
+
+### pre-B cells
+Clusters 10, 16.  
+```{r, fig.height=3, fig.width=4}
+PlotGeneFraction('Vpreb1', pgd, log_mtx)
+```
+
+## T cells
+Cluster 17.  
+```{r, fig.height=3, fig.width=4}
+PlotGeneFraction('Cd7', pgd, log_mtx)
+```
+
+## Other
+```{r, fig.height=3, fig.width=8}
+cowplot::plot_grid(plotlist=lapply(c('Ccl4', 'Cldn10'), PlotGeneFraction, pgd, log_mtx))
+```
+
+## Full annotation
+Mapping of clusters to cell types:  
+```{r}
+cluster_map <- c(
+  `1`='Monocytes',
+  `2`='Macrophages',
+  `3`='Macrophages',
+  `4`='Macrophages',
+  `5`='B cells, immature',
+  `6`='Resident macrophages',
+  `7`='B cells, mature',
+  `8`='Resident macrophages',
+  `9`='Cycling',
+  `10`='pre-B cells 1',
+  `11`='Unknown 1', #???
+  `12`='Resident macrophages',
+  `13`='Macrophages',
+  `14`='Macrophages',
+  `15`='Unknown 2', #???
+  `16`='pre-B cells 2',
+  `17`='T cells'
+)
+
+clusters_annotated <- cluster_map[paste0(clusters)] %>% setNames(names(clusters))
+
+# saveRDS(clusters_annotated, paste0(kDataPath, 'clusters_annotated.rds'))
+
+tibble(Cluster=names(cluster_map), `Cell type`=cluster_map)
+```
+
+```{r, fig.height=4, fig.width=6, message=FALSE, warning=FALSE}
+PlotPagodaEmbeding(pgd, clusters=clusters_annotated, show.ticks=F, min.cluster.size=50, size=1, alpha=0.5, plot.na=F, 
+                   font.size=NULL, nudge_x=1, nudge_y=1) +
+  ggplot2::scale_size_continuous(guide='none', range=c(3, 6))
+```
+
+```{r}
+# # Web app
+# go_sets <- p2.generate.mouse.go.web(colnames(pgd$counts))
+# de_sets <- get.de.geneset(pgd, groups = pgd$clusters$PCA$infomap, prefix = 'de_')
+# go_sets <- c(go_sets, de_sets)
+# 
+# additional_metadata <- list()
+# additional_metadata$altCluster <- p2.metadata.from.factor(as.factor(clusters_annotated), displayname = 'Annotated', s = 0.7, v = 0.8, start = 0, end = 0.5)
+# 
+# pgd_web_object <- make.p2.app(pgd, dendrogramCellGroups = pgd$clusters$PCA$infomap,
+#                               additionalMetadata = additional_metadata, geneSets = go_sets, 
+#                               show.clusters = T)
+# 
+# saveRDS(pgd_web_object, paste0(kDataPath, 'pagoda_web.rds'))
+```

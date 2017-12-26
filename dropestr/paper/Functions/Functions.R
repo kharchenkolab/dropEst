@@ -55,19 +55,6 @@ PlotTrimmedCorrections <- function(trimmed.data, raw.data, trimed.length, log=T,
   return(list(small=gg.small, large=gg.large))
 }
 
-GetPagoda <- function(cm, n.cores=10, verbose=F) {
-  library(pagoda2)
-  r <- Pagoda2$new(cm, modelType='plain', trim=5, n.cores=n.cores, verbose=verbose)
-  r$adjustVariance(plot=F, do.par=F, gam.k=10, verbose=verbose)
-
-  r$calculatePcaReduction(nPcs=100, n.odgenes=1000, maxit=1000)
-  r$makeKnnGraph(k=30,type='PCA', center=T,distance='cosine',weight.type='none');
-  r$getKnnClusters(method=infomap.community,type='PCA',name='infomap')
-
-  r$getEmbedding(type='PCA', perplexity=30, embeddingType = 'tSNE')
-  return(r)
-}
-
 ExpressionMatrixToDataFrame <- function(matrix, umis.per.cb, clusters, rescued.cbs = NULL, filtration.type=NULL) {
   h.clust.col <- hclust(dist(t(matrix)))
   gene.order <- h.clust.col$labels[h.clust.col$order]
