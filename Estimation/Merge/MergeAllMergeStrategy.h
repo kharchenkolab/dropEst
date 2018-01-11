@@ -4,6 +4,7 @@
 
 #include <Estimation/CellsDataContainer.h>
 #include <Tools/UtilFunctions.h>
+#include <limits>
 
 namespace Estimation
 {
@@ -14,6 +15,8 @@ namespace Merge
 	protected:
 		virtual long get_merge_target(CellsDataContainer &container, size_t base_cell_ind) override
 		{
+			int min_ed = std::numeric_limits<int>::max();
+			size_t target_id = std::numeric_limits<size_t>::max();
 			for (auto const &cell_ind: container.filtered_cells())
 			{
 				if (container.cell(cell_ind).umis_number() <= container.cell(base_cell_ind).umis_number())
@@ -25,8 +28,18 @@ namespace Merge
 				if (ed > this->_max_merge_edit_distance)
 					continue;
 
-				return cell_ind;
+				if (min_ed > ed)
+				{
+					min_ed = ed;
+					target_id = cell_ind;
+
+					if (min_ed == 1)
+						return cell_ind;
+				}
 			}
+
+			if (target_id != std::numeric_limits<size_t>::max())
+				return target_id;
 
 			return base_cell_ind;
 		}

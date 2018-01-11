@@ -1,6 +1,11 @@
 <config>
     <!-- droptag -->
     <TagsSearch>
+        <!--
+        Used protocol. Number and order of required input files depend on this parameter.
+        Possible values: indrop, indrop3, iclip.
+        -->
+        <protocol>indrop</protocol>
         <BarcodesSearch> <!-- Required for InDrop V3 -->
             <barcode1_length> 8 </barcode1_length>  <!-- Length of the first CB part -->
             <barcode2_length> 8 </barcode2_length> <!-- Length of the second CB part -->
