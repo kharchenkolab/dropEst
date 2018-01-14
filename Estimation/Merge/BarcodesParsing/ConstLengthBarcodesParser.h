@@ -5,6 +5,7 @@
 namespace TestEstimator
 {
 	struct testSplitBarcode;
+	struct testConstLengthBarcodeParser;
 }
 
 namespace Estimation
@@ -16,6 +17,7 @@ namespace Estimation
 			class ConstLengthBarcodesParser : public BarcodesParser
 			{
 				friend struct TestEstimator::testSplitBarcode;
+				friend struct TestEstimator::testConstLengthBarcodeParser;
 
 			private:
 				std::vector<size_t> _barcode_lengths;
@@ -26,8 +28,8 @@ namespace Estimation
 				virtual barcode_parts_list_t get_barcodes_list(const std::string &barcodes_filename) const override;
 
 			public:
-				ConstLengthBarcodesParser(const std::string &barcodes_filename);
-				virtual void init() override;
+				explicit ConstLengthBarcodesParser(const std::string &barcodes_filename);
+				void init() override;
 			};
 		}
 	}

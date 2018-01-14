@@ -1,5 +1,6 @@
 #pragma once
 
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -14,7 +15,8 @@ namespace TestEstimator
 	struct testRealNeighboursCbs;
 	struct testRealNeighbours;
 	struct testBarcodesFile;
-	struct testConstLengthBarcodesFile;
+//	struct testConstLengthBarcodesFile;
+	struct testConstLengthBarcodeParser;
 }
 
 namespace Estimation
@@ -29,7 +31,8 @@ namespace BarcodesParsing
 		friend struct TestEstimator::testRealNeighboursCbs;
 		friend struct TestEstimator::testRealNeighbours;
 		friend struct TestEstimator::testBarcodesFile;
-		friend struct TestEstimator::testConstLengthBarcodesFile;
+//		friend struct TestEstimator::testConstLengthBarcodesFile;
+		friend struct TestEstimator::testConstLengthBarcodeParser;
 
 	public:
 		struct BarcodesDistance
@@ -64,9 +67,10 @@ namespace BarcodesParsing
 	protected:
 		virtual barcodes_list_t split_barcode(const std::string &barcode) const = 0;
 		virtual barcode_parts_list_t get_barcodes_list(const std::string &barcodes_filename) const = 0;
+		static bool read_line(std::ifstream &barcodes_file, barcodes_list_t &barcodes, bool require_equal_length = false);
 
 	public:
-		BarcodesParser(const std::string &barcodes_filename);
+		explicit BarcodesParser(const std::string &barcodes_filename);
 		virtual void init();
 		virtual void release();
 

@@ -56,7 +56,7 @@ namespace BarcodesParsing
 	{
 		if (begin == end)
 		{
-			res.push_back(BarcodesDistance(barcodes_inds, edit_distance));
+			res.emplace_back(barcodes_inds, edit_distance);
 			return;
 		}
 
@@ -112,6 +112,35 @@ namespace BarcodesParsing
 	const size_t BarcodesParser::barcode_parts_num() const
 	{
 		return this->_barcodes.size();
+	}
+
+	bool BarcodesParser::read_line(std::ifstream &barcodes_file, barcodes_list_t &barcodes, bool require_equal_length)
+	{
+		std::string line;
+		Tools::ReverseComplement rc;
+		if (!std::getline(barcodes_file, line))
+			return false;
+
+		std::istringstream b1_in(line);
+		std::string::size_type barcode_length = 0;
+		while (b1_in)
+		{
+			std::string barcode;
+			b1_in >> barcode;
+			if (barcode.empty())
+				continue;
+
+			if (barcode_length == 0)
+			{
+				barcode_length = barcode.length();
+			}
+			else if (require_equal_length && barcode_length != barcode.length())
+				throw std::runtime_error("All barcodes in one line must have the same length");
+
+			barcodes.push_back(rc.rc(barcode));
+		}
+
+		return true;
 	}
 }
 }

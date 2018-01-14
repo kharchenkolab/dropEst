@@ -4,9 +4,11 @@
 ### Added
 * Dockers for Centos6, Centos7 and Debian9
 * iclip protocol support
+* 10x barcodes
 ### Changed
 * Optimized precise merge performance
 * Fixed bug with fastq split during dropTag
+* New format of barcode files
 
 ## [0.7.1] - 2017-10-18
 ### Added

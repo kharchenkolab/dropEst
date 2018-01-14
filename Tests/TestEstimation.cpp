@@ -282,6 +282,31 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		BOOST_CHECK_EQUAL(splitted[1], "ACTAATGA");
 	}
 
+	BOOST_FIXTURE_TEST_CASE(testConstLengthBarcodeParser, Fixture)
+	{
+		Merge::BarcodesParsing::ConstLengthBarcodesParser parser_indrop(PROJ_DATA_PATH + std::string("/barcodes/indrop_v3"));
+		parser_indrop.init();
+
+		BOOST_REQUIRE_EQUAL(parser_indrop._barcode_length, 16);
+		BOOST_REQUIRE_EQUAL(parser_indrop._barcode_lengths.size(), 2);
+		BOOST_CHECK_EQUAL(parser_indrop._barcode_lengths[0], 8);
+		BOOST_CHECK_EQUAL(parser_indrop._barcode_lengths[1], 8);
+		BOOST_REQUIRE_EQUAL(parser_indrop._barcodes.size(), 2);
+		BOOST_CHECK_EQUAL(parser_indrop._barcodes[0].size(), 384);
+		BOOST_CHECK_EQUAL(parser_indrop._barcodes[1].size(), 384);
+
+		Merge::BarcodesParsing::ConstLengthBarcodesParser parser_10x(PROJ_DATA_PATH + std::string("/barcodes/10x_aug_2016_split"));
+		parser_10x.init();
+
+		BOOST_REQUIRE_EQUAL(parser_indrop._barcode_length, 16);
+		BOOST_REQUIRE_EQUAL(parser_10x._barcode_lengths.size(), 2);
+		BOOST_CHECK_EQUAL(parser_10x._barcode_lengths[0], 7);
+		BOOST_CHECK_EQUAL(parser_10x._barcode_lengths[1], 9);
+		BOOST_REQUIRE_EQUAL(parser_10x._barcodes.size(), 2);
+		BOOST_CHECK_EQUAL(parser_10x._barcodes[0].size(), 480);
+		BOOST_CHECK_EQUAL(parser_10x._barcodes[1].size(), 1536);
+	}
+
 //	BOOST_FIXTURE_TEST_CASE(testStat, Fixture)
 //	{
 //		Stats stats;
@@ -301,7 +326,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		BamTools::BamAlignment align;
 		align.Position = 34610;
 		align.Length = 10;
-		align.CigarData.push_back(BamTools::CigarOp('M', 10));
+		align.CigarData.emplace_back('M', 10);
 		ReadParamsParser parser(PROJ_DATA_PATH + (std::string)"/gtf/gtf_test.gtf.gz", BamTags(), false);
 
 		std::string gene;
@@ -368,7 +393,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		align.Name = "152228477!TGAGTTCTGTTACTGCATC#ATGGGC";
 		align.Position = 34610;
 		align.Length = 10;
-		align.CigarData.push_back(BamTools::CigarOp('M', 10));
+		align.CigarData.emplace_back('M', 10);
 
 		this->test_bam_controller.process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
 		BOOST_CHECK_EQUAL(container.cell(0).at("FAM138A").at("ATGGGC").read_count(), 1);
@@ -404,7 +429,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		align.Name = "152228477!TGAGTTCTGTTACTGCATC#ATGGGC";
 		align.Position = 34610;
 		align.Length = 10;
-		align.CigarData.push_back(BamTools::CigarOp('M', 10));
+		align.CigarData.emplace_back('M', 10);
 
 		this->test_bam_controller.process_alignment(parser, processor, unexpected_chromosomes, "chrX", align);
 		BOOST_CHECK_EQUAL(container.cell(0).at("FAM138A").at("ATGGGC").read_count(), 1);
@@ -453,9 +478,9 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	BOOST_FIXTURE_TEST_CASE(testFillWrongUmis, Fixture)
 	{
 		Merge::UMIs::MergeUMIsStrategySimple::s_vec_t wrong_umis;
-		wrong_umis.push_back("AAANTTT");
-		wrong_umis.push_back("AAANCTT");
-		wrong_umis.push_back("NNNNNNN");
+		wrong_umis.emplace_back("AAANTTT");
+		wrong_umis.emplace_back("AAANCTT");
+		wrong_umis.emplace_back("NNNNNNN");
 		auto merge_targets = this->umi_merge_strat->fill_wrong_umis(wrong_umis);
 		for (auto const &umi : merge_targets)
 		{
@@ -468,9 +493,9 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 	BOOST_FIXTURE_TEST_CASE(testRemoveSimilarWrongUmis, Fixture)
 	{
 		Merge::UMIs::MergeUMIsStrategySimple::s_vec_t wrong_umis;
-		wrong_umis.push_back("AAANTTT");
-		wrong_umis.push_back("AACTNTT");
-		wrong_umis.push_back("AACTCNT");
+		wrong_umis.emplace_back("AAANTTT");
+		wrong_umis.emplace_back("AACTNTT");
+		wrong_umis.emplace_back("AACTCNT");
 //		wrong_umis.push_back("NNNNNNN"); // These tests will fail, but we don't really care
 //
 //		wrong_umis.push_back("AANNNCT");
@@ -567,7 +592,7 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		align.Name = "152228477!TGAGTTCTGTTACTGCATC#ATGGGC";
 		align.Position = 34610;
 		align.Length = 10;
-		align.CigarData.push_back(BamTools::CigarOp('M', 10));
+		align.CigarData.emplace_back('M', 10);
 
 		std::string gene;
 		auto mark = parser.get_gene("chrX", align, gene);
