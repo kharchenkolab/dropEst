@@ -26,7 +26,7 @@ namespace Estimation
 			std::shared_ptr<PoissonTargetEstimator> _estimator;
 
 		public:
-			MergeProbabilityValidator(const std::shared_ptr<PoissonTargetEstimator> &_estimator);
+			explicit MergeProbabilityValidator(const std::shared_ptr<PoissonTargetEstimator> &_estimator);
 
 			void run_validation(const CellsDataContainer &container, unsigned min_ed, unsigned max_ed,
 			                    size_t cb_pairs_num, unsigned log_period);

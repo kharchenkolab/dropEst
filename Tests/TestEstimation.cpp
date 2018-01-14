@@ -305,6 +305,10 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		BOOST_REQUIRE_EQUAL(parser_10x._barcodes.size(), 2);
 		BOOST_CHECK_EQUAL(parser_10x._barcodes[0].size(), 480);
 		BOOST_CHECK_EQUAL(parser_10x._barcodes[1].size(), 1536);
+
+		auto distances = parser_10x.get_distances_to_barcode("GGTGCGTAGCTAAACA");
+		BOOST_CHECK_EQUAL(distances[0][0].value, 0);
+		BOOST_CHECK_EQUAL(distances[1][0].value, 0);
 	}
 
 //	BOOST_FIXTURE_TEST_CASE(testStat, Fixture)
