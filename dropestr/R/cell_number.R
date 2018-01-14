@@ -214,7 +214,11 @@ PlotCellsNumberSummary <- function(umi.counts, breaks=100, mask=c(T,T,T)) { #TOD
 }
 
 #' @export
-PlotCellsNumberLogLog <- function(umi.counts, estimate.cells.number=F, show.legend=T) {
+PlotCellsNumberLogLog <- function(umi.counts, estimate.cells.number=F, show.legend=T, gg.base=NULL, plot.label=NULL,
+                                  plot.border=TRUE, linewidth=1, alpha=1.0) {
+  if (is.null(gg.base)) {
+    gg.base <- ggplot2::ggplot()
+  }
   umi.counts <- sort(umi.counts, decreasing=T)
   n.cells <- EstimateCellsNumber(umi.counts)
   plot.df <- data.frame(x=1:length(umi.counts), y=umi.counts)
@@ -226,10 +230,28 @@ PlotCellsNumberLogLog <- function(umi.counts, estimate.cells.number=F, show.lege
 
   y.max <- max(umi.counts) * 1.5
   y.min <- min(umi.counts)
-  gg <- ggplot2::ggplot(plot.df, ggplot2::aes(x=x, y=y)) + ggplot2::geom_line() +
-    ggplot2::geom_vline(ggplot2::aes(xintercept=n.cells$expected), linetype='dashed') +
+  if (is.null(plot.label)) {
+    gg <- gg.base +
+      ggplot2::geom_line(data=plot.df, mapping=ggplot2::aes(x=x, y=y), size=linewidth, alpha=alpha)
+
+    if (plot.border) {
+      gg <- gg + ggplot2::geom_vline(ggplot2::aes(xintercept=n.cells$expected), linetype='dashed', size=linewidth, alpha=alpha)
+    }
+  } else {
+    plot.df$PlotLabel <- plot.label
+    gg <- gg.base +
+      ggplot2::geom_line(data=plot.df, mapping=ggplot2::aes(x=x, y=y, color=PlotLabel), size=linewidth, alpha=alpha)
+
+    if (plot.border) {
+      gg <- gg + ggplot2::geom_vline(data=data.frame(Label=plot.label, CellNum=n.cells$expected),
+                                     ggplot2::aes(xintercept=CellNum, color=Label), linetype='dashed', size=linewidth, alpha=alpha)
+    }
+  }
+
+  gg <- gg +
     ggplot2::scale_x_log10(expand = c(0, 0)) +
     ggplot2::scale_y_log10(limits = c(y.min, y.max), expand = c(0, 0)) +
+    ggplot2::annotation_logticks(short=ggplot2::unit(2, 'pt'), mid=ggplot2::unit(3, 'pt'), long=ggplot2::unit(4, 'pt')) +
     ggplot2::labs(x='Cell rank', y='#UMIs')
 
   if (estimate.cells.number) {

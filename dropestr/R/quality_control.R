@@ -80,7 +80,7 @@ PlotIntergenicFractionByChromosomes <- function(reads.per.chr.per.cells, chromos
 #' @param main
 #' @param bandwidth
 PlotCellScores <- function(scores, cells.number=NULL, y.threshold=NULL, main=NULL, bandwidth=c(length(scores) / 100, 0.008)) {
-  smoothScatter(scores, bandwidth=bandwidth, xlab='Cell rank', ylab='Score', cex.lab=1.4, main=main)
+  smoothScatter(scores, bandwidth=bandwidth, xlab='Cell rank', ylab='Quality score', cex.lab=1.4, main=main)
   if (!is.null(cells.number)) {
     abline(v=cells.number$min, lty=2)
     abline(v=cells.number$max, lty=2)

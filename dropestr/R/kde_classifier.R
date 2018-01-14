@@ -28,8 +28,9 @@ TrainKDE <- function(x, y, H=ks::Hns, prior.probs=c(0.5, 0.5)) {
 #'
 #' @param clf trained classifier.
 #' @param x data for classification.
+#' @param bandwidth.mult multiplier for KDE bandwidth
 #' @return Class probabilities.
-PredictKDE <- function(clf, x) {
+PredictKDE <- function(clf, x, bandwidth.mult=1) {
   if (class(clf) != "KdeClassifier") {
     stop("The classifier provided isn't a KdeClassifier")
   }
@@ -39,7 +40,12 @@ PredictKDE <- function(clf, x) {
 
   sum.probs <- dens1 * clf$prior.probs[2] + dens0 * clf$prior.probs[1]
   prob1 <- as.vector(dens1 * clf$prior.probs[2]) / sum.probs
-  prob1[sum.probs < 1e-8] <- 0.5
+
+  outliers <- which(sum.probs < 1e-10)
+  if (length(outliers) > 0) {
+    warning(paste0("Found ", length(outliers), " points with 0 density. Either it's outliers or you should increase bandwidth. Setting score for these points to 0.5."))
+    prob1[outliers] <- 0.5
+  }
 
   ans <- cbind(1 - prob1, prob1)
   colnames(ans) <- clf$class.labels
