@@ -3,9 +3,10 @@
 ## [Upcoming]
 ### Added
 * Dockers for Centos6, Centos7 and Debian9
+* iclip protocol support
 ### Changed
 * Optimized precise merge performance
-* iclip protocol support
+* Fixed bug with fastq split during dropTag
 
 ## [0.7.1] - 2017-10-18
 ### Added
