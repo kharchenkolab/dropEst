@@ -2,6 +2,7 @@ library(ggplot2)
 library(ggpubr)
 library(ggrastr)
 library(dplyr)
+library(RColorBrewer)
 
 # ggpubr
 BuildPanel4 <- function(gg.plots, ylabel, xlabel, show.legend=F, return.raw=F, show.ticks=T, labels=c('A', 'B', 'C', 'D'), ...) {
@@ -49,17 +50,18 @@ PrepareHeatmapAnnotation <- function(annotation.df, colors, show_legend=F) { # T
   return(annotation)
 }
 
-HeatmapAnnotGG <- function(df, umi.per.cell.limits=c(2, 4.5)) {
+HeatmapAnnotGG <- function(df, umi.per.cell.limits=c(2, 4.5), raster.width=5, raster.height=5, annot.width=0.05, raster.dpi=300) {
   gg <- ggplot(df, aes(y=Barcode)) + theme_pdf() + rremove('xy.text') + rremove('ticks')
+  heatmap.width <- 1 - 2 * annot.width
 
   ggs <- list(
-    heatmap = gg + geom_tile(aes(x=Gene, fill=Expression)) +
+    heatmap = gg + geom_tile_rast(aes(x=Gene, fill=Expression), width=raster.width * heatmap.width, height=raster.height, dpi=raster.dpi) +
       scale_fill_gradientn(colours=colorRampPalette(rev(brewer.pal(n = 7, name = "RdYlBu")))(100)),
-    clust = gg + geom_tile(aes(x=1, fill=Cluster)) +
+    clust = gg + geom_tile_rast(aes(x=1, fill=Cluster), width=raster.width * annot.width, height=raster.height, dpi=raster.dpi) +
       scale_x_continuous(expand = c(0, 0)) +
       scale_fill_discrete(drop=F) +
       theme(plot.margin=margin()) + rremove('xylab'),
-    umis = gg + geom_tile(aes(x=1, fill=UmisPerCb)) +
+    umis = gg + geom_tile_rast(aes(x=1, fill=UmisPerCb), width=raster.width * annot.width, height=raster.height, dpi=raster.dpi) +
       scale_x_continuous(expand = c(0, 0)) +
       scale_fill_distiller(palette='OrRd', limits=umi.per.cell.limits, direction=1) +
       theme(plot.margin=margin()) + rremove('xylab')

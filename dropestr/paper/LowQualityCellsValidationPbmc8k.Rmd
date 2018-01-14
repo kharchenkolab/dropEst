@@ -1,0 +1,308 @@
+---
+title: "Low-quality Cells Validation"
+output: html_document
+---
+
+```{r global_options, include=FALSE}
+library(ggplot2)
+library(ggsci)
+library(ggpubr)
+library(ggrastr)
+library(dplyr)
+library(parallel)
+library(reshape2)
+library(RColorBrewer)
+
+source("./Functions/PlotFuncs.R")
+source("./Functions/Functions.R")
+source("./Functions/PagodaWrappers.R")
+
+knitr::opts_chunk$set(fig.width=5, fig.height=3, echo=FALSE, warning=FALSE, message=FALSE)
+
+theme_set(theme_base)
+
+set.seed(42)
+kDatasetName <- 'pbmc8k'
+kPlotsFolder <- paste0('/d0-mendel/home/viktor_petukhov/Data/Plots/PaperReview/LowQualityCells/', kDatasetName, '/')
+kDataPath <- '/d0-mendel/home/viktor_petukhov/Data/10x/pbmc8k/'
+kEstFolder <- paste0(kDataPath, 'est_11_11_umi_quality/')
+k10xFolder <- paste0(kDataPath, 'filtered_gene_bc_matrices/GRCh38/')
+```
+
+```{r}
+# holder <- readRDS(paste0(kEstFolder, 'pbmc8k.rds'))
+# holder$reads_per_umi_per_cell <- NULL
+# saveRDS(holder, paste0(kEstFolder, 'pbmc8k_no_umi.rds'))
+
+holder <- readRDS(paste0(kEstFolder, 'pbmc8k_no_umi.rds'))
+# holder$cm <- holder$cm[grep("^[^;]+$", rownames(holder$cm)),]
+# holder$cm_raw <- holder$cm_raw[grep("^[^;]+$", rownames(holder$cm_raw)),]
+```
+
+```{r}
+cm_10x <- as(Matrix::readMM(paste0(k10xFolder, 'matrix.mtx')), 'dgCMatrix')
+rownames(cm_10x) <- read.table(paste0(k10xFolder, 'genes.tsv'))$V1
+colnames(cm_10x) <- read.table(paste0(k10xFolder, 'barcodes.tsv'))$V1
+
+cm_10x <- cm_10x[, order(Matrix::colSums(cm_10x), decreasing=F)]
+dim(cm_10x)
+```
+
+```{r}
+umis_per_cell <- sort(Matrix::colSums(holder$cm_raw), decreasing=T)
+est_cell_num <- EstimateCellsNumber(umis_per_cell)
+```
+
+```{r, message=FALSE, fig.width=7.5, fig.height=3.5}
+scores <- ScorePipelineCells(holder, mit.chromosome.name='MT', predict.all=T, verbose=T)[names(umis_per_cell)]
+# pdf(paste0(kPlotsFolder, 'pbmc8k_scores.pdf'), width=7.5, height=3.5)
+# par(mar=c(2.7,2.5,0,0.3), tck=-0.02, mgp=c(1.4,0.3,0))
+PlotCellScores(scores[1:20000], cells.number=est_cell_num)
+# dev.off()
+```
+
+```{r}
+intersect_cbs <- names(scores[1:est_cell_num$expected])
+intersect_cbs <- intersect_cbs[scores[intersect_cbs] > 0.4]
+
+unknown_cell_scores <- scores[(est_cell_num$expected + 1):length(scores)]
+rescued_cbs <- names(unknown_cell_scores)[unknown_cell_scores > 0.5]
+
+unknown_cell_scores <- scores[1:est_cell_num$expected]
+filtered_cbs <- names(unknown_cell_scores)[unknown_cell_scores < 0.1]
+
+c(length(intersect_cbs), length(rescued_cbs), length(filtered_cbs))
+```
+
+```{r}
+r_cm_rescued <- holder$cm_raw[, c(names(umis_per_cell)[1:est_cell_num$expected], rescued_cbs)]
+r_cm_rescued <- r_cm_rescued[grep("^[^;]+$", rownames(r_cm_rescued)),]
+
+if (!all(colnames(cm_10x) %in% colnames(r_cm_rescued))) stop("All 10x cells must be presented")
+```
+
+## Rescued cells
+```{r, message=FALSE}
+# r_rescued <- GetPagoda(r_cm_rescued, n.cores=30, tsne.iters.num=3000)
+# saveRDS(r_rescued, paste0(kEstFolder, 'pagoda.rds'))
+r_rescued <- readRDS(paste0(kEstFolder, 'pagoda.rds'))
+```
+
+```{r}
+clusters_annotated <- read.csv(paste0(kEstFolder, 'clusters_annotated.csv')) %>% (function(x) setNames(as.character(x$Type), x$Barcode))
+clusters <- r_rescued$clusters$PCA$infomap
+# intersect_clusters <- clusters[intersect(names(clusters), intersect_cbs)]
+
+cluster_centers <- split(names(clusters_annotated), clusters_annotated) %>%
+  lapply(function(cbs) r_rescued$reductions$PCA[cbs, , drop=F] %>% Matrix::colMeans())
+
+rescued_clusters <- apply(r_rescued$reductions$PCA[rescued_cbs, , drop=F], 1, function(cell)
+  sapply(cluster_centers, cor, cell) %>% which.max() %>% names())
+
+filtered_clusters <- apply(r_rescued$reductions$PCA[filtered_cbs, , drop=F], 1, function(cell)
+  sapply(cluster_centers, cor, cell) %>% which.max() %>% names())
+
+notannotated_cells <- setdiff(names(clusters), names(clusters_annotated))
+clusters_annotated[notannotated_cells] <- apply(r_rescued$reductions$PCA[notannotated_cells,], 1, function(cell)
+  sapply(cluster_centers, cor, cell) %>% which.max() %>% names())
+
+intersect_clusters <- clusters_annotated[intersect_cbs]
+```
+
+```{r}
+tsne <- r_rescued$embeddings$PCA$tSNE
+intergenic_inf <- names(clusters)[clusters == 11] %>% intersect(filtered_cbs) %>% GetCellsChull(tsne, offset.y=-0.5)
+mitochondrial_inf <- names(clusters)[clusters == 16] %>% intersect(filtered_cbs) %>% GetCellsChull(tsne)
+low_rpu_inf <- names(clusters)[clusters == 7] %>% intersect(filtered_cbs) %>% GetCellsChull(tsne, chull.quantile=0.8)
+
+chull_list <- list(intergenic_inf, mitochondrial_inf, low_rpu_inf) %>% lapply(`[[`, 'chull') %>% 
+  lapply(as.data.frame) %>% setNames(c('Intergenic', 'Mitochondrial', 'Low expression'))
+
+label_colors <- c('#0faf00', '#1989c6', 'orange') %>% setNames(names(chull_list))
+
+labels_df <- Reduce(rbind,  lapply(chull_list, colMeans)) %>% as.data.frame() %>% 
+  mutate(Text=paste0(names(chull_list), ' (', c('C', 'B', 'A'), ')'), Color=label_colors) %>%
+  mutate(OffsetX=c(8, 0, -2), OffsetY=c(8, 8, -11))
+```
+
+```{r, message=FALSE, fig.width=4.28, fig.height=6}
+raster_width <-  4.28
+raster_height <- 6
+filt_df <- PlotPagodaEmbeding(r_rescued, clusters=filtered_clusters, return.df=T)
+rescued_df <- PlotPagodaEmbeding(r_rescued, clusters=rescued_clusters, return.df=T)
+
+gg <- PlotPagodaEmbeding(r_rescued, clusters=clusters_annotated[names(clusters_annotated) %>% setdiff(rescued_cbs) %>% setdiff(filtered_cbs)], 
+                         alpha=0.5, size=0.7, font.size=NULL, plot.na=F, nudge_x=1, nudge_y=1, 
+                         raster=T, raster.width=raster_width, raster.height=raster_height)
+
+gg <- Reduce(`+`, lapply(names(chull_list), function(n) geom_polygon(data=chull_list[[n]], mapping=aes(x=V1, y=V2), alpha=0.3, color=label_colors[n])), init=gg)
+
+gg$layers[[1]]$mapping$shape <- 'unchanged'
+
+gg$layers <- c(gg$layers[[1]],
+               geom_point_rast(data=filt_df, mapping=aes(x=V1, y=V2, shape='filtered'), size=1, alpha=0.5, width=raster_width, height=raster_height),
+               gg$layers[3:length(gg$layers)],
+               geom_point_rast(data=rescued_df, mapping=aes(x=V1, y=V2, shape='rescued', color=Cluster), size=1.5, alpha=0.9, stroke=0.7, width=raster_width, height=raster_height),
+               gg$layers[[2]])
+
+gg_repels <- lapply(1:3, function(i) 
+  ggrepel::geom_label_repel(data=labels_df[i,], mapping=aes(x=V1, y=V2, label=Text), fill=ggplot2::alpha(labels_df$Color[i], 0.5), 
+                            nudge_x=labels_df$OffsetX[i], nudge_y=labels_df$OffsetY[i], segment.size=1, size=3, point.padding=0,
+                            arrow=arrow(length = unit(0.02, 'npc')), color='black', segment.color=labels_df$Color[i], fontface='bold'))
+
+gg <- Reduce(`+`, gg_repels, init=gg)
+gg_tsne_noise <- gg + scale_color_discrete(guide="none") +
+  scale_shape_manual(values=c(4, 24, 19), name='Cells filtration') +
+  theme_pdf(legend.pos=c(1, 1), show.ticks=F) +
+  scale_size_continuous(range=c(3, 6), trans='identity', guide='none')
+
+gg_tsne_noise
+```
+
+```{r, fig.width=6, fig.height=6, message=FALSE, warning=FALSE}
+bc_data <- PrepareLqCellsDataPipeline(holder, mit.chromosome.name='MT', scale=F)
+gg <- function(y.max) ggplot() + scale_y_continuous(expand=c(0, 0), name='Fraction of cells', limits=c(0, y.max)) + guides(fill=guide_legend(title=NULL))
+gg1 <- gg(0.9) + 
+  geom_histogram(aes(x=bc_data[mitochondrial_inf$cbs, ]$MitochondrionFraction, y=..count.. / sum(..count..), fill = 'Filtered cells'), color='black') +
+  geom_histogram(aes(x=bc_data[intersect_cbs, ]$MitochondrionFraction, y=..count.. / sum(..count..), fill='Real cells'), alpha=0.5, color='black') +
+  scale_x_continuous(limits=c(0, 1.01), expand=c(0, 0), name='Fraction of mitochondrial reads') +
+  theme_pdf(legend.pos=c(1, 1))
+
+gg2 <- gg(0.31) + 
+  geom_histogram(aes(x=bc_data[intergenic_inf$cbs, ]$IntergenicFrac, y=..count.. / sum(..count..), fill = 'Highly-intergenic'), color='black') +
+  geom_histogram(aes(x=bc_data[intersect_cbs, ]$IntergenicFrac, y=..count.. / sum(..count..), fill='Real cells'), alpha=0.5, color='black') +
+  scale_x_continuous(limits=c(0, 1.01), expand=c(0, 0), name='Fraction of intergenic reads') +
+  theme_pdf(legend.pos=c(1, 1))
+
+gg3 <- gg(0.6) + 
+  geom_histogram(aes(x=bc_data[low_rpu_inf$cbs, ]$UmiPerGene, y=..count.. / sum(..count..), fill = 'Lowly-expressed'), color='black') +
+  geom_histogram(aes(x=bc_data[intersect_cbs, ]$UmiPerGene, y=..count.. / sum(..count..), fill='Real cells'), alpha=0.5, color='black') +
+  scale_x_continuous(limits=c(1, 5.5), expand=c(0, 0), name='Mean #UMIs per gene') +
+  theme_pdf(legend.pos=c(1, 1))
+
+gg_distributions <- cowplot::plot_grid(gg1, gg2 + rremove("legend"), gg3 + rremove("legend"), nrow=3, align='v', labels=c('B', 'C', 'D'), label_x=0.025)
+```
+
+```{r, fig.width=7.5, fig.height=6}
+cowplot::plot_grid(gg_tsne_noise, gg_distributions, ncol=2, rel_widths=c(1, 0.75), labels=c('A', NULL))
+ggsave(paste0(kPlotsFolder, 'pbmc8k_figure.pdf'))
+```
+
+## Comparison with 10x
+```{r}
+cbs_10x <- colnames(cm_10x)
+rescued_cbs <- names(scores)[scores > 0.9] %>% setdiff(cbs_10x)
+filtered_cbs <- names(scores)[scores < 0.1] %>% intersect(cbs_10x)
+intersect_cbs <- names(scores)[scores > 0.9] %>% intersect(cbs_10x)
+
+rescued_clusters <- apply(r_rescued$reductions$PCA[rescued_cbs, , drop=F], 1, function(cell)
+  sapply(cluster_centers, cor, cell) %>% which.max() %>% names())
+
+filtered_clusters <- apply(r_rescued$reductions$PCA[filtered_cbs, , drop=F], 1, function(cell)
+  sapply(cluster_centers, cor, cell) %>% which.max() %>% names())
+
+c(length(cbs_10x), length(rescued_cbs), length(filtered_cbs))
+```
+
+```{r, message=FALSE, fig.width=4.28, fig.height=5}
+raster_width <-  4.28
+raster_height <- 5
+filt_df <- PlotPagodaEmbeding(r_rescued, clusters=filtered_clusters, return.df=T)
+rescued_df <- PlotPagodaEmbeding(r_rescued, clusters=rescued_clusters, return.df=T)
+
+gg <- PlotPagodaEmbeding(r_rescued, clusters=clusters_annotated[cbs_10x %>% setdiff(filtered_cbs)], alpha=0.5, size=0.7, 
+                         font.size=NULL, plot.na=F, raster=T, raster.width=raster_width, raster.height=raster_height, point.padding=0, nudge_y=2)
+
+gg$layers[[1]]$mapping$shape <- 'unchanged'
+
+gg$layers <- c(gg$layers[[1]],
+               geom_point_rast(data=filt_df, mapping=aes(x=V1, y=V2, shape='filtered'), size=1, alpha=0.5, width=raster_width, height=raster_height),
+               geom_point_rast(data=rescued_df, mapping=aes(x=V1, y=V2, shape='rescued', color=Cluster), size=1.5, alpha=0.9, stroke=0.7, width=raster_width, height=raster_height),
+               gg$layers[[2]])
+
+gg_tsne <- gg + scale_color_discrete(guide="none") +
+  scale_shape_manual(values=c(4, 24, 19), name='Cells filtration') +
+  theme_pdf(legend.pos=c(0, 1), show.ticks=F) +
+  scale_size_continuous(range=c(3, 5), trans='identity', guide='none')
+
+gg_tsne
+```
+
+```{r}
+tested_clusts <- sort(c(clusters_annotated[intersect_cbs], rescued_clusters, filtered_clusters))
+tested_clusts <- as.factor(tested_clusts) %>% setNames(names(tested_clusts))
+tested_clusts <- tested_clusts[tested_clusts %in% (which(table(clusters_annotated[rescued_cbs]) >= 10) %>% names())]
+separation <- c(setNames(rep('rescued', length(rescued_cbs)), rescued_cbs), 
+                setNames(rep('real', length(intersect_cbs)), intersect_cbs))
+
+umis_per_cb_subset <- log10(Matrix::colSums(r_cm_rescued[, names(tested_clusts)]))
+tested_clusts <- tested_clusts[order(tested_clusts, -umis_per_cb_subset)]
+
+de_genes <- r_rescued$getDifferentialGenes(type='PCA', clusterType='infomap', upregulated.only=T) %>%
+  lapply(function(cm) rownames(cm)[cm$highest][1:50]) %>% unlist() %>% unique() %>% (function(x) x[!is.na(x)])
+
+m_subset <- log10(1e-3 + as.matrix(r_rescued$counts[names(tested_clusts), de_genes]))
+```
+
+```{r, fig.width=6, fig.height=7}
+legendGuide <- function(title, barwidth=1.3, guide=ggplot2::guide_colorbar, ...) {
+  guides(fill = guide(title.position='top', direction='horizontal', title=title, barwidth=unit(barwidth, 'in'), ...))
+}
+
+raster_width <-  3
+raster_height <- 3
+raster_dpi <- 100
+
+plot_df <- ExpressionMatrixToDataFrame(m_subset, umis_per_cb_subset, tested_clusts, filtration.type=separation)
+plot_df <- plot_df %>% filter(UmisPerCb < 3.4)
+plot_dfs <- split(plot_df, plot_df$FiltrationType)
+
+
+ggs <- lapply(plot_dfs, HeatmapAnnotGG, umi.per.cell.limits=range(plot_df$UmisPerCb), raster.width=raster_width, 
+              raster.height=raster_height, raster.dpi=raster_dpi)
+
+gg_legends <- mapply(`+`, ggs$real, list(legendGuide('log10(expression)'), 
+                                    legendGuide('Cell type', guide=guide_legend, ncol=3), 
+                                    legendGuide('log10(#molecules)')), SIMPLIFY=F) %>%
+  lapply(`+`, theme(legend.margin=margin(l=4, r=4, unit='pt'))) %>% lapply(get_legend)
+
+ggs$real$heatmap <- ggs$real$heatmap + rremove('xlab') + ylab('Cells')
+ggs$rescued$heatmap <- ggs$rescued$heatmap + labs(x = 'Genes', y = 'Cells')
+ggs_annot <- lapply(ggs, function(gg) cowplot::plot_grid(plotlist=lapply(gg, `+`, theme(legend.position="none", plot.margin=margin())), 
+                                                         nrow=1, rel_widths=c(1.5, 0.1, 0.1), align='h'))
+
+gg_legends_plot <- cowplot::plot_grid(plotlist=gg_legends, nrow=3, align='v')
+```
+
+```{r, fig.width=7.5, fig.height=6}
+gg_left <- cowplot::plot_grid(ggs_annot$real, ggs_annot$rescued, nrow=2, labels=c('B', 'C'))
+gg_right <- gg_tsne + theme(plot.margin=margin(l=0.1, unit='in'), axis.text=element_blank(), axis.ticks=element_blank())
+gg_bottom <- cowplot::plot_grid(plotlist=gg_legends[c(1, 3, 2)], ncol=3, rel_widths=c(1, 1, 2.6))
+
+gg_10x <- cowplot::plot_grid(gg_left, gg_right, labels=c('', 'D'), ncol=2) %>% 
+  cowplot::plot_grid(gg_bottom, nrow=2, rel_heights=c(1, 0.21), align='v')
+ggsave(paste0(kPlotsFolder, 'comparison_with_10x.pdf'), gg_10x, width=7.5, height=6)
+gg_10x
+```
+
+## Initial labels and scores
+```{r, messages=FALSE}
+cbs_full <- names(scores)[1:20000]
+r_cm_full <- holder$cm_raw[, cbs_full]
+r_full <- GetPagoda(r_cm_full, n.cores=30)
+```
+
+```{r, fig.width=7.5, fig.height=5}
+initial_labels <- EstimateCellsQuality(Matrix::colSums(r_cm_full))
+gg1 <- PlotPagodaEmbeding(r_full, clusters=initial_labels, mark.clusters=F, show.legend=T, alpha=0.6, size=0.5) +
+  scale_color_manual(values=scales::hue_pal(l=60)(3)[c(2, 1, 3)], name='Initial label') +
+  theme_pdf(legend.pos=c(0, 1), show.ticks=F)
+
+gg2 <- PlotPagodaEmbeding(r_full, colors=scores, mark.clusters=F, show.legend=T, alpha=0.6, size=0.5) +
+  scale_color_distiller(palette='RdYlBu', direction=1, limits=c(0, 1), name='Score') +
+  theme_pdf(legend.pos=c(0, 1), show.ticks=F)
+
+cowplot::plot_grid(gg1, gg2 + rremove("ylab"), labels='AUTO', label_x=c(0, -0.05))
+ggsave(paste0(kPlotsFolder, 'pbmc8k_supp_initial_labeling.pdf'), width=7.5, height=5)
+```
+

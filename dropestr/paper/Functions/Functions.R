@@ -77,3 +77,33 @@ ExpressionMatrixToDataFrame <- function(matrix, umis.per.cb, clusters, rescued.c
 
   return(res)
 }
+
+FindClusterMarkers <- function(clust2, clust1, srt.obj, max.pval=1e-5) {
+  res <- Seurat::FindMarkers(object = srt, ident.1 = clust1, ident.2 = clust2, min.pct = 0.25, only.pos=T) %>%
+    tibble::rownames_to_column('gene') %>% filter(p_val_adj < 1e-5) %>% .$gene
+
+  return(res)
+}
+
+GetOverexpressedGenes <- function(srt, compared.clusters, cluster.markers, genes.from.cluster=50, expression.threshold=0.6) {
+  genes <- lapply(cluster.markers, function(x)
+  (unlist(x) %>% table() %>% sort(decreasing=T) %>% names())[1:genes.from.cluster]) %>% unlist() %>% unique()
+  genes <- genes[!is.na(genes)]
+
+  gene.mask <- lapply(compared.clusters, function(cl)
+    Matrix::rowMeans(srt@data[genes, names(srt@ident)[srt@ident == cl]] > 0) > expression.threshold)
+
+  gene.mask <- Reduce(`|`, gene.mask)
+  return(names(gene.mask)[gene.mask])
+}
+
+GetCellsChull <- function(cbs, tsne, chull.quantile=0.95, offset.x=0.5, offset.y=0.5) {
+  tsne <- tsne[cbs, ]
+  rob.stats <- robustbase::covMcd(tsne)
+  dists <- mahalanobis(tsne, center=rob.stats$center, cov=rob.stats$cov)
+  cbs <- names(dists)[dists < quantile(dists, chull.quantile)]
+  tsne <- tsne[cbs, ]
+  res <- tsne[chull(tsne),]
+  res <- res + c(offset.x, offset.y) * sign(res - rob.stats$center)
+  return(list(chull=res[chull(res), ], cbs=cbs))
+}

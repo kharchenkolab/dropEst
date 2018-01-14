@@ -30,7 +30,7 @@ kPlotsFolder <- paste0('/d0-mendel/home/viktor_petukhov/Data/Plots/PaperReview/L
 ```{r}
 kDataPath <- '/d0-mendel/home/viktor_petukhov/Data/SCG71/est_11_14_poisson_real/'
 holder <- readRDS(paste0(kDataPath, 'SCG71.rds'))
-genesets <- readRDS('/d0-mendel/home/viktor_petukhov/cp/data/genesets_mouse.rds')
+# genesets <- readRDS('/d0-mendel/home/viktor_petukhov/cp/data/genesets_mouse.rds')
 ```
 
 ```{r}
@@ -39,7 +39,7 @@ umis_per_cell <- sort(holder$aligned_umis_per_cell, decreasing=T)
 ```
 
 ```{r}
-scores <- ScorePipelineCells(holder, mitochondrion.genes=genesets$mitochondrion, filter.high.mit.fraction=T, predict.all=T)[names(umis_per_cell)]
+scores <- ScorePipelineCells(holder, mit.chromosome.name='chrM', predict.all=T, verbose=T)[names(umis_per_cell)]
 PlotCellScores(scores)
 ```
 
@@ -60,58 +60,9 @@ c(length(intersect_cbs), length(rescued_cbs), length(filtered_cbs))
 r_cm_rescued <- holder$cm_raw[, c(names(umis_per_cell)[1:est_cell_num$expected], rescued_cbs)]
 ```
 
-## Seurat analysis
-```{r, message=FALSE}
-library(Seurat)
-srt <- CreateSeuratObject(raw.data = r_cm_rescued, min.cells = 10, min.genes = 0, project = "SCG71")
-srt <- NormalizeData(object = srt, normalization.method = "LogNormalize", scale.factor = 10000)
-srt <- FindVariableGenes(object = srt, mean.function = ExpMean, dispersion.function = LogVMR, 
-                         x.low.cutoff = 0.0125, x.high.cutoff = 3, y.cutoff = 1)
-srt <- ScaleData(object = srt, vars.to.regress = "nUMI")
-srt <- RunPCA(object = srt, pc.genes = srt@var.genes, do.print = FALSE, pcs.compute=50, maxit=1000, work=500)
-srt <- JackStraw(object = srt, num.replicate = 100, do.print = FALSE)
-PCElbowPlot(object = srt, num.pc=50)
-
-pcs <- 1:50
-srt <- FindClusters(object = srt, reduction.type = "pca", dims.use = pcs, 
-                    resolution = 0.6, print.output = 0, save.SNN = TRUE)
-
-srt <- RunTSNE(object = srt, dims.use = pcs, do.fast = TRUE)
-
-save(srt, file = "~/tmp_exchange/scg71_srt.Robj")
-```
-
 ```{r}
-TSNEPlot(object = srt, do.label=T)
-```
-
-```{r}
-FindClusterMarkers <- function(clust2, clust1, srt.obj, max.pval=1e-5) {
-  res <- FindMarkers(object = srt, ident.1 = clust1, ident.2 = clust2, min.pct = 0.25, only.pos=T) %>%
-    tibble::rownames_to_column('gene') %>% filter(p_val_adj < 1e-5) %>% .$gene
-
-  return(res)
-}
-
-compared_clusters <- unique(srt@ident)
-cluster_markers <- mclapply(compared_clusters, function(i) mclapply(setdiff(compared_clusters, i), FindClusterMarkers, i, srt, mc.cores=4), mc.cores=11)
-```
-
-```{r}
-overexpressed_genes <- Reduce(union, lapply(cluster_markers, function(x) (unlist(x) %>% table() %>% sort(decreasing=T) %>% names())[1:50]))
-length(overexpressed_genes)
-
-overexpressed_genes_mask <- lapply(compared_clusters, function(cl) Matrix::rowMeans(srt@data[overexpressed_genes, names(srt@ident)[srt@ident == cl]] > 0) > 0.6)
-overexpressed_genes_mask <- Reduce(`|`, overexpressed_genes_mask)
-overexpressed_genes <- names(overexpressed_genes_mask)[overexpressed_genes_mask]
-length(overexpressed_genes)
-
-clusters_info <- list(clusters=srt@ident, marks=cluster_markers, overexpressed_genes=overexpressed_genes)
-saveRDS(clusters_info, '~/tmp_exchange/SCG71_cluster_markers.rds')
-```
-
-```{r}
-clusters_info <- readRDS('~/tmp_exchange/SCG71_cluster_markers.rds')
+clusters <- readRDS(paste0(kDataPath, 'clusters_annotated.rds'))
+clusters[(clusters == 'pre-B cells 1') | (clusters == 'pre-B cells 2')] <- 'pre-B cells'
 ```
 
 ## Rescued cells
@@ -120,8 +71,6 @@ r_rescued <- GetPagoda(r_cm_rescued, n.cores=30, tsne.iters.num=10000)
 ```
 
 ```{r}
-clusters <- readRDS(paste0(kDataPath, 'clusters_annotated.rds'))
-clusters[(clusters == 'pre-B cells 1') | (clusters == 'pre-B cells 2')] <- 'pre-B cells'
 # clusters <- srt@ident
 intersect_clusters <- clusters[intersect(names(clusters), intersect_cbs)]
 
@@ -134,6 +83,10 @@ rescued_clusters <- apply(r_rescued$reductions$PCA[rescued_cbs, , drop=F], 1, fu
 filtered_clusters <- apply(r_rescued$reductions$PCA[filtered_cbs, , drop=F], 1, function(cell)
   sapply(cluster_centers, cor, cell) %>% which.max() %>% names())
 
+unclassified_cbs <- setdiff(colnames(r_cm_rescued), names(clusters))
+clusters[unclassified_cbs] <- apply(r_rescued$reductions$PCA[unclassified_cbs, , drop=F], 1, function(cell)
+  sapply(cluster_centers, cor, cell) %>% which.max() %>% names())
+
 # updated_clusters <- apply(r_rescued$reductions$PCA[names(clusters), ], 1, function(cell)
 #   sapply(cluster_centers, cor, cell) %>% which.max() %>% names())
 # 
@@ -143,6 +96,7 @@ filtered_clusters <- apply(r_rescued$reductions$PCA[filtered_cbs, , drop=F], 1, 
 intersect_clusters <- clusters[intersect_cbs]
 ```
 
+# !!!TODO: rasterize
 ```{r}
 filt_df <- PlotPagodaEmbeding(r_rescued, clusters=filtered_clusters, return.df=T)
 rescued_df <- PlotPagodaEmbeding(r_rescued, clusters=rescued_clusters, return.df=T)
@@ -158,10 +112,50 @@ gg$layers[[3]]$mapping$shape <- 'unchanged'
 
 gg_tsne <- gg + scale_color_discrete(guide="none") + 
   scale_shape_manual(values=c(4, 24, 19), name='Cells filtration') + 
-  theme_pdf(legend.pos=c(1, 1)) +
+  theme_pdf(legend.pos=c(0, 1)) +
   scale_size_continuous(range=c(3, 7), trans='identity', guide='none')
 
 gg_tsne
+```
+
+### Seurat analysis
+```{r, message=FALSE}
+library(Seurat)
+srt <- CreateSeuratObject(raw.data = r_cm_rescued, min.cells = 10, min.genes = 0, project = "SCG71")
+srt <- NormalizeData(object = srt, normalization.method = "LogNormalize", scale.factor = 10000)
+srt <- FindVariableGenes(object = srt, mean.function = ExpMean, dispersion.function = LogVMR, 
+                         x.low.cutoff = 0.0125, x.high.cutoff = 3, y.cutoff = 1, do.plot=F)
+srt <- ScaleData(object = srt, vars.to.regress = "nUMI")
+# srt <- RunPCA(object = srt, pc.genes = srt@var.genes, do.print = FALSE, pcs.compute=50, maxit=1000, work=500)
+# srt <- JackStraw(object = srt, num.replicate = 100, do.print = FALSE)
+# PCElbowPlot(object = srt, num.pc=50)
+# 
+# pcs <- 1:50
+# # srt <- FindClusters(object = srt, reduction.type = "pca", dims.use = pcs,
+# #                     resolution = 0.6, print.output = 0, save.SNN = TRUE)
+# 
+# srt <- RunTSNE(object = srt, dims.use = pcs, do.fast = TRUE)
+
+save(srt, file = "~/tmp_exchange/scg71_srt.Robj")
+```
+
+```{r}
+srt@ident <- as.factor(clusters[colnames(srt@raw.data)])
+names(srt@ident) <- colnames(srt@raw.data)
+compared_clusters <- unique(srt@ident)
+cluster_markers <- mclapply(compared_clusters, function(i) mclapply(setdiff(compared_clusters, i), FindClusterMarkers, i, srt, mc.cores=4), mc.cores=11)
+```
+
+```{r}
+overexpressed_genes <- GetOverexpressedGenes(srt, compared_clusters, cluster_markers)
+length(overexpressed_genes)
+
+clusters_info <- list(clusters=srt@ident, marks=cluster_markers, overexpressed_genes=overexpressed_genes)
+saveRDS(clusters_info, '~/tmp_exchange/SCG71_cluster_markers.rds')
+```
+
+```{r}
+clusters_info <- readRDS('~/tmp_exchange/SCG71_cluster_markers.rds')
 ```
 
 ## Heatmaps
@@ -197,7 +191,7 @@ gg_legends <- mapply(`+`, ggs$real, list(legendGuide('log10(expression)'),
 
 ggs$real$heatmap <- ggs$real$heatmap + rremove('xlab') + ylab('Cells')
 ggs$rescued$heatmap <- ggs$rescued$heatmap + labs(x = 'Genes', y = 'Cells')
-ggs_annot <- lapply(ggs, function(gg) cowplot::plot_grid(plotlist=lapply(gg, `+`, theme(legend.position="none", plot.margin=margin(unit='in'))), nrow=1, rel_widths=c(1.5, 0.1, 0.1), align='h'))
+ggs_annot <- lapply(ggs, function(gg) cowplot::plot_grid(plotlist=lapply(gg, `+`, theme(legend.position="none", plot.margin=margin())), nrow=1, rel_widths=c(1.5, 0.1, 0.1), align='h'))
 
 gg_legends_plot <- cowplot::plot_grid(plotlist=gg_legends, nrow=3, align='v')
 ```
