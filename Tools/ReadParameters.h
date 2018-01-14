@@ -40,6 +40,6 @@ namespace Tools
 		bool is_empty() const;
 	};
 
-	typedef boost::unordered_map<std::string, ReadParameters> reads_params_map_t;
-//	typedef std::map<std::string, ReadParameters> reads_params_map_t;
+	using reads_params_map_t = boost::unordered_map<std::string, ReadParameters>;
+//	using reads_params_map_t = std::map<std::string, ReadParameters>;
 }

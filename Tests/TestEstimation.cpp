@@ -339,8 +339,8 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 
 		BOOST_CHECK_EQUAL(container.cell(0).at("Gene4").at("ACCCCT").read_count(), 1);
 
-		container.add_record("AAATTAGGTCCA", "TTTTTT", "Gene3", "chr1", Mark::HAS_NOT_ANNOTATED);
-		container.add_record("AAATTAGGTCCA", "ACCCCT", "Gene4", "chr1", Mark::HAS_NOT_ANNOTATED);
+		container.add_record("AAATTAGGTCCA", "TTTTTT", "Gene3", "chr1", Mark(Mark::HAS_NOT_ANNOTATED));
+		container.add_record("AAATTAGGTCCA", "ACCCCT", "Gene4", "chr1", Mark(Mark::HAS_NOT_ANNOTATED));
 		BOOST_CHECK(container.cell(0).at("Gene3").at("TTTTTT").mark().check(Mark::HAS_NOT_ANNOTATED));
 		BOOST_CHECK(container.cell(0).at("Gene4").at("ACCCCT").mark().check(Mark::HAS_NOT_ANNOTATED));
 

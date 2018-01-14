@@ -4,10 +4,8 @@
 #include <Tools/Logs.h>
 
 #include <fstream>
-#include <map>
 #include <sstream>
-#include <string.h>
-#include <unordered_map>
+#include <cstdlib>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
 
@@ -26,21 +24,21 @@ namespace Tools
 				, _use_introns_from_gtf(false)
 				, _gtf_has_transcripts(true)
 		{
-			auto wrong_format_exception = std::runtime_error("Wrong genes file format: '" + genes_filename + "'");
+			auto const wrong_format_text = "Wrong genes file format: '" + genes_filename + "'";
 			if (genes_filename.length() < 3)
-				throw wrong_format_exception;
+				throw std::runtime_error(wrong_format_text);
 
 			this->_file_format = genes_filename.substr(genes_filename.length() - 3);
 			if (this->_file_format == ".gz")
 			{
 				if (genes_filename.length() < 6)
-					throw wrong_format_exception;
+					throw std::runtime_error(wrong_format_text);
 
 				this->_file_format = genes_filename.substr(genes_filename.length() - 6, 3);
 			}
 
 			if (this->_file_format != "bed" && this->_file_format != "gtf")
-				throw wrong_format_exception;
+				throw std::runtime_error(wrong_format_text);
 
 			this->init(genes_filename);
 		}
@@ -72,7 +70,7 @@ namespace Tools
 						record = RefGenesContainer::parse_bed_record(line);
 					}
 				}
-				catch (std::runtime_error err)
+				catch (std::runtime_error &err)
 				{
 					L_ERR << err.what();
 					continue;
@@ -175,8 +173,8 @@ namespace Tools
 				id = name;
 			}
 
-			size_t start_pos = strtoul(columns[3].c_str(), NULL, 10) - 1;
-			size_t end_pos = strtoul(columns[4].c_str(), NULL, 10);
+			size_t start_pos = strtoul(columns[3].c_str(), nullptr, 10) - 1;
+			size_t end_pos = strtoul(columns[4].c_str(), nullptr, 10);
 
 			return GtfRecord(columns[0], id, name, start_pos, end_pos, type, transcript);
 		}
@@ -225,8 +223,8 @@ namespace Tools
 			if (columns.size() < 4)
 				throw std::runtime_error("Bed record is too short:\n" + record);
 
-			size_t start_pos = strtoul(columns[1].c_str(), NULL, 10);
-			size_t end_pos = strtoul(columns[2].c_str(), NULL, 10);
+			size_t start_pos = strtoul(columns[1].c_str(), nullptr, 10);
+			size_t end_pos = strtoul(columns[2].c_str(), nullptr, 10);
 
 			return GtfRecord(columns[0], columns[3], "", start_pos, end_pos, GtfRecord::EXON);
 		}

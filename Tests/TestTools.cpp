@@ -215,7 +215,7 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 
 				gene_num++;
 				total_gene_num++;
-				BOOST_CHECK(r_bed_exons.find(gene_rec.gene_name) != r_bed.end());
+				BOOST_CHECK(r_bed_exons.find(RefGenesContainer::QueryResult(gene_rec.gene_name)) != r_bed.end());
 			}
 
 			BOOST_CHECK_EQUAL(gene_num, r_bed_exons.size());

@@ -12,8 +12,8 @@ namespace Merge
 	class SimpleMergeStrategy : public MergeStrategyBase
 	{
 	private:
-		typedef boost::unordered_set<size_t> sul_set_t;
-		typedef boost::unordered_map<std::pair<StringIndexer::index_t, StringIndexer::index_t>, sul_set_t, Tools::PairHash> umig_map_t;
+		using sul_set_t = std::unordered_set<size_t>;
+		using umig_map_t = std::unordered_map<std::pair<StringIndexer::index_t, StringIndexer::index_t>, sul_set_t, Tools::PairHash>;
 		static const double EPS;
 
 	private:
@@ -22,15 +22,15 @@ namespace Merge
 	protected:
 		u_u_hash_t get_cells_with_common_umigs(const CellsDataContainer &container, size_t base_cell_ind) const;
 
-		virtual long get_merge_target(CellsDataContainer &container, size_t base_cell_ind) override;
-		virtual void init(const CellsDataContainer &container) override;
-		virtual void release() override;
+		long get_merge_target(CellsDataContainer &container, size_t base_cell_ind) override;
+		void init(const CellsDataContainer &container) override;
+		void release() override;
 
 	public:
 		SimpleMergeStrategy(size_t min_genes_before_merge, size_t min_genes_after_merge,
 		                    unsigned max_merge_edit_distance, double min_merge_fraction);
 
-		virtual std::string merge_type() const override;
+		std::string merge_type() const override;
 	};
 }
 }

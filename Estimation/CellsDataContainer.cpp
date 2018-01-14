@@ -17,8 +17,8 @@ namespace Estimation
 	const std::string UMI::Mark::DEFAULT_CODE = "eEBA";
 	const size_t CellsDataContainer::TOP_PRINT_SIZE = 10;
 
-	CellsDataContainer::CellsDataContainer(std::shared_ptr<Merge::MergeStrategyAbstract> merge_strategy,
-	                                       std::shared_ptr<Merge::UMIs::MergeUMIsStrategySimple> umi_merge_strategy,
+	CellsDataContainer::CellsDataContainer(const std::shared_ptr<Merge::MergeStrategyAbstract> &merge_strategy,
+	                                       const std::shared_ptr<Merge::UMIs::MergeUMIsStrategySimple> &umi_merge_strategy,
 		                                   const std::vector<UMI::Mark> &gene_match_levels, int max_cells_num)
 		: _merge_strategy(merge_strategy)
 		, _umi_merge_strategy(umi_merge_strategy)
@@ -62,8 +62,8 @@ namespace Estimation
 		auto res = this->_cell_ids_by_cb.emplace(cell_barcode, this->_cell_ids_by_cb.size());
 		if (res.second)
 		{
-			this->_cells.push_back(Cell(cell_barcode, this->_merge_strategy->min_genes_before_merge(),
-			                            &this->_gene_indexer, &this->_umi_indexer));
+			this->_cells.emplace_back(cell_barcode, this->_merge_strategy->min_genes_before_merge(),
+			                          &this->_gene_indexer, &this->_umi_indexer);
 		}
 
 		size_t cell_id = res.first->second;
@@ -76,7 +76,7 @@ namespace Estimation
 
 		if (umi_mark == UMI::Mark::NONE)
 		{
-			L_WARN << "Empty mark for CB '" + cell_barcode + "', UMI '" + umi + "', gene '" + gene + "'";
+			L_WARN << "Empty mark for CB '" << cell_barcode << "', UMI '" << umi << "', gene '" << gene << "'";
 		}
 
 		this->_cells[cell_id].add_umi(gene, umi, umi_mark);
@@ -98,10 +98,10 @@ namespace Estimation
 	                                             int cell_threshold)
 	{
 		this->_number_of_real_cells = 0;
-		for (size_t i = 0; i < this->_cells.size(); i++)
+		for (auto &cell : this->_cells)
 		{
-			this->_cells[i].update_requested_size(query_marks);
-			if (!this->_cells[i].is_real())
+			cell.update_requested_size(query_marks);
+			if (!cell.is_real())
 				continue;
 
 			this->_number_of_real_cells++;
@@ -113,7 +113,7 @@ namespace Estimation
 	string CellsDataContainer::get_cb_count_top_verbose() const
 	{
 		stringstream ss;
-		if (this->_filtered_cells.size() > 0)
+		if (!this->_filtered_cells.empty())
 		{
 			ss << "top CBs:\n";
 			long low_border = this->_filtered_cells.size() - min(this->_filtered_cells.size(), CellsDataContainer::TOP_PRINT_SIZE - 1);

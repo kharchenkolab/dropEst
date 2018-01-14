@@ -3,8 +3,8 @@
 #include "MergeStrategyAbstract.h"
 #include <Estimation/Cell.h>
 
-#include <boost/unordered_map.hpp>
-#include <boost/unordered_set.hpp>
+#include <unordered_map>
+#include <unordered_set>
 #include <cstdlib>
 
 namespace TestEstimator
@@ -21,9 +21,9 @@ namespace Merge
 		friend struct TestEstimator::testMerge;
 
 	protected:
-		typedef boost::unordered_map<size_t, size_t> u_u_hash_t;
-		typedef boost::unordered_set<size_t> id_set_t;
-		typedef boost::unordered_map<size_t, id_set_t> id_id_set_map_t;
+		using u_u_hash_t = std::unordered_map<size_t, size_t>;
+		using id_set_t = std::unordered_set<size_t>;
+		using id_id_set_map_t = std::unordered_map<size_t, id_set_t>;
 
 	protected:
 		const double _min_merge_fraction;

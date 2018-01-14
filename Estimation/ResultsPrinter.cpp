@@ -80,7 +80,7 @@ namespace Estimation
 
 	std::string ResultsPrinter::extract_filename_base(const std::string &filename) const
 	{
-		auto extension_pos = filename.find_last_of(".");
+		auto extension_pos = filename.find_last_of('.');
 		if (extension_pos != std::string::npos && filename.substr(extension_pos + 1) == "rds")
 			return filename.substr(0, extension_pos);
 
@@ -313,7 +313,7 @@ namespace Estimation
 
 				size_t row_num = gene_it.first->second;
 
-				triplets.push_back(eigen_triplet_t(row_num, column_num, umis_per_gene.second));
+				triplets.emplace_back(row_num, column_num, umis_per_gene.second);
 			}
 		}
 
@@ -346,7 +346,7 @@ namespace Estimation
 				size_t row_num = gene_it.first->second;
 				size_t cell_value = gene.second.number_of_umis(this->reads_output);
 
-				triplets.push_back(eigen_triplet_t(row_num, column_num, cell_value));
+				triplets.emplace_back(row_num, column_num, cell_value);
 			}
 
 			column_num++;
@@ -452,7 +452,7 @@ namespace Estimation
 		);
 	}
 
-	void ResultsPrinter::save_validation_stats(const std::string list_name, const CellsDataContainer &container) const
+	void ResultsPrinter::save_validation_stats(const std::string &list_name, const CellsDataContainer &container) const
 	{
 		const std::string val_info_list_name = list_name + "_val";
 

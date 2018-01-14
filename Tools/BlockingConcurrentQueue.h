@@ -13,8 +13,8 @@ namespace Tools
 	class BlockingConcurrentQueue
 	{
 	private:
-		typedef std::mutex mutex_t;
-		typedef std::lock_guard<mutex_t> lock_t;
+		using mutex_t = std::mutex;
+		using lock_t = std::lock_guard<mutex_t>;
 
 	private:
 		std::queue<T> _queue;

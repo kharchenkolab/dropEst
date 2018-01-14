@@ -50,7 +50,7 @@ namespace Estimation
 		this->_mark |= mark._mark;
 	}
 
-	bool UMI::Mark::match(const std::vector<Mark>match_levels) const
+	bool UMI::Mark::match(const std::vector<Mark> &match_levels) const
 	{
 		for (auto const &match_level : match_levels)
 		{

@@ -31,15 +31,16 @@ namespace Tools
 			friend struct TestTools::testParseBed;
 
 		public:
-			typedef unsigned long pos_t;
+			using pos_t = unsigned long;
 
 			class ChrNotFoundException : public std::runtime_error
 			{
 			public:
 				const std::string chr_name;
-				ChrNotFoundException(const std::string &chr_name)
-						: std::runtime_error("Can't find chromosome " + chr_name)
-						, chr_name(chr_name)
+
+				explicit ChrNotFoundException(const std::string &chr_name)
+					: std::runtime_error("Can't find chromosome " + chr_name)
+					, chr_name(chr_name)
 				{}
 			};
 
@@ -50,15 +51,16 @@ namespace Tools
 				GtfRecord::RecordType type;
 
 				bool operator<(const QueryResult &other) const;
-				QueryResult(const std::string &gene_name = "", GtfRecord::RecordType type = GtfRecord::NONE);
+
+				explicit QueryResult(const std::string &gene_name = "", GtfRecord::RecordType type = GtfRecord::NONE);
 			};
 
-			typedef std::set<QueryResult> query_results_t;
+			using query_results_t = std::set<QueryResult>;
 
 		private:
-			typedef std::unordered_map<std::string, IntervalsContainer<std::string>> transcript_intervals_map_t;
-			typedef std::unordered_map<std::string, std::unordered_map<std::string, IntervalsContainer<GtfRecord::RecordType>>> exon_intervals_map_t;
-			typedef std::unordered_map<std::string, std::unordered_map<std::string, Interval>> transcript_positions_map_t;
+			using transcript_intervals_map_t = std::unordered_map<std::string, IntervalsContainer<std::string>>;
+			using exon_intervals_map_t = std::unordered_map<std::string, std::unordered_map<std::string, IntervalsContainer<GtfRecord::RecordType>>>;
+			using transcript_positions_map_t = std::unordered_map<std::string, std::unordered_map<std::string, Interval>>;
 
 		private:
 			bool _is_empty;
@@ -83,7 +85,8 @@ namespace Tools
 
 		public:
 			RefGenesContainer();
-			RefGenesContainer(const std::string &genes_filename);
+
+			explicit RefGenesContainer(const std::string &genes_filename);
 
 			/// Get genes, intersected requested interval
 			/// \param chr_name chromosome name

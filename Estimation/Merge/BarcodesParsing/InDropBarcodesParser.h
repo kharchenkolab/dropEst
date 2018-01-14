@@ -31,8 +31,8 @@ namespace Estimation
 				virtual barcode_parts_list_t get_barcodes_list(const std::string &barcodes_filename) const override;
 
 			public:
-				InDropBarcodesParser(const std::string &barcodes_filename);
-				virtual void init() override;
+				explicit InDropBarcodesParser(const std::string &barcodes_filename);
+				void init() override;
 			};
 		}
 	}

@@ -30,7 +30,7 @@ namespace BarcodesParsing
 			auto const &cb_part = barcode_parts[part_ind];
 			for (size_t cb_ind = 0; cb_ind < this->_barcodes[part_ind].size(); cb_ind++)
 			{
-				part_res.push_back(Tools::IndexedValue(cb_ind, Tools::edit_distance(cb_part.c_str(), part_barcodes[cb_ind].c_str())));
+				part_res.emplace_back(cb_ind, Tools::edit_distance(cb_part.c_str(), part_barcodes[cb_ind].c_str()));
 			}
 			std::sort(part_res.begin(), part_res.end(), Tools::IndexedValue::value_less);
 		}

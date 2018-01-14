@@ -15,10 +15,10 @@ namespace Estimation
 	class Cell
 	{
 	public:
-		typedef std::map<StringIndexer::index_t, Gene> genes_t;
-		typedef std::unordered_map<std::string, std::string> s_s_hash_t;
-		typedef std::unordered_map<std::string, size_t> s_ul_hash_t;
-		typedef std::unordered_map<std::string, s_ul_hash_t> ss_ul_hash_t;
+		using genes_t = std::map<StringIndexer::index_t, Gene>;
+		using s_s_hash_t = std::unordered_map<std::string, std::string>;
+		using s_ul_hash_t = std::unordered_map<std::string, size_t>;
+		using ss_ul_hash_t = std::unordered_map<std::string, s_ul_hash_t>;
 
 	private:
 		std::unique_ptr<char[]> _barcode;

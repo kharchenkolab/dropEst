@@ -30,10 +30,10 @@ namespace TagsSearch
 		friend struct TestTagsSearch::test1;
 
 	public:
-		typedef std::unordered_map<std::string, int> s_counter_t;
+		using s_counter_t = std::unordered_map<std::string, int>;
 
 	protected:
-		typedef std::string::size_type len_t;
+		using len_t = std::string::size_type;
 
 	private:
 		const bool _save_stats;

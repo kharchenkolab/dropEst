@@ -249,7 +249,7 @@ namespace TagsSearch
 		std::vector<std::thread> tasks;
 		for (int thread_num = 0; thread_num < number_of_threads; ++thread_num)
 		{
-			tasks.push_back(std::thread([this]{this->run_thread();}));
+			tasks.emplace_back([this]{this->run_thread();});
 		}
 
 		for (auto &task : tasks)

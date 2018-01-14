@@ -120,7 +120,7 @@ namespace Estimation
 
 	size_t Cell::umis_number() const
 	{
-		return this->stats().get(Stats::TOTAL_UMIS_PER_CB);
+		return size_t(this->stats().get(Stats::TOTAL_UMIS_PER_CB));
 	}
 
 	size_t Cell::requested_genes_num() const

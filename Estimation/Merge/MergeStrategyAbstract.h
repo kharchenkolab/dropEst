@@ -12,7 +12,7 @@ namespace Merge
 	class MergeStrategyAbstract
 	{
 	public:
-		typedef std::vector<size_t> ul_list_t;
+		using ul_list_t = std::vector<size_t>;
 
 	private:
 		const size_t _min_genes_before_merge;

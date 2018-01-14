@@ -8,7 +8,7 @@ namespace TagsSearch
 	class IndropV3TagsFinder : public TagsFinderBase
 	{
 	private:
-		typedef std::string::size_type len_t;
+		using len_t = std::string::size_type;
 
 		const len_t barcode1_length;
 		const len_t barcode2_length;
@@ -22,8 +22,9 @@ namespace TagsSearch
 		std::string parse_cb(const std::string &cb1_seq, const std::string &cb2_seq) const;
 
 	protected:
-		virtual bool parse_fastq_record(FastQReader::FastQRecord &record, Tools::ReadParameters &read_params) override;
-		virtual std::string get_additional_stat(long total_reads_read) const override;
+		bool parse_fastq_record(FastQReader::FastQRecord &record, Tools::ReadParameters &read_params) override;
+
+		std::string get_additional_stat(long total_reads_read) const override;
 
 	public:
 		IndropV3TagsFinder(const std::vector<std::string> &fastq_filenames,

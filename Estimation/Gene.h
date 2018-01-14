@@ -12,17 +12,17 @@ namespace Estimation
 	class Gene
 	{
 	private:
-		typedef std::unordered_map<std::string, size_t> s_ul_hash_t;
+		using s_ul_hash_t = std::unordered_map<std::string, size_t>;
 
 	public:
-		typedef std::map<StringIndexer::index_t, UMI> umis_t;
+		using umis_t = std::map<StringIndexer::index_t, UMI>;
 
 	private:
 		umis_t _umis;
 		StringIndexer *_umi_indexer;
 
 	public:
-		Gene(StringIndexer *umi_indexer);
+		explicit Gene(StringIndexer *umi_indexer);
 
 		const UMI& at(const std::string& umi) const;
 		const umis_t& umis() const;

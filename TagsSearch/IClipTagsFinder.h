@@ -12,8 +12,9 @@ namespace TagsSearch
 		size_t _cant_parse_num;
 
 	protected:
-		virtual bool parse_fastq_record(FastQReader::FastQRecord &gene_record, Tools::ReadParameters &read_params) override;
-		virtual std::string get_additional_stat(long total_reads_read) const override;
+		bool parse_fastq_record(FastQReader::FastQRecord &gene_record, Tools::ReadParameters &read_params) override;
+
+		std::string get_additional_stat(long total_reads_read) const override;
 
 		std::string parse_cb(const std::string &sequence) const;
 		std::string parse_umi(const std::string &sequence) const;

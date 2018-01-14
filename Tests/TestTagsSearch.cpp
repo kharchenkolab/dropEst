@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_SUITE(TestTagsSearch)
 
 	BOOST_FIXTURE_TEST_CASE(testMask, Fixture)
 	{
-		typedef FixPosSpacerTagsFinder::MaskPart::Type mask_part_t;
+		using mask_part_t = FixPosSpacerTagsFinder::MaskPart::Type;
 		auto const & mask_parts = this->mask_tags_finder->_mask_parts;
 		BOOST_REQUIRE_EQUAL(mask_parts.size(), 7);
 

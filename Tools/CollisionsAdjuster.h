@@ -8,8 +8,8 @@ namespace Tools
 	class CollisionsAdjuster
 	{
 	public:
-		typedef std::vector<size_t> size_vec_t;
-		typedef std::vector<double> probs_vec_t;
+		using size_vec_t = std::vector<size_t>;
+		using probs_vec_t = std::vector<double>;
 
 	private:
 		size_vec_t _adjusted_sizes;

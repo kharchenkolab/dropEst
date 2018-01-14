@@ -10,10 +10,9 @@ namespace Estimation
 	class Stats
 	{
 	public:
-		typedef std::vector<std::string> str_list_t;
-		typedef std::vector<int> stat_list_t;
-		typedef std::vector<double> double_stat_list_t;
-		typedef int stat_t;
+		using str_list_t = std::vector<std::string>;
+		using stat_list_t = std::vector<int>;
+		using stat_t = int;
 
 		enum CellStatType
 		{
@@ -31,10 +30,10 @@ namespace Estimation
 		};
 
 	private:
-		typedef std::unordered_set<size_t> id_set_t;
-		typedef std::unordered_map<size_t, int> i_cnt_t;
-		typedef std::unordered_map<std::string, size_t> str_map_t;
-		typedef std::vector<std::string> names_t;
+		using id_set_t = std::unordered_set<size_t>;
+		using i_cnt_t = std::unordered_map<size_t, int>;
+		using str_map_t = std::unordered_map<std::string, size_t>;
+		using names_t = std::vector<std::string>;
 
 	private:
 		int _stat_data[CELL_STAT_SIZE];

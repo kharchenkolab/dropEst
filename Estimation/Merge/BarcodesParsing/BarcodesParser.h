@@ -41,10 +41,10 @@ namespace BarcodesParsing
 		};
 
 	protected:
-		typedef std::vector<std::string> barcodes_list_t;
-		typedef std::vector<barcodes_list_t> barcode_parts_list_t;
-		typedef std::vector<std::vector<Tools::IndexedValue>> edit_distance_parts_list_t;
-		typedef std::vector<BarcodesDistance> barcodes_distance_list_t;
+		using barcodes_list_t = std::vector<std::string>;
+		using barcode_parts_list_t = std::vector<barcodes_list_t>;
+		using edit_distance_parts_list_t = std::vector<std::vector<Tools::IndexedValue>>;
+		using barcodes_distance_list_t = std::vector<BarcodesDistance>;
 
 	private:
 		const std::string _barcodes_filename;

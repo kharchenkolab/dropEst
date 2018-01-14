@@ -8,9 +8,9 @@ namespace Estimation
 
 	Stats::Stats()
 	{
-		for (int i = 0; i < CellStatType::CELL_STAT_SIZE; ++i)
+		for (int &i : this->_stat_data)
 		{
-			this->_stat_data[i] = 0;
+			i = 0;
 		}
 	}
 
