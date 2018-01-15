@@ -36,7 +36,7 @@ namespace TagsSearch
 		gene_record.sequence = this->trim_barcodes(gene_record.sequence);
 		gene_record.quality = this->trim_barcodes(gene_record.quality);
 
-		read_params = Tools::ReadParameters(barcode, umi, barcode_quality, umi_quality);
+		read_params = Tools::ReadParameters(barcode, umi, barcode_quality, umi_quality, this->_quality_threshold);
 
 		return true;
 	}

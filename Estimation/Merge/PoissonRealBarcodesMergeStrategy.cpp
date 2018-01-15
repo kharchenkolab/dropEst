@@ -24,7 +24,7 @@ namespace Merge
 
 	std::string PoissonRealBarcodesMergeStrategy::merge_type() const
 	{
-		return "Poisson";
+		return "Poisson Real CBs";
 	}
 
 	void PoissonRealBarcodesMergeStrategy::init(const Estimation::CellsDataContainer &container)

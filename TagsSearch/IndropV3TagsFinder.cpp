@@ -51,7 +51,7 @@ namespace TagsSearch
 			this->trim(tail, record.sequence, record.quality);
 		}
 
-		read_params = Tools::ReadParameters(cb, umi, cb_quality, umi_quality);
+		read_params = Tools::ReadParameters(cb, umi, cb_quality, umi_quality, this->_quality_threshold);
 		return true;
 	}
 

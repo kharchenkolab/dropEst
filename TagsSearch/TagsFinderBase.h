@@ -38,7 +38,6 @@ namespace TagsSearch
 	private:
 		const bool _save_stats;
 		const bool _save_read_params;
-		const int _quality_threshold;
 		const std::string _file_uid;
 
 		std::atomic<long> _total_reads_read;
@@ -55,6 +54,7 @@ namespace TagsSearch
 
 	protected:
 		const unsigned _min_read_len;
+		const int _quality_threshold;
 		const std::string poly_a;
 		const Tools::ReverseComplement rc;
 

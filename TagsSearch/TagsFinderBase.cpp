@@ -59,7 +59,7 @@ namespace TagsSearch
 
 		++this->_parsed_reads;
 
-		if (!params.check_quality(this->_quality_threshold))
+		if (!params.pass_quality_threshold())
 		{
 			this->_low_quality_reads++;
 			return false;
@@ -154,7 +154,14 @@ namespace TagsSearch
 		}
 
 		srand(unsigned(random_seed));
-		return std::to_string(rand()) + char(rand() % 25 + 'A');
+
+		const int range = 'Z' - 'A';
+		std::string res;
+		for (int i = 0; i < 4; ++i)
+		{
+			res.append(1, char(rand() % range + 'A'));
+		}
+		return res;
 	}
 
 	void TagsFinderBase::read_bunch(size_t number_of_iterations, size_t records_bunch_size)

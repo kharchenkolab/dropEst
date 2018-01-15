@@ -161,7 +161,7 @@ namespace TagsSearch
 		}
 
 		this->_outcomes.inc(MultiSpacerOutcomesCounter::OK);
-		read_params = Tools::ReadParameters(cb, umi, cb_quality, umi_quality);
+		read_params = Tools::ReadParameters(cb, umi, cb_quality, umi_quality, this->_quality_threshold);
 		return cur_pos;
 	}
 

@@ -3,15 +3,31 @@
 namespace Tools
 {
 	ReadParameters::ReadParameters(const std::string &cell_barcode, const std::string &umi,
-	                               const std::string &cell_barcode_quality, const std::string &umi_quality)
-		: _is_empty(false)
-		, _cell_barcode(cell_barcode)
+	                               const std::string &cell_barcode_quality, const std::string &umi_quality,
+	                               int min_quality)
+		: _cell_barcode(cell_barcode)
 		, _umi(umi)
 		, _cell_barcode_quality(cell_barcode_quality)
 		, _umi_quality(umi_quality)
+		, _pass_quality_threshold(this->check_quality(min_quality))
+		, _is_empty(false)
 	{
 		if (cell_barcode.length() == 0 || umi.length() == 0)
-			throw std::runtime_error("Bad reads parameters: '" + cell_barcode + "' '" + umi + "'");
+			throw std::runtime_error("Wrong read parameters: '" + cell_barcode + "' '" + umi + "'");
+	}
+
+	ReadParameters::ReadParameters(const std::string &cell_barcode, const std::string &umi,
+	                               const std::string &cell_barcode_quality, const std::string &umi_quality,
+	                               bool pass_quality_threshold)
+		: _cell_barcode(cell_barcode)
+		, _umi(umi)
+		, _cell_barcode_quality(cell_barcode_quality)
+		, _umi_quality(umi_quality)
+		, _pass_quality_threshold(pass_quality_threshold)
+		, _is_empty(false)
+	{
+		if (cell_barcode.length() == 0 || umi.length() == 0)
+			throw std::runtime_error("Wrong read parameters: '" + cell_barcode + "' '" + umi + "'");
 	}
 
 	ReadParameters::ReadParameters()
@@ -19,6 +35,7 @@ namespace Tools
 		, _umi("")
 		, _cell_barcode_quality("")
 		, _umi_quality("")
+		, _pass_quality_threshold(false)
 		, _is_empty(true)
 	{}
 
@@ -30,15 +47,16 @@ namespace Tools
 
 		size_t cell_barcode_start_pos = encoded_id.rfind('!', umi_start_pos);
 		if (cell_barcode_start_pos == std::string::npos)
-			throw std::runtime_error("ERROR: unable to parse out cell tag in: " + encoded_id);
+			throw std::runtime_error("ERROR: unable to parse out cell barcode in: " + encoded_id);
 
 		auto cell_barcode = encoded_id.substr(cell_barcode_start_pos + 1, umi_start_pos - cell_barcode_start_pos - 1);
 		auto umi = encoded_id.substr(umi_start_pos + 1);
 
-		return ReadParameters(cell_barcode, umi);
+		return ReadParameters(cell_barcode, umi, "", "", 0);
 	}
 
-	std::pair<std::string, ReadParameters> ReadParameters::parse_from_string(const std::string &params_string)
+	std::pair<std::string, ReadParameters> ReadParameters::parse_from_string(const std::string &params_string,
+	                                                                         int min_quality)
 	{
 		std::vector<std::string> parsed;
 		std::string::size_type start_pos = 0, end_pos = 0;
@@ -54,7 +72,7 @@ namespace Tools
 
 		parsed.push_back(params_string.substr(start_pos));
 
-		return std::make_pair(parsed[0], ReadParameters(parsed[1], parsed[2], parsed[3], parsed[4]));
+		return std::make_pair(parsed[0], ReadParameters(parsed[1], parsed[2], parsed[3], parsed[4], min_quality));
 	}
 
 	const std::string& ReadParameters::cell_barcode() const
@@ -111,5 +129,10 @@ namespace Tools
 		}
 
 		return true;
+	}
+
+	bool ReadParameters::pass_quality_threshold() const
+	{
+		return this->_pass_quality_threshold;
 	}
 }

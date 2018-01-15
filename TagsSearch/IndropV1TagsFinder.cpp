@@ -22,7 +22,7 @@ namespace TagsSearch
 		std::string umi_barcode = this->_spacer_finder.parse_umi_barcode(r1_seq, spacer_pos.second);
 		std::string umi_barcode_quality = this->_spacer_finder.parse_umi_barcode(r1_quality, spacer_pos.second);
 
-		return Tools::ReadParameters(cell_barcode, umi_barcode, cell_barcode_quality, umi_barcode_quality);
+		return Tools::ReadParameters(cell_barcode, umi_barcode, cell_barcode_quality, umi_barcode_quality, this->_quality_threshold);
 	}
 
 	bool IndropV1TagsFinder::parse_fastq_record(FastQReader::FastQRecord &gene_record, Tools::ReadParameters &read_params)

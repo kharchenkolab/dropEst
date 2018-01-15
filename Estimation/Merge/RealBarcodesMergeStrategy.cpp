@@ -115,7 +115,7 @@ namespace Estimation
 
 		std::string RealBarcodesMergeStrategy::merge_type() const
 		{
-			return "RealCBs";
+			return "Real CBs";
 		}
 	}
 }
