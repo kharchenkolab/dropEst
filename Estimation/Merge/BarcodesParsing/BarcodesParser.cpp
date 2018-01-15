@@ -30,7 +30,7 @@ namespace BarcodesParsing
 			auto const &cb_part = barcode_parts[part_ind];
 			for (size_t cb_ind = 0; cb_ind < this->_barcodes[part_ind].size(); cb_ind++)
 			{
-				part_res.push_back(Tools::IndexedValue(cb_ind, Tools::edit_distance(cb_part.c_str(), part_barcodes[cb_ind].c_str())));
+				part_res.emplace_back(cb_ind, Tools::edit_distance(cb_part.c_str(), part_barcodes[cb_ind].c_str()));
 			}
 			std::sort(part_res.begin(), part_res.end(), Tools::IndexedValue::value_less);
 		}
@@ -56,7 +56,7 @@ namespace BarcodesParsing
 	{
 		if (begin == end)
 		{
-			res.push_back(BarcodesDistance(barcodes_inds, edit_distance));
+			res.emplace_back(barcodes_inds, edit_distance);
 			return;
 		}
 
@@ -112,6 +112,35 @@ namespace BarcodesParsing
 	const size_t BarcodesParser::barcode_parts_num() const
 	{
 		return this->_barcodes.size();
+	}
+
+	bool BarcodesParser::read_line(std::ifstream &barcodes_file, barcodes_list_t &barcodes, bool require_equal_length)
+	{
+		std::string line;
+		Tools::ReverseComplement rc;
+		if (!std::getline(barcodes_file, line))
+			return false;
+
+		std::istringstream b1_in(line);
+		std::string::size_type barcode_length = 0;
+		while (b1_in)
+		{
+			std::string barcode;
+			b1_in >> barcode;
+			if (barcode.empty())
+				continue;
+
+			if (barcode_length == 0)
+			{
+				barcode_length = barcode.length();
+			}
+			else if (require_equal_length && barcode_length != barcode.length())
+				throw std::runtime_error("All barcodes in one line must have the same length");
+
+			barcodes.push_back(rc.rc(barcode));
+		}
+
+		return true;
 	}
 }
 }

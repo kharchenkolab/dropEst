@@ -14,8 +14,8 @@ namespace Merge
 		                            max_merge_edit_distance, min_merge_fraction)
 	{ }
 
-	long BrokenRealBarcodesMergeStrategy::get_best_merge_target(const CellsDataContainer &container, size_t base_cell_ind,
-	                                                            const ul_list_t &neighbour_cells) const
+	long BrokenRealBarcodesMergeStrategy::get_best_merge_target(CellsDataContainer &container, size_t base_cell_ind,
+	                                                            const ul_list_t &neighbour_cells)
 	{
 		if (base_cell_ind == neighbour_cells[0])
 			return base_cell_ind;

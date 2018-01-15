@@ -109,6 +109,6 @@ namespace Estimation
 	}
 
 	Gene::Gene(StringIndexer *umi_indexer)
-			: _umi_indexer(umi_indexer)
+		: _umi_indexer(umi_indexer)
 	{}
 }

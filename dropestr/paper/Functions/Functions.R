@@ -2,6 +2,7 @@ library(dplyr)
 library(ggplot2)
 library(ggpubr)
 library(ggrastr)
+library(ggsci)
 
 FilterNUmis <- function(reads.per.umi) {
   return(lapply(reads.per.umi, function(rpus) rpus[grep("^[^N]+$", names(rpus))]))

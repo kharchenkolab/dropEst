@@ -4,13 +4,13 @@ namespace Estimation
 {
 	Stats::id_set_t Stats::_presented_chromosomes[Stats::CHROMOSOME_STAT_SIZE];
 	Stats::str_map_t Stats::_chromosome_inds;
-	std::vector<std::string> Stats::_chromosome_names;
+	Stats::names_t Stats::_chromosome_names;
 
 	Stats::Stats()
 	{
-		for (int i = 0; i < CellStatType::CELL_STAT_SIZE; ++i)
+		for (int &i : this->_stat_data)
 		{
-			this->_stat_data[i] = 0;
+			i = 0;
 		}
 	}
 
@@ -21,14 +21,9 @@ namespace Estimation
 
 	void Stats::inc(CellChrStatType stat, const std::string &subtype)
 	{
-		auto chrom_it = Stats::_chromosome_inds.emplace(subtype, Stats::_chromosome_inds.size());
-		if (chrom_it.second)
-		{
-			Stats::_chromosome_names.push_back(subtype);
-		}
-
-		Stats::_presented_chromosomes[stat].insert(chrom_it.first->second);
-		this->_chromosome_stat_data[stat][chrom_it.first->second]++;
+		size_t id = Stats::get_index(Stats::_chromosome_inds, Stats::_chromosome_names, subtype);
+		Stats::_presented_chromosomes[stat].insert(id);
+		this->_chromosome_stat_data[stat][id]++;
 	}
 
 	void Stats::merge(const Stats &source)
@@ -81,5 +76,16 @@ namespace Estimation
 	void Stats::dec(Stats::CellStatType type)
 	{
 		this->_stat_data[type]--;
+	}
+
+	size_t Stats::get_index(Stats::str_map_t &indexes, names_t &names, const std::string &type)
+	{
+		auto index_it = indexes.emplace(type, indexes.size());
+		if (index_it.second)
+		{
+			names.push_back(type);
+		}
+
+		return index_it.first->second;
 	}
 }

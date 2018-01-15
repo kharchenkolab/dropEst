@@ -4,11 +4,10 @@
 
 namespace Estimation
 {
-	Cell::Cell(const std::string &barcode, size_t min_genes_to_be_real, const std::vector<UMI::Mark> &query_marks,
-	           StringIndexer *gene_indexer, StringIndexer *umi_indexer)
+	Cell::Cell(const std::string &barcode, size_t min_genes_to_be_real, StringIndexer *gene_indexer,
+	           StringIndexer *umi_indexer)
 		: _barcode(std::unique_ptr<char[]>(new char[barcode.length() + 1], std::default_delete<char[]>()))
 		, _min_genes_to_be_real(min_genes_to_be_real)
-		, _query_marks(query_marks)
 		, _is_merged(false)
 		, _is_excluded(false)
 		, _requested_genes_num(0)
@@ -21,7 +20,7 @@ namespace Estimation
 
 	void Cell::add_umi(const ReadInfo &read_info)
 	{
-		auto gene_it = this->_genes.emplace(this->_gene_indexer->add(read_info.gene), this->_umi_indexer);
+		auto gene_it = this->_genes.emplace(this->_gene_indexer->add(read_info.gene), Gene(this->_umi_indexer));
 		bool is_new = gene_it.first->second.add_umi(read_info);
 		if (is_new)
 		{
@@ -43,7 +42,7 @@ namespace Estimation
 	{
 		for (auto const &gene: source._genes)
 		{
-			auto gene_it = this->_genes.emplace(gene.first, this->_umi_indexer);
+			auto gene_it = this->_genes.emplace(gene.first, Gene(this->_umi_indexer));
 			gene_it.first->second.merge(gene.second);
 		}
 
@@ -68,12 +67,12 @@ namespace Estimation
 		return this->_genes;
 	}
 
-	Cell::s_ul_hash_t Cell::requested_umis_per_gene(bool return_reads) const
+	Cell::s_ul_hash_t Cell::requested_umis_per_gene(const UMI::Mark::query_t &query_marks, bool return_reads) const
 	{
 		s_ul_hash_t umis_per_gene;
 		for (auto const &gene : this->_genes)
 		{
-			size_t umis_num = gene.second.number_of_requested_umis(this->_query_marks, return_reads);
+			size_t umis_num = gene.second.number_of_requested_umis(query_marks, return_reads);
 
 			if (umis_num == 0)
 				continue;
@@ -84,12 +83,12 @@ namespace Estimation
 		return umis_per_gene;
 	}
 
-	Cell::ss_ul_hash_t Cell::requested_reads_per_umi_per_gene() const
+	Cell::ss_ul_hash_t Cell::requested_reads_per_umi_per_gene(const UMI::Mark::query_t &query_marks) const
 	{
 		ss_ul_hash_t reads_per_umi_per_gene;
 		for (auto const &gene : this->_genes)
 		{
-			s_ul_hash_t reads_per_umi(gene.second.requested_reads_per_umi(this->_query_marks));
+			s_ul_hash_t reads_per_umi(gene.second.requested_reads_per_umi(query_marks));
 			if (reads_per_umi.empty())
 				continue;
 
@@ -121,7 +120,7 @@ namespace Estimation
 
 	size_t Cell::umis_number() const
 	{
-		return this->stats().get(Stats::TOTAL_UMIS_PER_CB);
+		return size_t(this->stats().get(Stats::TOTAL_UMIS_PER_CB));
 	}
 
 	size_t Cell::requested_genes_num() const
@@ -144,13 +143,13 @@ namespace Estimation
 		return !this->_is_excluded && !this->_is_merged && this->size() >= this->_min_genes_to_be_real;
 	}
 
-	void Cell::update_requested_size()
+	void Cell::update_requested_size(const UMI::Mark::query_t &query_marks)
 	{
 		this->_requested_genes_num = 0;
 		this->_requested_umis_num = 0;
 		for (auto const &gene : this->_genes)
 		{
-			size_t cur_num = gene.second.number_of_requested_umis(this->_query_marks, false);
+			size_t cur_num = gene.second.number_of_requested_umis(query_marks, false);
 			if (cur_num == 0)
 				continue;
 

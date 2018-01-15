@@ -3,7 +3,7 @@ NULL
 
 GetMcCores <- function(mc.cores) {
   if (is.null(mc.cores)) {
-    mc.cores <- options("mc.cores")
+    mc.cores <- options()$mc.cores
     if (is.null(mc.cores)) {
       mc.cores <- 1
     }

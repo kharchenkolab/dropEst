@@ -4,7 +4,6 @@
 #include <Estimation/Merge/UMIs/MergeUMIsStrategySimple.h>
 
 #include <Tools/Logs.h>
-#include <Tools/RefGenesContainer.h>
 
 #include <api/BamMultiReader.h>
 
@@ -18,8 +17,8 @@ namespace Estimation
 	const std::string UMI::Mark::DEFAULT_CODE = "eEBA";
 	const size_t CellsDataContainer::TOP_PRINT_SIZE = 10;
 
-	CellsDataContainer::CellsDataContainer(std::shared_ptr<Merge::MergeStrategyAbstract> merge_strategy,
-	                                       std::shared_ptr<Merge::UMIs::MergeUMIsStrategySimple> umi_merge_strategy,
+	CellsDataContainer::CellsDataContainer(const std::shared_ptr<Merge::MergeStrategyAbstract> &merge_strategy,
+	                                       const std::shared_ptr<Merge::UMIs::MergeUMIsStrategySimple> &umi_merge_strategy,
 		                                   const std::vector<UMI::Mark> &gene_match_levels, int max_cells_num)
 		: _merge_strategy(merge_strategy)
 		, _umi_merge_strategy(umi_merge_strategy)
@@ -42,7 +41,9 @@ namespace Estimation
 		this->_merge_targets = this->_merge_strategy->merge(*this);
 
 		this->_umi_merge_strategy->merge(*this);
-		size_t filtered_cells_num = this->update_cell_sizes(this->_merge_strategy->min_genes_after_merge(), this->_max_cells_num);
+		size_t filtered_cells_num = this->update_cell_sizes(this->_query_marks,
+		                                                    this->_merge_strategy->min_genes_after_merge(),
+		                                                    this->_max_cells_num);
 
 		L_TRACE << this->_number_of_real_cells << " cells are considered as real.\n";
 
@@ -60,8 +61,8 @@ namespace Estimation
 		auto res = this->_cell_ids_by_cb.emplace(read_info.params.cell_barcode(), this->_cell_ids_by_cb.size());
 		if (res.second)
 		{
-			this->_cells.push_back(Cell(read_info.params.cell_barcode(), this->_merge_strategy->min_genes_before_merge(),
-			                            this->_query_marks, &this->_gene_indexer, &this->_umi_indexer));
+			this->_cells.emplace_back(read_info.params.cell_barcode(), this->_merge_strategy->min_genes_before_merge(),
+			                          &this->_gene_indexer, &this->_umi_indexer);
 		}
 
 		size_t cell_id = res.first->second;
@@ -74,8 +75,8 @@ namespace Estimation
 
 		if (read_info.umi_mark == UMI::Mark::NONE)
 		{
-			L_WARN << "Empty mark for CB '" + read_info.params.cell_barcode() + "', UMI '" + read_info.params.umi() +
-						"', gene '" + read_info.gene + "'";
+			L_WARN << "Empty mark for CB '" << read_info.params.cell_barcode() << "', UMI '" << read_info.params.umi()
+						<< "', gene '" << read_info.gene << "'";
 		}
 
 		this->_cells[cell_id].add_umi(read_info);
@@ -93,13 +94,14 @@ namespace Estimation
 		this->_cells.at(index).set_excluded();
 	}
 
-	size_t CellsDataContainer::update_cell_sizes(size_t requested_genes_threshold, int cell_threshold)
+	size_t CellsDataContainer::update_cell_sizes(const UMI::Mark::query_t &query_marks, size_t requested_genes_threshold,
+	                                             int cell_threshold)
 	{
 		this->_number_of_real_cells = 0;
-		for (size_t i = 0; i < this->_cells.size(); i++)
+		for (auto &cell : this->_cells)
 		{
-			this->_cells[i].update_requested_size();
-			if (!this->_cells[i].is_real())
+			cell.update_requested_size(query_marks);
+			if (!cell.is_real())
 				continue;
 
 			this->_number_of_real_cells++;
@@ -111,7 +113,7 @@ namespace Estimation
 	string CellsDataContainer::get_cb_count_top_verbose() const
 	{
 		stringstream ss;
-		if (this->_filtered_cells.size() > 0)
+		if (!this->_filtered_cells.empty())
 		{
 			ss << "top CBs:\n";
 			long low_border = this->_filtered_cells.size() - min(this->_filtered_cells.size(), CellsDataContainer::TOP_PRINT_SIZE - 1);
@@ -149,7 +151,7 @@ namespace Estimation
 		if (this->_is_initialized)
 			throw std::runtime_error("Container is already initialized");
 
-		this->update_cell_sizes(0, -1);
+		this->update_cell_sizes(this->_query_marks, 0, -1);
 
 		L_TRACE << "\n" << this->_filtered_cells.size() << " CBs with more than "
 		        << this->_merge_strategy->min_genes_before_merge() << " genes";
@@ -163,21 +165,21 @@ namespace Estimation
 		return this->_cell_ids_by_cb.at(barcode);
 	}
 
-	CellsDataContainer::s_ul_hash_t CellsDataContainer::umis_distribution() const
+	CellsDataContainer::s_ul_hash_t CellsDataContainer::umi_distribution() const
 	{
-		s_ul_hash_t umis_dist;
+		s_ul_hash_t umi_dist;
 		for (size_t cell_id : this->_filtered_cells)
 		{
 			for (auto const &gene : this->_cells[cell_id].genes())
 			{
 				for (auto const &umi : gene.second.umis())
 				{
-					umis_dist[this->_umi_indexer.get_value(umi.first)]++;
+					umi_dist[this->_umi_indexer.get_value(umi.first)]++;
 				}
 			}
 		}
 
-		return umis_dist;
+		return umi_dist;
 	}
 
 	std::string CellsDataContainer::merge_type() const
@@ -196,7 +198,7 @@ namespace Estimation
 		this->_cells.at(cell_id).merge_umis(gene, merge_targets);
 	}
 
-	const std::vector<UMI::Mark>& CellsDataContainer::gene_match_level() const
+	const UMI::Mark::query_t& CellsDataContainer::gene_match_level() const
 	{
 		return this->_query_marks;
 	}

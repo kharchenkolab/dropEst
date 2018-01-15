@@ -7,6 +7,7 @@
 #include "RealBarcodesMergeStrategy.h"
 #include "SimpleMergeStrategy.h"
 #include "PoissonSimpleMergeStrategy.h"
+#include "MergeAllMergeStrategy.h"
 
 #include <Estimation/Merge/BarcodesParsing/InDropBarcodesParser.h>
 #include <Estimation/Merge/BarcodesParsing/ConstLengthBarcodesParser.h>
@@ -22,6 +23,7 @@ namespace Merge
 	{
 		auto main_config = config.get_child("Merge", boost::property_tree::ptree());
 
+		this->_merge_type = main_config.get<std::string>("merge_type", "none");
 		this->_min_genes_before_merge = main_config.get<size_t>("min_genes_before_merge", 10);
 
 		if (min_genes_after_merge > 0)
@@ -63,6 +65,10 @@ namespace Merge
 
 	MergeStrategyFactory::merge_cb_ptr MergeStrategyFactory::get_cb_strat() const
 	{
+		if (this->_merge_type == "all")
+			return merge_cb_ptr(new MergeAllMergeStrategy(this->_min_genes_before_merge, this->_min_genes_after_merge,
+			                                            this->_max_merge_edit_distance));
+
 		if (this->_barcodes_filename.empty())
 			return merge_cb_ptr(new SimpleMergeStrategy(this->_min_genes_before_merge, this->_min_genes_after_merge,
 			                                            this->_max_merge_edit_distance, this->_min_merge_fraction));

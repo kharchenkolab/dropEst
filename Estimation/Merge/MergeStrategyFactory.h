@@ -24,11 +24,12 @@ namespace Merge
 	class MergeStrategyFactory
 	{
 	public:
-		typedef std::shared_ptr<MergeStrategyAbstract> merge_cb_ptr;
-		typedef std::shared_ptr<UMIs::MergeUMIsStrategySimple> merge_umi_ptr;
-		typedef std::shared_ptr<BarcodesParsing::BarcodesParser> barcodes_parser_ptr;
+		using merge_cb_ptr = std::shared_ptr<MergeStrategyAbstract>;
+		using merge_umi_ptr = std::shared_ptr<UMIs::MergeUMIsStrategySimple>;
+		using barcodes_parser_ptr = std::shared_ptr<BarcodesParsing::BarcodesParser>;
 
 	private:
+		std::string _merge_type;
 		size_t _min_genes_before_merge;
 		size_t _min_genes_after_merge;
 		unsigned int _max_merge_edit_distance;

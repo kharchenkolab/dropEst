@@ -4,13 +4,13 @@
 #include "BarcodesParsing/ConstLengthBarcodesParser.h"
 #include "BarcodesParsing/InDropBarcodesParser.h"
 
-#include <fstream>
+#include <algorithm>
 
 namespace Estimation
 {
 	namespace Merge
 	{
-		RealBarcodesMergeStrategy::RealBarcodesMergeStrategy(barcodes_parser_ptr barcodes_parser,
+		RealBarcodesMergeStrategy::RealBarcodesMergeStrategy(const barcodes_parser_ptr &barcodes_parser,
 		                                                     size_t min_genes_before_merge, size_t min_genes_after_merge,
 		                                                     unsigned max_merge_edit_distance, double min_merge_fraction)
 			: MergeStrategyBase(min_genes_before_merge, min_genes_after_merge, max_merge_edit_distance, min_merge_fraction)
@@ -19,7 +19,7 @@ namespace Estimation
 			this->_barcodes_parser->init();
 		}
 
-		long RealBarcodesMergeStrategy::get_merge_target(const Estimation::CellsDataContainer &container, size_t base_cell_ind) const
+		long RealBarcodesMergeStrategy::get_merge_target(CellsDataContainer &container, size_t base_cell_ind)
 		{
 			ul_list_t neighbour_cells = this->get_real_neighbour_cbs(container, base_cell_ind);
 			if (neighbour_cells.empty())
@@ -28,8 +28,8 @@ namespace Estimation
 			return this->get_best_merge_target(container, base_cell_ind, neighbour_cells);
 		}
 
-		long RealBarcodesMergeStrategy::get_best_merge_target(const CellsDataContainer &container, size_t base_cell_ind,
-															  const MergeStrategyAbstract::ul_list_t &neighbour_cells) const
+		long RealBarcodesMergeStrategy::get_best_merge_target(CellsDataContainer &container, size_t base_cell_ind,
+		                                                      const MergeStrategyAbstract::ul_list_t &neighbour_cells)
 		{
 			if (neighbour_cells[0] == base_cell_ind)
 				return base_cell_ind;
@@ -92,7 +92,7 @@ namespace Estimation
 				{
 					curr_cell_id = container.cell_id_by_cb(cur_real_cb);
 				}
-				catch (std::out_of_range ex)
+				catch (std::out_of_range &ex)
 				{}
 
 				if (curr_cell_id >= 0 &&
@@ -115,7 +115,7 @@ namespace Estimation
 
 		std::string RealBarcodesMergeStrategy::merge_type() const
 		{
-			return "RealCBs";
+			return "Real CBs";
 		}
 	}
 }

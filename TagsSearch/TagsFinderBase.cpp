@@ -47,18 +47,19 @@ namespace TagsSearch
 			return false;
 		}
 
-		if (++this->_total_reads_read % 5000000 == 0)
+		if (this->_total_reads_read % 5000000 == 0 && this->_total_reads_read > 0)
 		{
 			L_TRACE << "Total " << this->_total_reads_read << " read (" << this->_parsed_reads << " parsed, "
 			        << (this->_parsed_reads - this->_low_quality_reads) << " passed quality threshold)";
 		}
+		this->_total_reads_read++;
 
 		if (params.is_empty() || record.sequence.length() < this->_min_read_len)
 			return false;
 
 		++this->_parsed_reads;
 
-		if (!params.check_quality(this->_quality_threshold))
+		if (!params.pass_quality_threshold())
 		{
 			this->_low_quality_reads++;
 			return false;
@@ -153,7 +154,14 @@ namespace TagsSearch
 		}
 
 		srand(unsigned(random_seed));
-		return std::to_string(rand()) + char(rand() % 25 + 'A');
+
+		const int range = 'Z' - 'A';
+		std::string res;
+		for (int i = 0; i < 4; ++i)
+		{
+			res.append(1, char(rand() % range + 'A'));
+		}
+		return res;
 	}
 
 	void TagsFinderBase::read_bunch(size_t number_of_iterations, size_t records_bunch_size)
@@ -164,7 +172,7 @@ namespace TagsSearch
 				break;
 
 			std::string records_bunch, params_bunch;
-			size_t record_id;
+			unsigned record_id;
 			for (record_id = 0; record_id < records_bunch_size; ++record_id)
 			{
 				if (this->_file_ended)
@@ -249,7 +257,7 @@ namespace TagsSearch
 		std::vector<std::thread> tasks;
 		for (int thread_num = 0; thread_num < number_of_threads; ++thread_num)
 		{
-			tasks.push_back(std::thread([this]{this->run_thread();}));
+			tasks.emplace_back([this]{this->run_thread();});
 		}
 
 		for (auto &task : tasks)

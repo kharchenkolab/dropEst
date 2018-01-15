@@ -5,8 +5,8 @@
 
 #include <Estimation/CellsDataContainer.h>
 #include <Estimation/UMI.h>
-#include <Tools/RefGenesContainer.h>
-#include <Tools/RefGenesContainer.h>
+#include <Tools/GeneAnnotation/RefGenesContainer.h>
+#include <Tools/GeneAnnotation/RefGenesContainer.h>
 #include "BamTags.h"
 
 namespace Tools
@@ -21,7 +21,7 @@ namespace Estimation
 		class ReadParamsParser
 		{
 		private:
-			Tools::RefGenesContainer _genes_container;
+			Tools::GeneAnnotation::RefGenesContainer _genes_container;
 			bool _gene_in_chromosome_name;
 
 		protected:
@@ -32,8 +32,8 @@ namespace Estimation
 			UMI::Mark get_gene_from_reference(const std::string &chr_name, const BamTools::BamAlignment &alignment,
 			                                  std::string &gene) const;
 
-			bool find_exon(Tools::RefGenesContainer::query_results_t query_results,
-			               Tools::RefGenesContainer::QueryResult &exon_result) const;
+			bool find_exon(Tools::GeneAnnotation::RefGenesContainer::query_results_t query_results,
+			               Tools::GeneAnnotation::RefGenesContainer::QueryResult &exon_result) const;
 
 		public:
 			ReadParamsParser(const std::string &genes_filename, const BamTags &tags, bool gene_in_chromosome_name);

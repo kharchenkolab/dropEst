@@ -5,14 +5,15 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/unordered_map.hpp>
 #include <Tools/ReadParameters.h>
-#include <Tools/RefGenesContainer.h>
+#include <Tools/GeneAnnotation/RefGenesContainer.h>
 
-#include "Tools/GtfRecord.h"
+#include "Tools/GeneAnnotation/GtfRecord.h"
 #include "Tools/Logs.h"
-#include "Tools/RefGenesContainer.h"
+#include "Tools/GeneAnnotation/RefGenesContainer.h"
 #include "Tools/UtilFunctions.h"
 
 using namespace Tools;
+using namespace Tools::GeneAnnotation;
 
 struct Fixture
 {
@@ -69,7 +70,7 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 		BOOST_CHECK_EQUAL(rp.cell_barcode(), "ATTTG");
 		BOOST_CHECK_EQUAL(rp.umi(), "ATAT");
 
-		rp = ReadParameters("AAATTTTATA", "TTGG", "QUALCB", "CCC");
+		rp = ReadParameters("AAATTTTATA", "TTGG", "QUALCB", "CCC", 0);
 		auto rp_info = ReadParameters::parse_from_string(rp.to_string("ID"));
 		BOOST_CHECK_EQUAL(rp_info.first, "ID");
 		BOOST_CHECK_EQUAL(rp_info.second.cell_barcode(), rp.cell_barcode());
@@ -214,7 +215,7 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 
 				gene_num++;
 				total_gene_num++;
-				BOOST_CHECK(r_bed_exons.find(gene_rec.gene_name) != r_bed.end());
+				BOOST_CHECK(r_bed_exons.find(RefGenesContainer::QueryResult(gene_rec.gene_name)) != r_bed.end());
 			}
 
 			BOOST_CHECK_EQUAL(gene_num, r_bed_exons.size());

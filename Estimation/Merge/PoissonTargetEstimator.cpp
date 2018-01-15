@@ -1,9 +1,6 @@
 #include "PoissonTargetEstimator.h"
 
-#include <Tools/UtilFunctions.h>
 #include "MergeStrategyBase.h"
-
-#include <random>
 
 namespace Estimation
 {
@@ -15,7 +12,7 @@ PoissonTargetEstimator::PoissonTargetEstimator(double max_merge_prob, double max
 {}
 
 long PoissonTargetEstimator::get_best_merge_target(const CellsDataContainer &container, size_t base_cell_ind,
-                                                   const ul_list_t &neighbour_cells) const
+                                                   const ul_list_t &neighbour_cells)
 {
 	bool is_base_cb_real = (base_cell_ind == neighbour_cells.at(0));
 	double max_merge_prob = is_base_cb_real
@@ -31,10 +28,8 @@ long PoissonTargetEstimator::get_best_merge_target(const CellsDataContainer &con
 		if (cell_ind == base_cell_ind)
 			continue;
 
-		double prob = this->get_bootstrap_intersect_prob(container, base_cell_ind, cell_ind);
+		double prob = this->estimate_intersection_prob(container, base_cell_ind, cell_ind).merge_probability;
 
-//		container.stats().set(Stats::MERGE_PROB_BY_CELL, container.cell_barcode(base_cell_ind),
-//							  container.cell_barcode(cell_ind), prob);
 		if (prob < min_prob)
 		{
 			min_prob = prob;
@@ -48,135 +43,92 @@ long PoissonTargetEstimator::get_best_merge_target(const CellsDataContainer &con
 	return best_target;
 }
 
-void PoissonTargetEstimator::init(const Estimation::CellsDataContainer &container)
+void PoissonTargetEstimator::init(const Estimation::CellsDataContainer::s_ul_hash_t &umi_distribution)
 {
-	auto umis_distribution = container.umis_distribution();
 	double sum = 0;
-	for (auto const &it : umis_distribution)
+	for (auto const &it : umi_distribution)
 	{
 		sum += it.second;
 	}
 
-	for (auto const &it : umis_distribution)
+	for (auto const &it : umi_distribution)
 	{
-		this->_umis_distribution.push_back(it.second / sum);
+		this->_umi_distribution.push_back(it.second / sum);
 	}
 
-	auto r = Tools::init_r();
-	r->parseEvalQ("set.seed(48)");
+	this->_adjuster.init(this->_umi_distribution);
 
-	srand(48);
+	Tools::init_r();
 }
 
 void PoissonTargetEstimator::release()
 {
-	this->_umis_distribution.clear();
+	this->_umi_distribution.clear();
 }
 
-double PoissonTargetEstimator::get_bootstrap_intersect_prob(const CellsDataContainer &container,
-														    size_t cell1_ind, size_t cell2_ind,
-															size_t repeats_count, unsigned multiplies_count) const
+PoissonTargetEstimator::EstimationResult
+PoissonTargetEstimator::estimate_intersection_prob(const CellsDataContainer &container, size_t cell1_ind, size_t cell2_ind)
 {
-	const size_t test_sample_size = 100;
-	auto const &cell1_dist = container.cell(cell1_ind);
-	auto const &cell2_dist = container.cell(cell2_ind);
-	size_t intersect_size = MergeStrategyBase::get_umigs_intersect_size(cell1_dist, cell2_dist);
+	auto const &cell1 = container.cell(cell1_ind);
+	auto const &cell2 = container.cell(cell2_ind);
+	size_t intersect_size = MergeStrategyBase::get_umigs_intersect_size(cell1, cell2);
 	if (intersect_size == 0)
-		return 1;
+		return EstimationResult(intersect_size, -1, 1);
 
-	ul_list_t sizes;
-
-	sizes.reserve(test_sample_size);
-	double prob = this->get_bootstrap_intersect_sizes(cell1_dist, cell2_dist, intersect_size, test_sample_size, sizes);
-
-	if (prob > 0.05) // Just to speed up
-		return prob;
-
-	double estimated = -1;
-	for (unsigned i = 0; i < multiplies_count; ++i)
+	double expected_intersect_size = 0;
+	for (auto const &gene1_it : cell1.genes())
 	{
-		sizes.clear();
-		sizes.reserve(repeats_count);
-		this->get_bootstrap_intersect_sizes(cell1_dist, cell2_dist, intersect_size, repeats_count, sizes);
-
-		estimated = this->estimate_by_r(sizes, intersect_size);
-
-		if (estimated >= 0)
-			return estimated;
-
-		repeats_count *= 2;
-	}
-
-	return -estimated;
-}
-
-double PoissonTargetEstimator::estimate_by_r(ul_list_t sizes, size_t val) const
-{
-	using namespace Rcpp;
-	double mean = std::accumulate(sizes.begin(), sizes.end(), 0.0) / sizes.size();
-
-	std::vector<double> diff(sizes.size());
-	std::transform(sizes.begin(), sizes.end(), diff.begin(), [mean](double x) { return x - mean; });
-	double sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
-	double stderr = std::sqrt(sq_sum / (sizes.size() * sizes.size()));
-
-	double res = ppois(IntegerVector::create(val - 1), mean, false)[0];
-	double res_upper = std::max(ppois(IntegerVector::create(val - 1), mean + 3 * stderr, false)[0],
-	                            ppois(IntegerVector::create(val - 1), mean - 3 * stderr, false)[0]);
-
-	if (res_upper > 4 * res) // Check that we have enough observations
-		return -res_upper;
-
-	return res;
-}
-
-double PoissonTargetEstimator::get_bootstrap_intersect_sizes(const Cell &cell1, const Cell &cell2,
-                                                             size_t real_intersect_size, size_t repeats_count,
-                                                             ul_list_t &sizes) const
-{
-	std::vector<size_t >c1_dist, c2_dist;
-	for (auto const &item : cell1.genes())
-	{
-		auto const& cell2_it = cell2.genes().find(item.first);
-		if (cell2_it == cell2.genes().end())
+		auto const& gene2_it = cell2.genes().find(gene1_it.first);
+		if (gene2_it == cell2.genes().end())
 			continue;
 
-		c1_dist.push_back(item.second.size());
-		c2_dist.push_back(cell2_it->second.size());
+		expected_intersect_size += this->estimate_genes_intersection_size(gene1_it.second.size(), gene2_it->second.size());
 	}
 
-	size_t repeats_sum = 0;
-	std::vector<bs_umi_t> intersection_marks(this->_umis_distribution.size(), 0);
-	std::discrete_distribution<unsigned> dist(this->_umis_distribution.begin(), this->_umis_distribution.end());
-	std::mt19937 gen;
-
-	for (unsigned repeat_num = 1; repeat_num <= repeats_count; ++repeat_num)
-	{
-		size_t intersect_size = 0;
-		for (auto c1_it = c1_dist.begin(), c2_it = c2_dist.begin(); c1_it != c1_dist.end(); ++c1_it, ++c2_it)
-		{
-			size_t cell1_gene_size = *c1_it;
-			for (size_t choice_num = 0; choice_num < cell1_gene_size; ++choice_num)
-			{
-				intersection_marks[dist(gen)] = repeat_num;
-			}
-
-			size_t cell2_gene_size = *c2_it;
-			for (size_t choice_num = 0; choice_num < cell2_gene_size; ++choice_num)
-			{
-				bs_umi_t umi = dist(gen);
-				if (intersection_marks[umi] == repeat_num)
-				{
-					intersect_size++;
-					intersection_marks[umi] = 0;
-				}
-			}
-		}
-		sizes.push_back(intersect_size);
-		repeats_sum += (intersect_size >= real_intersect_size);
-	}
-
-	return repeats_sum / (double) repeats_count;
+	double prob = Rcpp::ppois(Rcpp::IntegerVector::create(intersect_size - 1), expected_intersect_size, false)[0];
+	return EstimationResult(intersect_size, expected_intersect_size, prob);
 }
+
+double PoissonTargetEstimator::estimate_genes_intersection_size(size_t gene1_size, size_t gene2_size)
+{
+	if (gene1_size > gene2_size)
+	{
+		std::swap(gene1_size, gene2_size);
+	}
+
+	gene1_size = this->_adjuster.estimate_adjusted_gene_expression(gene1_size);
+	gene2_size = this->_adjuster.estimate_adjusted_gene_expression(gene2_size);
+
+	auto gene_pair = std::make_pair(gene1_size, gene2_size);
+	auto pair_it = this->_estimated_gene_intersections.find(gene_pair);
+	if (pair_it != this->_estimated_gene_intersections.end())
+		return pair_it->second;
+
+	const size_t d_size = gene2_size - gene1_size;
+
+	double est_size = 0;
+	for (size_t i = 0; i < this->_umi_distribution.size(); ++i)
+	{
+		double min_prob = Tools::fpow(1 - this->_umi_distribution[i], gene1_size);
+		double max_prob = min_prob * Tools::fpow(1 - this->_umi_distribution[i], d_size);
+		est_size += (1 - min_prob) * (1 - max_prob);
+	}
+
+	this->_estimated_gene_intersections.emplace(gene_pair, est_size);
+	return est_size;
+}
+
+size_t PoissonTargetEstimator::cache_size() const
+{
+	return this->_estimated_gene_intersections.size();
+}
+
+PoissonTargetEstimator::EstimationResult::EstimationResult(size_t intersection_size,
+                                                           double expected_intersection_size,
+	                                                   double merge_probability)
+	: intersection_size(intersection_size)
+	, expected_intersection_size(expected_intersection_size)
+	, merge_probability(merge_probability)
+{}
 }
 }

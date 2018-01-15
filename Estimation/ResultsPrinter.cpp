@@ -5,6 +5,7 @@
 #include <Estimation/CellsDataContainer.h>
 #include <Tools/Logs.h>
 #include <Tools/UtilFunctions.h>
+#include <Estimation/Merge/MergeProbabilityValidator.h>
 
 using namespace Rcpp;
 
@@ -14,6 +15,8 @@ namespace Estimation
 
 	void ResultsPrinter::save_results(const CellsDataContainer &container, const std::string &filename) const
 	{
+		const std::string list_name = "d";
+
 		if (container.filtered_cells().empty())
 		{
 			L_WARN << "WARNING: filtered cells are empty. Probably, filtration threshold is too strict"
@@ -25,17 +28,17 @@ namespace Estimation
 
 		L_TRACE << "Compiling diagnostic stats: ";
 		auto reads_per_chr_per_cell = this->get_reads_per_chr_per_cell_info(container); // Real cells, all UMIs.
-		auto saturation_info = this->get_saturation_analysis_info(container); // Filtered cells, query UMIs.
+		auto saturation_info = this->get_saturation_analysis_info(container); // Filtered cells, requested UMIs.
 		auto mean_reads_per_umi = this->get_mean_reads_per_umi(container); // Real cells, all UMIs.
-		auto reads_per_umi_per_cell = this->get_reads_per_umi_per_cell(container); // Filtered cells, query UMIs.
+		auto reads_per_umi_per_cell = this->get_reads_per_umi_per_cell(container); // Filtered cells, requested UMIs.
 		auto merge_targets = this->get_merge_targets(container); // All cells.
 		IntegerVector aligned_reads_per_cb = wrap(container.get_stat_by_real_cells(Stats::TOTAL_READS_PER_CB)); // Real cells, all UMIs
 		IntegerVector aligned_umis_per_cb = wrap(container.get_stat_by_real_cells(Stats::TOTAL_UMIS_PER_CB)); // Real cells, all UMIs
-		auto requested_umis_per_cb = this->get_requested_umis_per_cb(container); // Real cells, query UMIs
-		auto requested_reads_per_cb = this->get_requested_umis_per_cb(container, true); // Real cells, query UMIs
+		auto requested_umis_per_cb = this->get_requested_umis_per_cb(container); // Real cells, requested UMIs
+		auto requested_reads_per_cb = this->get_requested_umis_per_cb(container, true); // Real cells, requested UMIs
 		L_TRACE << "Completed.\n";
 
-		(*R)["d"] = List::create(
+		(*R)[list_name] = List::create(
 				_["cm"] = this->get_count_matrix(container, true),
 				_["cm_raw"] = this->get_count_matrix(container, false),
 				_["reads_per_chr_per_cells"] = reads_per_chr_per_cell,
@@ -48,30 +51,40 @@ namespace Estimation
 				_["requested_umis_per_cb"] = requested_umis_per_cb,
 				_["requested_reads_per_cb"] = requested_reads_per_cb);
 
-		std::string filename_base = filename;
-		auto extension_pos = filename.find_last_of(".");
-		if (extension_pos != std::string::npos && filename.substr(extension_pos + 1) == "rds")
+		if (this->validation_stats)
 		{
-			filename_base = filename.substr(0, extension_pos);
+			this->save_validation_stats(list_name, container);
 		}
 
-		std::string rds_filename = filename_base + ".rds";
-
-		L_TRACE << "";
-		Tools::trace_time("Writing R data to " + rds_filename + " ...");
-		R->parseEvalQ("saveRDS(d, '" + rds_filename + "')");
-		Tools::trace_time("Completed");
+		std::string filename_base = this->extract_filename_base(filename);
+		this->save_rds(filename_base, list_name);
 
 		if (this->write_matrix) {
-			std::string mtx_file = filename_base + ".mtx";
-			L_TRACE << "Writing " + mtx_file + " ...";
-			R->parseEvalQ("Matrix::writeMM(d$cm, '" + mtx_file + "')");
-			R->parseEvalQ("write.table(colnames(d$cm), '" + filename_base + ".cells.tsv', row.names = F, col.names = F, quote = F)");
-			R->parseEvalQ("write.table(rownames(d$cm), '" + filename_base + ".genes.tsv', row.names = F, col.names = F, quote = F)");
-			L_TRACE << "Completed.";
+			this->save_mtx(list_name, filename_base);
 		}
 
 		L_TRACE << "";
+	}
+
+	void ResultsPrinter::save_mtx(const std::string &list_name, const std::string &filename_base) const
+	{
+		RInside *R = Tools::init_r();
+		std::string mtx_file = filename_base + ".mtx";
+
+		L_TRACE << "Writing " + mtx_file + " ...";
+		R->parseEvalQ("Matrix::writeMM(" + list_name + "$cm, '" + mtx_file + "')");
+		R->parseEvalQ("write.table(colnames(" + list_name + "$cm), '" + filename_base + ".cells.tsv', row.names = F, col.names = F, quote = F)");
+		R->parseEvalQ("write.table(rownames(" + list_name + "$cm), '" + filename_base + ".genes.tsv', row.names = F, col.names = F, quote = F)");
+		L_TRACE << "Completed.";
+	}
+
+	std::string ResultsPrinter::extract_filename_base(const std::string &filename) const
+	{
+		auto extension_pos = filename.find_last_of('.');
+		if (extension_pos != std::string::npos && filename.substr(extension_pos + 1) == "rds")
+			return filename.substr(0, extension_pos);
+
+		return filename;
 	}
 
 	IntegerMatrix ResultsPrinter::create_matrix(const s_vec_t &col_names, const s_vec_t &row_names,
@@ -85,9 +98,10 @@ namespace Estimation
 		return mat;
 	}
 
-	ResultsPrinter::ResultsPrinter(bool write_matrix, bool reads_output)
+	ResultsPrinter::ResultsPrinter(bool write_matrix, bool reads_output, bool validation_stats)
 		: write_matrix(write_matrix)
 		, reads_output(reads_output)
+		, validation_stats(validation_stats)
 	{}
 
 	List ResultsPrinter::get_saturation_analysis_info(const CellsDataContainer &container) const
@@ -104,7 +118,7 @@ namespace Estimation
 				continue;
 
 			const auto &cb = cell.barcode();
-			for (auto const& gene : cell.requested_reads_per_umi_per_gene())
+			for (auto const& gene : cell.requested_reads_per_umi_per_gene(container.gene_match_level()))
 			{
 				for (auto const &reads_per_umi : gene.second)
 				{
@@ -165,7 +179,7 @@ namespace Estimation
 		SEXP cm;
 		if (filtered)
 		{
-			cm = this->get_count_matrix_filtered(container);
+			cm = this->get_count_matrix_filtered(container, container.gene_match_level());
 		}
 		else
 		{
@@ -259,7 +273,7 @@ namespace Estimation
 			auto const &cur_cell = container.cell(container_cell_id);
 			unsigned cell_id = cell_indexer.add(cur_cell.barcode());
 
-			for (auto const &gene_rpus : cur_cell.requested_reads_per_umi_per_gene())
+			for (auto const &gene_rpus : cur_cell.requested_reads_per_umi_per_gene(container.gene_match_level()))
 			{
 				unsigned gene_id = gene_indexer.add(gene_rpus.first);
 
@@ -311,7 +325,7 @@ namespace Estimation
 		return wrap(merge_targets);
 	}
 
-	SEXP ResultsPrinter::get_count_matrix_filtered(const CellsDataContainer &container) const
+	SEXP ResultsPrinter::get_count_matrix_filtered(const CellsDataContainer &container, const UMI::Mark::query_t &query_marks) const
 	{
 		s_vec_t gene_names, cell_names;
 		std::unordered_map<std::string, size_t> gene_ids;
@@ -322,7 +336,7 @@ namespace Estimation
 			auto const &cur_cell = container.cell(container.filtered_cells()[column_num]);
 			cell_names.push_back(cur_cell.barcode());
 
-			for (auto const &umis_per_gene : cur_cell.requested_umis_per_gene(this->reads_output))
+			for (auto const &umis_per_gene : cur_cell.requested_umis_per_gene(query_marks, this->reads_output))
 			{
 				auto gene_it = gene_ids.emplace(umis_per_gene.first, gene_ids.size());
 				if (gene_it.second)
@@ -332,7 +346,7 @@ namespace Estimation
 
 				size_t row_num = gene_it.first->second;
 
-				triplets.push_back(eigen_triplet_t(row_num, column_num, umis_per_gene.second));
+				triplets.emplace_back(row_num, column_num, umis_per_gene.second);
 			}
 		}
 
@@ -365,7 +379,7 @@ namespace Estimation
 				size_t row_num = gene_it.first->second;
 				size_t cell_value = gene.second.number_of_umis(this->reads_output);
 
-				triplets.push_back(eigen_triplet_t(row_num, column_num, cell_value));
+				triplets.emplace_back(row_num, column_num, cell_value);
 			}
 
 			column_num++;
@@ -392,7 +406,7 @@ namespace Estimation
 			size_t cell_expression = 0;
 			if (return_reads)
 			{
-				for (auto const &gene : cell.requested_umis_per_gene(true))
+				for (auto const &gene : cell.requested_umis_per_gene(container.gene_match_level(), true))
 				{
 					cell_expression += gene.second;
 				}
@@ -419,5 +433,72 @@ namespace Estimation
 		S4 res(wrap(mat));
 		res.slot("Dimnames") = List::create(row_names, col_names);
 		return res;
+	}
+
+	void ResultsPrinter::save_rds(const std::string &filename_base, const std::string &list_name) const
+	{
+		RInside *R = Tools::init_r();
+		std::string rds_filename = filename_base + ".rds";
+
+		L_TRACE << "";
+		Tools::trace_time("Writing R data to " + rds_filename + " ...");
+		R->parseEvalQ("saveRDS(" + list_name + ", '" + rds_filename + "')");
+		Tools::trace_time("Completed");
+	}
+
+	void ResultsPrinter::save_intron_exon_matrices(CellsDataContainer &container, const std::string &filename) const
+	{
+		const std::string list_name = "matrices";
+		RInside *R = Tools::init_r();
+
+		Tools::trace_time("Compiling intron/exon matrices");
+		List matrices;
+		L_TRACE << "Exon";
+		matrices["exon"] = this->get_count_matrix_filtered(container, UMI::Mark::get_by_code("e"));
+		L_TRACE << "Intron";
+		matrices["intron"] = this->get_count_matrix_filtered(container, UMI::Mark::get_by_code("i"));
+		L_TRACE << "Intron/exon spanning";
+		matrices["spanning"] = this->get_count_matrix_filtered(container, UMI::Mark::get_by_code("BA"));
+		Tools::trace_time("Done");
+
+		(*R)[list_name] = matrices;
+
+		std::string filename_base = this->extract_filename_base(filename);
+		this->save_rds(filename_base + ".matrices", list_name);
+	}
+
+	List ResultsPrinter::get_merge_validation_info(const std::shared_ptr<Merge::PoissonTargetEstimator> &target_estimator,
+	                                               const CellsDataContainer &container, unsigned min_ed, unsigned max_ed,
+	                                               size_t cb_pairs_num, unsigned log_period) const
+	{
+		L_TRACE << "Merge validation;";
+		Merge::MergeProbabilityValidator validator(target_estimator);
+		validator.run_validation(container, min_ed, max_ed, cb_pairs_num, log_period);
+
+		return List::create(
+				_["Probability"]=validator.merge_probs(),
+				_["UmisPerCell1"]=validator.umis_per_cell1(),
+				_["UmisPerCell2"]=validator.umis_per_cell2(),
+				_["EditDistance"]=validator.edit_distances(),
+				_["IntersectionSize"]=validator.intersection_size(),
+				_["ExpectedIntersectionSize"]=validator.expected_intersection_size()
+		);
+	}
+
+	void ResultsPrinter::save_validation_stats(const std::string &list_name, const CellsDataContainer &container) const
+	{
+		const std::string val_info_list_name = list_name + "_val";
+
+		RInside *R = Tools::init_r();
+
+		auto estimator = std::make_shared<Merge::PoissonTargetEstimator>(1, 1);
+		estimator->init(container.umi_distribution());
+
+		auto distant = this->get_merge_validation_info(estimator, container, 5, 100, 1000000, 100000); // Real cells, doesn't depend on UMIs
+		auto adjacent = this->get_merge_validation_info(estimator, container, 1, 1, 100000, 10000); // Real cells, doesn't depend on UMIs
+
+		(*R)[val_info_list_name] = List::create(_["distant"] = distant, _["adjacent"] = adjacent);
+		R->parseEvalQ(list_name + "$merge_validation_info <- " + val_info_list_name);
+		R->parseEvalQ("rm(" + val_info_list_name + ")");
 	}
 }

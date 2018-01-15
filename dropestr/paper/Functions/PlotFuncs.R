@@ -2,11 +2,13 @@ library(ggplot2)
 library(ggpubr)
 library(ggrastr)
 
-BuildPanel4 <- function(gg.plots, ylabel, xlabel, show.legend=F, return.raw=F) {
+BuildPanel4 <- function(gg.plots, ylabel, xlabel, show.legend=F, return.raw=F, show.ticks=T, labels=c('A', 'B', 'C', 'D'), ...) {
   margin.theme <- theme(plot.margin=margin(l=0.03, r=0.03, b=0.03, t=0.06, "in"))
 
-  gg.plots <- lapply(gg.plots, function(gg) gg + theme_pdf() + margin.theme + rremove('xylab') + rremove('legend'))
-  gg.plots[[1]] <- gg.plots[[1]] + rremove("x.ticks") + rremove("x.text")
+    gg.plots <- lapply(gg.plots, function(gg) gg + theme_pdf(show.ticks=show.ticks) +
+        margin.theme + rremove('xylab') + rremove('legend'))
+
+    gg.plots[[1]] <- gg.plots[[1]] + rremove("x.ticks") + rremove("x.text")
   gg.plots[[2]] <- gg.plots[[2]] + rremove("ticks") + rremove("xy.text")
   if (show.legend) {
     gg.plots[[3]] <- gg.plots[[3]] + theme_pdf(legend.pos=c(0, 0)) + margin.theme + rremove('xylab')
@@ -16,7 +18,7 @@ BuildPanel4 <- function(gg.plots, ylabel, xlabel, show.legend=F, return.raw=F) {
   if (return.raw)
     return(gg.plots)
 
-  gg.res <- annotate_figure(ggarrange(plotlist=gg.plots, ncol=2, nrow=2),
+  gg.res <- annotate_figure(cowplot::plot_grid(plotlist=gg.plots, ncol=2, nrow=2, labels=labels, ...),
                             left=text_grob(ylabel, size=14, rot=90),
                             bottom=text_grob(xlabel, size=14))
 

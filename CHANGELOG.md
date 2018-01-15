@@ -4,11 +4,28 @@
 ### Changed
 * Now, information about reads is kept in separate file instead (*.reads.gz), which should be passed to dropEst
 * New format of *reads_per_umi_per_cell* in cell.counts.rds
+* Optimized precise merge performance
+* Fixed bug with fastq split during dropTag
+* New format of barcode files
+* Optimized memory usage in read params parsing from file
+
+### Added
+* UMI correction algorithm now uses UMI quality (only Illumina 1.8 or later formats are supported)
+* Dockers for Centos6, Centos7 and Debian9
+* iclip protocol support
+* 10x barcodes
+
+## [0.7.1] - 2017-10-18
+### Added
+* Integration with velocyto
+
+## [0.7.0] - 2017-10-17
+### Changed
 * Optimized cmake
 * **Secondary alignments are filtered now**
 
 ### Added
-* UMI correction algorithm now uses UMI quality (only Illumina 1.8 or later formats are supported)
+* Output UMIs with only exonic or only intronic reads
 
 ## [0.6.8] - 2017-09-22
 ### Added
