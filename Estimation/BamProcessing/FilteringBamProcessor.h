@@ -13,7 +13,7 @@ namespace Estimation
 		class FilteringBamProcessor : public BamProcessorAbstract
 		{
 		private:
-			typedef std::unordered_map<std::string, std::string> cb_map_t;
+			using cb_map_t = std::unordered_map<std::string, std::string>;
 
 			cb_map_t merge_cbs;
 			bool is_bam_open;

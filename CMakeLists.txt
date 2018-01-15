@@ -13,7 +13,7 @@ endif (NOT "${CMAKE_BUILD_TYPE}" STREQUAL Debug)
 
 add_definitions(-DPROJ_DATA_PATH=\"${PROJECT_SOURCE_DIR}/data\")
 add_definitions(-DPROJ_BIN_PATH=\"${CMAKE_CURRENT_BINARY_DIR}\")
-add_definitions(-DVERSION=\"0.6.8\")
+add_definitions(-DVERSION=\"0.7.1\")
 
 include(deps)
 
@@ -22,7 +22,7 @@ include_directories(${INCLUDE_DIRS})
 
 set(BASE_LIBRARIES ${R_LIBRARIES} ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
-FILE(GLOB DropToolsSources Tools/*.cpp)
+FILE(GLOB DropToolsSources Tools/*.cpp Tools/GeneAnnotation/*.cpp)
 add_library(DropTools ${DropToolsSources})
 target_link_libraries(DropTools ${BASE_LIBRARIES})
 

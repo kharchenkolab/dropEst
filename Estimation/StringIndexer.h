@@ -9,8 +9,8 @@ namespace Estimation
 	class StringIndexer
 	{
 	public:
-		typedef unsigned index_t;
-		typedef std::vector<std::string> values_t;
+		using index_t = size_t;
+		using values_t = std::vector<std::string>;
 	private:
 		values_t _values;
 		std::unordered_map<std::string, index_t> _indexes;

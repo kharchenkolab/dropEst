@@ -11,7 +11,13 @@ namespace TagsSearch
 	class ConcurrentGzWriter
 	{
 	private:
-		typedef std::pair<std::string, size_t> line_info_t;
+		struct LinesInfo
+		{
+			std::string text;
+			unsigned lines_num;
+
+			explicit LinesInfo(const std::string &text = "", unsigned int lines_num = 0);
+		};
 
 	private:
 		static const size_t max_cache_size;
@@ -23,8 +29,8 @@ namespace TagsSearch
 
 		std::atomic<bool> _write_in_progress;
 
-		Tools::BlockingConcurrentQueue<line_info_t> _lines;
-		Tools::BlockingConcurrentQueue<line_info_t> _gzipped;
+		Tools::BlockingConcurrentQueue<LinesInfo> _lines;
+		Tools::BlockingConcurrentQueue<LinesInfo> _gzipped;
 
 		std::ofstream _out_file;
 
@@ -34,7 +40,7 @@ namespace TagsSearch
 	private:
 		std::string get_out_filename() const;
 		void increase_out_file();
-		bool write(const std::string &text, size_t lines_num);
+		bool write(const LinesInfo &text);
 
 		static std::string gzip(const std::string &text);
 
@@ -44,7 +50,7 @@ namespace TagsSearch
 		bool empty() const;
 		const std::string &base_filename() const;
 
-		void enqueue_lines(const std::string &lines, size_t lines_num);
+		void enqueue_lines(const std::string &line, unsigned lines_num);
 		void flush_gzip(bool unlimited_size);
 		void flush_write();
 	};

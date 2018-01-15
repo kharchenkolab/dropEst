@@ -1,6 +1,7 @@
 <config>
     <!-- droptag -->
     <TagsSearch>
+        <protocol>indrop</protocol>
         <SpacerSearch>
             <spacer>GAGTGATTGCTTGTGACGCCTT</spacer>
             <max_spacer_edit_distance>3</max_spacer_edit_distance>

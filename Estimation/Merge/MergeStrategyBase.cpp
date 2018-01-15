@@ -8,7 +8,7 @@ namespace Estimation
 {
 namespace Merge
 {
-MergeStrategyAbstract::ul_list_t MergeStrategyBase::merge_inited(CellsDataContainer &container) const
+MergeStrategyAbstract::ul_list_t MergeStrategyBase::merge_inited(CellsDataContainer &container)
 {
 	id_id_set_map_t cb_reassigned_to_it;
 	ul_list_t cb_reassign_targets(container.total_cells_number());

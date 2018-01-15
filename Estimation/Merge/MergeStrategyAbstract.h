@@ -11,14 +11,14 @@ namespace Merge
 	class MergeStrategyAbstract
 	{
 	public:
-		typedef std::vector<size_t> ul_list_t;
+		using ul_list_t = std::vector<size_t>;
 
 	private:
 		const size_t _min_genes_before_merge;
 		const size_t _min_genes_after_merge;
 
 	protected:
-		virtual ul_list_t merge_inited(Estimation::CellsDataContainer &container) const = 0;
+		virtual ul_list_t merge_inited(Estimation::CellsDataContainer &container) = 0;
 
 	public:
 		MergeStrategyAbstract(size_t min_genes_before_merge, size_t min_genes_after_merge);

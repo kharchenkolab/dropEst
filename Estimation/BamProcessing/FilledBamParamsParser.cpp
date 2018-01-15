@@ -10,7 +10,7 @@ namespace Estimation
 namespace BamProcessing
 {
 	bool FilledBamParamsParser::get_read_params(const BamTools::BamAlignment &alignment,
-											 Tools::ReadParameters &read_params)
+	                                            Tools::ReadParameters &read_params)
 	{
 		std::string cell_barcode;
 		if (!alignment.GetTag(this->tags.cell_barcode, cell_barcode))
@@ -28,7 +28,7 @@ namespace BamProcessing
 
 		try
 		{
-			read_params = Tools::ReadParameters(cell_barcode, umi, cb_quality, umi_quality);
+			read_params = Tools::ReadParameters(cell_barcode, umi, cb_quality, umi_quality, this->_min_barcode_quality);
 		}
 		catch (std::runtime_error &error)
 		{
@@ -39,8 +39,10 @@ namespace BamProcessing
 		return true;
 	}
 
-	FilledBamParamsParser::FilledBamParamsParser(const std::string &gtf_path, const BamTags &tags, bool gene_in_chromosome_name)
+	FilledBamParamsParser::FilledBamParamsParser(const std::string &gtf_path, const BamTags &tags,
+	                                             bool gene_in_chromosome_name, int min_barcode_quality)
 		: ReadParamsParser(gtf_path, tags, gene_in_chromosome_name)
+		, _min_barcode_quality(min_barcode_quality)
 	{}
 }
 }

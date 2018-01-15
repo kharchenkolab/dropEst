@@ -73,7 +73,7 @@ namespace Estimation
 		this->_mark |= mark._mark;
 	}
 
-	bool UMI::Mark::match(const std::vector<Mark>match_levels) const
+	bool UMI::Mark::match(const std::vector<Mark> &match_levels) const
 	{
 		for (auto const &match_level : match_levels)
 		{
@@ -84,14 +84,14 @@ namespace Estimation
 		return false;
 	}
 
-	void UMI::Mark::add(Tools::GtfRecord::RecordType type)
+	void UMI::Mark::add(Tools::GeneAnnotation::GtfRecord::RecordType type)
 	{
 		switch (type)
 		{
-			case Tools::GtfRecord::EXON:
+			case Tools::GeneAnnotation::GtfRecord::EXON:
 				this->add(HAS_EXONS);
 				break;
-			case Tools::GtfRecord::INTRON:
+			case Tools::GeneAnnotation::GtfRecord::INTRON:
 				this->add(HAS_INTRONS);
 				break;
 			default:

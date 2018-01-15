@@ -1,6 +1,6 @@
 #include <Tools/Logs.h>
 #include <Tools/ReadParameters.h>
-#include <Tools/RefGenesContainer.h>
+#include <Tools/GeneAnnotation/RefGenesContainer.h>
 #include "ReadParamsParser.h"
 #include "BamController.h"
 
@@ -8,13 +8,14 @@ namespace Estimation
 {
 namespace BamProcessing
 {
-	ReadParamsParser::ReadParamsParser(const std::string &genes_filename, const BamTags &tags, bool gene_in_chromosome_name)
-		: tags(tags)
-		, _gene_in_chromosome_name(gene_in_chromosome_name)
+	ReadParamsParser::ReadParamsParser(const std::string &genes_filename, const BamTags &tags,
+	                                   bool gene_in_chromosome_name)
+		: _gene_in_chromosome_name(gene_in_chromosome_name)
+		, tags(tags)
 	{
 		if (genes_filename.length() != 0)
 		{
-			this->_genes_container = Tools::RefGenesContainer(genes_filename);
+			this->_genes_container = Tools::GeneAnnotation::RefGenesContainer(genes_filename);
 		}
 	}
 
@@ -129,7 +130,7 @@ namespace BamProcessing
 		if (gene_set1.empty() || gene_set2.empty())
 			return mark;
 
-		Tools::RefGenesContainer::QueryResult exon_result1, exon_result2;
+		Tools::GeneAnnotation::RefGenesContainer::QueryResult exon_result1, exon_result2;
 		if (!find_exon(gene_set1, exon_result1))
 			return mark;
 
@@ -151,12 +152,12 @@ namespace BamProcessing
 		return mark;
 	}
 
-	bool ReadParamsParser::find_exon(Tools::RefGenesContainer::query_results_t query_results,
-	                                 Tools::RefGenesContainer::QueryResult &exon_result) const
+	bool ReadParamsParser::find_exon(Tools::GeneAnnotation::RefGenesContainer::query_results_t query_results,
+	                                 Tools::GeneAnnotation::RefGenesContainer::QueryResult &exon_result) const
 	{
 		for (auto const &query_res : query_results)
 		{
-			if (query_res.type != Tools::GtfRecord::EXON)
+			if (query_res.type != Tools::GeneAnnotation::GtfRecord::EXON)
 				continue;
 
 			if (exon_result.gene_name.empty())

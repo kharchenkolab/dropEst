@@ -2,7 +2,6 @@
 
 #include "Cell.h"
 #include "Stats.h"
-#include <Tools/GtfRecord.h>
 #include "UMI.h"
 #include "StringIndexer.h"
 #include "ReadInfo.h"
@@ -37,13 +36,13 @@ namespace Estimation
 		friend struct TestEstimator::testGeneMatchLevelUmiExclusion;
 
 	public:
-		typedef std::unordered_map<std::string, std::string> s_s_hash_t;
-		typedef std::unordered_map<std::string, size_t> s_ul_hash_t;
-		typedef std::unordered_map<std::string, int> s_i_hash_t; // not long because of RCpp
+		using s_s_hash_t = std::unordered_map<std::string, std::string>;
+		using s_ul_hash_t = std::unordered_map<std::string, size_t>;
+		using s_i_hash_t = std::unordered_map<std::string, int>; // not long because of RCpp
 
-		typedef std::vector<size_t> ids_t;
-		typedef std::vector<int> counts_t;
-		typedef std::vector<std::string> names_t;
+		using ids_t = std::vector<size_t>;
+		using counts_t = std::vector<int>;
+		using names_t = std::vector<std::string>;
 
 	private:
 		std::shared_ptr<Merge::MergeStrategyAbstract> _merge_strategy;
@@ -58,7 +57,7 @@ namespace Estimation
 		ids_t _merge_targets;
 
 		bool _is_initialized;
-		const std::vector<UMI::Mark> _query_marks;
+		const UMI::Mark::query_t _query_marks;
 
 		size_t _has_exon_reads;
 		size_t _has_intron_reads;
@@ -70,14 +69,16 @@ namespace Estimation
 
 	private:
 		std::string get_cb_count_top_verbose() const;
-		size_t update_cell_sizes(size_t requested_genes_threshold, int cell_threshold);
+		size_t update_cell_sizes(const UMI::Mark::query_t &query_marks, size_t requested_genes_threshold, int cell_threshold);
 		void update_cell_stats(size_t cell_id, const UMI::Mark &mark, const std::string &chromosome_name);
 
 		bool compare_cells(size_t cell1_id, size_t cell2_id) const;
 
+		size_t update_filtered_gene_counts(size_t requested_genes_threshold, int cell_threshold);
+
 	public:
-		CellsDataContainer(std::shared_ptr<Merge::MergeStrategyAbstract> merge_strategy,
-		                   std::shared_ptr<Merge::UMIs::MergeUMIsStrategySimple> umi_merge_strategy,
+		CellsDataContainer(const std::shared_ptr<Merge::MergeStrategyAbstract> &merge_strategy,
+		                   const std::shared_ptr<Merge::UMIs::MergeUMIsStrategySimple> &umi_merge_strategy,
 		                   const std::vector<UMI::Mark> &gene_match_levels, int max_cells_num = -1);
 
 		void add_record(const ReadInfo &read_info);
@@ -94,8 +95,8 @@ namespace Estimation
 		size_t cell_id_by_cb(const std::string &barcode) const;
 		const ids_t& filtered_cells() const;
 		const ids_t& merge_targets() const;
-		const std::vector<UMI::Mark>& gene_match_level() const;
-		size_t update_filtered_gene_counts(size_t requested_genes_threshold, int cell_threshold);
+		const UMI::Mark::query_t& gene_match_level() const;
+
 		s_i_hash_t get_stat_by_real_cells(Stats::CellStatType type) const;
 		void get_stat_by_real_cells(Stats::CellChrStatType stat, names_t &cell_barcodes, names_t &chromosome_names,
 		                            counts_t &counts) const;
@@ -112,6 +113,6 @@ namespace Estimation
 		const StringIndexer& gene_indexer() const;
 		const StringIndexer& umi_indexer() const;
 
-		s_ul_hash_t umis_distribution() const;
+		s_ul_hash_t umi_distribution() const;
 	};
 }

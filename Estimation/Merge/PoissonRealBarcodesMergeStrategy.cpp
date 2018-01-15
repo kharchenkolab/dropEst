@@ -24,13 +24,13 @@ namespace Merge
 
 	std::string PoissonRealBarcodesMergeStrategy::merge_type() const
 	{
-		return "Poisson";
+		return "Poisson Real CBs";
 	}
 
 	void PoissonRealBarcodesMergeStrategy::init(const Estimation::CellsDataContainer &container)
 	{
 		RealBarcodesMergeStrategy::init(container);
-		this->_target_estimator.init(container);
+		this->_target_estimator.init(container.umi_distribution());
 	}
 
 	void PoissonRealBarcodesMergeStrategy::release()
@@ -39,15 +39,15 @@ namespace Merge
 		RealBarcodesMergeStrategy::release();
 	}
 
-	long PoissonRealBarcodesMergeStrategy::get_best_merge_target(const CellsDataContainer &container, size_t base_cell_ind,
-																 const MergeStrategyAbstract::ul_list_t &neighbour_cells) const
+	long PoissonRealBarcodesMergeStrategy::get_best_merge_target(CellsDataContainer &container, size_t base_cell_ind,
+	                                                             const MergeStrategyAbstract::ul_list_t &neighbour_cells)
 	{
 		return this->_target_estimator.get_best_merge_target(container, base_cell_ind, neighbour_cells);
 	}
 
 	size_t PoissonRealBarcodesMergeStrategy::get_log_period() const
 	{
-		return 1000;
+		return 10000;
 	}
 }
 }

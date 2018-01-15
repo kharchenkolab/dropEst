@@ -189,7 +189,7 @@ FilterMitochondrionCells <- function(mitochondrion.fraction, cells.quality, plot
 #'
 #' @export
 ScorePipelineCells <- function(pipeline.data, filter.high.mit.fraction=F, mitochondrion.genes=NULL,
-                               mit.chromosome.name=NULL, tags.data=NULL) {
+                               mit.chromosome.name=NULL, tags.data=NULL, predict.all=FALSE) {
   if (filter.high.mit.fraction && is.null(mitochondrion.genes) && is.null(mit.chromosome.name))
     stop("Either list of mitochondrial genes of a name of mitochondrial chromosome must be provided to filter cells with high mitochondrial fraction")
 
@@ -208,7 +208,11 @@ ScorePipelineCells <- function(pipeline.data, filter.high.mit.fraction=F, mitoch
   bc.df <- PrepareLqCellsDataPipeline(pipeline.data, mitochondrion.genes = mitochondrion.genes,
                                       mit.chromosome.name=mit.chromosome.name, total.reads.per.cell=tags.data$reads_per_cb)
   clf <- TrainClassifier(bc.df, cells.quality, umi.counts.raw)
+  if (predict.all) {
+    umi.counts <- sort(Matrix::colSums(pipeline.data$cm_raw), decreasing=T)
+  } else {
+    umi.counts <- sort(Matrix::colSums(pipeline.data$cm), decreasing=T)
+  }
 
-  umi.counts <- sort(Matrix::colSums(pipeline.data$cm), decreasing=T)
   return(PredictKDE(clf, bc.df[names(umi.counts),])[,2])
 }

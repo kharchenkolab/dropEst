@@ -13,9 +13,10 @@ Pipeline for estimating molecular count matrices for droplet-based single-cell R
 		- [Troubleshooting](#troubleshooting)
 	- [dropTag](#droptag)
 		- [Protocols](#protocols)
-			- [inDrop v1 & v2](#indrop-v1-v2)
+			- [inDrop v1 & v2](#indrop-v1--v2)
 			- [inDrop v3](#indrop-v3)
 			- [10x](#10x)
+			- [iCLIP](#iCLIP)
 		- [Command line arguments for dropTag](#command-line-arguments-for-droptag)
 	- [Alignment](#alignment)
 	    - [Alignment with TopHat](#alignment-with-tophat)
@@ -23,6 +24,7 @@ Pipeline for estimating molecular count matrices for droplet-based single-cell R
 	- [dropEst](#dropest)
 		- [Usage of tagged bam files (e.g. 10x, Drop-seq) as input](#usage-of-tagged-bam-files-eg-10x-drop-seq-as-input)
 		- [Usage of pseudoaligners](#usage-of-pseudoaligners)
+		- [Count intronic / exonic reads only](#count-intronic--exonic-reads-only)
 		- [Command line arguments for dropEst](#command-line-arguments-for-dropest)
 		- [Output](#output)
 	- [dropReport](#dropreport)
@@ -72,6 +74,7 @@ cmake . && make
 ```
 
 ### Troubleshooting
+#### Local libraries installation
 If `cmake` can't find one of the libraries, or you want to use some specific versions, which are currently not in the default path, use corresponding cmake variables:
 * Boost: BOOST_ROOT.
 * BamTools: BAMTOOLS_ROOT.
@@ -81,6 +84,12 @@ These variables should be set to the path to the installed library. It can be do
 
 
 In case you have some issues with the linker for specific library, please try to build this library manually with the version of compiler, which you're going to use for dropEst build.
+
+#### Boost 1.65
+CMake < 3.10 has known issues with boost 1.65. If you have such combination, please try either to upgrade cmake or to downgrade boost.
+
+#### Dockers
+In case you still can't build the project, dockerfiles for the most popular linux distributions are provided (see `dropEst/dockers/`). You can either build and run these dockers or just read dockerfiles for the further instructions on dropEst installation for specific distribution.
 
 ## dropTag
     droptag -- generate tagged fastq files for alignment
@@ -135,13 +144,23 @@ Example command:
 
 While dropTag provides way to demultiplex 10x data, [Cell Ranger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger) is still recommended tool for this. [dropEst](##dropEst) phase can be ran on the Cell Ranger demultiplexed .bam file to obtain data in the format, optimized for the subsequent analysis.
 
+#### iCLIP
+* File 1: Gene reads with barcodes at the beginning of the sequence
+
+Example config file is located at "*dropEst/configs/iclip.xml*".  
+Example command:
+```bash
+./droptag -c dropEst/configs/iclip.xml [-S] data.fastq
+```
+
 ### Command line arguments for dropTag
 *  -c, --config filename: xml file with droptag parameters  
-*  -l, --log-prefix prefix: logs prefix  
-*  -n, --name name: alternative output base name  
+*  -l, --log-prefix prefix: logs prefix
+*  -n, --name name: alternative output base name
+*  -p, --parallel number: number of threads (usage of more than 6 threads should lead to significant speed up)
 *  -S, --save-stats : save stats to rds file. This data is used on the dropReport phase.
-*  -t, --lib-tag library tag : (for IndropV3 with library tag only)  
-*  -q, --quiet : disable logs  
+*  -t, --lib-tag library tag : (for IndropV3 with library tag only)
+*  -q, --quiet : disable logs
 
 Please, use `./droptag -h` for additional help.
 
@@ -205,6 +224,41 @@ use "*-P*" option. Example:
  dropest [options] -P -c ./config.xml ./kallisto_res_*.bam
  ```
 
+### Count intronic / exonic reads only
+One feature of the pipeline is the ability to count only UMIs, which reads touch only specific parts of a genome. 
+Option *"-L"* allows to specify all acceptable types of regions:
+* e: UMIs with exonic reads only
+* i: UMIs with intronic reads only
+* E: UMIs, which have both exonic and not annotated reads
+* I: UMIs, which have both intronic and not annotated reads
+* B: UMIs, which have both exonic and intronic reads
+* A: UMIs, which have exonic, intronic and not annotated reads
+
+Thus, to count all UMIs with exonic **or** not annotated reads, use *"-L eE"*. Default value: *"-L eEBA"*.
+
+Example commands:
+* Intronic reads only:
+    ```bash
+    dropest [-f] [-g ./genes.gtf] -L i -c ./config.xml ./alignment_*.bam
+    ```
+* Exonic reads only:
+    ```bash
+    dropest [-f] [-g ./genes.gtf] -L i -c ./config.xml ./alignment_*.bam
+    ```
+* Exon/intron spanning reads:
+    ```bash
+    dropest [-f] [-g ./genes.gtf] -L BA -c ./config.xml ./alignment_*.bam
+    ```
+
+The pipeline can determine genome regions either using .gtf annotation file or using .bam tags, i.e. for CellRanger 
+output (see *Estimation/BamTags/Type* in *configs/config_desc.xml*). If .gtf file isn't provided and .bam file doesn't containt 
+annotation tags, all reads with not empty gene tag are considered as exonic. 
+
+#### Velocyto integration
+For some purposes (i.e. [velocyto](http://velocyto.org/)) it can be useful to look separately at the fraction of intronic and exonic UMIs.
+Option *"-V"* allows to output three separate count matrices, each of which contains only UMIs of a specific type: 
+intronic, exonic or exon/intron spanning. These matrices are stored in the separate file *"cell.counts.matrices.rds"*. 
+
 ### Command line arguments for dropEst
 *  -b, --bam-output: print tagged bam files  
 *  -c, --config filename: xml file with estimation parameters  
@@ -219,6 +273,7 @@ use "*-P*" option. Example:
 *  -o, --output-file filename : output file name  
 *  -R, --reads-output: print count matrix for reads and don't use UMI statistics  
 *  -q, --quiet : disable logs  
+*  -V, --velocyto : save separate count matrices for exons, introns and exon/intron spanning reads
 *  -w, --write-mtx : write out matrix in MatrixMarket format  
 
 ### Output

@@ -24,8 +24,8 @@ namespace TagsSearch
 		virtual Tools::ReadParameters parse(const std::string &r1_seq, const std::string &r1_quality,
 		                                    const SpacerFinder::spacer_pos_t &spacer_pos);
 
-		virtual bool parse_fastq_record(FastQReader::FastQRecord &gene_record, Tools::ReadParameters &read_params) override;
-		virtual std::string get_additional_stat(long total_reads_read) const override;
+		bool parse_fastq_record(FastQReader::FastQRecord &gene_record, Tools::ReadParameters &read_params) override;
+		std::string get_additional_stat(long total_reads_read) const override;
 
 	public:
 		IndropV1TagsFinder(const std::vector<std::string> &fastq_filenames,

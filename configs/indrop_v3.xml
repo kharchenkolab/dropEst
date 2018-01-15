@@ -1,6 +1,7 @@
 <config>
     <!-- droptag -->
     <TagsSearch>
+        <protocol>indrop3</protocol>
         <BarcodesSearch>
             <barcode1_length>8</barcode1_length>
             <barcode2_length>8</barcode2_length>

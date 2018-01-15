@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Estimation/CellsDataContainer.h"
-#include "Tools/RefGenesContainer.h"
+#include "Tools/GeneAnnotation/RefGenesContainer.h"
 #include "BamProcessorAbstract.h"
 
 #include <string>

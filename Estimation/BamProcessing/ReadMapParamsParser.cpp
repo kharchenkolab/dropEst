@@ -10,24 +10,25 @@ namespace Estimation
 namespace BamProcessing
 {
 	ReadMapParamsParser::ReadMapParamsParser(const std::string &gtf_path, const std::string &read_param_filenames,
-	                                         const BamTags &tags, bool gene_in_chromosome_name)
+	                                         const BamTags &tags, bool gene_in_chromosome_name, int min_quality)
 		: ReadParamsParser(gtf_path, tags, gene_in_chromosome_name)
+		, _min_quality(min_quality)
 	{
 		this->init(read_param_filenames);
 	}
 
 	bool ReadMapParamsParser::get_read_params(const BamTools::BamAlignment &alignment,
-											  Tools::ReadParameters &read_params)
+	                                          Tools::ReadParameters &read_params)
 	{
-		const std::string &read_name = alignment.Name;
+		const std::string &read_name = (alignment.Name[0] == '@') ? alignment.Name.substr(1) : alignment.Name;
 
-		auto iter = this->_reads_params.find(read_name);
-		bool read_not_found = (iter == this->_reads_params.end());
+		auto iter = this->_read_params.find(read_name);
+		bool read_not_found = (iter == this->_read_params.end());
 
 		if (!read_not_found)
 		{
-			read_params = iter->second;
-			this->_reads_params.erase(iter);
+			read_params = iter->second.parameters(this->_barcode_indexer, this->_umi_indexer, this->_umi_quality_indexer);
+			this->_read_params.erase(iter);
 		}
 
 		if (read_not_found)
@@ -69,23 +70,25 @@ namespace BamProcessing
 				total_reads_count++;
 				if (total_reads_count % 10000000 == 0)
 				{
-					L_TRACE << "Total " << total_reads_count << " read records processed";
+					L_TRACE << "Total " << total_reads_count << " read records processed" << std::flush;
 				}
 
 				try
 				{
-					auto read_params_info = Tools::ReadParameters::parse_from_string(row);
-					if (this->_reads_params.find(read_params_info.first) != this->_reads_params.end())
+					auto params_pair = Tools::ReadParameters::parse_from_string(row, this->_min_quality);
+					auto params = ReadParametersEfficient(params_pair.second, this->_barcode_indexer, this->_umi_indexer,
+					                                      this->_umi_quality_indexer);
+					auto ins_iter = this->_read_params.emplace(params_pair.first, params);
+
+					if (!ins_iter.second)
 					{
-						L_ERR << "Read name is already in map: " << read_params_info.first << ", old value: '"
-						      << this->_reads_params[read_params_info.first].to_string("").substr(1)
-						      << "', new value: " << read_params_info.second.to_string("").substr(1);
+						L_ERR << "Read name is already in map: " << ins_iter.first->first << ", old value: '"
+						      << ins_iter.first->second.parameters(this->_barcode_indexer, this->_umi_indexer,
+						                                           this->_umi_quality_indexer).to_string("").substr(1);
 						continue;
 					}
-
-					this->_reads_params.insert(read_params_info);
 				}
-				catch (std::runtime_error err)
+				catch (std::runtime_error &err)
 				{
 					L_ERR << err.what();
 					continue;
