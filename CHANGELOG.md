@@ -9,6 +9,7 @@
 * Optimized precise merge performance
 * Fixed bug with fastq split during dropTag
 * New format of barcode files
+* Optimized memory usage in read params parsing from file
 
 ## [0.7.1] - 2017-10-18
 ### Added

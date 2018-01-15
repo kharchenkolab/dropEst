@@ -32,7 +32,7 @@ static const std::string SCRIPT_NAME = "droptag";
 struct Params
 {
 	bool cant_parse = false;
-	bool save_reads_names = false;
+	bool save_reads_params = false;
 	bool quiet = false;
 	bool save_stats = false;
 	int num_of_threads = 1;
@@ -58,7 +58,7 @@ static void usage()
 	cerr << "\t-l, --log-prefix prefix: logs prefix\n";
 	cerr << "\t-n, --name name: alternative output base name\n";
 	cerr << "\t-p, --parallel number: number of threads\n";
-	cerr << "\t-s, --save-reads-names : serialize reads parameters to save quality info\n";
+	cerr << "\t-s, --save-reads-params : serialize reads parameters to save quality info\n";
 	cerr << "\t-S, --save-stats : save stats to rds file\n";
 	cerr << "\t-t, --lib-tag library tag : (for IndropV3 with library tag only)\n";
 	cerr << "\t-q, --quiet : disable logs\n";
@@ -101,7 +101,7 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const ptree &pt
 
 			return shared_ptr<TagsFinderBase>(
 					new IndropV3LibsTagsFinder(params.read_files, params.lib_tag, pt.get_child(BARCODES_CONFIG_PATH),
-					                           processing_config, writer, params.save_stats, params.save_reads_names));
+					                           processing_config, writer, params.save_stats, params.save_reads_params));
 		}
 
 		if (params.read_files.size() != 3)
@@ -109,7 +109,7 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const ptree &pt
 
 		return shared_ptr<TagsFinderBase>(
 				new IndropV3TagsFinder(params.read_files, pt.get_child(BARCODES_CONFIG_PATH), processing_config,
-				                       writer, params.save_stats, params.save_reads_names));
+				                       writer, params.save_stats, params.save_reads_params));
 	}
 
 	if (protocol_type == "indrop")
@@ -120,11 +120,11 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const ptree &pt
 		if (!pt.get<std::string>(SPACER_CONFIG_PATH + ".barcode_mask", "").empty())
 			return shared_ptr<TagsFinderBase>(
 					new FixPosSpacerTagsFinder(params.read_files, pt.get_child(SPACER_CONFIG_PATH), processing_config,
-					                           writer, params.save_stats, params.save_reads_names));
+					                           writer, params.save_stats, params.save_reads_params));
 
 		return shared_ptr<TagsFinderBase>(
 				new IndropV1TagsFinder(params.read_files, pt.get_child(SPACER_CONFIG_PATH), processing_config,
-				                       writer, params.save_stats, params.save_reads_names));
+				                       writer, params.save_stats, params.save_reads_params));
 	}
 
 	if (protocol_type == "iclip")
@@ -134,7 +134,7 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const ptree &pt
 
 		return shared_ptr<TagsFinderBase>(
 				new IClipTagsFinder(params.read_files, pt.get_child(BARCODES_CONFIG_PATH), processing_config,
-				                    writer, params.save_stats, params.save_reads_names));
+				                    writer, params.save_stats, params.save_reads_params));
 	}
 }
 
@@ -149,7 +149,7 @@ Params parse_cmd_params(int argc, char **argv)
 			{"log-prefix", required_argument, 0, 'l'},
 			{"name",       required_argument, 0, 'n'},
 			{"parallel",   required_argument, 0, 'p'},
-			{"save-reads-names",    no_argument,       0, 's'},
+			{"save-reads-params",    no_argument,       0, 's'},
 			{"save-stats",    required_argument,       0, 'S'},
 			{"lib-tag",    required_argument, 0, 't'},
 			{"quiet",    no_argument,       0, 'q'},
@@ -177,7 +177,7 @@ Params parse_cmd_params(int argc, char **argv)
 				params.num_of_threads = int(strtol(optarg, nullptr, 10));
 				break;
 			case 's' :
-				params.save_reads_names = true;
+				params.save_reads_params = true;
 				break;
 			case 'S' :
 				params.save_stats = true;

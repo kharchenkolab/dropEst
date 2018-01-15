@@ -72,6 +72,10 @@ namespace Tools
 
 		parsed.push_back(params_string.substr(start_pos));
 
+		if (parsed[0][0] == '@')
+		{
+			parsed[0] = parsed[0].substr(1);
+		}
 		return std::make_pair(parsed[0], ReadParameters(parsed[1], parsed[2], parsed[3], parsed[4], min_quality));
 	}
 
