@@ -24,8 +24,8 @@ namespace Estimation
 				size_t _barcode_length;
 
 			protected:
-				virtual std::vector<std::string> split_barcode(const std::string &barcode) const override;
-				virtual barcode_parts_list_t get_barcodes_list(const std::string &barcodes_filename) const override;
+				std::vector<std::string> split_barcode(const std::string &barcode) const override;
+				barcode_parts_list_t get_barcodes_list(const std::string &barcodes_filename) const override;
 
 			public:
 				explicit ConstLengthBarcodesParser(const std::string &barcodes_filename);

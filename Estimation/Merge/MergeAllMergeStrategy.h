@@ -13,7 +13,7 @@ namespace Merge
 	class MergeAllMergeStrategy : public MergeStrategyBase
 	{
 	protected:
-		virtual long get_merge_target(CellsDataContainer &container, size_t base_cell_ind) override
+		long get_merge_target(CellsDataContainer &container, size_t base_cell_ind) override
 		{
 			int min_ed = std::numeric_limits<int>::max();
 			int max_umi_num = 0;
@@ -55,7 +55,7 @@ namespace Merge
 			: MergeStrategyBase(min_genes_before_merge, min_genes_after_merge, max_merge_edit_distance, 0)
 		{}
 
-		virtual std::string merge_type() const override
+		std::string merge_type() const override
 		{
 			return "Merge all";
 		}
