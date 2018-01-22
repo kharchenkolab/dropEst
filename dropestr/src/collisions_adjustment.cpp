@@ -91,6 +91,7 @@ public:
   }
 };
 
+// '@export
 // [[Rcpp::export]]
 std::vector<unsigned> FillCollisionsAdjustmentInfo(const std::vector<double> &umi_probabilities, unsigned max_umi_per_gene) {
   CollisionsAdjuster adjuster;

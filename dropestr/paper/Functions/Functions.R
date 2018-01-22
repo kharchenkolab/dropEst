@@ -4,6 +4,14 @@ library(ggpubr)
 library(ggrastr)
 library(ggsci)
 
+Read10xMatrix <- function(path, use.gene.names=FALSE) {
+  gene.var <- if (use.gene.names) 'V2' else 'V1'
+  mtx <- as(Matrix::readMM(paste0(path, 'matrix.mtx')), 'dgCMatrix')
+  colnames(mtx) <- read.table(paste0(path, 'barcodes.tsv'), stringsAsFactors=F)$V1
+  rownames(mtx) <- read.table(paste0(path, 'genes.tsv'), stringsAsFactors=F)[[gene.var]]
+  return(mtx)
+}
+
 FilterNUmis <- function(reads.per.umi) {
   return(lapply(reads.per.umi, function(rpus) rpus[grep("^[^N]+$", names(rpus))]))
 }
@@ -70,4 +78,28 @@ PlotTrimmedCorrections <- function(trimmed.data, raw.data, trimed.length, log=T,
     plot.labs
 
   return(list(small=gg.small, large=gg.large))
+}
+
+GetPagoda <- function(cm, n.cores=10, clustering.type='infomap', embeding.type='tSNE', verbose=TRUE) {
+  library(pagoda2)
+  r <- Pagoda2$new(cm, modelType='plain', trim=5, n.cores=n.cores, verbose=verbose)
+  r$adjustVariance(plot=F, do.par=F, gam.k=10, verbose=verbose)
+
+  r$calculatePcaReduction(nPcs=100, n.odgenes=1000, maxit=1000)
+  r$makeKnnGraph(k=30,type='PCA', center=T,distance='cosine',weight.type='none', verbose=verbose)
+  if (clustering.type == 'infomap') {
+    r$getKnnClusters(method=infomap.community,type='PCA',name='infomap')
+  } else if (clustering.type == 'multilevel') {
+    r$getKnnClusters(method=multilevel.community,type='PCA',name='multilevel')
+  } else stop("Unknown clustering  type")
+
+  if ('largeVis' %in% embeding.type) {
+    r$getEmbedding(type='PCA', embeddingType = 'largeVis')
+  }
+
+  if ('tSNE' %in% embeding.type) {
+    r$getEmbedding(type='PCA', perplexity=30, embeddingType = 'tSNE')
+  }
+
+  return(r)
 }

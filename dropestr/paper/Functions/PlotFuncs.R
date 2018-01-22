@@ -2,7 +2,8 @@ library(ggplot2)
 library(ggpubr)
 library(ggrastr)
 
-BuildPanel4 <- function(gg.plots, ylabel, xlabel, show.legend=F, return.raw=F, show.ticks=T, labels=c('A', 'B', 'C', 'D'), ...) {
+BuildPanel4 <- function(gg.plots, xlabel, ylabel, show.legend=F, return.raw=F, show.ticks=T,
+                        labels=c('A', 'B', 'C', 'D'), plot.theme=NULL, ...) {
   margin.theme <- theme(plot.margin=margin(l=0.03, r=0.03, b=0.03, t=0.06, "in"))
 
     gg.plots <- lapply(gg.plots, function(gg) gg + theme_pdf(show.ticks=show.ticks) +
@@ -14,6 +15,10 @@ BuildPanel4 <- function(gg.plots, ylabel, xlabel, show.legend=F, return.raw=F, s
     gg.plots[[3]] <- gg.plots[[3]] + theme_pdf(legend.pos=c(0, 0)) + margin.theme + rremove('xylab')
   }
   gg.plots[[4]] <- gg.plots[[4]] + rremove("y.ticks") + rremove("y.text")
+
+  if (!is.null(plot.theme)) {
+    gg.plots <- lapply(gg.plots, `+`, plot.theme)
+  }
 
   if (return.raw)
     return(gg.plots)
@@ -28,6 +33,7 @@ BuildPanel4 <- function(gg.plots, ylabel, xlabel, show.legend=F, return.raw=F, s
 PlotPagodaEmbeding <- function(r, embeding.type='tSNE', clusters=NULL, clustering.type=NULL, colors=NULL, plot.na=TRUE,
                                min.cluster.size=0, mark.clusters=F, show.legend=T, alpha=0.4, size=0.8, title=NULL,
                                font.size=5.5, show.ticks=T, raster=F, raster.width=NULL, raster.height=NULL, raster.dpi=300) {
+  labels <- labs(x='Component 1', y='Component 2')
   plot.df <- tibble::rownames_to_column(as.data.frame(r$embeddings$PCA[[embeding.type]]), var='CellName')
   if (raster) {
     geomp_point_w <- function(...) ggrastr::geom_point_rast(..., width=raster.width, height=raster.height, dpi=raster.dpi)
@@ -35,10 +41,11 @@ PlotPagodaEmbeding <- function(r, embeding.type='tSNE', clusters=NULL, clusterin
     geomp_point_w <- ggplot2::geom_point
   }
 
-  if (is.null(colors)) {
-    if (is.null(clusters)) {
-      clusters <- r$clusters$PCA[[clustering.type]]
-    }
+  if (is.null(clusters) & !is.null(clustering.type)) {
+    clusters <- r$clusters$PCA[[clustering.type]]
+  }
+
+  if (is.null(colors) & !is.null(clusters)) {
     plot.df <- plot.df %>% dplyr::mutate(Cluster=clusters[CellName])
 
     plot.df$Cluster <- as.character(plot.df$Cluster)
@@ -53,7 +60,7 @@ PlotPagodaEmbeding <- function(r, embeding.type='tSNE', clusters=NULL, clusterin
     # n.clusters <- length(unique(plot.df$Cluster))
     gg <- ggplot(plot.df, aes(x=V1, y=V2)) +
       geomp_point_w(aes(col=Cluster), alpha=alpha, size=size) +
-      labs(x='Component 1', y='Component 2')
+      labels
 
     if (plot.na) {
       gg <- gg + geomp_point_w(data=na.plot.df, alpha=alpha, size=size, color='black', shape=4)
@@ -65,11 +72,15 @@ PlotPagodaEmbeding <- function(r, embeding.type='tSNE', clusters=NULL, clusterin
                                            fill=ggplot2::alpha('white', 0.7), label.size = NA,
                                            label.padding=ggplot2::unit(0.5, 'pt'))
     }
-  } else {
+  } else if (!is.null(colors)) {
     plot.df <- plot.df %>% dplyr::mutate(Color=colors[CellName])
     gg <- ggplot(plot.df, aes(x=V1, y=V2)) +
       geomp_point_w(aes(col=Color), alpha=alpha, size=size) +
-      labs(x='tSNE-1', y='tSNE-2')
+      labels
+  } else {
+    gg <- ggplot(plot.df, aes(x=V1, y=V2)) +
+      geomp_point_w(alpha=alpha, size=size) +
+      labels
   }
 
   if (!is.null(title)) {

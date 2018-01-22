@@ -25,14 +25,16 @@ knitr::opts_chunk$set(fig.width=5, fig.height=3, echo=FALSE, warning=FALSE, mess
 
 theme_set(theme_base)
 kPlotsFolder <- '~/Data/Plots/Paper/Review/UmiErrors/'
-kDataPath <- '/d0-mendel/home/viktor_petukhov/Data/10x/aml035_post_transplant/est_10_20_umi_quality/'
+kDataPath <- '/d0-mendel/home/viktor_petukhov/Data/10x/aml035_post_transplant/'
 ```
 
 ```{r}
-# holder <- readRDS(paste0(kDataPath, '/aml035ost_transplant.rds'))
-# reads_per_umi_per_cell <- holder$reads_per_umi_per_cell
-# reads_per_umi_per_cell$reads_per_umi <- FilterNUmis(holder$reads_per_umi_per_cell$reads_per_umi)
-#
+# holders <- mclapply(paste0(kDataPath, c('est_01_21_umi_quality/aml035ost_transplant.rds', 'est_01_21_10x_umi/aml035ost_transplant.rds')), readRDS, mc.cores=2) %>%
+#   setNames(c('raw', '10x'))
+# 
+# reads_per_umi_per_cell <- holders$raw$reads_per_umi_per_cell
+# reads_per_umi_per_cell$reads_per_umi <- FilterNUmis(reads_per_umi_per_cell$reads_per_umi)
+# 
 # saveRDS(reads_per_umi_per_cell, paste0(kDataPath, 'reads_per_umi_per_cell.rds'))
 
 reads_per_umi_per_cell <- readRDS(paste0(kDataPath, 'reads_per_umi_per_cell.rds'))
@@ -43,29 +45,29 @@ length(reads_per_umi_per_cell$reads_per_umi)
 
 # UMI errors
 ```{r}
-tr_cur <- TrimAndCorrect(reads_per_umi_per_cell, umi.trim.length=6, mc.cores.large=30, mc.cores.small=30, verbosity.level=1, prepare.only=T)
-classifier <- TrainNBClassifier(tr_cur$reads.per.umi.per.cb, distribution.smooth=50, umi.probabilities=tr_cur$umi.probabilities, mc.cores=10)
+# tr_cur <- TrimAndCorrect(reads_per_umi_per_cell, umi.trim.length=6, mc.cores.large=30, mc.cores.small=30, verbosity.level=1, prepare.only=T)
+# classifier <- TrainNBClassifier(tr_cur$reads.per.umi.per.cb, distribution.smooth=50, umi.probabilities=tr_cur$umi.probabilities, mc.cores=10)
 ```
 
 ```{r}
-umi_probabilities_map <- new(CppMap, names(tr_cur$umi.probabilities), as.vector(tr_cur$umi.probabilities))
-# gp <- profvis::profvis(r0 <- lapply(tr_cur$reads.per.umi.per.cb[tr_cur$umis.per.gene > 1][1:1000], FilterUmisInGene, umi_probabilities_map, classifier,
-#        tr_cur$correction.info$dp.matrices, tr_cur$correction.info$neighb.prob.index, tr_cur$collisions.info))
-
-r0 <- lapply(tr_cur$reads.per.umi.per.cb[tr_cur$umis.per.gene > 1][1:1000], FilterUmisInGene, umi_probabilities_map, classifier,
-       tr_cur$correction.info$dp.matrices, tr_cur$correction.info$neighb.prob.index, tr_cur$collisions.info)
+# umi_probabilities_map <- new(CppMap, names(tr_cur$umi.probabilities), as.vector(tr_cur$umi.probabilities))
+# # gp <- profvis::profvis(r0 <- lapply(tr_cur$reads.per.umi.per.cb[tr_cur$umis.per.gene > 1][1:1000], FilterUmisInGene, umi_probabilities_map, classifier,
+# #        tr_cur$correction.info$dp.matrices, tr_cur$correction.info$neighb.prob.index, tr_cur$collisions.info))
+# 
+# r0 <- lapply(tr_cur$reads.per.umi.per.cb[tr_cur$umis.per.gene > 1][1:1000], FilterUmisInGene, umi_probabilities_map, classifier,
+#        tr_cur$correction.info$dp.matrices, tr_cur$correction.info$neighb.prob.index, tr_cur$collisions.info)
 ```
 
 ```{r}
-r0 <- mclapply(tr_cur$reads.per.umi.per.cb[1:100000], FilterUmisInGene, umi_probabilities_map, classifier,
-               tr_cur$correction.info$dp.matrices, tr_cur$correction.info$neighb.prob.index,
-               tr_cur$collisions.info, mc.cores=30)
+# r0 <- mclapply(tr_cur$reads.per.umi.per.cb[1:100000], FilterUmisInGene, umi_probabilities_map, classifier,
+#                tr_cur$correction.info$dp.matrices, tr_cur$correction.info$neighb.prob.index,
+#                tr_cur$collisions.info, mc.cores=30)
 ```
 
 ```{r}
-largest_gene <- tr_cur$reads.per.umi.per.cb[[which.max(tr_cur$umis.per.gene)]]
-r1 <- FilterUmisInGene(largest_gene, umi_probabilities_map, classifier, tr_cur$correction.info$dp.matrices, 
-                       tr_cur$correction.info$neighb.prob.index, tr_cur$collisions.info, verbose=T)
+# largest_gene <- tr_cur$reads.per.umi.per.cb[[which.max(tr_cur$umis.per.gene)]]
+# r1 <- FilterUmisInGene(largest_gene, umi_probabilities_map, classifier, tr_cur$correction.info$dp.matrices, 
+#                        tr_cur$correction.info$neighb.prob.index, tr_cur$collisions.info, verbose=T)
 ```
 
 ```{r}
@@ -94,8 +96,10 @@ saveRDS(trimmed, paste0(kDataPath, 'trimmed4_umi.rds'))
 ```
 
 ```{r}
-raw <- readRDS(paste0(kDataPath, 'raw3.rds'))
-trimmed <- readRDS(paste0(kDataPath, 'trimmed3.rds'))
+raw <- readRDS(paste0(kDataPath, 'raw4_umi.rds'))
+trimmed <- readRDS(paste0(kDataPath, 'trimmed4_umi.rds'))
+# raw <- readRDS(paste0(kDataPath, 'raw3.rds'))
+# trimmed <- readRDS(paste0(kDataPath, 'trimmed3.rds'))
 ```
 
 ## Plots
@@ -103,14 +107,16 @@ trimmed <- readRDS(paste0(kDataPath, 'trimmed3.rds'))
 ```{r}
 plots <- lapply(6:9, function(i) PlotTrimmedCorrections(trimmed[[i - 5]], raw, i, log=T, rast.width=4,
                                                         rast.height=4.5, rast.dpi=200, heights.ratio=c(2.5, 3)))
-large_plots <- lapply(plots, `[[`, 'large')
-large_plots <- lapply(large_plots, `+`, annotation_logticks(sides='b'))
+large_plots <- lapply(plots, `[[`, 'large') %>% lapply(`+`, annotation_logticks(sides='b'))
 small_plots <- lapply(plots, `[[`, 'small')
 ```
 
 ```{r, fig.width=8, fig.height=9, warning=FALSE, message=FALSE}
-gp_large <- BuildPanel4(large_plots, "Corrected #UMIs without trimming", "Error on trimmed data, %", show.legend=T)
-gp_small <- BuildPanel4(small_plots, "Corrected #UMIs without trimming", "Error on trimmed data, %", show.legend=F)
+title_theme <- theme(plot.title=element_text(size=12))
+gp_large <- BuildPanel4(large_plots, xlabel="Corrected #UMIs without trimming", ylabel="Error on trimmed data, %", 
+                        show.legend=T, labels=NULL, plot.theme=title_theme)
+gp_small <- BuildPanel4(small_plots, xlabel="Corrected #UMIs without trimming", ylabel="Error on trimmed data, %", 
+                        show.legend=F, labels=NULL, plot.theme=title_theme)
 supp_fig_errors <- cowplot::plot_grid(gp_large, gp_small, nrow=2, labels=c('A', 'B'), rel_heights=c(5, 6))
 supp_fig_errors
 ```
@@ -176,15 +182,15 @@ gp2
 ```
 
 ```{r}
-correction_colors <- c("#2222F2", "#017A5A", "#9B3BB8", "#E69F00", "#BD5500", '#757575')
-color_scale <- scale_color_manual(name='Correction', values=alpha(correction_colors, 0.7),
-                                  labels=c('Cell Ranger', 'Bayesian', 'cluster', 'cluster-neq', 'directional', 'no correction'))
+# correction_colors <- c(`CellRanger`="#2222F2", Bayesian="#017A5A", cluster="#9B3BB8", `cluster-neq`="#E69F00", directional="#BD5500", `no correction`='#757575')
+# color_scale <- scale_color_manual(name='Correction', values=alpha(correction_colors, 0.7))
 ```
 
 ```{r}
 fig_umi_length <- 7
-corrected_data <- as.data.frame(trimmed[[fig_umi_length - 5]]$filt_cells)
-corrected_data$NoCorrection <- trimmed[[fig_umi_length - 5]]$umis.per.gene
+corrected_data <- as_tibble(trimmed[[fig_umi_length - 5]]$filt_cells)
+colnames(corrected_data) <- c('Bayesian', 'cluster', 'cluster-neq', 'directional')
+corrected_data$`no correction` <- trimmed[[fig_umi_length - 5]]$umis.per.gene
 corrected_data$real <- raw$filt_umis_per_gene_simple
 
 plot_df <- melt(corrected_data, id.vars='real', variable.name='Correction') %>%
@@ -195,7 +201,7 @@ gp3 <- ggplot(plot_df, aes(x=real, y=100 * (value - real) / real, color=Correcti
   geom_smooth() +
   scale_x_log10(expand=c(0.01, 0)) + annotation_logticks(sides='b') +
   scale_y_continuous(limits=c(-101, 51), expand=c(0, 0)) +
-  scale_color_manual(values=correction_colors[2:length(correction_colors)]) +
+  # scale_color_manual(values=correction_colors[2:length(correction_colors)]) +
   guides(color=guide_legend(ncol=3)) + theme_pdf(legend.pos=c(0, 0))
 
 gp3
@@ -207,43 +213,18 @@ saveRDS(aml035_plots, paste0(kDataPath, '/gg_plots.rds'))
 ```
 
 ```{r}
-f_bmmc_plots <- readRDS('/d0-mendel/home/viktor_petukhov/Data/10x/frozen_bmmc_healthy_donor1/est_07_05/correlations_by_clust.rds')
-f_pbmc_plots <- readRDS('/d0-mendel/home/viktor_petukhov/Data/10x/frozen_pbmc_donor_a/est_07_10/correlations_by_clust.rds')
-```
-
-```{r, fig.width=5, fig.height=4}
-f_bmmc_plots$gg <- ggplot(f_bmmc_plots$correlations_by_clust, aes(x=spearman, color=CorrectionType, linetype=CollisionsAdjustment)) +
-  geom_density(size=1.3, show.legend=F) +
-  geom_line(aes(y=rep(0, nrow(f_bmmc_plots$correlations_by_clust))), size=1.3) +
-  color_scale +
-  scale_linetype_manual(name='Collisions\nadjustment', values=c('solid', 'dashed'), labels=c('adjusted', 'unadjusted')) +
-  scale_x_continuous(expand=c(0, 0), limits=c(0.55, 0.85)) +
-  scale_y_continuous(expand=c(0, 0), limits=c(0, 9.5), name='Density') +
-  theme_pdf(legend.pos=c(0, 1)) +
-  guides(linetype=guide_legend(order=2, keywidth=1.2, override.aes=list(linetype=c('solid', '21'))),
-         color=guide_legend(reverse=T, order=1, keywidth=1.2))
-f_bmmc_plots$gg
-```
-
-```{r, fig.width=5, fig.height=8}
-corr_fig <- cowplot::plot_grid(f_bmmc_plots$gg + rremove("xlab"),
-                      f_pbmc_plots$gg + scale_x_continuous(expand=c(0, 0), limits=c(0.75, 0.9)) +
-                        color_scale + rremove("xlab") + rremove("legend"),
-                      ncol=1, nrow=2, labels=c('D', 'E'), align='v')
-
-corr_fig_ann <- annotate_figure(corr_fig + theme(plot.margin=margin(t=10, unit='pt')),
-                                bottom=text_grob("Spearman correlation", size=14))
-corr_fig_ann
+aml035_plots <- readRDS(paste0(kDataPath, '/gg_plots.rds'))
+bmmc_plots_data <- readRDS('~/tmp_r_exchange/bmmc_umi_fig_part2.rds')
 ```
 
 ```{r, fig.width=4, fig.height=7}
-scale_color_short <- scale_color_manual(values=alpha(correction_colors[2:length(correction_colors)], 0.7))
-figure_trim <- cowplot::plot_grid(aml035_plots$gp1 + theme_pdf() + ylab('Error, %') + rremove("xlab"),
-                         aml035_plots$gp2 + theme_pdf() + rremove("xlab"),
+scale_color_short <- scale_color_manual(values=alpha(bmmc_plots_data$correction_colors, 0.7) %>% setNames(names(bmmc_plots_data$correction_colors)))
+figure_trim <- cowplot::plot_grid(aml035_plots$gp1 + theme_pdf() + ylab('Error, %') + rremove("xlab") + theme(plot.margin=margin(b=2, unit='pt')),
+                         aml035_plots$gp2 + theme_pdf() + rremove("xlab") + theme(plot.margin=margin(b=2, unit='pt')),
                          aml035_plots$gp3 + theme_pdf() + ylab('Error, %') +
                            scale_color_short +
                            guides(color=guide_legend(title='Correction (see Figure D)', label.theme=element_blank(), ncol=5, reverse=T)) +
-                           rremove("xlab"),
+                           rremove("xlab") + theme(plot.margin=margin()),
                          ncol=1, nrow=3, labels = c("A", "B", "C"), align='v')
 
 figure_trim_ann <- annotate_figure(figure_trim + theme(plot.margin=margin(t=10, l=0, unit='pt')),
@@ -253,14 +234,14 @@ figure_trim_ann
 ```
 
 ```{r, fig.width=8, fig.height=7}
-full_fig <- cowplot::plot_grid(figure_trim_ann + theme(plot.margin=margin()), corr_fig_ann + theme(plot.margin=margin()), ncol=2)
-full_fig_ann <- annotate_figure(full_fig, fig.lab="Figure 2", fig.lab.pos="top.right")
-# ggexport(full_fig_ann, filename=paste0(kPlotsFolder, '/Figure.pdf'), pdf.width=8)
-full_fig_ann
+fig_full <- cowplot::plot_grid(figure_trim_ann + theme(plot.margin=margin()), 
+                               bmmc_plots_data$gg_fig + theme(plot.margin=margin()), ncol=2)
+fig_full_ann <- annotate_figure(fig_full, fig.lab="Figure 2", fig.lab.pos="top.right")
+fig_full
 ```
 
 ```{r}
 pdf(paste0(kPlotsFolder, '/Figure.pdf'), width=8, height=7)
-print(full_fig_ann)
+print(fig_full_ann)
 dev.off()
 ```
