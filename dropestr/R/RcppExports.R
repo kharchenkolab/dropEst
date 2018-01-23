@@ -53,10 +53,6 @@ Quantize <- function(values, quant_borders) {
     .Call('_dropestr_Quantize', PACKAGE = 'dropestr', values, quant_borders)
 }
 
-PredictLeftPart <- function(classifier, predict_data, gene_size) {
-    .Call('_dropestr_PredictLeftPart', PACKAGE = 'dropestr', classifier, predict_data, gene_size)
-}
-
 ArrangePredictions <- function(target_umi_factors, probs) {
     .Call('_dropestr_ArrangePredictions', PACKAGE = 'dropestr', target_umi_factors, probs)
 }
@@ -65,11 +61,10 @@ FilterPredictions <- function(not_filtered_umis, base_umis, target_umis) {
     .Call('_dropestr_FilterPredictions', PACKAGE = 'dropestr', not_filtered_umis, base_umis, target_umis)
 }
 
-PrepareClassifierData <- function(reads_per_umi, umi_probabilities, probability_normalizers) {
-    .Call('_dropestr_PrepareClassifierData', PACKAGE = 'dropestr', reads_per_umi, umi_probabilities, probability_normalizers)
+PrepareClassifierData <- function(reads_per_umi) {
+    .Call('_dropestr_PrepareClassifierData', PACKAGE = 'dropestr', reads_per_umi)
 }
 
-#' @export
 PrepareClassifierTrainingData <- function(reads_per_umi_pairs) {
     .Call('_dropestr_PrepareClassifierTrainingData', PACKAGE = 'dropestr', reads_per_umi_pairs)
 }

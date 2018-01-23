@@ -134,19 +134,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// PredictLeftPart
-NumericVector PredictLeftPart(const List& classifier, const DataFrame& predict_data, int gene_size);
-RcppExport SEXP _dropestr_PredictLeftPart(SEXP classifierSEXP, SEXP predict_dataSEXP, SEXP gene_sizeSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const List& >::type classifier(classifierSEXP);
-    Rcpp::traits::input_parameter< const DataFrame& >::type predict_data(predict_dataSEXP);
-    Rcpp::traits::input_parameter< int >::type gene_size(gene_sizeSEXP);
-    rcpp_result_gen = Rcpp::wrap(PredictLeftPart(classifier, predict_data, gene_size));
-    return rcpp_result_gen;
-END_RCPP
-}
 // ArrangePredictions
 std::vector<int> ArrangePredictions(const std::vector<int>& target_umi_factors, const std::vector<double>& probs);
 RcppExport SEXP _dropestr_ArrangePredictions(SEXP target_umi_factorsSEXP, SEXP probsSEXP) {
@@ -173,15 +160,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // PrepareClassifierData
-DataFrame PrepareClassifierData(const List& reads_per_umi, const NumericVector& umi_probabilities, const NumericVector& probability_normalizers);
-RcppExport SEXP _dropestr_PrepareClassifierData(SEXP reads_per_umiSEXP, SEXP umi_probabilitiesSEXP, SEXP probability_normalizersSEXP) {
+DataFrame PrepareClassifierData(const List& reads_per_umi);
+RcppExport SEXP _dropestr_PrepareClassifierData(SEXP reads_per_umiSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const List& >::type reads_per_umi(reads_per_umiSEXP);
-    Rcpp::traits::input_parameter< const NumericVector& >::type umi_probabilities(umi_probabilitiesSEXP);
-    Rcpp::traits::input_parameter< const NumericVector& >::type probability_normalizers(probability_normalizersSEXP);
-    rcpp_result_gen = Rcpp::wrap(PrepareClassifierData(reads_per_umi, umi_probabilities, probability_normalizers));
+    rcpp_result_gen = Rcpp::wrap(PrepareClassifierData(reads_per_umi));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -362,10 +347,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dropestr_GetSmallerNeighboursDistributionsBySizes", (DL_FUNC) &_dropestr_GetSmallerNeighboursDistributionsBySizes, 8},
     {"_dropestr_FilterUmisInGeneClassic", (DL_FUNC) &_dropestr_FilterUmisInGeneClassic, 2},
     {"_dropestr_Quantize", (DL_FUNC) &_dropestr_Quantize, 2},
-    {"_dropestr_PredictLeftPart", (DL_FUNC) &_dropestr_PredictLeftPart, 3},
     {"_dropestr_ArrangePredictions", (DL_FUNC) &_dropestr_ArrangePredictions, 2},
     {"_dropestr_FilterPredictions", (DL_FUNC) &_dropestr_FilterPredictions, 3},
-    {"_dropestr_PrepareClassifierData", (DL_FUNC) &_dropestr_PrepareClassifierData, 3},
+    {"_dropestr_PrepareClassifierData", (DL_FUNC) &_dropestr_PrepareClassifierData, 1},
     {"_dropestr_PrepareClassifierTrainingData", (DL_FUNC) &_dropestr_PrepareClassifierTrainingData, 1},
     {"_dropestr_GetTrimCollisionsNum", (DL_FUNC) &_dropestr_GetTrimCollisionsNum, 2},
     {"_dropestr_FillCollisionsAdjustmentInfo", (DL_FUNC) &_dropestr_FillCollisionsAdjustmentInfo, 2},

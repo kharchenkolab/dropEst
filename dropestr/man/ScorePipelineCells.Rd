@@ -6,7 +6,7 @@
 \usage{
 ScorePipelineCells(pipeline.data, filter.high.mit.fraction = F,
   mitochondrion.genes = NULL, mit.chromosome.name = NULL,
-  tags.data = NULL)
+  tags.data = NULL, predict.all = FALSE)
 }
 \arguments{
 \item{pipeline.data}{data for classification.}

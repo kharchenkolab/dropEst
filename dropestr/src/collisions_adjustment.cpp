@@ -74,8 +74,11 @@ private:
 
 public:
   CollisionsAdjuster()
-    : _sum_collisions(0)
-    , _last_total_gene_size(0)
+    : _adjusted_sizes()
+  , _umi_probabilities()
+  , _umi_probabilities_neg_prod()
+  , _sum_collisions(0)
+  , _last_total_gene_size(0)
   {}
 
   void init(const probs_vec_t &umi_probabilities, size_t max_gene_expression = 0) {

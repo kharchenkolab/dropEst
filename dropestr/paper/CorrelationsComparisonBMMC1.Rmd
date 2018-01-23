@@ -29,7 +29,8 @@ knitr::opts_chunk$set(fig.width=5, fig.height=3, echo=FALSE, warning=FALSE, mess
 
 theme_set(theme_base)
 
-kPlotDir <- '~/Data/Plots/Paper/Review/UmiErrors/'
+kDatasetName <- 'frozen_bmmc_healthy_donor1'
+kPlotsDir <- paste0('~/Data/Plots/Paper/Review/UmiErrors/', kDatasetName, '/')
 kDataPath <- '/d0-mendel/home/viktor_petukhov/Data/10x/frozen_bmmc_healthy_donor1/est_11_10_umi_quality/'
 ```
 
@@ -136,15 +137,6 @@ corrected_cms <- lapply(corrected_cms, function(cm) cm[grep("^[^;]+$", rownames(
 names(corrected_cms) <- c('Bayesian', 'cluster', 'cluster-neq', 'directional', 'raw')
 ```
 
-```{r}
-# umis_per_gene <- lapply(corrected_cms, function(cm) cm@x)
-# umis_per_gene <- lapply(umis_per_gene, function(x) x[umis_per_gene$raw > 1]) %>% as.data.frame()
-# ggplot(melt(umis_per_gene, id.vars='raw')) +
-#   geom_point_rast(aes(x = raw, y = raw - value, color = variable, size = 1, alpha=0.05)) +
-#   scale_x_log10() + annotation_logticks() +
-#   theme_pdf(legend.pos = c(0, 1))
-```
-
 Create pagoda object for raw data:
 ```{r, message=FALSE, warning=FALSE}
 kClusteringType <- 'infomap'
@@ -178,6 +170,37 @@ for (n in names(corrected_cms)) {
 }
 
 norm_cms <- lapply(rs, function(r) t(r$counts))
+```
+
+## Magnitude of correction
+Raw expression:
+
+```{r, fig.width=7, fig.height=5}
+umis_per_gene <- lapply(corrected_cms, function(cm) cm@x)
+umis_per_gene <- lapply(umis_per_gene, function(x) x[umis_per_gene$raw > 1]) %>% as.data.frame()
+ggplot(melt(umis_per_gene, id.vars='raw'), aes(x = raw, y = raw - value, color = variable)) +
+  geom_point_rast(size = 1, alpha=0.05) +
+  # geom_smooth() +
+  # facet_wrap(~variable) +
+  scale_x_log10() + scale_y_log10() + annotation_logticks() +
+  labs(x = 'Raw expression', y = 'Expression change') +
+  # theme_pdf(legend.pos = 'none') +
+  theme_pdf(legend.pos = c(0.05, 1)) +
+  guides(color = guide_legend(override.aes=list(alpha=1), title='Correction'))
+```
+
+Normalized expression:
+
+```{r, fig.width=7, fig.height=5}
+norm_umis_per_gene <- lapply(norm_cms, function(cm) cm@x)
+norm_umis_per_gene <- lapply(norm_umis_per_gene, function(x) x[(umis_per_gene$raw > 1) & (umis_per_gene$raw != umis_per_gene$cluster)]) %>% as.data.frame()
+ggplot(melt(norm_umis_per_gene, id.vars='raw')) +
+  geom_point_rast(aes(x = raw, y = 1e-6 + raw - value, color = variable), size = 0.5, alpha=0.05) +
+  facet_wrap(~variable) +
+  scale_x_log10() + scale_y_log10() + annotation_logticks(sides='b') +
+  labs(x = 'Raw exression', y = '1e-6 + Exression change') +
+  theme_pdf(legend.pos = 'none') +
+  theme(strip.text.x=element_text(margin=margin(t=3, b=3, unit='pt')))
 ```
 
 ## Target correlations
@@ -219,6 +242,12 @@ gg2 + facet_wrap(~Cluster) + scale_x_continuous(limits=c(0, 1), breaks=c(0, 0.5,
 To understand the reason of the difference between correlations, we can look at a fixe pair of cells.
 To present these pairs we can plot heatmap, which would be the graphical representation of the contingency table for these cells.
 Numbers above the plots denote Spearman correlation. Here, all expression values above the x/y border were set to the border value.
+```{r}
+ggplot(as.data.frame(corrected_cms$raw[genes, barcodes] %>% as.matrix()) %>% `colnames<-`(c('C1','C2'))) + geom_point(aes(x = rank(C1), y = rank(C2)))
+ggplot(as.data.frame(corrected_cms$Bayesian[genes, barcodes] %>% as.matrix()) %>% `colnames<-`(c('C1','C2'))) + geom_point(aes(x = rank(C1), y = rank(C2)))
+ggplot(as.data.frame(corrected_cms$cluster[genes, barcodes] %>% as.matrix()) %>% `colnames<-`(c('C1','C2'))) + geom_point(aes(x = rank(C1), y = rank(C2)))
+```
+
 ```{r, message=FALSE, fig.width=8, fig.height=6}
 cl_correlations <- inner_join(correlations %>% filter(Correction == 'cluster'), 
                               correlations %>% filter(Correction == 'Bayesian') %>% 
@@ -288,6 +317,9 @@ var_dfs <- lapply(real_clusters, function(cl)
                           median.expression.threshold=10))
 
 var_df <- var_dfs %>% bind_rows(.id='Cluster') %>% mutate(Cluster = as.integer(Cluster))
+```
+
+```{r}
 plot_df <- var_df %>% group_by(Gene, Correction, Cluster) %>% 
   summarise(Variation = IQR(Expression), VariationRaw = IQR(ExpressionRaw), 
             VariationDiff = Variation - VariationRaw, Mean = mean(Expression, trim=0.1))
@@ -300,12 +332,14 @@ ggplot(plot_df) + geom_density(aes(x=VariationDiff, color=Correction)) +
 
 Dependency between mean and variation:  
 ```{r}
-ggplot(plot_df, aes(x=Mean, y=Variation, color=Correction)) + 
-  geom_point(alpha=0.8, size=1) + 
+gg_variation <- ggplot(plot_df, aes(x=Mean, y=Variation, color=Correction)) + 
+  geom_point(size=1) + 
   geom_smooth(method='lm') +
   scale_x_log10() + scale_y_log10() + 
   labs(x='Trimmed mean expression (10% trim level)', y='Interquartile range') +
   theme_pdf(legend.pos=c(0, 1))
+
+gg_variation
 ```
 
 According to this plot, `cluster` and `directional` corrections increase variation coeffitient.
@@ -357,7 +391,7 @@ tested_genes <- rev(rownames(expr_mats$raw)[clust_row$order])[38:54]
 tested_clusters <- colnames(expr_mats$raw)[clust_col$order][7:ncol(expr_mats$raw)] %>% as.integer()
 ```
 
-We can see that a lot of clusters has the same set of highly-expressed genes. Let's choose some such genes and clusters.
+We can see that a lot of clusters have the same set of highly-expressed genes. Let's choose some such genes and clusters.
 
 Genes:
 ```{r}
@@ -459,14 +493,41 @@ obs_ed_sds <- mclapply(obs_eds, function(x) sd(x) / (length(x) %>% sqrt()), mc.c
 ```
 
 Here, confidence intervals are negligable and not shown:
-
 ```{r}
+plot_df <- (abs(obs_ed_probs - ed_probs)) %>% mutate(EditDistance=1:5) %>% 
+  melt(variable.name = 'Correction', value.name = 'Error', id.vars = 'EditDistance')
+
+(text_df <- as.data.frame(abs(obs_ed_probs - ed_probs) / ed_probs) %>% mutate(EditDistance=1:5) %>% 
+  melt(variable.name = 'Correction', value.name = 'Error', id.vars = 'EditDistance') %>%
+  mutate(x=EditDistance + (as.integer(Correction) - 3) / 5.5, y=100 * plot_df$Error + 0.1))
+
+breaks <- seq(0, 100, by=25)
+ggplot(plot_df) + 
+  geom_bar(aes(x = EditDistance, y = 100 * Error, fill = Correction), color = 'black', position = 'dodge', stat = 'identity') + 
+  labs(x = 'Edit distance', y = 'Probability error') +
+  geom_text(aes(x=x, y=y, label=format(100*Error, digits=0)), text_df) +
+  scale_y_continuous(expand=c(0.0, 0), limits=c(0, 3)) +
+  theme_pdf(legend.pos=c(1, 1)) +
+  theme(panel.grid.major=element_blank())
+```
+
+```{r, fig.width=8, fig.height=4}
 plot_df <- (abs(obs_ed_probs - ed_probs) / ed_probs) %>% mutate(EditDistance=1:5) %>% 
   melt(variable.name = 'Correction', value.name = 'Error', id.vars = 'EditDistance')
 
-ggplot(plot_df) + 
+text_df <- data.frame(Prob=ed_probs, EditDistance=1:5, x=1:5 - 0.03) %>%
+  mutate(y = plot_df %>% group_by(EditDistance) %>% summarise(Error=max(Error)) %>% .$Error * 100 + 3.5)
+
+breaks <- seq(0, 100, by=25)
+gg_eds <- ggplot(plot_df) + 
   geom_bar(aes(x = EditDistance, y = 100 * Error, fill = Correction), color = 'black', position = 'dodge', stat = 'identity') + 
-  labs(x = 'Edit distance', y = 'Relative error, %') +
+  labs(x = 'Edit distance', y = 'Relative probability error, %') +
+  geom_text(aes(x=x, y=y, label=format(Prob, digits=2)), text_df) +
+  scale_y_continuous(expand=c(0.0, 0), limits=c(0, 107), minor_breaks=breaks - 1e-3, breaks=breaks) +
+  scale_x_continuous(minor_breaks=NULL) +
   theme_pdf(legend.pos=c(1, 1)) +
-  theme(panel.grid.major=element_blank()) + scale_y_continuous(expand=c(0.0, 0))
+  theme(panel.grid.major=element_blank())
+
+cowplot::plot_grid(gg_variation + annotation_logticks() + rremove("legend"), gg_eds, labels="AUTO")
+ggsave(paste0(kPlotsDir, 'figure_correction.pdf'))
 ```

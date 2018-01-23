@@ -14,6 +14,7 @@ library(ggplot2)
 library(ggsci)
 library(ggpubr)
 library(ggridges)
+library(ggrastr)
 library(dplyr)
 library(parallel)
 library(reshape2)
@@ -24,7 +25,7 @@ source("./Functions/Functions.R")
 knitr::opts_chunk$set(fig.width=5, fig.height=3, echo=FALSE, warning=FALSE, message=FALSE)
 
 theme_set(theme_base)
-# kPlotsFolder <- '~/Data/Plots/Paper/Review/UmiCollisions/'
+kPlotsFolder <- '~/Data/Plots/Paper/Review/UmiCollisions/'
 ```
 
 ```{r}
@@ -54,13 +55,13 @@ MaxCharFreq <- function(str) {
   return(max(table(strsplit(str, split='')) / nchar(str)))
 }
 
-MaxFreqDistribution <- function(tail.length, umi.distr.tail) {
+MaxFreqDistribution <- function(prefix.length, umi.distr.tail) {
   substrs <- sapply(names(umi.distr.tail),
-                    function(n) substr(n, nchar(n) - tail.length + 1, nchar(n)))
+                    function(n) substr(n, 1, prefix.length))
   max.frecs <- sapply(substrs, MaxCharFreq)
   observed <- sapply(split(umi.distr.tail, max.frecs), sum) / sum(umi.distr.tail)
 
-  uniform <- sapply(1:10000, function(i) max(table(sample(1:4, size=tail.length, replace = T)) / tail.length))
+  uniform <- sapply(1:10000, function(i) max(table(sample(1:4, size=prefix.length, replace = T)) / prefix.length))
   estimated <- table(uniform) / length(uniform)
 
   all.fracs <- union(names(estimated), names(observed))
@@ -95,7 +96,7 @@ df$AdjustedClassic <- mapply(AdjustGeneExpressionClassic, df$Observed, 4^df$UmiL
 df_s <- setNames(split(df, df$IsReverse), c('Reverse', 'Direct'))
 ```
 
-```{r, fig.width=4, fig.height=5}
+```{r, fig.width=3.5, fig.height=5.5}
 plt_guide <- guides(color=guide_legend(title='UMI length', nrow = 2, order=1),
                     linetype=guide_legend(title='UMI distribution', order=2, keywidth = 1.5))
 
@@ -107,19 +108,21 @@ fig_collisions <- ggplot(df_s$Direct, aes(x=Observed, col=as.factor(UmiLength)))
   # geom_line(data=df_s$Reverse, mapping=aes(y=Adjusted - Observed, linetype='Empirical, trim front'), size=0.9) +
   scale_x_continuous(expand = expand, breaks=seq(4000, 12000, 4000)) + scale_y_continuous(expand = expand) +
   labs(x='#Observed UMIs', y='#Collisions') +
-  legend_pos(1, 1) + theme_pdf + plt_guide
+  theme_pdf(legend.pos=c(1, 1)) + plt_guide
 
-ggsave(fig_collisions, filename=paste0(kPlotsFolder, '/FigureCollisons.pdf'), height=8, width=4)
+fig_collisions <- cowplot::plot_grid(fig_collisions, labels='C')
+
+ggsave(fig_collisions, filename=paste0(kPlotsFolder, '/FigureCollisons.pdf'), height=5.5, width=3.5)
 fig_collisions
 ```
 
 ```{r, fig.width=4, fig.height=5}
 gg_collisions_ext <- ggplot(mapping=aes(x=Observed, col=as.factor(UmiLength), y=Adjusted / AdjustedClassic)) + 
-  geom_smooth(data=df_s$Direct, mapping=aes(linetype='Empirical, trim back'), size=0.9, se=F) +
-  geom_smooth(data=df_s$Reverse, mapping=aes(linetype='Empirical, trim front'), size=0.9, se=F) +
+  geom_smooth(data=df_s$Direct, mapping=aes(linetype='Empirical, back trim'), size=0.9, se=F) +
+  geom_smooth(data=df_s$Reverse, mapping=aes(linetype='Empirical, front trim'), size=0.9, se=F) +
   scale_x_continuous(expand = expand) + scale_y_continuous(expand = expand) +
   labs(x='#Observed UMIs', y='#Collisions empirical / #Collisions uniform') +
-  legend_pos(1, 1) + theme_pdf + plt_guide
+  theme_pdf(legend.pos=c(1, 1)) + plt_guide
 
 gg_collisions_ext
 ```
@@ -133,23 +136,23 @@ umi_distribution_tail <- umi_distribution[umi_distribution > quantile(umi_distri
 ```
 
 ```{r}
-tail_lengths <- seq(2, 10, 2)
-distrs_by_length <- mclapply(tail_lengths, MaxFreqDistribution, umi_distribution_tail, mc.cores=10)
-plot_df <- lapply(1:length(tail_lengths),
-                  function(i) cbind(melt(distrs_by_length[[i]], id.vars = 'fracs'), TailLength=tail_lengths[i]))
+prefix_lengths <- seq(2, 10, 2)
+distrs_by_length <- mclapply(prefix_lengths, MaxFreqDistribution, umi_distribution_tail, mc.cores=10)
+plot_df <- lapply(1:length(prefix_lengths),
+                  function(i) cbind(melt(distrs_by_length[[i]], id.vars = 'fracs'), PrefixLength=prefix_lengths[i]))
 plot_df <- plot_df %>% bind_rows()
 ```
 
 ```{r, fig.width=4, fig.height=6}
 gl <- guide_legend(title='Distribution')
-gg_stretches <- ggplot(plot_df, aes(x = fracs, y = as.factor(TailLength), height = value,
+gg_stretches <- ggplot(plot_df, aes(x = fracs, y = as.factor(PrefixLength), height = value,
                                     fill=variable, linetype=variable)) + 
   geom_density_ridges(stat = "identity", scale = 0.95, alpha=0.7) +
   scale_x_continuous(expand = c(0.005, 0.005)) +
   scale_y_discrete(expand = c(0.02, 0.02)) +
-  labs(x='Fraction of the most\nfrequent nucleotide', y='UMI tail length') +
-  theme_pdf + legend_pos(0.01, 0) +
-  guides(fill=gl, linetype=gl)
+  labs(x='Fraction of the most\nfrequent nucleotide', y='UMI prefix length') +
+  theme_pdf(legend.pos=c(0.01, 0)) +
+  guides(fill=gl, linetype=gl) + scale_fill_npg()
 
 gg_stretches
 ```
@@ -211,7 +214,7 @@ gg_prob_ratio <- ggplot(plot_df, aes(x=GeneSize)) +
   scale_linetype_manual(values='dashed', name='Probabilities ratio') +
   guides(color=guide_legend(title='UMI distribution')) + 
   guides(linetype=guide_legend(override.aes=list(linetype=6))) +
-  theme_pdf + legend_pos(0.5, 0) + 
+  theme_pdf(legend.pos=c(0.5, 0)) + 
   theme(legend.box='horizontal', legend.key.width=unit(0.3, 'in'))
 gg_prob_ratio
 ```
@@ -221,7 +224,7 @@ gg_upper <- cowplot::plot_grid(gg_stretches, gg_collisions_ext, ncol=2, labels=c
 gg_figure <- cowplot::plot_grid(gg_upper, gg_prob_ratio + theme(plot.margin=margin(0, 0, 0, 0, 'in')), 
                                 nrow=2, labels=c('', 'C'), align='h', rel_heights=c(3, 2), label_x=0.03, label_y=1.12)
 
-# ggsave(gg_figure, filename=paste0(kPlotsFolder, 'CollisionsSupFig.pdf'), width=8, height=7)
+ggsave(gg_figure, filename=paste0(kPlotsFolder, 'CollisionsSupFig.pdf'), width=7, height=8)
 gg_figure
 ```
 

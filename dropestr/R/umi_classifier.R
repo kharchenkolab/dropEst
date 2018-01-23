@@ -22,6 +22,7 @@ ErrorProbsGivenRlRs <- function(probs.given.rl, reads.small.cumsum, reads.large)
   sum.reads.large[sum.reads.large > ncol(probs.given.rl)] <- ncol(probs.given.rl)
 
   probs.subset <- probs.given.rl[1:(length(reads.small.cumsum) + 1), sum.reads.large]
+
   return(diag(probs.subset) / colSums(probs.subset))
 }
 
@@ -99,10 +100,9 @@ GetPercentileQuantBorders <- function(distribution, max.quants.num) {
   return(distribution$Value[quants])
 }
 
-GetQualityQuantBorders <- function(values, max.quants.num, distribution.smooth = 0) {
-  values <- lapply(values, ValueCounts)
-  values <- lapply(values, function(v) data.frame(Value=as.integer(names(v)),
-                                                  Probability= (v + distribution.smooth) / sum(v + distribution.smooth)))
+GetQualityQuantBorders <- function(values, max.quants.num) {
+  values <- lapply(values, ValueCounts) %>%
+    lapply(function(v) data.frame(Value=as.integer(names(v)), Probability = v / sum(v)))
 
   distribution <- dplyr::full_join(values[[1]], values[[2]], by='Value') %>%
     dplyr::mutate_all(dplyr::funs(replace(., is.na(.), 0))) %>%
@@ -132,8 +132,7 @@ SmoothDistribution <- function(values, smooth, max.value=NULL, smooth.probs=FALS
   return(probs)
 }
 
-TrainNBNegative <- function(train.data, rpus.extracted, distribution.smooth, nucleotide.pairs.number,
-                            umi.length, quality.prior, adj.umi.num, mc.cores) {
+TrainNBNegative <- function(rpus.extracted, quality.prior, adj.umi.num, mc.cores) {
   params.neg <- list()
 
   reads.per.umi.train <- ReadsPerUmiDataset(rpus.extracted, max.umis.per.cb=4)
@@ -147,32 +146,26 @@ TrainNBNegative <- function(train.data, rpus.extracted, distribution.smooth, nuc
 
   params.neg$MinRpUParams <- list(Theta=read.error.theta, Prob=read.error.prob)
   params.neg$ErrorNumProbsRL <- probs.given.reads.large
-
-  params.neg$Position <- SmoothDistribution(train.data$Position, distribution.smooth, umi.length, log.probs=T) # TODO: remove?
-  params.neg$Nucleotides <- SmoothDistribution(train.data$Nucleotides, distribution.smooth, nucleotide.pairs.number, log.probs=T)
   params.neg$Quality <- quality.prior
 
   return(params.neg)
 }
 
 #' @export
-TrainNBClassifier <- function(reads.per.umi.per.cb, distribution.smooth, umi.probabilities, quality.quants.num=15,
-                              quality.smooth=0.01, mc.cores=1) {
-  kNucleotides <- c('A', 'T', 'G', 'C')
-
+TrainNBClassifier <- function(reads.per.umi.per.cb, adj.umi.num, quality.quants.num=15, quality.smooth=0.01, mc.cores=1) {
   umis.per.gene <- sapply(reads.per.umi.per.cb, length)
   paired.rpus <- reads.per.umi.per.cb[umis.per.gene == 2]
   is.pair.adjacent <- plapply(paired.rpus, function(g) names(g) %>% SubsetAdjacentUmis() %>% sapply(length), mc.cores=mc.cores) %>%
     sapply(max)
 
-  train.data <- PrepareClassifierTrainingData(paired.rpus[is.pair.adjacent > 0])
+  train.data <- PrepareClassifierTrainingData(paired.rpus[is.pair.adjacent > 0]) # TODO: we need only quality
 
   if (nrow(train.data) == 0)
     stop('Data has no training samples with UMI errors')
 
   # Quality estimation
   quality.vals <- list(negative=train.data$Quality, common=unlist(plapply(reads.per.umi.per.cb[umis.per.gene <= 2], sapply, `[[`, 2, mc.cores=mc.cores)))
-  quant.borders <- GetQualityQuantBorders(quality.vals, quality.quants.num, distribution.smooth)
+  quant.borders <- GetQualityQuantBorders(quality.vals, quality.quants.num)
 
   quantized.quality.data <- lapply(quality.vals, Quantize, quant.borders)
   quants.num <- max(sapply(quantized.quality.data, max)) + 1
@@ -181,23 +174,12 @@ TrainNBClassifier <- function(reads.per.umi.per.cb, distribution.smooth, umi.pro
   # Reads per UMI distributions
   rpus.extracted <- ExtractReadsPerUmi(reads.per.umi.per.cb, mc.cores=mc.cores)
   rpu.distribution <- SmoothDistribution(unlist(rpus.extracted) - 1, 10, log.probs=F)
-  adj.umi.num <- nchar(names(umi.probabilities)[1]) * 3
 
   # Distributions given error
-  clf.neg <- TrainNBNegative(train.data, rpus.extracted, distribution.smooth=distribution.smooth,
-                             nucleotide.pairs.number=NumberOfNucleotidePairs(),
-                             umi.length=nchar(names(reads.per.umi.per.cb[[1]])[1]), quality.prior=quality.probs$negative,
-                             adj.umi.num=adj.umi.num, mc.cores=mc.cores)
+  clf.neg <- TrainNBNegative(rpus.extracted, quality.prior=quality.probs$negative, adj.umi.num=adj.umi.num, mc.cores=mc.cores)
 
   # Distribution over all data
-  nucl.freqs <- names(umi.probabilities) %>% sapply(strsplit, '') %>% lapply(table) %>% # TODO: remove?
-    lapply(function(tb) c(setNames(rep(0, length(kNucleotides) - length(tb)), setdiff(kNucleotides, names(tb))), tb)) %>%
-    lapply(`[`, kNucleotides)
-
-  nucl.probs <- mapply(`*`, nucl.freqs, umi.probabilities) %>% rowSums() %>% (function(x) x / sum(x)) %>% log()
-
-  clf.common <- list(NucleotideProbs=nucl.probs, Quality=quality.probs$common, RpUDistribution=log(rpu.distribution))
-  # clf.common <- list(Quality=quality.probs$common, RpUDistribution=log(rpu.distribution))
+  clf.common <- list(Quality=quality.probs$common, RpUDistribution=log(rpu.distribution))
 
   return(list(Negative=clf.neg, Common=clf.common, QualityQuantBorders=quant.borders, MaxAdjacentUmisNum=adj.umi.num))
 }
@@ -240,13 +222,10 @@ PredictBayesian <- function(classifier, classifier.df, filt.gene, dp.matrices, n
   total.rpus <- classifier.df$MinRpUCS + classifier.df$MaxRpU
   classifier.df$RealProb <- classifier$Common$RpUDistribution[classifier.df$MinRpU] - classifier.df$MaxRpUProb +
     classifier.df$RealQualityProb
-    # classifier$Common$NucleotideProbs[as.character(classifier.df$NucleotideLarge)] + classifier.df$UmiProb
 
   classifier.df$ErrorProb <- dbetabinom(classifier.df$MinRpUCS, size=total.rpus, log=T) -
     log(1 - dbetabinom(0, size=total.rpus)) +
     classifier.df$ErrorQualityProb
-    # classifier$Negative$Nucleotides[classifier.df$Nucleotides + 1] +
-    # classifier$Negative$Position[classifier.df$Position + 1]
 
   classifier.df <- classifier.df[ClassifierDfOrder(classifier.df),]
 

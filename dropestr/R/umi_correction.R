@@ -47,8 +47,8 @@ CorrectUmiSequenceErrorsClassic <- function(reads.per.umi.per.cb, mult, mc.cores
   return(filt.genes)
 }
 
-CorrectUmiSequenceErrorsBayesian <- function(reads.per.umi.per.cb, umi.probabilities, collisions.info, correction.info,
-                                             mc.cores, distribution.smooth, quality.quants.num, verbosity.level=0) {
+CorrectUmiSequenceErrorsBayesian <- function(reads.per.umi.per.cb, collisions.info, correction.info, adj.umi.num,
+                                             mc.cores, quality.quants.num, verbosity.level=0) {
   if (verbosity.level > 0) {
     cat("\nEstimating prior error probabilities...")
   }
@@ -59,8 +59,8 @@ CorrectUmiSequenceErrorsBayesian <- function(reads.per.umi.per.cb, umi.probabili
   if (length(reads.per.umi.per.cb[[1]][[1]][[2]]) == 0)
     stop("Information about quality is required for UMI correction")
 
-  clf <- try(TrainNBClassifier(reads.per.umi.per.cb, distribution.smooth, umi.probabilities=umi.probabilities,
-                               quality.quants.num=quality.quants.num, mc.cores=mc.cores))
+  clf <- try(TrainNBClassifier(reads.per.umi.per.cb, adj.umi.num=adj.umi.num, quality.quants.num=quality.quants.num,
+                               mc.cores=mc.cores))
 
   if (class(clf) == 'try-error') {
     warning(clf)
@@ -72,9 +72,7 @@ CorrectUmiSequenceErrorsBayesian <- function(reads.per.umi.per.cb, umi.probabili
     cat("Correcting UMI sequence errors...")
   }
 
-  umi.probabilities.map <- new(CppMap, names(umi.probabilities), as.vector(umi.probabilities))
-
-  filt.genes <- plapply(reads.per.umi.per.cb, FilterUmisInGene, umi.probabilities.map, clf, correction.info$dp.matrices,
+  filt.genes <- plapply(reads.per.umi.per.cb, FilterUmisInGene, clf, correction.info$dp.matrices,
                         correction.info$neighb.prob.index, collisions.info, mc.cores=mc.cores)
 
   if (verbosity.level > 0) {
@@ -137,10 +135,11 @@ CorrectUmiSequenceErrors <- function(reads.per.umi.per.cb.info, umi.probabilitie
                                                   verbosity.level=if (verbosity.level > 1) verbosity.level else 0)
     }
 
-    filt.genes <- CorrectUmiSequenceErrorsBayesian(reads.per.umi.per.cb, umi.probabilities=umi.probabilities,
+    adj.umi.num <- nchar(names(umi.probabilities)[1]) * 3
+    filt.genes <- CorrectUmiSequenceErrorsBayesian(reads.per.umi.per.cb, adj.umi.num=adj.umi.num,
                                                    collisions.info=collisions.info, correction.info=correction.info,
-                                                   mc.cores=mc.cores, distribution.smooth=distribution.smooth,
-                                                   quality.quants.num=quality.quants.num, verbosity.level=verbosity.level)
+                                                   mc.cores=mc.cores, quality.quants.num=quality.quants.num,
+                                                   verbosity.level=verbosity.level)
   } else {
     filt.genes <- CorrectUmiSequenceErrorsClassic(reads.per.umi.per.cb, mult=mult, mc.cores=mc.cores,
                                                   verbosity.level=verbosity.level)
@@ -170,17 +169,12 @@ GetUmiProbabilitiesIndex <- function(umi.probs, umi.tolerance) {
 }
 
 #' @export
-FilterUmisInGene <- function(cur.gene, umi.probabilities.map, classifier, dp.matrices, neighbours.prob.index,
-                             collisions.info, max.iter=100, verbose=FALSE) {
+FilterUmisInGene <- function(cur.gene, classifier, dp.matrices, neighbours.prob.index, collisions.info, max.iter=100,
+                             verbose=FALSE) {
   if (length(cur.gene) == 1)
     return(cur.gene)
 
-  tryCatch(umi.probabilities <- umi.probabilities.map$at(names(cur.gene)), error=function(x) stop(paste0("Error: ", x$message)))
-
-  umi.probs.normalizers <- lapply(names(cur.gene), GetAdjacentUmis)%>% lapply(umi.probabilities.map$at) %>%
-    sapply(sum) %>% setNames(names(cur.gene))
-
-  classifier.df <- PrepareClassifierData(cur.gene, umi.probabilities, umi.probs.normalizers)
+  classifier.df <- PrepareClassifierData(cur.gene)
 
   if (nrow(classifier.df) == 0)
     return(cur.gene)
