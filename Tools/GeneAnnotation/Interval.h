@@ -9,7 +9,7 @@ namespace Tools
 		class Interval
 		{
 		public:
-			typedef size_t coord_t;
+			using coord_t = size_t;
 
 		private:
 			coord_t _start_pos;

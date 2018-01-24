@@ -13,8 +13,8 @@ namespace Estimation
 		class MergeProbabilityValidator
 		{
 		public:
-			typedef std::vector<unsigned> u_vec_t;
-			typedef std::vector<double> d_vec_t;
+			using u_vec_t = std::vector<unsigned>;
+			using d_vec_t = std::vector<double>;
 
 		private:
 			u_vec_t _umis_per_cell1;
@@ -26,7 +26,7 @@ namespace Estimation
 			std::shared_ptr<PoissonTargetEstimator> _estimator;
 
 		public:
-			MergeProbabilityValidator(const std::shared_ptr<PoissonTargetEstimator> &_estimator);
+			explicit MergeProbabilityValidator(const std::shared_ptr<PoissonTargetEstimator> &_estimator);
 
 			void run_validation(const CellsDataContainer &container, unsigned min_ed, unsigned max_ed,
 			                    size_t cb_pairs_num, unsigned log_period);

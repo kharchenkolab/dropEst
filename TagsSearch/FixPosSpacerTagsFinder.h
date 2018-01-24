@@ -32,7 +32,7 @@ namespace TagsSearch
 			Type type;
 			size_t min_edit_distance;
 
-			MaskPart(const std::string &spacer="", size_t length=0, Type type=Type::NONE, size_t min_edit_distance=0);
+			explicit MaskPart(const std::string &spacer="", size_t length=0, Type type=Type::NONE, size_t min_edit_distance=0);
 		};
 
 	private:
@@ -48,8 +48,9 @@ namespace TagsSearch
 		static size_t parse_barcode_mask(const std::string &mask, size_t cur_pos, MaskPart &mask_part);
 
 	protected:
-		virtual bool parse_fastq_record(FastQReader::FastQRecord &gene_record, Tools::ReadParameters &read_params) override;
-		virtual std::string get_additional_stat(long total_reads_read) const override;
+		bool parse_fastq_record(FastQReader::FastQRecord &gene_record, Tools::ReadParameters &read_params) override;
+
+		std::string get_additional_stat(long total_reads_read) const override;
 
 	public:
 		FixPosSpacerTagsFinder(const std::vector<std::string> &fastq_filenames,

@@ -54,46 +54,15 @@ namespace BarcodesParsing
 			throw std::runtime_error("Can't open barcodes file: '" + barcodes_filename + "'");
 
 		barcode_parts_list_t barcodes;
-		std::vector<size_t> part_lengths; //to check that every line has equal lengths
 
-		std::string line;
-		while (std::getline(cb_f, line))
+		barcodes_list_t barcode_part;
+		while (BarcodesParser::read_line(cb_f, barcode_part, true))
 		{
-			if (line.empty())
-				continue;
+			if (barcode_part.empty())
+				throw std::runtime_error("File with barcodes (" + barcodes_filename + ") has wrong format");
 
-			std::vector<std::string> cb_parts;
-			boost::trim_if(line, boost::is_any_of(" \t\r\n"));
-			boost::split(cb_parts, line, boost::is_any_of(" \t\r\n"), boost::token_compress_on);
-
-			if (!part_lengths.empty() && cb_parts.size() != part_lengths.size())
-			{
-				L_WARN << "WARNING: barcode line has bad format: '" << line << "' (" << cb_parts.size() << " parts, "
-					   << part_lengths.size() << " expected)";
-				continue;
-			}
-
-			if (part_lengths.empty())
-			{
-				part_lengths.resize(cb_parts.size(), 0);
-				barcodes.resize(cb_parts.size());
-			}
-
-			for (size_t part_ind = 0; part_ind < part_lengths.size(); ++part_ind)
-			{
-				if (part_lengths[part_ind] == 0)
-				{
-					part_lengths[part_ind] = cb_parts[part_ind].length();
-				}
-
-				if (part_lengths[part_ind] != cb_parts[part_ind].length())
-				{
-					L_WARN << "WARNING: barcode part has wrong length: '" << cb_parts[part_ind] << "' ("
-						   << this->_barcode_lengths[part_ind] << " expected)";
-					continue;
-				}
-				barcodes[part_ind].push_back(cb_parts[part_ind]);
-			}
+			barcodes.emplace_back(barcode_part);
+			barcode_part.clear();
 		}
 
 		return barcodes;

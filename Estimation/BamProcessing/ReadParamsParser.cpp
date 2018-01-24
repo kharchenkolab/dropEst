@@ -8,9 +8,10 @@ namespace Estimation
 {
 namespace BamProcessing
 {
-	ReadParamsParser::ReadParamsParser(const std::string &genes_filename, const BamTags &tags, bool gene_in_chromosome_name)
-		: tags(tags)
-		, _gene_in_chromosome_name(gene_in_chromosome_name)
+	ReadParamsParser::ReadParamsParser(const std::string &genes_filename, const BamTags &tags,
+	                                   bool gene_in_chromosome_name)
+		: _gene_in_chromosome_name(gene_in_chromosome_name)
+		, tags(tags)
 	{
 		if (genes_filename.length() != 0)
 		{

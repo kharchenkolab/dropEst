@@ -20,6 +20,7 @@
 
 using namespace std;
 using namespace TagsSearch;
+using namespace boost::property_tree;
 
 const std::string CONFIG_PATH = "config.TagsSearch";
 const std::string PROCESSING_CONFIG_PATH = CONFIG_PATH + ".Processing";
@@ -31,7 +32,7 @@ static const std::string SCRIPT_NAME = "droptag";
 struct Params
 {
 	bool cant_parse = false;
-	bool save_reads_names = false;
+	bool save_reads_params = false;
 	bool quiet = false;
 	bool save_stats = false;
 	int num_of_threads = 1;
@@ -42,7 +43,7 @@ struct Params
 	vector<string> read_files = vector<string>();
 };
 
-void save_stats(const string &out_filename, shared_ptr<TagsFinderBase> tags_finder);
+void save_stats(const string &out_filename, const shared_ptr<TagsFinderBase> &tags_finder);
 
 static void usage()
 {
@@ -57,7 +58,7 @@ static void usage()
 	cerr << "\t-l, --log-prefix prefix: logs prefix\n";
 	cerr << "\t-n, --name name: alternative output base name\n";
 	cerr << "\t-p, --parallel number: number of threads\n";
-	cerr << "\t-s, --save-reads-names : serialize reads parameters to save quality info\n";
+	cerr << "\t-s, --save-reads-params : serialize reads parameters to save quality info\n";
 	cerr << "\t-S, --save-stats : save stats to rds file\n";
 	cerr << "\t-t, --lib-tag library tag : (for IndropV3 with library tag only)\n";
 	cerr << "\t-q, --quiet : disable logs\n";
@@ -65,7 +66,7 @@ static void usage()
 
 static void check_files_existence(const Params &params)
 {
-	if (params.config_file_name != "" && !std::ifstream(params.config_file_name))
+	if (!params.config_file_name.empty() && !std::ifstream(params.config_file_name))
 		throw std::runtime_error("Can't open config file '" + params.config_file_name + "'");
 
 	for (auto const &file : params.read_files)
@@ -75,14 +76,14 @@ static void check_files_existence(const Params &params)
 	}
 }
 
-shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const boost::property_tree::ptree &pt)
+shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const ptree &pt)
 {
 	auto const &config = pt.get_child(CONFIG_PATH);
 	std::string protocol_type = config.get<std::string>("protocol", "");
 	if (protocol_type.empty())
 		throw std::runtime_error("Protocol is empty. Please, specify it in the config (TagsSearch/protocol)");
 
-	auto const &processing_config = pt.get_child(PROCESSING_CONFIG_PATH, boost::property_tree::ptree());
+	auto const &processing_config = pt.get_child(PROCESSING_CONFIG_PATH, ptree());
 
 	size_t max_file_size = processing_config.get<size_t>("reads_per_out_file", std::numeric_limits<size_t>::max());
 	auto writer = std::make_shared<ConcurrentGzWriter>(params.base_name, "fastq.gz", max_file_size);
@@ -95,12 +96,12 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const boost::pr
 	{
 		if (params.read_files.size() == 4)
 		{
-			if (params.lib_tag == "")
+			if (params.lib_tag.empty())
 				throw std::runtime_error("For IndropV3 with library tag, tag (-t option) should be specified");
 
 			return shared_ptr<TagsFinderBase>(
 					new IndropV3LibsTagsFinder(params.read_files, params.lib_tag, pt.get_child(BARCODES_CONFIG_PATH),
-					                           processing_config, writer, params.save_stats, params.save_reads_names));
+					                           processing_config, writer, params.save_stats, params.save_reads_params));
 		}
 
 		if (params.read_files.size() != 3)
@@ -108,7 +109,7 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const boost::pr
 
 		return shared_ptr<TagsFinderBase>(
 				new IndropV3TagsFinder(params.read_files, pt.get_child(BARCODES_CONFIG_PATH), processing_config,
-				                       writer, params.save_stats, params.save_reads_names));
+				                       writer, params.save_stats, params.save_reads_params));
 	}
 
 	if (protocol_type == "indrop")
@@ -116,14 +117,14 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const boost::pr
 		if (params.read_files.size() != 2)
 			throw std::runtime_error(input_files_num_error_text);
 
-		if (pt.get<std::string>(SPACER_CONFIG_PATH + ".barcode_mask", "") != "")
+		if (!pt.get<std::string>(SPACER_CONFIG_PATH + ".barcode_mask", "").empty())
 			return shared_ptr<TagsFinderBase>(
 					new FixPosSpacerTagsFinder(params.read_files, pt.get_child(SPACER_CONFIG_PATH), processing_config,
-					                           writer, params.save_stats, params.save_reads_names));
+					                           writer, params.save_stats, params.save_reads_params));
 
 		return shared_ptr<TagsFinderBase>(
 				new IndropV1TagsFinder(params.read_files, pt.get_child(SPACER_CONFIG_PATH), processing_config,
-				                       writer, params.save_stats, params.save_reads_names));
+				                       writer, params.save_stats, params.save_reads_params));
 	}
 
 	if (protocol_type == "iclip")
@@ -133,7 +134,7 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const boost::pr
 
 		return shared_ptr<TagsFinderBase>(
 				new IClipTagsFinder(params.read_files, pt.get_child(BARCODES_CONFIG_PATH), processing_config,
-				                    writer, params.save_stats, params.save_reads_names));
+				                    writer, params.save_stats, params.save_reads_params));
 	}
 }
 
@@ -148,7 +149,7 @@ Params parse_cmd_params(int argc, char **argv)
 			{"log-prefix", required_argument, 0, 'l'},
 			{"name",       required_argument, 0, 'n'},
 			{"parallel",   required_argument, 0, 'p'},
-			{"save-reads-names",    no_argument,       0, 's'},
+			{"save-reads-params",    no_argument,       0, 's'},
 			{"save-stats",    required_argument,       0, 'S'},
 			{"lib-tag",    required_argument, 0, 't'},
 			{"quiet",    no_argument,       0, 'q'},
@@ -173,10 +174,10 @@ Params parse_cmd_params(int argc, char **argv)
 				params.base_name = string(optarg);
 				break;
 			case 'p' :
-				params.num_of_threads = atoi(optarg);
+				params.num_of_threads = int(strtol(optarg, nullptr, 10));
 				break;
 			case 's' :
-				params.save_reads_names = true;
+				params.save_reads_params = true;
 				break;
 			case 'S' :
 				params.save_stats = true;
@@ -195,7 +196,7 @@ Params parse_cmd_params(int argc, char **argv)
 		}
 	}
 
-	if (params.config_file_name == "")
+	if (params.config_file_name.empty())
 	{
 		cerr << SCRIPT_NAME << ": config file must be supplied" << endl;
 		params.cant_parse = true;
@@ -211,10 +212,10 @@ Params parse_cmd_params(int argc, char **argv)
 
 	while (optind != argc)
 	{
-		params.read_files.push_back(string(argv[optind++]));
+		params.read_files.emplace_back(argv[optind++]);
 	}
 
-	if (params.base_name == "")
+	if (params.base_name.empty())
 	{
 		params.base_name = boost::filesystem::path(params.read_files.back()).filename().generic_string() + ".tagged";
 	}
@@ -222,7 +223,7 @@ Params parse_cmd_params(int argc, char **argv)
 	return params;
 }
 
-void save_stats(const string &out_filename, shared_ptr<TagsFinderBase> tags_finder)
+void save_stats(const string &out_filename, const shared_ptr<TagsFinderBase> &tags_finder)
 {
 	using namespace Rcpp;
 
@@ -260,8 +261,8 @@ int main(int argc, char **argv)
 	L_TRACE << command_line;
 	L_TRACE << "Version: " << VERSION << ".";
 
-	boost::property_tree::ptree pt;
-	read_xml(params.config_file_name, pt);
+	ptree pt;
+	xml_parser::read_xml(params.config_file_name, pt);
 
 	try
 	{
@@ -279,7 +280,7 @@ int main(int argc, char **argv)
 	}
 	catch (std::runtime_error &err)
 	{
-		time_t ctt = time(0);
+		time_t ctt = time(nullptr);
 		L_ERR << err.what()  << "\nTime: " << asctime(localtime(&ctt));
 		return 1;
 	}

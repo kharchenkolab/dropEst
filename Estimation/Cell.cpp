@@ -20,7 +20,7 @@ namespace Estimation
 
 	void Cell::add_umi(const std::string &gene, const std::string &umi, const UMI::Mark &umi_mark)
 	{
-		auto gene_it = this->_genes.emplace(this->_gene_indexer->add(gene), this->_umi_indexer);
+		auto gene_it = this->_genes.emplace(this->_gene_indexer->add(gene), Gene(this->_umi_indexer));
 		bool is_new = gene_it.first->second.add_umi(umi, umi_mark);
 		if (is_new)
 		{
@@ -42,7 +42,7 @@ namespace Estimation
 	{
 		for (auto const &gene: source._genes)
 		{
-			auto gene_it = this->_genes.emplace(gene.first, this->_umi_indexer);
+			auto gene_it = this->_genes.emplace(gene.first, Gene(this->_umi_indexer));
 			gene_it.first->second.merge(gene.second);
 		}
 
@@ -120,7 +120,7 @@ namespace Estimation
 
 	size_t Cell::umis_number() const
 	{
-		return this->stats().get(Stats::TOTAL_UMIS_PER_CB);
+		return size_t(this->stats().get(Stats::TOTAL_UMIS_PER_CB));
 	}
 
 	size_t Cell::requested_genes_num() const

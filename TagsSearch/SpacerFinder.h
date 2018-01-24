@@ -17,8 +17,8 @@ namespace TagsSearch
 	class SpacerFinder
 	{
 	public:
-		typedef std::string::size_type len_t;
-		typedef std::pair<len_t, len_t> spacer_pos_t;
+		using len_t = std::string::size_type;
+		using spacer_pos_t = std::pair<len_t, len_t>;
 		static const len_t ERR_CODE = std::string::npos;
 
 	private:
@@ -41,10 +41,9 @@ namespace TagsSearch
 		OutcomesCounter outcomes;
 
 	public:
-		SpacerFinder()
-		{}
+		SpacerFinder() = default;
 
-		SpacerFinder(const boost::property_tree::ptree &config, const std::string& reads_params_file = "");
+		explicit SpacerFinder(const boost::property_tree::ptree &config, const std::string& reads_params_file = "");
 
 		spacer_pos_t find_spacer(const std::string& seq);
 

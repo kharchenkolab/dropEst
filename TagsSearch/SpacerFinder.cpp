@@ -18,7 +18,7 @@ namespace TagsSearch
 		, umi_length(config.get<size_t>("umi_length"))
 		, r1_rc_length(config.get<size_t>("r1_rc_length"))
 	{
-		size_t spacer_prefix_length = config.get<size_t>("spacer_search_length");
+		auto spacer_prefix_length = config.get<size_t>("spacer_search_length");
 
 		this->min_seq_len = this->spacer_min_pos + this->barcode_length + this->umi_length + this->spacer.length();
 

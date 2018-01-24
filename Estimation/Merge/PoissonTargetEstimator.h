@@ -40,7 +40,7 @@ namespace Estimation
 			};
 
 		private:
-			typedef Estimation::CellsDataContainer::ids_t ul_list_t;
+			using ul_list_t=Estimation::CellsDataContainer::ids_t;
 
 		private:
 			const double max_merge_prob;

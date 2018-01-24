@@ -9,10 +9,13 @@ namespace BamProcessing
 {
 	class FilledBamParamsParser : public ReadParamsParser
 	{
-	public:
-		FilledBamParamsParser(const std::string &gtf_path, const BamTags &tags, bool gene_in_chromosome_name);
+	protected:
+		const int _min_barcode_quality;
 
-		virtual bool get_read_params(const BamTools::BamAlignment &alignment, Tools::ReadParameters &read_params) override;
+	public:
+		FilledBamParamsParser(const std::string &gtf_path, const BamTags &tags, bool gene_in_chromosome_name,
+		                      int min_barcode_quality);
+		bool get_read_params(const BamTools::BamAlignment &alignment, Tools::ReadParameters &read_params) override;
 	};
 }
 }

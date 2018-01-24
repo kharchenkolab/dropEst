@@ -30,15 +30,14 @@ namespace TagsSearch
 		friend struct TestTagsSearch::test1;
 
 	public:
-		typedef std::unordered_map<std::string, int> s_counter_t;
+		using s_counter_t = std::unordered_map<std::string, int>;
 
 	protected:
-		typedef std::string::size_type len_t;
+		using len_t = std::string::size_type;
 
 	private:
 		const bool _save_stats;
 		const bool _save_read_params;
-		const int _quality_threshold;
 		const std::string _file_uid;
 
 		std::atomic<long> _total_reads_read;
@@ -55,6 +54,7 @@ namespace TagsSearch
 
 	protected:
 		const unsigned _min_read_len;
+		const int _quality_threshold;
 		const std::string poly_a;
 		const Tools::ReverseComplement rc;
 

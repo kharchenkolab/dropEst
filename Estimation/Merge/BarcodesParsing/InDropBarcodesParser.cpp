@@ -19,33 +19,16 @@ namespace BarcodesParsing
 			throw std::runtime_error("Can't open barcodes file: '" + barcodes_filename + "'");
 
 		barcode_parts_list_t barcodes(2);
-
-		std::string line;
-		Tools::ReverseComplement rc;
-		while (std::getline(cb_f, line))
+		for (size_t i = 0; i < 2; ++i)
 		{
-			size_t space_ind = line.find(' ');
-			if (space_ind == std::string::npos)
-			{
-				L_WARN << "WARNING: barcodes line has wrong format: '" << line << "'";
-				continue;
-			}
-
-			if (space_ind != 0)
-			{
-				barcodes[0].push_back(rc.rc(line.substr(0, space_ind)));
-			}
-
-			if (space_ind + 1 < line.length())
-			{
-				barcodes[1].push_back(rc.rc(line.substr(space_ind + 1)));
-			}
+			if (!BarcodesParser::read_line(cb_f, barcodes[i]) || barcodes[i].empty())
+				throw std::runtime_error("File with barcodes (" + barcodes_filename + ") has wrong format");
 		}
 
 		return barcodes;
 	}
 
-	std::vector<std::string> InDropBarcodesParser::split_barcode(const std::string &barcode) const
+	BarcodesParser::barcodes_list_t InDropBarcodesParser::split_barcode(const std::string &barcode) const
 	{
 		std::vector<std::string> res;
 		res.push_back(barcode.substr(0, barcode.length() - this->_barcode2_length));

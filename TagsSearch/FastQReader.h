@@ -17,13 +17,13 @@ namespace TagsSearch
 	class FastQReader
 	{
 	private:
-		typedef std::mutex mutex_t;
+		using mutex_t = std::mutex;
 
 	public:
 		struct FastQRecord
 		{
-			FastQRecord(const std::string &id="", const std::string &sequence="", const std::string &description="",
-						const std::string &quality="");
+			explicit FastQRecord(const std::string &id="", const std::string &sequence="",
+			                     const std::string &description="", const std::string &quality="");
 
 			std::string id;
 			std::string sequence;
@@ -47,7 +47,7 @@ namespace TagsSearch
 		bool get_next_record_unsafe(FastQRecord &record);
 
 	public:
-		FastQReader(const std::string &filename);
+		explicit FastQReader(const std::string &filename);
 
 		const std::string& filename() const;
 		void try_read_records_to_cash();

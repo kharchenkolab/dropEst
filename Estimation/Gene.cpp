@@ -9,7 +9,7 @@ namespace Estimation
 
 	bool Gene::add_umi(const std::string &umi, const UMI::Mark &umi_mark)
 	{
-		auto insert_it = this->_umis.emplace(this->_umi_indexer->add(umi), 0);
+		auto insert_it = this->_umis.emplace(this->_umi_indexer->add(umi), UMI());
 		insert_it.first->second.add_read(umi_mark);
 
 		return insert_it.second;
@@ -106,6 +106,6 @@ namespace Estimation
 	}
 
 	Gene::Gene(StringIndexer *umi_indexer)
-			: _umi_indexer(umi_indexer)
+		: _umi_indexer(umi_indexer)
 	{}
 }

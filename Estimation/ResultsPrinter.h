@@ -15,10 +15,10 @@ namespace Estimation
 	class ResultsPrinter
 	{
 	private:
-		typedef std::vector<std::string> s_vec_t;
-		typedef std::vector<int> i_vec_t;
-		typedef Eigen::Triplet<unsigned> eigen_triplet_t;
-		typedef std::vector<eigen_triplet_t> triplets_vec_t;
+		using s_vec_t = std::vector<std::string>;
+		using i_vec_t = std::vector<int>;
+		using eigen_triplet_t = Eigen::Triplet<unsigned>;
+		using triplets_vec_t = std::vector<eigen_triplet_t>;
 
 	private:
 		const bool write_matrix;
@@ -62,6 +62,6 @@ namespace Estimation
 
 		Rcpp::IntegerVector get_requested_umis_per_cb(const CellsDataContainer &container, bool return_reads = false) const;
 
-		void save_validation_stats(const std::string list_name, const CellsDataContainer &container) const;
+		void save_validation_stats(const std::string &list_name, const CellsDataContainer &container) const;
 	};
 }

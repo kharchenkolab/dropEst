@@ -27,7 +27,7 @@ USER user
 ENTRYPOINT ["/bin/bash"]
 WORKDIR "/home/user"
 
-RUN \ 
+RUN \
   git clone https://github.com/hms-dbmi/dropEst.git && \
   mkdir -p dropEst/build && \
   cd dropEst/build && \

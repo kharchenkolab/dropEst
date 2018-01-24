@@ -68,7 +68,7 @@ namespace Estimation
 
 			auto read_params_updated = Tools::ReadParameters(cb_iter->second, read_params.umi(),
 			                                                 read_params.cell_barcode_quality(),
-			                                                 read_params.umi_quality());
+			                                                 read_params.umi_quality(), 0);
 			this->written_reads++;
 			this->save_alignment(alignment, read_params_updated, gene);
 		}

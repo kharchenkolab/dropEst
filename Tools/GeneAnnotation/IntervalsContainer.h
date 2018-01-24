@@ -28,8 +28,8 @@ namespace Tools
 			friend struct TestTools::testInitGtf;
 
 		public:
-			typedef size_t coord_t;
-			typedef std::set<IntervalLabelT> interval_labels_t;
+			using coord_t = size_t;
+			using interval_labels_t = std::set<IntervalLabelT>;
 
 		private:
 			/// Intervals are stored in 0-based coordinate system
@@ -88,7 +88,7 @@ namespace Tools
 				{}
 			};
 
-			typedef std::multimap<coord_t, Event> events_t;
+			using events_t = std::multimap<coord_t, Event>;
 
 		private:
 			bool _initialized;

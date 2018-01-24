@@ -4,13 +4,13 @@
 #include "BarcodesParsing/ConstLengthBarcodesParser.h"
 #include "BarcodesParsing/InDropBarcodesParser.h"
 
-#include <fstream>
+#include <algorithm>
 
 namespace Estimation
 {
 	namespace Merge
 	{
-		RealBarcodesMergeStrategy::RealBarcodesMergeStrategy(barcodes_parser_ptr barcodes_parser,
+		RealBarcodesMergeStrategy::RealBarcodesMergeStrategy(const barcodes_parser_ptr &barcodes_parser,
 		                                                     size_t min_genes_before_merge, size_t min_genes_after_merge,
 		                                                     unsigned max_merge_edit_distance, double min_merge_fraction)
 			: MergeStrategyBase(min_genes_before_merge, min_genes_after_merge, max_merge_edit_distance, min_merge_fraction)
@@ -92,7 +92,7 @@ namespace Estimation
 				{
 					curr_cell_id = container.cell_id_by_cb(cur_real_cb);
 				}
-				catch (std::out_of_range ex)
+				catch (std::out_of_range &ex)
 				{}
 
 				if (curr_cell_id >= 0 &&
@@ -115,7 +115,7 @@ namespace Estimation
 
 		std::string RealBarcodesMergeStrategy::merge_type() const
 		{
-			return "RealCBs";
+			return "Real CBs";
 		}
 	}
 }

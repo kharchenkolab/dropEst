@@ -24,8 +24,8 @@ namespace Estimation
 				friend struct TestEstimator::testRemoveSimilarWrongUmis;
 
 			private:
-				typedef std::unordered_set<std::string> s_hash_t;
-				typedef std::vector<std::string> s_vec_t;
+				using s_hash_t = std::unordered_set<std::string>;
+				using s_vec_t = std::vector<std::string>;
 			private:
 				const unsigned _max_merge_distance;
 				static const std::string nucleotides;

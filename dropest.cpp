@@ -16,6 +16,7 @@
 
 using namespace std;
 using namespace Estimation;
+using namespace boost::property_tree;
 
 static const std::string SCRIPT_NAME = "dropest";
 
@@ -45,13 +46,13 @@ struct Params
 
 static void check_files_existence(const Params &params, const vector<string> &bam_files)
 {
-	if (params.config_file_name != "" && !std::ifstream(params.config_file_name))
+	if (!params.config_file_name.empty() && !std::ifstream(params.config_file_name))
 		throw std::runtime_error("Can't open config file '" + params.config_file_name + "'");
 
-	if (params.genes_filename != "" && !std::ifstream(params.genes_filename))
+	if (!params.genes_filename.empty() && !std::ifstream(params.genes_filename))
 		throw std::runtime_error("Can't open genes file '" + params.genes_filename + "'");
 
-	if (params.read_params_filenames != "" && !std::ifstream(params.read_params_filenames))
+	if (!params.read_params_filenames.empty() && !std::ifstream(params.read_params_filenames))
 		throw std::runtime_error("Can't open reads file '" + params.read_params_filenames + "'");
 
 	for (auto const &file : bam_files)
@@ -137,7 +138,7 @@ static Params parse_cmd_params(int argc, char **argv)
 				params.config_file_name = string(optarg);
 				break;
 			case 'C' :
-				params.max_cells_number = atoi(optarg);
+				params.max_cells_number = int(strtol(optarg, nullptr, 10));
 				break;
 			case 'f' :
 				params.filled_bam = true;
@@ -149,7 +150,7 @@ static Params parse_cmd_params(int argc, char **argv)
 				params.genes_filename = string(optarg);
 				break;
 			case 'G' :
-				params.min_genes_after_merge = atoi(optarg);
+				params.min_genes_after_merge = int(strtol(optarg, nullptr, 10));
 				break;
 			case 'h' :
 				usage();
@@ -204,7 +205,7 @@ static Params parse_cmd_params(int argc, char **argv)
 		params.cant_parse = true;
 	}
 
-	if (params.config_file_name == "")
+	if (params.config_file_name.empty())
 	{
 		cerr << SCRIPT_NAME << ": config file must be supplied" << endl;
 		params.cant_parse = true;
@@ -216,13 +217,13 @@ static Params parse_cmd_params(int argc, char **argv)
 		params.cant_parse = true;
 	}
 
-	if (params.genes_filename == "" && params.gene_match_level.find_first_of("eE") == std::string::npos)
+	if (params.genes_filename.empty() && params.gene_match_level.find_first_of("eE") == std::string::npos)
 	{
 		cerr << SCRIPT_NAME << ": you should provide genes file (-g option) to use intron annotations" << endl;
 		params.cant_parse = true;
 	}
 
-	if (params.output_name == "")
+	if (params.output_name.empty())
 	{
 		params.output_name = "cell.counts.rds";
 	}
@@ -231,8 +232,7 @@ static Params parse_cmd_params(int argc, char **argv)
 }
 
 CellsDataContainer get_cells_container(const vector<string> &files, const Params &params,
-                                       const boost::property_tree::ptree &est_config,
-                                       const BamProcessing::BamController &bam_controller)
+                                       const ptree &est_config, const BamProcessing::BamController &bam_controller)
 {
 	auto match_levels = UMI::Mark::get_by_code(params.gene_match_level);
 
@@ -276,19 +276,19 @@ int main(int argc, char **argv)
 	Tools::init_r();
 	while (optind < argc)
 	{
-		files.push_back(string(argv[optind++]));
+		files.emplace_back(argv[optind++]);
 	}
 
 	try
 	{
 		check_files_existence(params, files);
 		Tools::trace_time("Run", true);
-		boost::property_tree::ptree estimation_config;
+		ptree estimation_config;
 		if (!params.config_file_name.empty())
 		{
-			boost::property_tree::ptree pt;
+			ptree pt;
 			read_xml(params.config_file_name, pt);
-			estimation_config = pt.get_child("config.Estimation", boost::property_tree::ptree());
+			estimation_config = pt.get_child("config.Estimation", ptree());
 		}
 
 		BamProcessing::BamController bam_controller(BamProcessing::BamTags(estimation_config), params.filled_bam,
@@ -310,17 +310,17 @@ int main(int argc, char **argv)
 			printer.save_intron_exon_matrices(container, params.output_name);
 		}
 	}
-	catch (std::runtime_error err)
+	catch (std::runtime_error &err)
 	{
 		L_ERR << err.what();
 		return 1;
 	}
-	catch (std::logic_error err)
+	catch (std::logic_error &err)
 	{
 		L_ERR << err.what();
 		return 1;
 	}
-	catch (std::exception err)
+	catch (std::exception &err)
 	{
 		L_ERR << err.what();
 		return 1;

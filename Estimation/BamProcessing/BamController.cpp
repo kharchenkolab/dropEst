@@ -112,11 +112,13 @@ namespace BamProcessing
 	std::shared_ptr<ReadParamsParser> BamController::get_parser() const
 	{
 		if (this->_filled_bam)
-			return std::make_shared<FilledBamParamsParser>(this->_gtf_path, this->_tags, this->_gene_in_chromosome_name);
+			return std::make_shared<FilledBamParamsParser>(this->_gtf_path, this->_tags, this->_gene_in_chromosome_name,
+			                                               this->_min_barcode_quality);
 
 		if (this->_read_param_filenames != "")
 			return std::make_shared<ReadMapParamsParser>(this->_gtf_path, this->_read_param_filenames,
-			                                             this->_tags, this->_gene_in_chromosome_name);
+			                                             this->_tags, this->_gene_in_chromosome_name,
+			                                             this->_min_barcode_quality);
 
 		return std::make_shared<ReadParamsParser>(this->_gtf_path, this->_tags, this->_gene_in_chromosome_name);
 	}
@@ -136,7 +138,7 @@ namespace BamProcessing
 			return;
 		}
 
-		if (!read_params.check_quality(this->_min_barcode_quality))
+		if (!read_params.pass_quality_threshold())
 		{
 			processor->inc_low_quality_num();
 			return;

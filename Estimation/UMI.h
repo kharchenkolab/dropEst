@@ -20,7 +20,7 @@ namespace Estimation
 				HAS_INTRONS = 4
 			};
 
-			typedef std::vector<Mark> query_t;
+			using query_t = std::vector<Mark>;
 
 		private:
 			char _mark;
@@ -28,13 +28,13 @@ namespace Estimation
 		public:
 			static const std::string DEFAULT_CODE;
 
-			Mark(MarkType type = MarkType::NONE);
+			explicit Mark(MarkType type = MarkType::NONE);
 
 			void add(const Mark &mark);
 			void add(MarkType type);
 			void add(Tools::GeneAnnotation::GtfRecord::RecordType type);
 			bool check(MarkType type) const;
-			bool match(const std::vector<Mark>) const;
+			bool match(const std::vector<Mark> &match_levels) const;
 			bool operator==(const MarkType &other) const;
 			bool operator==(const Mark &other) const;
 
@@ -47,7 +47,7 @@ namespace Estimation
 		Mark _mark;
 
 	public:
-		UMI(size_t read_count = 0);
+		explicit UMI(size_t read_count = 0);
 
 		size_t read_count() const;
 		const Mark& mark() const;

@@ -61,12 +61,12 @@ namespace TagsSearch
 					throw std::runtime_error("Number of edit distances must be equal to the number of spacers");
 
 				size_t ed = std::strtoul(edit_distances[spacer_ind++].c_str(), nullptr, 10);
-				mask_parts.push_back(MaskPart(mask.substr(cur_pos, next_pos - cur_pos), next_pos - cur_pos, MaskPart::Type::SPACER, ed));
+				mask_parts.emplace_back(mask.substr(cur_pos, next_pos - cur_pos), next_pos - cur_pos, MaskPart::Type::SPACER, ed);
 				cur_pos = next_pos;
 			}
 			++cur_pos;
 
-			mask_parts.push_back(MaskPart());
+			mask_parts.emplace_back();
 			cur_pos = FixPosSpacerTagsFinder::parse_barcode_mask(mask, cur_pos, mask_parts.back()) + 1;
 		}
 
@@ -161,7 +161,7 @@ namespace TagsSearch
 		}
 
 		this->_outcomes.inc(MultiSpacerOutcomesCounter::OK);
-		read_params = Tools::ReadParameters(cb, umi, cb_quality, umi_quality);
+		read_params = Tools::ReadParameters(cb, umi, cb_quality, umi_quality, this->_quality_threshold);
 		return cur_pos;
 	}
 

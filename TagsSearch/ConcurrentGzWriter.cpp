@@ -22,7 +22,7 @@ namespace TagsSearch
 		this->increase_out_file();
 	}
 
-	bool ConcurrentGzWriter::write(const std::string &text)
+	bool ConcurrentGzWriter::write(const LinesInfo &text)
 	{
 		bool result = false;
 		if (this->_limited_file_size && this->_current_file_reads_written > this->_max_file_size)
@@ -33,10 +33,10 @@ namespace TagsSearch
 			result = true;
 		}
 
-		if (!(this->_out_file << text))
+		if (!(this->_out_file << text.text))
 			throw std::runtime_error("Can't write to file: " + this->get_out_filename());
 
-		this->_current_file_reads_written++;
+		this->_current_file_reads_written += text.lines_num;
 
 		return result;
 	}
@@ -88,11 +88,11 @@ namespace TagsSearch
 	{
 		while (unlimited_size || !this->_gzipped.full())
 		{
-			std::string line;
-			if (!this->_lines.pop(line))
+			LinesInfo info;
+			if (!this->_lines.pop(info))
 				break;
 
-			this->_gzipped.push(ConcurrentGzWriter::gzip(line));
+			this->_gzipped.push(LinesInfo(ConcurrentGzWriter::gzip(info.text), info.lines_num));
 		}
 	}
 
@@ -103,12 +103,13 @@ namespace TagsSearch
 
 		while (true)
 		{
-			std::string to_write, cur_text;
-			while (to_write.length() < ConcurrentGzWriter::max_cache_size && this->_gzipped.pop(cur_text))
+			LinesInfo to_write, cur_text;
+			while (to_write.text.length() < ConcurrentGzWriter::max_cache_size && this->_gzipped.pop(cur_text))
 			{
-				to_write += cur_text;
+				to_write.text += cur_text.text;
+				to_write.lines_num += cur_text.lines_num;
 			}
-			if (to_write.empty())
+			if (to_write.text.empty())
 				break;
 
 			this->write(to_write);
@@ -117,13 +118,18 @@ namespace TagsSearch
 		this->_write_in_progress = false;
 	}
 
-	void ConcurrentGzWriter::enqueue_line(const std::string &line)
+	void ConcurrentGzWriter::enqueue_lines(const std::string &line, unsigned lines_num)
 	{
-		this->_lines.push(line);
+		this->_lines.push(LinesInfo(line, lines_num));
 	}
 
 	const std::string &ConcurrentGzWriter::base_filename() const
 	{
 		return this->_out_file_name;
 	}
+
+	ConcurrentGzWriter::LinesInfo::LinesInfo(const std::string &text, unsigned int lines_num)
+		: text(text)
+		, lines_num(lines_num)
+	{}
 }

@@ -80,7 +80,7 @@ namespace Tools
 		RInside *r = RInside::instancePtr();
 		if (r == nullptr)
 		{
-			r = new RInside(0, 0);
+			r = new RInside(0, nullptr);
 		}
 
 		r->parseEvalQ("library(Matrix)");

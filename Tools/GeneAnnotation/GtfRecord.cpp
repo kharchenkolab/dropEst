@@ -16,7 +16,7 @@ namespace Tools
 
 		bool GtfRecord::is_valid() const
 		{
-			return this->gene_id() != "";
+			return !this->gene_id().empty();
 		}
 
 		bool GtfRecord::operator<(const GtfRecord &other) const
@@ -36,16 +36,17 @@ namespace Tools
 
 		const std::string &GtfRecord::gene_name() const
 		{
-			return this->_gene_name == "" ? this->_gene_id : this->_gene_name;
+			return this->_gene_name.empty() ? this->_gene_id : this->_gene_name;
 		}
 
 		GtfRecord::GtfRecord()
-				: Interval(0, 0)
+			: Interval(0, 0)
+			, _type(NONE)
 		{}
 
 		const std::string &GtfRecord::transcript_id() const
 		{
-			return this->_transcript_id == "" ? this->_gene_id : this->_transcript_id;
+			return this->_transcript_id.empty() ? this->_gene_id : this->_transcript_id;
 		}
 
 		GtfRecord::RecordType GtfRecord::type() const
