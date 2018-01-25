@@ -44,6 +44,9 @@ target_link_libraries(droptag TagsSearch ${LIBRARIES})
 add_executable(dropest dropest.cpp)
 target_link_libraries(dropest Estimation ${EST_LIBRARIES})
 
+add_executable(filter_bam filter_bam.cpp)
+target_link_libraries(filter_bam ${EST_LIBRARIES})
+
 #TODO: check it
 add_custom_command(TARGET dropest POST_BUILD
         COMMAND cp
