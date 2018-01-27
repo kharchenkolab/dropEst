@@ -4,10 +4,12 @@
 \alias{ScorePipelineCells}
 \title{Score cells with a KDE classifier.}
 \usage{
-ScorePipelineCells(pipeline.data, filter.high.mit.fraction = F,
-  mitochondrion.genes = NULL, mit.chromosome.name = NULL,
-  mit.threshold = NULL, tags.data = NULL, predict.all = FALSE,
-  r2.threshold = 0.05, pcs.number = 3)
+ScorePipelineCells(pipeline.data, mitochondrion.genes = NULL,
+  mit.chromosome.name = NULL, tags.data = NULL, filter.mitochondrial = T,
+  filter.intergenic = T, mit.fraction.threshold = NULL,
+  intergenic.fraction.threshold = NULL, max.pcs.number = 3,
+  predict.all = FALSE, verbose = FALSE, kde.bandwidth.mult = 1,
+  cell.number = NULL)
 }
 \arguments{
 \item{pipeline.data}{data for classification.}

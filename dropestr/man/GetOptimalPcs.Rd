@@ -4,7 +4,8 @@
 \alias{GetOptimalPcs}
 \title{Perform PCA with the optimal number of principal components.}
 \usage{
-GetOptimalPcs(data, explained.var.required = 0.98, max.pcs = 3)
+GetOptimalPcs(data, explained.var.required = 0.98, max.pcs = 3,
+  loadings.filt.threshold = 0.05)
 }
 \arguments{
 \item{data}{data for low-quality cells filtration}
@@ -12,11 +13,14 @@ GetOptimalPcs(data, explained.var.required = 0.98, max.pcs = 3)
 \item{explained.var.required}{minimal fraction of explained variance.}
 
 \item{max.pcs}{maximal number of output principal components.}
+
+\item{loadings.filt.threshold}{minimal contribution to loadings, with which feature is considered as used.}
 }
 \value{
 List with the PCA results:
-  \item{explained.var}{fraction of the explained variance.}
+  \item{total.variance.explained}{fraction of the explained variance.}
   \item{pca.data}{transformed data with the optimal number of principal components.}
+  \item{used.features}{features, which contribute to pca.data.}
 }
 \description{
 Perform PCA with the optimal number of principal components.
