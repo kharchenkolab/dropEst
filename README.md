@@ -52,7 +52,7 @@ Pipeline for estimating molecular count matrices for droplet-based single-cell R
 ### System requirements
 * Boost >= 1.54
 * BamTools with headers
-  * Either install `libbamtools-dev` 
+  * Either install `libbamtools-dev` (for Ubuntu)
   * or [build it locally](https://github.com/pezmaster31/bamtools/wiki/Building-and-installing) and then specify the location of the build when running cmake (e.g. `cmake -D BAMTOOLS_ROOT=/home/username/bamtools .`)
 * Zlib
 * R >= 3.2.2 with packages:
@@ -94,7 +94,7 @@ These variables should be set to the path to the installed library. It can be do
 
 In case you have some issues with the linker for specific library, please build this library manually with the version of compiler, which you're going to use for dropEst build.
 
-### Problems with std::__cxx11::string
+#### Problems with std::__cxx11::string
 See [question on stackoverflow](https://stackoverflow.com/questions/33394934/converting-std-cxx11string-to-stdstring).
 
 #### Boost 1.65
