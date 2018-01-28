@@ -1,6 +1,7 @@
 #include <unordered_set>
 #include <string>
 #include <vector>
+#include <getopt.h>
 
 #include <api/BamReader.h>
 #include <Tools/Logs.h>
@@ -8,6 +9,33 @@
 
 using namespace std;
 using namespace BamTools;
+
+static const std::string SCRIPT_NAME = "filter_bam";
+
+std::string parse_cmd_params(int argc, char **argv)
+{
+	int option_index = 0;
+	int c;
+	static struct option long_options[] = {
+			{"ouptut",     required_argument, 0, 'o'},
+			{0, 0,                            0, 0}
+	};
+
+	std::string output_name;
+	while ((c = getopt_long(argc, argv, "o:", long_options, &option_index)) != -1)
+	{
+		switch (c)
+		{
+			case 'o' :
+				output_name = string(optarg);
+				break;
+			default:
+				cerr << SCRIPT_NAME << ": unknown arguments passed" << endl;
+		}
+	}
+
+	return output_name;
+}
 
 unordered_set<string> get_read_names(const string &bam_name)
 {
@@ -39,7 +67,7 @@ unordered_set<string> get_read_names(const string &bam_name)
 	return read_names;
 }
 
-unordered_set<string> get_mixed_reads(const string &org1_bam_name, const string &org2_bam_name)
+unordered_set<string> get_uniquely_mapped_reads(const string &org1_bam_name, const string &org2_bam_name)
 {
 	auto org1_read_names = get_read_names(org1_bam_name);
 
@@ -49,7 +77,7 @@ unordered_set<string> get_mixed_reads(const string &org1_bam_name, const string 
 		throw std::runtime_error("Could not open BAM file: " + org2_bam_name);
 
 	BamAlignment alignment;
-	unordered_set<string> mixed_read_names;
+	unordered_set<string> mixed_read_names, org2_read_names;
 
 	size_t iter = 0, mixed_reads_num = 0;
 	while (reader.GetNextAlignment(alignment))
@@ -59,8 +87,12 @@ unordered_set<string> get_mixed_reads(const string &org1_bam_name, const string 
 
 		if (org1_read_names.find(alignment.Name) != org1_read_names.end())
 		{
-			mixed_read_names.insert(alignment.Name);
+			mixed_read_names.emplace(alignment.Name);
 			mixed_reads_num++;
+		}
+		else
+		{
+			org2_read_names.emplace(alignment.Name);
 		}
 
 		if (++iter % 10000000 == 0)
@@ -71,14 +103,18 @@ unordered_set<string> get_mixed_reads(const string &org1_bam_name, const string 
 
 	reader.Close();
 
-	org1_read_names.clear();
+	for (auto const &name: mixed_read_names)
+	{
+		org1_read_names.erase(name);
+	}
+	org1_read_names.insert(org2_read_names.begin(), org2_read_names.end());
 
 	Tools::trace_time("Done");
 
-	return mixed_read_names;
+	return org1_read_names;
 }
 
-unordered_set<string> get_mixed_reads(const string &bam_name)
+unordered_set<string> get_uniquely_mapped_reads(const string &bam_name)
 {
 	L_TRACE << "Reading bam to create list of mixed reads";
 	BamReader reader;
@@ -136,14 +172,15 @@ unordered_set<string> get_mixed_reads(const string &bam_name)
 
 	reader.Close();
 
-	mouse_reads.clear();
-	human_reads.clear();
+	mouse_reads.erase(mixed_reads.begin(), mixed_reads.end());
+	human_reads.erase(mixed_reads.begin(), mixed_reads.end());
+	human_reads.insert(mouse_reads.begin(), mouse_reads.end());
 	L_TRACE << "Done";
-	return mixed_reads;
+	return human_reads;
 }
 
 void write_filtered_bam(const string &source_bam_name, const string &target_bam_name,
-                        const unordered_set<string> &mixed_reads)
+                        const unordered_set<string> &accepted_reads)
 {
 	Tools::trace_time("Writing filtered bam file", true);
 
@@ -165,7 +202,7 @@ void write_filtered_bam(const string &source_bam_name, const string &target_bam_
 			continue;
 
 		++iter;
-		if (mixed_reads.find(alignment.Name) != mixed_reads.end())
+		if (accepted_reads.find(alignment.Name) == accepted_reads.end())
 		{
 			filtered_reads++;
 			continue;
@@ -198,6 +235,7 @@ int main(int argc, char **argv)
 
 	vector<string> arguments;
 
+	std::string output_name = parse_cmd_params(argc, argv);
 	while (optind < argc)
 	{
 		arguments.emplace_back(argv[optind++]);
@@ -209,15 +247,20 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	if (output_name.empty())
+	{
+		output_name = arguments[0] + ".filtered.bam";
+	}
+
 	Tools::trace_time("Run", true);
 
 	try
 	{
-		unordered_set<string> mixed_reads = arguments.size() == 1
-		                                    ? get_mixed_reads(arguments[0])
-		                                    : get_mixed_reads(arguments[1], arguments[2]);
+		unordered_set<string> uniquely_mapped_reads = arguments.size() == 1
+		                                              ? get_uniquely_mapped_reads(arguments[0])
+		                                              : get_uniquely_mapped_reads(arguments[1], arguments[2]);
 
-		write_filtered_bam(arguments[0], arguments[0] + ".filtered.bam", mixed_reads);
+		write_filtered_bam(arguments[0], output_name, uniquely_mapped_reads);
 	}
 	catch (std::runtime_error &err)
 	{

@@ -44,8 +44,9 @@ target_link_libraries(droptag TagsSearch ${LIBRARIES})
 add_executable(dropest dropest.cpp)
 target_link_libraries(dropest Estimation ${EST_LIBRARIES})
 
-add_executable(filter_bam filter_bam.cpp)
-target_link_libraries(filter_bam ${EST_LIBRARIES})
+add_executable(filter_mixture_bam utils/filter_mixture_bam.cpp)
+target_link_libraries(filter_mixture_bam ${BAMTOOLS_LIBRARIES} ${LIBRARIES})
+set_target_properties(filter_mixture_bam PROPERTIES RUNTIME_OUTPUT_DIRECTORY ./utils/)
 
 #TODO: check it
 add_custom_command(TARGET dropest POST_BUILD
