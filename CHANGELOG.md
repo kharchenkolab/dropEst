@@ -1,15 +1,17 @@
 # Changelog
 
-## [Upcoming]
+## [0.7.5] - 2018-01-28
 ### Added
 * Dockers for Centos6, Centos7 and Debian9
 * iclip protocol support
 * 10x barcodes
+* Published code for filtration of multialigned reads from bam files with cell mixture.
 ### Changed
 * Optimized precise merge performance
 * Fixed bug with fastq split during dropTag
-* New format of barcode files
-* Optimized memory usage in read params parsing from file
+* **New format of barcode files**
+* Optimized memory usage in parsing read params from file
+* Algorithm of filtration of low-quality cells was significantly improved
 
 ## [0.7.1] - 2017-10-18
 ### Added

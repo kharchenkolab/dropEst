@@ -1,7 +1,7 @@
 Package: dropestr
 Type: Package
 Title: Preprocessing of Droplet-based Single-Cell RNA-seq Data
-Version: 0.6.0
+Version: 0.7.5
 Authors@R: c(
     person("Viktor", "Petukhov", email = "viktor.s.petukhov@ya.ru", role = c("cre", "aut")),
     person("Peter", "Kharchenko", email = "peter_kharchenko@hms.harvard.edu", role = "aut"))
