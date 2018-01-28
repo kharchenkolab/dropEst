@@ -8,10 +8,10 @@
 PrepareLqCellsData(count.matrix, aligned.reads.per.cell,
   total.umis.per.cell = NULL, total.reads.per.cell = NULL,
   intergenic.reads.per.cell = NULL, mitochondrion.fraction = NULL,
-  pcs.number = 3)
+  scale = TRUE)
 
 PrepareLqCellsDataPipeline(data, total.reads.per.cell = NULL,
-  mitochondrion.genes = NULL, mit.chromosome.name = NULL, pcs.number = 3)
+  mitochondrion.genes = NULL, mit.chromosome.name = NULL, scale = TRUE)
 }
 \arguments{
 \item{count.matrix}{Matrix with counts of umi per gene per cell.}
@@ -20,7 +20,7 @@ PrepareLqCellsDataPipeline(data, total.reads.per.cell = NULL,
 
 \item{mitochondrion.fraction}{Fraction of mitochondrion reads or UMIs per cell}
 
-\item{pcs.number}{maximal number of principal components, which is returned. Set to NULL to return raw data.}
+\item{scale}{should data be normalized?}
 
 \item{data}{data, extracted with the pipeline.}
 

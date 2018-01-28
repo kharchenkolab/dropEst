@@ -37,7 +37,7 @@ namespace Merge
 		void merge_force(Estimation::CellsDataContainer &container, size_t src_cell_id, size_t target_cell_ind,
 						 ul_list_t &cb_reassign_targets, id_id_set_map_t &cb_reassigned_to_it) const;
 
-		virtual ul_list_t merge_inited(Estimation::CellsDataContainer &container) override;
+		ul_list_t merge_inited(Estimation::CellsDataContainer &container) override;
 		virtual long get_merge_target(CellsDataContainer &container, size_t base_cell_ind) = 0;
 
 		virtual size_t get_log_period() const;

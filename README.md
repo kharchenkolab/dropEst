@@ -1,10 +1,18 @@
 # dropEst - Pipeline
 Pipeline for estimating molecular count matrices for droplet-based single-cell RNA-seq measurements. Implements methods, described in [this paper](https://doi.org/10.1101/171496).
 
+## News
+### V0.7.5
+* Files with real cell barcodes have new format: now they are organized by rows, but not by columns. It allowed to add 10x 16bp barcodes.
+* Dockers for Centos6, Centos7 and Debian9 have been added.
+* Algorithm of filtration of low-quality cells was significantly improved.
+* See **CHANGELOG.md** for full list.
+
 ## Table of contents
 <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
 - [dropEst - Pipeline](#dropest-pipeline)
+    - [News](#news)
 	- [Table of contents](#table-of-contents)
 	- [General processing steps](#general-processing-steps)
 	- [Setup](#setup)
@@ -45,6 +53,7 @@ Pipeline for estimating molecular count matrices for droplet-based single-cell R
 * Boost >= 1.54
 * BamTools library
 	* Note that some linux distributions have separate packages for the library and the executable, i.e. on Ubuntu you need `libbamtools-dev`, but not `bamtools`.
+	* or you can [build it locally](https://github.com/pezmaster31/bamtools/wiki/Building-and-installing) and then specify the location of the build when running cmake (e.g. `cmake -D BAMTOOLS_ROOT=/home/username/bamtools .`)
 * Zlib
 * R >= 3.2.2 with packages:
   * Rcpp
@@ -83,13 +92,18 @@ If `cmake` can't find one of the libraries, or you want to use some specific ver
 These variables should be set to the path to the installed library. It can be done either by using command line options: `cmake -D R_ROOT="path_to_r"` or by adding the variable declaration to the beginning of CMakeLists.txt: `set(R_ROOT path_to_r)`.
 
 
-In case you have some issues with the linker for specific library, please try to build this library manually with the version of compiler, which you're going to use for dropEst build.
+In case you have some issues with the linker for specific library, please build this library manually with the version of compiler, which you're going to use for dropEst build.
+
+### Problems with std::__cxx11::string
+See [question on stackoverflow](https://stackoverflow.com/questions/33394934/converting-std-cxx11string-to-stdstring).
 
 #### Boost 1.65
 CMake < 3.10 has known issues with boost 1.65. If you have such combination, please try either to upgrade cmake or to downgrade boost.
 
 #### Dockers
-In case you still can't build the project, dockerfiles for the most popular linux distributions are provided (see `dropEst/dockers/`). You can either build and run these dockers or just read dockerfiles for the further instructions on dropEst installation for specific distribution.
+In case you still can't build the project, dockerfiles for the most popular linux distributions are provided (see `dropEst/dockers/`). 
+You can either build and run these dockers or just read dockerfiles for the further instructions on dropEst installation for specific distribution.
+Manual boost installation is shown in **CentOS 6** docker.
 
 ## dropTag
     droptag -- generate tagged fastq files for alignment
@@ -144,6 +158,12 @@ Example command:
 
 While dropTag provides way to demultiplex 10x data, [Cell Ranger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger) is still recommended tool for this. [dropEst](##dropEst) phase can be ran on the Cell Ranger demultiplexed .bam file to obtain data in the format, optimized for the subsequent analysis.
 
+**NOTE.** Sometimes 10x CellRanger isn't able to determine gene, from which a read originated. In this cases it fills gene info with a list of possible genes, separated by semicolon (e.g. 'ENSG00000255508;ENSG00000254772'). These genes **must be filtered out** prior to further analysis:
+```r
+holder <- readRDS('./cell.counts.rds')
+cm <- holder$cm[grep("^[^;]+$", rownames(holder$cm)),]
+```
+
 #### iCLIP
 * File 1: Gene reads with barcodes at the beginning of the sequence
 
@@ -152,6 +172,8 @@ Example command:
 ```bash
 ./droptag -c dropEst/configs/iclip.xml [-S] data.fastq
 ```
+**NOTE.** Implementation of iCLIP wasn't tested properly. Please, be careful using it. Anyone who used it is very welcome to comment it either in Issues or by e-mail.
+
 
 ### Command line arguments for dropTag
 *  -c, --config filename: xml file with droptag parameters  

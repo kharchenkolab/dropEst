@@ -13,7 +13,7 @@ endif (NOT "${CMAKE_BUILD_TYPE}" STREQUAL Debug)
 
 add_definitions(-DPROJ_DATA_PATH=\"${PROJECT_SOURCE_DIR}/data\")
 add_definitions(-DPROJ_BIN_PATH=\"${CMAKE_CURRENT_BINARY_DIR}\")
-add_definitions(-DVERSION=\"0.7.1\")
+add_definitions(-DVERSION=\"0.7.5\")
 
 include(deps)
 
@@ -43,6 +43,10 @@ target_link_libraries(droptag TagsSearch ${LIBRARIES})
 
 add_executable(dropest dropest.cpp)
 target_link_libraries(dropest Estimation ${EST_LIBRARIES})
+
+add_executable(filter_mixture_bam utils/filter_mixture_bam.cpp)
+target_link_libraries(filter_mixture_bam ${BAMTOOLS_LIBRARIES} ${LIBRARIES})
+set_target_properties(filter_mixture_bam PROPERTIES RUNTIME_OUTPUT_DIRECTORY ./utils/)
 
 #TODO: check it
 add_custom_command(TARGET dropest POST_BUILD

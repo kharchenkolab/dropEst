@@ -22,18 +22,18 @@ namespace Estimation
 			const CellsDataContainer &_container;
 
 		protected:
-			virtual std::string get_result_bam_name(const std::string &bam_name) const override;
+			std::string get_result_bam_name(const std::string &bam_name) const override;
 
 		public:
 			FilteringBamProcessor(const BamTags &tags, const CellsDataContainer &container);
 
-			virtual void update_bam(const std::string& bam_file, const BamTools::BamReader &reader) override;
-			virtual void trace_state(const std::string& bam_file) const override;
-			virtual void save_read(const ReadInfo &read_info) override;
-			virtual void write_alignment(BamTools::BamAlignment alignment, const std::string& gene,
+			void update_bam(const std::string& bam_file, const BamTools::BamReader &reader) override;
+			void trace_state(const std::string& bam_file) const override;
+			void save_read(const ReadInfo &read_info) override;
+			void write_alignment(BamTools::BamAlignment alignment, const std::string& gene,
 										 const Tools::ReadParameters &read_params) override;
 
-			virtual const CellsDataContainer& container() const override;
+			const CellsDataContainer& container() const override;
 		};
 	}
 }

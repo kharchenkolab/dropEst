@@ -74,7 +74,7 @@ namespace BamProcessing
 
 		BamReader reader;
 		if (!reader.Open(bam_name))
-			throw std::runtime_error("Could not open BAM file: " + bam_name);
+			throw std::runtime_error("Can't open BAM file: " + bam_name);
 
 		processor->update_bam(bam_name, reader);
 
@@ -89,7 +89,7 @@ namespace BamProcessing
 			{
 				chr_name = reader.GetReferenceData().at(alignment.RefID).RefName;
 			}
-			catch (std::exception error)
+			catch (std::exception &error)
 			{
 				if (unexpected_chromosome_ids.emplace(alignment.RefID).second)
 				{

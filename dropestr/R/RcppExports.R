@@ -85,6 +85,7 @@ DeadjustGeneExpression <- function(gene_expression, adjusted_expressions) {
     .Call('_dropestr_DeadjustGeneExpression', PACKAGE = 'dropestr', gene_expression, adjusted_expressions)
 }
 
+#' @export
 ValueCountsC <- function(values) {
     .Call('_dropestr_ValueCountsC', PACKAGE = 'dropestr', values)
 }
