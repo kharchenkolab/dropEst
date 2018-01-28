@@ -40,6 +40,7 @@ NumericVector vpow(const NumericVector& base, double exp) {
   return res;
 }
 
+//' @export
 // [[Rcpp::export]]
 si_map_t ValueCountsC(const s_vec_t &values) {
   si_map_t res;

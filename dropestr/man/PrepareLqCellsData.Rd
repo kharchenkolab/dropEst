@@ -7,10 +7,11 @@
 \usage{
 PrepareLqCellsData(count.matrix, aligned.reads.per.cell,
   total.umis.per.cell = NULL, total.reads.per.cell = NULL,
-  intergenic.reads.per.cell = NULL, mitochondrion.fraction = NULL)
+  intergenic.reads.per.cell = NULL, mitochondrion.fraction = NULL,
+  scale = TRUE)
 
 PrepareLqCellsDataPipeline(data, total.reads.per.cell = NULL,
-  mitochondrion.genes = NULL, mit.chromosome.name = NULL)
+  mitochondrion.genes = NULL, mit.chromosome.name = NULL, scale = TRUE)
 }
 \arguments{
 \item{count.matrix}{Matrix with counts of umi per gene per cell.}
@@ -19,6 +20,8 @@ PrepareLqCellsDataPipeline(data, total.reads.per.cell = NULL,
 
 \item{mitochondrion.fraction}{Fraction of mitochondrion reads or UMIs per cell}
 
+\item{scale}{should data be normalized?}
+
 \item{data}{data, extracted with the pipeline.}
 
 \item{reads.per.gene}{List, which contains number of reads per gene per cell.}
@@ -26,8 +29,6 @@ PrepareLqCellsDataPipeline(data, total.reads.per.cell = NULL,
 \item{total.reads.per.cb}{Number of reads per cell before alignment.}
 
 \item{merge.targets}{Targets of CB merge. Used only with total.reads.per.cb provided.}
-
-\item{pcs.number}{maximal number of principal components, which is returned. Set to NULL to return raw data.}
 
 \item{merge.targets}{Targets of CB merge. Used only with total.reads.per.cell provided.}
 }

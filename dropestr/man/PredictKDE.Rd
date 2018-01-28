@@ -4,12 +4,14 @@
 \alias{PredictKDE}
 \title{Predict data with the KDE classifier.}
 \usage{
-PredictKDE(clf, x)
+PredictKDE(clf, x, bandwidth.mult = 1)
 }
 \arguments{
 \item{clf}{trained classifier.}
 
 \item{x}{data for classification.}
+
+\item{bandwidth.mult}{multiplier for KDE bandwidth}
 }
 \value{
 Class probabilities.

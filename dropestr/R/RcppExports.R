@@ -86,6 +86,7 @@ AdjustGeneExpression <- function(value, observed_sizes, adjusted_sizes) {
     .Call('_dropestr_AdjustGeneExpression', PACKAGE = 'dropestr', value, observed_sizes, adjusted_sizes)
 }
 
+#' @export
 ValueCountsC <- function(values) {
     .Call('_dropestr_ValueCountsC', PACKAGE = 'dropestr', values)
 }
