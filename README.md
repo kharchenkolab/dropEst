@@ -51,7 +51,9 @@ Pipeline for estimating molecular count matrices for droplet-based single-cell R
 ## Setup
 ### System requirements
 * Boost >= 1.54
-* BamTools
+* BamTools with headers
+  * Either install `libbamtools-dev` 
+  * or [build it locally](https://github.com/pezmaster31/bamtools/wiki/Building-and-installing) and then specify the location of the build when running cmake (e.g. `cmake -D BAMTOOLS_ROOT=/home/username/bamtools .`)
 * Zlib
 * R >= 3.2.2 with packages:
   * Rcpp
@@ -156,6 +158,12 @@ Example command:
 
 While dropTag provides way to demultiplex 10x data, [Cell Ranger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger) is still recommended tool for this. [dropEst](##dropEst) phase can be ran on the Cell Ranger demultiplexed .bam file to obtain data in the format, optimized for the subsequent analysis.
 
+**NOTE.** Sometimes 10x CellRanger isn't able to determine gene, from which a read originated. In this cases it fills gene info with a list of possible genes, separated by semicolon (e.g. 'ENSG00000255508;ENSG00000254772'). These genes **must be filtered out** prior to further analysis:
+```r
+holder <- readRDS('./cell.counts.rds')
+cm <- holder$cm[grep("^[^;]+$", rownames(holder$cm)),]
+```
+
 #### iCLIP
 * File 1: Gene reads with barcodes at the beginning of the sequence
 
@@ -164,6 +172,8 @@ Example command:
 ```bash
 ./droptag -c dropEst/configs/iclip.xml [-S] data.fastq
 ```
+**NOTE.** Implementation of iCLIP wasn't tested properly. Please, be careful using it. Anyone who used it is very welcome to comment it either in Issues or by e-mail.
+
 
 ### Command line arguments for dropTag
 *  -c, --config filename: xml file with droptag parameters  
