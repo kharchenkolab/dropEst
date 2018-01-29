@@ -1,4 +1,6 @@
 ErrorNumProb <- function(error.num, reads.num, error.prob, p.collisions) {
+  # p(#Err = eror.num | reads.num) =
+  # \Sum_{n.errs=error.num}^{reads.num} Binom(n.errs, size=reads.num, p=error.prob) * p(#Collisions = n.errs - error.num)
   if (error.num > reads.num)
     return(0)
 
@@ -10,7 +12,7 @@ ErrorProbsGivenNumOfReadsLarge <- function(max.reads.num, error.prob, umi.num, m
   p.collisions <- FillDpMatrix(1, umi.num + 1, max.reads.num + 1)
   probs <- plapply(1:max.reads.num, function(r) sapply(0:umi.num, function(e)
     ErrorNumProb(e, r, error.prob, p.collisions)), mc.cores=mc.cores)
-  probs <- unlist(probs) %>% matrix(nrow=length(probs[[1]]))
+  probs <- unlist(probs) %>% matrix(nrow=umi.num + 1)
 
   colnames(probs) <- paste(1:ncol(probs))
   rownames(probs) <- paste(0:(nrow(probs) - 1))
@@ -141,11 +143,10 @@ TrainNBNegative <- function(rpus.extracted, quality.prior, adj.umi.num, mc.cores
   read.error.prob <- sum.rpus['Small'] / sum(sum.rpus)
   read.error.theta <- EstimateReadsBetaBinomial(reads.per.umi.train$Small, reads.per.umi.train$Large, read.error.prob)
 
-  max.reads.num <- (max(rpus.extracted %>% sapply(max)) * 1.5) %>% round()
-  probs.given.reads.large <- ErrorProbsGivenNumOfReadsLarge(max.reads.num, read.error.prob, adj.umi.num, mc.cores=mc.cores)
+  max.reads.num <- round(max(sapply(rpus.extracted, max)) * 1.5)
 
   params.neg$MinRpUParams <- list(Theta=read.error.theta, Prob=read.error.prob)
-  params.neg$ErrorNumProbsRL <- probs.given.reads.large
+  params.neg$ErrorNumProbsRL <- ErrorProbsGivenNumOfReadsLarge(max.reads.num, read.error.prob, adj.umi.num, mc.cores=mc.cores)
   params.neg$Quality <- quality.prior
 
   return(params.neg)
@@ -220,6 +221,7 @@ PredictBayesian <- function(classifier, classifier.df, filt.gene, dp.matrices, n
   classifier.df$MaxRpUProb <- unlist(max.rpu.probs[classifier.df$MaxRpU])
 
   total.rpus <- classifier.df$MinRpUCS + classifier.df$MaxRpU
+
   classifier.df$RealProb <- classifier$Common$RpUDistribution[classifier.df$MinRpU] - classifier.df$MaxRpUProb +
     classifier.df$RealQualityProb
 

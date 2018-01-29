@@ -2,8 +2,6 @@
 
 using namespace Rcpp;
 
-s_vec_t GetUmisList(unsigned umi_len);
-
 slst_map_t parseList(const List &lst) {
   slst_map_t res;
   StringVector names = as<StringVector>(lst.names());
@@ -50,6 +48,7 @@ NumericVector vpow(const NumericVector& base, double exp) {
   return res;
 }
 
+//' @export
 // [[Rcpp::export]]
 si_map_t ValueCountsC(const s_vec_t &values) {
   si_map_t res;
