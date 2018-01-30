@@ -28,29 +28,6 @@ ErrorProbsGivenRlRs <- function(probs.given.rl, reads.small.cumsum, reads.large)
   return(diag(probs.subset) / colSums(probs.subset))
 }
 
-EstimateReadsBetaBinomial <- function(reads.small, reads.large, error.prob) {
-  llBetabinom <- function(theta) {
-    -sum(emdbook::dbetabinom(reads.small, prob=error.prob, size=reads.large + reads.small, theta=theta, log=TRUE))
-  }
-
-  thetas.list <- seq(5, 100, 10)
-  for (theta in thetas.list) {
-    params <- try(suppressWarnings(as.list(bbmle::mle2(llBetabinom, start=list(theta=theta))@fullcoef)), silent=T)
-    if (class(params) != 'try-error')
-      break
-  }
-
-  if (class(params) == 'try-error') {
-    params <- try(suppressWarnings(bbmle::mle2(llBetabinom, start=list(theta=20), method='Nelder-Mead')@fullcoef), silent=T)
-  }
-
-  if (class(params) == 'try-error') {
-    stop("Unable to estimate distribution parameters: " + str(theta))
-  }
-
-  return(params$theta)
-}
-
 ReadsPerUmiDataset <- function(reads.per.umi.extracted, max.umis.per.cb=4) { # TODO: merge it with TrainNBClassifier
   umis.per.gene <- sapply(reads.per.umi.extracted, length)
   reads.large.all <- unlist(reads.per.umi.extracted[umis.per.gene == 1])
@@ -141,11 +118,8 @@ TrainNBNegative <- function(rpus.extracted, quality.prior, adj.umi.num, mc.cores
   sum.rpus <- colSums(reads.per.umi.train)
 
   read.error.prob <- sum.rpus['Small'] / sum(sum.rpus)
-  read.error.theta <- EstimateReadsBetaBinomial(reads.per.umi.train$Small, reads.per.umi.train$Large, read.error.prob)
-
   max.reads.num <- round(max(sapply(rpus.extracted, max)) * 1.5)
 
-  params.neg$MinRpUParams <- list(Theta=read.error.theta, Prob=read.error.prob)
   params.neg$ErrorNumProbsRL <- ErrorProbsGivenNumOfReadsLarge(max.reads.num, read.error.prob, adj.umi.num, mc.cores=mc.cores)
   params.neg$Quality <- quality.prior
 
@@ -174,13 +148,12 @@ TrainNBClassifier <- function(reads.per.umi.per.cb, adj.umi.num, quality.quants.
 
   # Reads per UMI distributions
   rpus.extracted <- ExtractReadsPerUmi(reads.per.umi.per.cb, mc.cores=mc.cores)
-  rpu.distribution <- SmoothDistribution(unlist(rpus.extracted) - 1, 10, log.probs=F)
 
   # Distributions given error
   clf.neg <- TrainNBNegative(rpus.extracted, quality.prior=quality.probs$negative, adj.umi.num=adj.umi.num, mc.cores=mc.cores)
 
   # Distribution over all data
-  clf.common <- list(Quality=quality.probs$common, RpUDistribution=log(rpu.distribution))
+  clf.common <- list(Quality=quality.probs$common)
 
   return(list(Negative=clf.neg, Common=clf.common, QualityQuantBorders=quant.borders, MaxAdjacentUmisNum=adj.umi.num))
 }
@@ -205,7 +178,6 @@ ClassifierDfOrder <- function(classifier.df) {
 #' @export
 PredictBayesian <- function(classifier, classifier.df, filt.gene, dp.matrices, neighbours.prob.index, size.adj) { #TODO: not export
   divSum <- function(x) x / sum(x)
-  dbetabinom <- function(...) emdbook::dbetabinom(..., prob=classifier$Negative$MinRpUParams$Prob, theta=classifier$Negative$MinRpUParams$Theta)
 
   classifier.df <- classifier.df[ClassifierDfOrder(classifier.df),]
   rpus <- ExtractReadsPerUmi(filt.gene, one.gene=T)
@@ -215,19 +187,8 @@ PredictBayesian <- function(classifier, classifier.df, filt.gene, dp.matrices, n
   classifier.df$LargerNum <- neighbour.info$LargerNum[as.character(classifier.df$Target)]
   classifier.df$MinRpUCS <- split(classifier.df$MinRpU, classifier.df$Target) %>% lapply(cumsum) %>% unlist()
 
-  max.rpus <- unique(classifier.df$MaxRpU)
-  max.rpu.probs <- list()
-  max.rpu.probs[max.rpus] <- sapply(max.rpus, function(r) log(sum(exp(classifier$Common$RpUDistribution[1:r]))))
-  classifier.df$MaxRpUProb <- unlist(max.rpu.probs[classifier.df$MaxRpU])
-
-  total.rpus <- classifier.df$MinRpUCS + classifier.df$MaxRpU
-
-  classifier.df$RealProb <- classifier$Common$RpUDistribution[classifier.df$MinRpU] - classifier.df$MaxRpUProb +
-    classifier.df$RealQualityProb
-
-  classifier.df$ErrorProb <- dbetabinom(classifier.df$MinRpUCS, size=total.rpus, log=T) -
-    log(1 - dbetabinom(0, size=total.rpus)) +
-    classifier.df$ErrorQualityProb
+  classifier.df$RealProb <- classifier.df$RealQualityProb
+  classifier.df$ErrorProb <- classifier.df$ErrorQualityProb
 
   classifier.df <- classifier.df[ClassifierDfOrder(classifier.df),]
 

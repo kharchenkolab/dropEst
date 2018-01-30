@@ -18,9 +18,7 @@ Imports:
   Rcpp,
   RcppProgress,
   RcppEigen,
-  Matrix (>= 1.2-7.1),
-  bbmle (>= 1.0.19),
-  emdbook (>= 1.3.9)
+  Matrix (>= 1.2-7.1)
 Suggests:
   parallel,
   optparse,
