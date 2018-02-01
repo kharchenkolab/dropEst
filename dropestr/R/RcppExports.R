@@ -69,10 +69,6 @@ PrepareClassifierTrainingData <- function(reads_per_umi_pairs) {
     .Call('_dropestr_PrepareClassifierTrainingData', PACKAGE = 'dropestr', reads_per_umi_pairs)
 }
 
-GetTrimCollisionsNum <- function(rpu_per_gene, trim_length) {
-    .Call('_dropestr_GetTrimCollisionsNum', PACKAGE = 'dropestr', rpu_per_gene, trim_length)
-}
-
 #' @export
 FillCollisionsAdjustmentInfo <- function(umi_probabilities, max_umi_per_gene) {
     .Call('_dropestr_FillCollisionsAdjustmentInfo', PACKAGE = 'dropestr', umi_probabilities, max_umi_per_gene)

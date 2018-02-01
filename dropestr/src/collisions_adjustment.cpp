@@ -3,28 +3,6 @@
 
 using namespace Rcpp;
 
-// [[Rcpp::export]]
-IntegerVector GetTrimCollisionsNum(const List &rpu_per_gene, int trim_length) {
-  IntegerVector res(rpu_per_gene.size());
-
-  for (int gene_ind = 0; gene_ind < rpu_per_gene.size(); ++gene_ind) {
-    const GeneInfo gene_info(as<List>(rpu_per_gene[gene_ind]));
-    s_set_t trimmed_rpus;
-
-    int collisions_num = 0;
-    for (int umi_ind = 0; umi_ind < gene_info.reads_per_umi.size(); ++umi_ind) {
-      auto ins = trimmed_rpus.insert(gene_info.umis[umi_ind].substr(0, trim_length));
-      if (!ins.second) {
-        collisions_num++;
-      }
-    }
-
-    res[gene_ind] = collisions_num;
-  }
-
-  return res;
-}
-
 class CollisionsAdjuster {
 public:
   typedef std::vector<unsigned> size_vec_t;

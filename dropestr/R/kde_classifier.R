@@ -5,6 +5,7 @@
 #' @param H the algorithm of bandwidth selection (see 'ks' documentation).
 #' @param prior.probs Prior probabilities or weights of classes.
 #' @return Trained KDE classifier.
+#' @export
 TrainKDE <- function(x, y, H=ks::Hns, prior.probs=c(0.5, 0.5)) {
   if (any(prior.probs < 0))
     stop("Prior probabilities must be positive")
@@ -30,6 +31,7 @@ TrainKDE <- function(x, y, H=ks::Hns, prior.probs=c(0.5, 0.5)) {
 #' @param x data for classification.
 #' @param bandwidth.mult multiplier for KDE bandwidth
 #' @return Class probabilities.
+#' @export
 PredictKDE <- function(clf, x, bandwidth.mult=1) {
   if (class(clf) != "KdeClassifier") {
     stop("The classifier provided isn't a KdeClassifier")
