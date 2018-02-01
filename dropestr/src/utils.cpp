@@ -5,6 +5,7 @@ using namespace Rcpp;
 
 s_vec_t GetUmisList(unsigned umi_len);
 
+//' @export
 // [[Rcpp::export]]
 SEXP BuildCountMatrix(const List &reads_per_umi_per_cell) {
   Progress p(0, false);

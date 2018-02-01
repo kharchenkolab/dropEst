@@ -205,15 +205,15 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// AdjustGeneExpressionClassic
-int AdjustGeneExpressionClassic(int value, int umis_number);
-RcppExport SEXP _dropestr_AdjustGeneExpressionClassic(SEXP valueSEXP, SEXP umis_numberSEXP) {
+// AdjustGeneExpressionUniform
+int AdjustGeneExpressionUniform(int value, int umis_number);
+RcppExport SEXP _dropestr_AdjustGeneExpressionUniform(SEXP valueSEXP, SEXP umis_numberSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< int >::type value(valueSEXP);
     Rcpp::traits::input_parameter< int >::type umis_number(umis_numberSEXP);
-    rcpp_result_gen = Rcpp::wrap(AdjustGeneExpressionClassic(value, umis_number));
+    rcpp_result_gen = Rcpp::wrap(AdjustGeneExpressionUniform(value, umis_number));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -353,7 +353,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dropestr_PrepareClassifierTrainingData", (DL_FUNC) &_dropestr_PrepareClassifierTrainingData, 1},
     {"_dropestr_GetTrimCollisionsNum", (DL_FUNC) &_dropestr_GetTrimCollisionsNum, 2},
     {"_dropestr_FillCollisionsAdjustmentInfo", (DL_FUNC) &_dropestr_FillCollisionsAdjustmentInfo, 2},
-    {"_dropestr_AdjustGeneExpressionClassic", (DL_FUNC) &_dropestr_AdjustGeneExpressionClassic, 2},
+    {"_dropestr_AdjustGeneExpressionUniform", (DL_FUNC) &_dropestr_AdjustGeneExpressionUniform, 2},
     {"_dropestr_DeadjustGeneExpression", (DL_FUNC) &_dropestr_DeadjustGeneExpression, 2},
     {"_dropestr_ValueCountsC", (DL_FUNC) &_dropestr_ValueCountsC, 1},
     {"_dropestr_ValueCounts", (DL_FUNC) &_dropestr_ValueCounts, 2},

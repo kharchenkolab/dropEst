@@ -73,12 +73,14 @@ GetTrimCollisionsNum <- function(rpu_per_gene, trim_length) {
     .Call('_dropestr_GetTrimCollisionsNum', PACKAGE = 'dropestr', rpu_per_gene, trim_length)
 }
 
+#' @export
 FillCollisionsAdjustmentInfo <- function(umi_probabilities, max_umi_per_gene) {
     .Call('_dropestr_FillCollisionsAdjustmentInfo', PACKAGE = 'dropestr', umi_probabilities, max_umi_per_gene)
 }
 
-AdjustGeneExpressionClassic <- function(value, umis_number) {
-    .Call('_dropestr_AdjustGeneExpressionClassic', PACKAGE = 'dropestr', value, umis_number)
+#' @export
+AdjustGeneExpressionUniform <- function(value, umis_number) {
+    .Call('_dropestr_AdjustGeneExpressionUniform', PACKAGE = 'dropestr', value, umis_number)
 }
 
 DeadjustGeneExpression <- function(gene_expression, adjusted_expressions) {
@@ -95,6 +97,7 @@ ValueCounts <- function(values, return_probs = FALSE) {
     .Call('_dropestr_ValueCounts', PACKAGE = 'dropestr', values, return_probs)
 }
 
+#' @export
 BuildCountMatrix <- function(reads_per_umi_per_cell) {
     .Call('_dropestr_BuildCountMatrix', PACKAGE = 'dropestr', reads_per_umi_per_cell)
 }

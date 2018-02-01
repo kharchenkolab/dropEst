@@ -94,7 +94,7 @@ public:
   }
 };
 
-// '@export
+//' @export
 // [[Rcpp::export]]
 std::vector<unsigned> FillCollisionsAdjustmentInfo(const std::vector<double> &umi_probabilities, unsigned max_umi_per_gene) {
   CollisionsAdjuster adjuster;
@@ -102,11 +102,11 @@ std::vector<unsigned> FillCollisionsAdjustmentInfo(const std::vector<double> &um
   return adjuster.adjusted_sizes();
 }
 
-// '@export
+//' @export
 // [[Rcpp::export]]
-int AdjustGeneExpressionClassic(int value, int umis_number) {
+int AdjustGeneExpressionUniform(int value, int umis_number) {
   if (value == umis_number) {
-    return 2 * AdjustGeneExpressionClassic(value - 1, umis_number) - AdjustGeneExpressionClassic(value - 2, umis_number);
+    return 2 * AdjustGeneExpressionUniform(value - 1, umis_number) - AdjustGeneExpressionUniform(value - 2, umis_number);
   }
   return int(std::round(-std::log(1 - value / double(umis_number)) * umis_number));
 }
