@@ -43,15 +43,6 @@ Pipeline for estimating molecular count matrices for droplet-based single-cell R
 <!-- /TOC -->
 
 ## General processing steps
-```mermaid
-graph LR
-A(dropTag) -->|tagged fastq| B{aligner}
-B-->|bams|C(dropEst)
-C-->|count matrix|D(pagoda2, Seurat, velocyto)
-C-->|rds file|E(dropEstR)
-C-->|rds file|F(dropReport)
-```
-
 1. **dropTag**: extraction of cell barcodes and UMIs from the library. Result: demultiplexed .fastq.gz files, which should be aligned to the reference.
 2. Alignment of the demultiplexed files to reference genome. Result: .bam files with the alignment.
 3. **dropEst**: building count matrix and estimation of some statistics, necessary for quality control. Result: .rds file with the count matrix and statistics. *Optionally: count matrix in MatrixMarket format.*
