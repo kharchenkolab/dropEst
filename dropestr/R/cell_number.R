@@ -219,7 +219,7 @@ PlotCellsNumberSummary <- function(umi.counts, breaks=100, mask=c(T,T,T)) { #TOD
 
 #' @export
 PlotCellsNumberLogLog <- function(umi.counts, estimate.cells.number=F, show.legend=T, gg.base=NULL, plot.label=NULL,
-                                  plot.border=TRUE, linewidth=1, alpha=1.0) {
+                                  plot.border=TRUE, linewidth=1, alpha=1.0, logticks=T) {
   if (is.null(gg.base)) {
     gg.base <- ggplot2::ggplot()
   }
@@ -255,17 +255,22 @@ PlotCellsNumberLogLog <- function(umi.counts, estimate.cells.number=F, show.lege
   gg <- gg +
     ggplot2::scale_x_log10(expand = c(0, 0)) +
     ggplot2::scale_y_log10(limits = c(y.min, y.max), expand = c(0, 0)) +
-    ggplot2::annotation_logticks(short=ggplot2::unit(2, 'pt'), mid=ggplot2::unit(3, 'pt'), long=ggplot2::unit(4, 'pt')) +
     ggplot2::labs(x='Cell rank', y='#UMIs')
+
+  if (logticks) {
+    gg <- gg + ggplot2::annotation_logticks(short=ggplot2::unit(2, 'pt'), mid=ggplot2::unit(3, 'pt'),
+                                            long=ggplot2::unit(4, 'pt'))
+  }
 
   if (estimate.cells.number) {
     if (show.legend) {
-      gg.theme <- ggplot2::theme(legend.position=c(0.99, 0.99), legend.justification=c(1, 1), legend.background=ggplot2::element_rect(fill=ggplot2::alpha('white', 0.7)))
+      gg.theme <- ggplot2::theme(legend.position=c(0.99, 0.99), legend.justification=c(1, 1),
+                                 legend.background=ggplot2::element_rect(fill=ggplot2::alpha('white', 0.7)))
     } else {
       gg.theme <- ggplot2::theme(legend.position='none')
     }
 
-    gg <- gg + ggplot2::geom_ribbon(ggplot2::aes(ymin=y.min, ymax=y, fill=Quality), alpha=0.4) +
+    gg <- gg + ggplot2::geom_ribbon(ggplot2::aes(ymin=y.min, x=x, ymax=y, fill=Quality), data=plot.df, alpha=0.4) +
       ggplot2::scale_fill_manual(values=c('green', 'red', 'gray')) +
       ggplot2::annotate("label", exp(log(n.cells$min) / 2), y=y.min, vjust=-1, hjust=0, label=paste0(n.cells$min, '\ncells'), alpha=0.7) +
       ggplot2::annotate("label", exp((log(n.cells$max) + log(length(umi.counts))) / 2), y=y.min, vjust=-1, label=paste0(length(umi.counts) - n.cells$max, '\ncells'), alpha=0.7) +

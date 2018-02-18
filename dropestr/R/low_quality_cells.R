@@ -147,7 +147,7 @@ PrepareLqCellsDataPipeline <- function(data, total.reads.per.cell=NULL, mitochon
 #'   \item{total.variance.explained}{fraction of the explained variance.}
 #'   \item{pca.data}{transformed data with the optimal number of principal components.}
 #'   \item{used.features}{features, which contribute to pca.data.}
-GetOptimalPcs <- function(data, explained.var.required=0.98, max.pcs=3, loadings.filt.threshold=5e-2) {
+GetOptimalPcs <- function(data, explained.var.required=0.98, max.pcs=3, loadings.filt.threshold=7.5e-2) {
   pc.fracs <- pcaPP::sPCAgrid(Scale(data), k=ncol(data))
   explained.before <- c(0, cumsum((pc.fracs$sdev)^2 / sum(pc.fracs$sdev^2)))
   pcs.num <- min(which.min(explained.before < explained.var.required) - 1, max.pcs)
@@ -208,7 +208,7 @@ ScorePipelineCells <- function(pipeline.data, mitochondrion.genes=NULL, mit.chro
                                       mit.chromosome.name=mit.chromosome.name,
                                       total.reads.per.cell=tags.data$reads_per_cb)[names(cells.quality), ]
 
-  used.features <- rownames(bc.df)
+  used.features <- colnames(bc.df)
 
   if (!is.null(max.pcs.number)) {
     pca.res <- GetOptimalPcs(bc.df, max.pcs=max.pcs.number)
