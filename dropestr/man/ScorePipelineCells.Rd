@@ -5,7 +5,8 @@
 \title{Score cells with a KDE classifier.}
 \usage{
 ScorePipelineCells(pipeline.data, mitochondrion.genes = NULL,
-  mit.chromosome.name = NULL, tags.data = NULL, filter.mitochondrial = T,
+  mit.chromosome.name = NULL, tags.data = NULL,
+  filter.mitochondrial = !is.null(mitochondrion.genes),
   filter.intergenic = T, mit.fraction.threshold = NULL,
   intergenic.fraction.threshold = NULL, max.pcs.number = 3,
   predict.all = FALSE, verbose = FALSE, kde.bandwidth.mult = 1,

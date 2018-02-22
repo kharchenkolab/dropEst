@@ -189,7 +189,7 @@ FilterHighFraction <- function(fraction, threshold=NULL) {
 #'
 #' @export
 ScorePipelineCells <- function(pipeline.data, mitochondrion.genes=NULL, mit.chromosome.name=NULL, tags.data=NULL,
-                               filter.mitochondrial=T, filter.intergenic=T,
+                               filter.mitochondrial=!is.null(mitochondrion.genes), filter.intergenic=T,
                                mit.fraction.threshold=NULL, intergenic.fraction.threshold=NULL,
                                max.pcs.number=3, predict.all=FALSE, verbose=FALSE, kde.bandwidth.mult=1, cell.number=NULL) {
   if (filter.mitochondrial && is.null(mitochondrion.genes) && is.null(mit.chromosome.name))
@@ -197,12 +197,6 @@ ScorePipelineCells <- function(pipeline.data, mitochondrion.genes=NULL, mit.chro
 
   umi.counts.raw <- sort(Matrix::colSums(pipeline.data$cm_raw), decreasing=T)
   cells.quality <- EstimateCellsQuality(umi.counts.raw, cell.number=cell.number)
-
-  if (predict.all) {
-    umi.counts <- umi.counts.raw
-  } else {
-    umi.counts <- sort(Matrix::colSums(pipeline.data$cm), decreasing=T)
-  }
 
   bc.df <- PrepareLqCellsDataPipeline(pipeline.data, mitochondrion.genes = mitochondrion.genes,
                                       mit.chromosome.name=mit.chromosome.name,
@@ -243,10 +237,17 @@ ScorePipelineCells <- function(pipeline.data, mitochondrion.genes=NULL, mit.chro
     }
   }
 
-  clf <- TrainClassifier(bc.df.pca, cells.quality, umi.counts)
-  scores <- PredictKDE(clf, bc.df.pca[names(umi.counts),], bandwidth.mult=kde.bandwidth.mult)[,2]
-  if (filter.mitochondrial & !set.mit.implicitly) {
-    scores[is.mitochondrial[names(scores)]] <- min(scores)
+  clf <- TrainClassifier(bc.df.pca, cells.quality, umi.counts.raw)
+  if (predict.all) {
+    bc.df.pca <- bc.df.pca[names(umi.counts.raw),]
+  } else {
+    bc.df.pca <- bc.df.pca[names(sort(Matrix::colSums(pipeline.data$cm), decreasing=T)),]
+  }
+  scores <- PredictKDE(clf, bc.df.pca, bandwidth.mult=kde.bandwidth.mult)[,2]
+  if (filter.mitochondrial) {
+    if (!set.mit.implicitly) {
+      scores[is.mitochondrial[names(scores)]] <- min(scores)
+    }
   }
 
   if (filter.intergenic & !set.intergenic.implicitly) {

@@ -58,10 +58,8 @@ List TrimUmis(const List &rpu_per_cell, int trim_length, bool reverse=false) {
 //' @param umi_length length of UMI.
 //' @param smooth smooth term, which is added to each UMI probability in case if some UMIs have only few observations.
 //' @return Vector of UMI probabilities.
-//'
-//' @export
 // [[Rcpp::export]]
-si_map_t GetUmisDistribution(List umis_per_gene_per_cell, int smooth = 1) {
+si_map_t GetUmisDistributionNew(List umis_per_gene_per_cell, int smooth = 1) {
   si_map_t res;
 
   for (const List &rpus: umis_per_gene_per_cell) {
@@ -76,6 +74,39 @@ si_map_t GetUmisDistribution(List umis_per_gene_per_cell, int smooth = 1) {
   }
 
   unsigned umi_length = res.begin()->first.length();
+  for (auto const &umi : GetUmisList(umi_length)) {
+    res[umi] += smooth;
+  }
+
+  return res;
+}
+
+//' Estimate a distribution of observed UMI probabilities for results on <= 0.7.5.
+//'
+//' @param umis_per_gene_per_cell list of vectors: number of UMIs per gene per cell (zeros can be omitted).
+//' @param umi_length length of UMI.
+//' @param smooth smooth term, which is added to each UMI probability in case if some UMIs have only few observations.
+//' @return Vector of UMI probabilities.
+//'
+//' @export
+// [[Rcpp::export]]
+si_map_t GetUmisDistributionOld(List umis_per_gene_per_cell, int smooth = 1) {
+  si_map_t res;
+
+  for (const List &umis_per_gene : umis_per_gene_per_cell) {
+    for (const IntegerVector &rpus : umis_per_gene) {
+      for (const String &umi : as<StringVector>(rpus.names())) {
+        res[umi]++;
+      }
+    }
+  }
+
+  if (res.empty()) {
+    warning("UMIs distribution is empty");
+    return res;
+  }
+
+  int umi_length = res.begin()->first.length();
   for (auto const &umi : GetUmisList(umi_length)) {
     res[umi] += smooth;
   }

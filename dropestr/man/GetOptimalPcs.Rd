@@ -5,7 +5,7 @@
 \title{Perform PCA with the optimal number of principal components.}
 \usage{
 GetOptimalPcs(data, explained.var.required = 0.98, max.pcs = 3,
-  loadings.filt.threshold = 0.05)
+  loadings.filt.threshold = 0.075)
 }
 \arguments{
 \item{data}{data for low-quality cells filtration}

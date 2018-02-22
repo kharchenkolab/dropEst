@@ -264,15 +264,27 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// GetUmisDistribution
-si_map_t GetUmisDistribution(List umis_per_gene_per_cell, int smooth);
-RcppExport SEXP _dropestr_GetUmisDistribution(SEXP umis_per_gene_per_cellSEXP, SEXP smoothSEXP) {
+// GetUmisDistributionNew
+si_map_t GetUmisDistributionNew(List umis_per_gene_per_cell, int smooth);
+RcppExport SEXP _dropestr_GetUmisDistributionNew(SEXP umis_per_gene_per_cellSEXP, SEXP smoothSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< List >::type umis_per_gene_per_cell(umis_per_gene_per_cellSEXP);
     Rcpp::traits::input_parameter< int >::type smooth(smoothSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetUmisDistribution(umis_per_gene_per_cell, smooth));
+    rcpp_result_gen = Rcpp::wrap(GetUmisDistributionNew(umis_per_gene_per_cell, smooth));
+    return rcpp_result_gen;
+END_RCPP
+}
+// GetUmisDistributionOld
+si_map_t GetUmisDistributionOld(List umis_per_gene_per_cell, int smooth);
+RcppExport SEXP _dropestr_GetUmisDistributionOld(SEXP umis_per_gene_per_cellSEXP, SEXP smoothSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type umis_per_gene_per_cell(umis_per_gene_per_cellSEXP);
+    Rcpp::traits::input_parameter< int >::type smooth(smoothSEXP);
+    rcpp_result_gen = Rcpp::wrap(GetUmisDistributionOld(umis_per_gene_per_cell, smooth));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -344,7 +356,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dropestr_ValueCounts", (DL_FUNC) &_dropestr_ValueCounts, 2},
     {"_dropestr_BuildCountMatrix", (DL_FUNC) &_dropestr_BuildCountMatrix, 1},
     {"_dropestr_TrimUmis", (DL_FUNC) &_dropestr_TrimUmis, 3},
-    {"_dropestr_GetUmisDistribution", (DL_FUNC) &_dropestr_GetUmisDistribution, 2},
+    {"_dropestr_GetUmisDistributionNew", (DL_FUNC) &_dropestr_GetUmisDistributionNew, 2},
+    {"_dropestr_GetUmisDistributionOld", (DL_FUNC) &_dropestr_GetUmisDistributionOld, 2},
     {"_dropestr_GetUmisList", (DL_FUNC) &_dropestr_GetUmisList, 1},
     {"_dropestr_ConcatLists", (DL_FUNC) &_dropestr_ConcatLists, 1},
     {"_dropestr_GetMirrorPairs", (DL_FUNC) &_dropestr_GetMirrorPairs, 3},
