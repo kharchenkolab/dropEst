@@ -2,11 +2,15 @@
 Pipeline for estimating molecular count matrices for droplet-based single-cell RNA-seq measurements. Implements methods, described in [this paper](https://doi.org/10.1101/171496).
 
 ## News
+### V0.7.6
+* dropEst now prints version number
+* Fixed some bugs with low-quality cells
 ### V0.7.5
 * Files with real cell barcodes have new format: now they are organized by rows, but not by columns. It allowed to add 10x 16bp barcodes.
 * Dockers for Centos6, Centos7 and Debian9 have been added.
 * Algorithm of filtration of low-quality cells was significantly improved.
-* See **CHANGELOG.md** for full list.
+
+See [CHANGELOG.md](CHANGELOG.md) for full list.
 
 ## Table of contents
 <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
