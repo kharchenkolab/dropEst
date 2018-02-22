@@ -64,7 +64,8 @@ static void check_files_existence(const Params &params, const vector<string> &ba
 
 static void usage()
 {
-	cerr << SCRIPT_NAME <<": estimate molecular counts per cell\n\n";
+	cerr << SCRIPT_NAME <<": estimate molecular counts per cell\n";
+	cerr << "Version: " << VERSION << "\n\n";
 	cerr << "SYNOPSIS\n";
 	cerr << "\t" << SCRIPT_NAME << " [options] -c config.xml file_1.bam [..., file_n.bam]\n";
 	cerr << "OPTIONS:\n";
@@ -271,6 +272,7 @@ int main(int argc, char **argv)
 	Tools::init_log(!params.quiet, false, params.log_prefix + "est_main.log", params.log_prefix + "est_debug.log");
 
 	L_TRACE << command_line;
+	L_TRACE << "Version: " << VERSION << ".";
 	vector<string> files;
 
 	Tools::init_r();

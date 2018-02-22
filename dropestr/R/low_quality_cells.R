@@ -189,9 +189,13 @@ FilterHighFraction <- function(fraction, threshold=NULL) {
 #'
 #' @export
 ScorePipelineCells <- function(pipeline.data, mitochondrion.genes=NULL, mit.chromosome.name=NULL, tags.data=NULL,
-                               filter.mitochondrial=!is.null(mitochondrion.genes), filter.intergenic=T,
+                               filter.mitochondrial=NULL, filter.intergenic=T,
                                mit.fraction.threshold=NULL, intergenic.fraction.threshold=NULL,
                                max.pcs.number=3, predict.all=FALSE, verbose=FALSE, kde.bandwidth.mult=1, cell.number=NULL) {
+  if (is.null(filter.mitochondrial)) {
+    filter.mitochondrial <- !is.null(mitochondrion.genes) | !is.null(mit.chromosome.name)
+  }
+
   if (filter.mitochondrial && is.null(mitochondrion.genes) && is.null(mit.chromosome.name))
     stop("Either list of mitochondrial genes of a name of mitochondrial chromosome must be provided to filter cells with high mitochondrial fraction")
 
@@ -250,8 +254,10 @@ ScorePipelineCells <- function(pipeline.data, mitochondrion.genes=NULL, mit.chro
     }
   }
 
-  if (filter.intergenic & !set.intergenic.implicitly) {
-    scores[is.intergenic[names(scores)]] <- min(scores)
+  if (filter.intergenic) {
+    if (!set.intergenic.implicitly) {
+      scores[is.intergenic[names(scores)]] <- min(scores)
+    }
   }
 
   return(scores)

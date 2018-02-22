@@ -8,6 +8,13 @@
 ### Added
 * UMI correction algorithm now uses UMI quality (only Illumina 1.8 or later formats are supported)
 
+## [0.7.6] - 2018-02-22
+### Added
+* Version number output in dropEst
+### Changed
+* Fixed bug with report generation
+* Fixed bugs with estimation of low-quality cells
+
 ## [0.7.5] - 2018-01-28
 ### Added
 * Dockers for Centos6, Centos7 and Debian9
@@ -35,7 +42,7 @@
 
 ## [0.6.8] - 2017-09-22
 ### Added
-* Filtration of reads by barcode quality ("*TagsSearch/Processing/min_barcode_quality*" and 
+* Filtration of reads by barcode quality ("*TagsSearch/Processing/min_barcode_quality*" and
 "*Estimation/Other/min_barcode_quality*" fields in the config)
 * dropEst is now able to parse read type (e.g. exonic/intronic) from .bam file (see *config_desc.xml*)
 

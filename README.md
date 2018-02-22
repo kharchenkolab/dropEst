@@ -2,11 +2,15 @@
 Pipeline for estimating molecular count matrices for droplet-based single-cell RNA-seq measurements. Implements methods, described in [this paper](https://doi.org/10.1101/171496).
 
 ## News
+### V0.7.6
+* dropEst now prints version number
+* Fixed some bugs with low-quality cells
 ### V0.7.5
 * Files with real cell barcodes have new format: now they are organized by rows, but not by columns. It allowed to add 10x 16bp barcodes.
 * Dockers for Centos6, Centos7 and Debian9 have been added.
 * Algorithm of filtration of low-quality cells was significantly improved.
-* See **CHANGELOG.md** for full list.
+
+See [CHANGELOG.md](CHANGELOG.md) for full list.
 
 ## Table of contents
 <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
@@ -95,7 +99,7 @@ These variables should be set to the path to the installed library. It can be do
 
 In case you have some issues with the linker for specific library, please build this library manually with the version of compiler, which you're going to use for dropEst build.
 
-### Problems with std::__cxx11::string
+#### Problems with std::__cxx11::string
 See [question on stackoverflow](https://stackoverflow.com/questions/33394934/converting-std-cxx11string-to-stdstring).
 
 #### Boost 1.65
@@ -140,7 +144,7 @@ Example command:
 If a file with library tags provided, option "-t" is required.
 <!-- To get data from multiple libraries **TODO: understand what happens with barcode in the case of multiple library tags**. -->
 
-Example config file is located at "*dropEst/configs/indrop_v1_2.xml*".  
+Example config file is located at "*dropEst/configs/indrop_v3.xml*".  
 Example command:
 ```bash
 ./droptag -c dropEst/configs/indrop_v3.xml [-S] [-t library_tag] barcode1_reads.fastq barcode2_reads.fastq gene_reads.fastq [library_tags.fastq]
@@ -206,7 +210,7 @@ tophat2 -p number_of_threads --no-coverage-search -g 1 -G genes.gtf -o output_di
 
 1. Download transcript sequences in .fasta format (i.e. [Ensembl](https://www.ensembl.org/info/data/ftp/index.html) genes).
 2. Build Kallisto index: `kallisto index -i genes.fa.gz`.
-3. Run `kallisto quant --pseudobam --single -i genes.index -o out -l mean_length -s std_length reads.fastq.gz`. Here, *mean_length* is mean read length and *std_length* is standard deviataion of read length. You should specify values, according to the experiment design.
+3. Run `kallisto quant --pseudobam --single -i genes.index -o out -l mean_length -s std_length reads.fastq.gz`. Here, *mean_length* is mean length of RNA fragment (not read length) and *std_length* is standard deviataion of RNA fragment length. You should specify values, according to the experiment design.
 
 ## dropEst
 
