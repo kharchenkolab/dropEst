@@ -352,5 +352,8 @@ Package content:
   * correction of UMI errors (see vignette "*umi-correction*")
   * quality control (see *dropReport.Rsc*)  <!-- TODO: create vignette -->
 
+### Troubleshooting
+*dropestr* depends on *ks* package, which requires installed X Server. If you don't want to install it, use [this fork](https://github.com/VPetukhov/ks), which has almost the same functionality without X Server requirenment.
+
 ## Additional notes
 Description of the fields for the config file is provided in *dropEst/configs/config_desc.xml*.
