@@ -15,12 +15,11 @@ RUN apt-get update --yes && apt-get install --no-install-recommends --yes \
   libcurl4-openssl-dev \
   libssl-dev \
   libz-dev \
-  nano
+  nano \
+  pandoc
 
 RUN \
-  R -e 'chooseCRANmirror(ind=52); install.packages(c("devtools"))' && \
-  R -e 'devtools::install_github("hms-dbmi/dropEst/dropestr", dependencies = T)' && \
-  R -e 'install.packages(c("Rcpp","RcppEigen", "RInside", "Matrix", "optparse", "rmarkdown"))'
+  R -e 'chooseCRANmirror(ind=52); install.packages(c("devtools", "Rcpp","RcppEigen", "RInside", "Matrix", "optparse", "rmarkdown", "withr"))'
 
 RUN useradd -m user
 USER user
@@ -28,11 +27,21 @@ ENTRYPOINT ["/bin/bash"]
 WORKDIR "/home/user"
 
 RUN \
+  git clone https://github.com/VPetukhov/ks.git && \
   git clone https://github.com/hms-dbmi/dropEst.git && \
+  mkdir -p ~/R/x86_64-redhat-linux-gnu-library/3.4
+
+RUN \
+  echo '.libPaths(c("~/R/x86_64-redhat-linux-gnu-library/3.4", .libPaths()))' > .Rprofile && \
+  R -e 'devtools::install_local("~/ks/")' && \
+  R -e 'devtools::install_local("~/dropEst/dropestr/", dependencies=T)'
+
+RUN \
   mkdir -p dropEst/build && \
   cd dropEst/build && \
   cmake ../ && \
   make
 
 ENV PATH=/home/user/dropEst/build:$PATH \
-  LD_LIBRARY_PATH=/usr/local/lib/R/lib/:$LD_LIBRARY_PATH
+  LD_LIBRARY_PATH=/usr/local/lib/R/lib/:$LD_LIBRARY_PATH \
+  R_PROFILE=~/.Rprofile
