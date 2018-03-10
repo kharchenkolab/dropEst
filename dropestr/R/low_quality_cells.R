@@ -147,6 +147,7 @@ PrepareLqCellsDataPipeline <- function(data, total.reads.per.cell=NULL, mitochon
 #'   \item{total.variance.explained}{fraction of the explained variance.}
 #'   \item{pca.data}{transformed data with the optimal number of principal components.}
 #'   \item{used.features}{features, which contribute to pca.data.}
+#' @export
 GetOptimalPcs <- function(data, explained.var.required=0.98, max.pcs=3, loadings.filt.threshold=7.5e-2) {
   pc.fracs <- pcaPP::sPCAgrid(Scale(data), k=ncol(data))
   explained.before <- c(0, cumsum((pc.fracs$sdev)^2 / sum(pc.fracs$sdev^2)))

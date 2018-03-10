@@ -6,11 +6,10 @@
 \usage{
 ScorePipelineCells(pipeline.data, mitochondrion.genes = NULL,
   mit.chromosome.name = NULL, tags.data = NULL,
-  filter.mitochondrial = !is.null(mitochondrion.genes),
-  filter.intergenic = T, mit.fraction.threshold = NULL,
-  intergenic.fraction.threshold = NULL, max.pcs.number = 3,
-  predict.all = FALSE, verbose = FALSE, kde.bandwidth.mult = 1,
-  cell.number = NULL)
+  filter.mitochondrial = NULL, filter.intergenic = T,
+  mit.fraction.threshold = NULL, intergenic.fraction.threshold = NULL,
+  max.pcs.number = 3, predict.all = FALSE, verbose = FALSE,
+  kde.bandwidth.mult = 1, cell.number = NULL)
 }
 \arguments{
 \item{pipeline.data}{data for classification.}
