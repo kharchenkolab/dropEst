@@ -23,6 +23,7 @@ See [CHANGELOG.md](CHANGELOG.md) for full list.
 		- [System requirements](#system-requirements)
 		- [Installation](#installation)
 		- [Troubleshooting](#troubleshooting)
+		- [Dockers](#dockers)
 	- [dropTag](#droptag)
 		- [Protocols](#protocols)
 			- [inDrop v1 & v2](#indrop-v1--v2)
@@ -106,10 +107,19 @@ If you have several compilers in your system, please use cmake flags `-DCMAKE_CX
 #### Boost 1.65
 CMake < 3.10 has known issues with boost 1.65. If you have such combination, please try either to upgrade cmake or to downgrade boost.
 
-#### Dockers
+### Dockers
 In case you still can't build the project, dockerfiles for the most popular linux distributions are provided (see `dropEst/dockers/`). 
 You can either build and run these dockers or just read dockerfiles for the further instructions on dropEst installation for specific distribution.
 Manual boost installation is shown in **CentOS 6** docker.
+
+To install docker on your system see [installation instruction](https://github.com/wsargent/docker-cheat-sheet#installation). After installing the docker, use the following commands to start it:
+```bash
+cd dropEst/dockers/debian9
+docker build -t dropest .
+docker run --name dropest -it dropest
+```
+
+You can find more info about dockers at [Docker Cheat Sheet](https://github.com/wsargent/docker-cheat-sheet)
 
 ## dropTag
     droptag -- generate tagged fastq files for alignment
