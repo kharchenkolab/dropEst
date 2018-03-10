@@ -99,7 +99,9 @@ These variables should be set to the path to the installed library. It can be do
 In case you have some issues with the linker for specific library, please build this library manually with the version of compiler, which you're going to use for dropEst build.
 
 #### Problems with std::__cxx11::string
-See [question on stackoverflow](https://stackoverflow.com/questions/33394934/converting-std-cxx11string-to-stdstring).
+If you have messages like "*(path to some library)*: undefined reference to *(some name)* for std::__cxx11::basic_ostringstream<char, std::char_traits<char>, std::allocator<char> >", it means that you're trying to link a library, built with gcc < 5.0, while dropEst is built with gcc >= 5.0. It's a compiler issue, and you have to guarantee consistency of compiler versions by rebuilding either the library or dropEst. For more details see [question on stackoverflow](https://stackoverflow.com/questions/33394934/converting-std-cxx11string-to-stdstring).
+
+If you have several compilers in your system, please use cmake flags `-DCMAKE_CXX_COMPILER=(c++ compiler)` and `-DCMAKE_C_COMPILER=(c compiler)` to choose a compiler. Here, `(c++ compiler)` and `(c compiler)` denotes path to the prefered compiler version.
 
 #### Boost 1.65
 CMake < 3.10 has known issues with boost 1.65. If you have such combination, please try either to upgrade cmake or to downgrade boost.
