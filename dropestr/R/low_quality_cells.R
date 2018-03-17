@@ -117,7 +117,7 @@ PrepareLqCellsDataPipeline <- function(data, total.reads.per.cell=NULL, mitochon
   intergenic.reads.per.cell[intergenic.cbs] <- rowSums(data$reads_per_chr_per_cells$Intergenic[intergenic.cbs,])
 
   if (!is.null(total.reads.per.cell)) {
-    merge.targets <- data$merge_targets[data$merge_targets != names(data$merge_targets)]
+    merge.targets <- unlist(data$merge_targets[data$merge_targets != names(data$merge_targets)])
     total.reads.per.cell[merge.targets] <- total.reads.per.cell[merge.targets] + total.reads.per.cell[names(merge.targets)]
   }
 
@@ -205,6 +205,10 @@ ScorePipelineCells <- function(pipeline.data, mitochondrion.genes=NULL, mit.chro
   bc.df <- PrepareLqCellsDataPipeline(pipeline.data, mitochondrion.genes = mitochondrion.genes,
                                       mit.chromosome.name=mit.chromosome.name,
                                       total.reads.per.cell=tags.data$reads_per_cb)[names(cells.quality), ]
+
+  if (!('IntergenicFrac' %in% colnames(bc.df))) { # Pseudoaligners don't provide intergenic data
+    filter.intergenic <- FALSE
+  }
 
   used.features <- colnames(bc.df)
 
