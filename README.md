@@ -2,13 +2,12 @@
 Pipeline for estimating molecular count matrices for droplet-based single-cell RNA-seq measurements. Implements methods, described in [this paper](https://doi.org/10.1101/171496).
 
 ## News
-### V0.7.6
-* dropEst now prints version number
-* Fixed some bugs with low-quality cells
-### V0.7.5
-* Files with real cell barcodes have new format: now they are organized by rows, but not by columns. It allowed to add 10x 16bp barcodes.
-* Dockers for Centos6, Centos7 and Debian9 have been added.
-* Algorithm of filtration of low-quality cells was significantly improved.
+### [0.8.0] - 2018-03-20
+**Important changes:**
+* Algorithm of UMI correction now uses UMI quality. To provide this information you have to extract it on the dropTag 
+phase with `-s` option and pass it to dropEst with `-r filename.gz`.
+* Now, information about reads is kept in separate file instead (*.reads.gz), which should be passed to dropEst
+* New format of *reads_per_umi_per_cell* in cell.counts.rds
 
 See [CHANGELOG.md](CHANGELOG.md) for full list.
 
@@ -127,10 +126,16 @@ You can find more info about dockers at [Docker Cheat Sheet](https://github.com/
 
 Example command:
 ```bash
-./droptag -c config.xml [-S] reads1.fastq reads2.fastq [...]
+./droptag -c config.xml [-S] [-s] reads1.fastq reads2.fastq [...]
 ```
 
-Positional arguments of the dropTag phase contain paths to the read files, obtained with a sequencer. These files can be either in *.fastq* of *.fastq.gz* format. The file order depends on the type of used protocol. Below is the instruction on the usage for currently supported protocols.
+Positional arguments of the dropTag phase contain paths to the read files, obtained with a sequencer. These files can be 
+either in *.fastq* of *.fastq.gz* format. The file order depends on the type of used protocol. Below is the instruction 
+on the usage for currently supported protocols.
+
+**Note.** Algorithm of UMI correction requires information about base-call quality of UMIs. To save this information, use `-s` option.
+In this case, in addition to fastq files with reads, the pipeline saves separate gzipped file with read parameters. This files must 
+be passed to dropEst with `-r` option. 
 
 ### Protocols
 #### inDrop v1 & v2
@@ -144,7 +149,7 @@ Positional arguments of the dropTag phase contain paths to the read files, obtai
 Example config file is located at "*dropEst/configs/indrop_v1_2.xml*".  
 Example command:
 ```bash
-./droptag -c ./configs/indrop_v1_2.xml barcode_reads.fastq gene_reads.fastq
+./droptag -c [-S] [-s] ./configs/indrop_v1_2.xml barcode_reads.fastq gene_reads.fastq
 ```
 
 #### inDrop v3
@@ -159,7 +164,7 @@ If a file with library tags provided, option "-t" is required.
 Example config file is located at "*dropEst/configs/indrop_v3.xml*".  
 Example command:
 ```bash
-./droptag -c dropEst/configs/indrop_v3.xml [-S] [-t library_tag] barcode1_reads.fastq barcode2_reads.fastq gene_reads.fastq [library_tags.fastq]
+./droptag -c dropEst/configs/indrop_v3.xml [-S] [-s] [-t library_tag] barcode1_reads.fastq barcode2_reads.fastq gene_reads.fastq [library_tags.fastq]
 ```
 
 #### 10x
@@ -170,7 +175,7 @@ Example command:
 Example config file is located at "*dropEst/configs/10x.xml*".  
 Example command:
 ```bash
-./droptag -c dropEst/configs/10x.xml [-S] lib_tag_reads.fastq barcode_reads.fastq gene_reads.fastq
+./droptag -c dropEst/configs/10x.xml [-S] [-s] lib_tag_reads.fastq barcode_reads.fastq gene_reads.fastq
 ```
 
 While dropTag provides way to demultiplex 10x data, [Cell Ranger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger) is still recommended tool for this. [dropEst](##dropEst) phase can be ran on the Cell Ranger demultiplexed .bam file to obtain data in the format, optimized for the subsequent analysis.
@@ -187,7 +192,7 @@ cm <- holder$cm[grep("^[^;]+$", rownames(holder$cm)),]
 Example config file is located at "*dropEst/configs/iclip.xml*".  
 Example command:
 ```bash
-./droptag -c dropEst/configs/iclip.xml [-S] data.fastq
+./droptag -c dropEst/configs/iclip.xml [-S] [-s] data.fastq
 ```
 **NOTE.** Implementation of iCLIP wasn't tested properly. Please, be careful using it. Anyone who used it is very welcome to comment it either in Issues or by e-mail.
 
@@ -228,9 +233,14 @@ tophat2 -p number_of_threads --no-coverage-search -g 1 -G genes.gtf -o output_di
 
     dropest: estimate molecular counts per cell
 
-This phase requires aligned .bam files as input and uses them to estimate count matrix. These files must contain information about cell barcode and UMI for each read (reads, which don't contain such information are ignored). Two possible ways to encode this information are acceptable:
+This phase requires aligned .bam files as input and uses them to estimate count matrix. These files must contain information about cell barcode and UMI for each read (reads, which don't contain such information are ignored). Three possible ways to encode this information are acceptable:
 1. Encode it in read names (as a result of dropTag phase).
 2. Use .bam tags (i.e. output of 10x Cell Ranger). Tag names can be configured in [*config.xml* file](##additional-notes).
+3. Save this information in a separate file using `-s` option on dropTag phase and pass it to dropEst with `-r` option.
+
+**Note.** To run Bayesian algorithm of UMI error correction with dropestr, you need to pass information about UMI base call quality
+to dropEst. You can do it either using .bam tags or `-s` dropTag option (i.e. option 1 isn't available in this case). You still can run
+simpler algorithms (i.e. *cluster* or *directional*, see paper) without this information. 
 
 Count matrix estimation also requires information about the source gene for the reads. It can be provided in two ways:
 1. Use gene annotation in either *.bad* or *.gtf* format. To provide such file, "*-g*" option should be used.
@@ -238,7 +248,7 @@ Count matrix estimation also requires information about the source gene for the 
 
 Another crucial moment in estimation of count matrix is correction of cell barcode errors. Most protocols provide the list of real barcodes, which simplifies the task of correction. If such file is available, path to the file **should be specified in the *config.xml* file** (*Estimation/Merge/barcodes_file*). This can dramatically increase quality of the result. Lists for inDrop protocols can be found at *dropEst/data/barcodes/*. Two algorithms of barcode correction are available:
 1. Simple, "*-m*" option. This algorithm is recommended in the case, where barcodes list is supplied.
-2. Precise, "*-M*" option. Doesn't requires list of real barcodes to obtain high-quality results, however has significantly lower performance.
+2. Precise, "*-M*" option. Doesn't requires list of real barcodes to obtain high-quality results, however has a lower performance for large datasets.
 
 Example command:
 ```bash
@@ -309,7 +319,8 @@ intronic, exonic or exon/intron spanning. These matrices are stored in the separ
 *  -l, --log-prefix : logs prefix  
 *  -m, --merge-barcodes : merge linked cell tags  
 *  -M, --merge-barcodes-precise : use precise merge strategy (can be slow), recommended to use when the list of real barcodes is not available  
-*  -o, --output-file filename : output file name  
+*  -o, --output-file filename : output file name
+*  -r, --read-params filenames: file or files with serialized params from tags search step. If there are several files, they should be provided in quotes, separated by space: "file1.reads.gz file2.reads.gz file3.reads.gz"  
 *  -R, --reads-output: print count matrix for reads and don't use UMI statistics  
 *  -q, --quiet : disable logs  
 *  -V, --velocyto : save separate count matrices for exons, introns and exon/intron spanning reads
@@ -337,7 +348,7 @@ To run the report you have to install:
     install.packages(c("optparse","rmarkdown"))
     ```
 
-To run report use:
+To run the report use:
 ```bash
 ./dropReport.Rsc cell.counts.rds
 ```

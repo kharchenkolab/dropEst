@@ -89,7 +89,7 @@ static void usage()
 	cerr << "\t-m, --merge-barcodes : merge linked cell tags" << endl;
 	cerr << "\t-M, --merge-barcodes-precise : use precise merge strategy (can be slow), recommended to use when the list of real barcodes is not available\n";
 	cerr << "\t-o, --output-file filename : output file name\n";
-	cerr << "\t-r, --reads-params filenames: file or files with serialized params from tags search step. If there are several files"
+	cerr << "\t-r, --read-params filenames: file or files with serialized params from tags search step. If there are several files"
 	     << ", they should be provided in quotes, separated by space: \"file1.reads.gz file2.reads.gz file3.reads.gz\"" << endl;
 	cerr << "\t-P, --pseudoaligner: use chromosome name as a source of gene id\n";
 	cerr << "\t-q, --quiet : disable logs\n";
@@ -119,7 +119,7 @@ static Params parse_cmd_params(int argc, char **argv)
 			{"merge-barcodes-precise",  no_argument,       0, 'M'},
 			{"not-filtered",	no_argument, 	   0, 'n'},
 			{"output-file",     required_argument, 0, 'o'},
-			{"reads-params",     required_argument, 0, 'r'},
+			{"read-params",     required_argument, 0, 'r'},
 			{"pseudoaligner",   no_argument, 0, 'P'},
 			{"quiet",         no_argument,       0, 'q'},
 			{"reads-output",     no_argument, 		0, 'R'},
