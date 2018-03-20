@@ -85,8 +85,8 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const ptree &pt
 
 	auto const &processing_config = pt.get_child(PROCESSING_CONFIG_PATH, ptree());
 
-	size_t max_file_size = processing_config.get<size_t>("reads_per_out_file", std::numeric_limits<size_t>::max());
-	auto writer = std::make_shared<ConcurrentGzWriter>(params.base_name, "fastq.gz", max_file_size);
+	size_t max_records_per_file = processing_config.get<size_t>("reads_per_out_file", 0);
+	auto writer = std::make_shared<ConcurrentGzWriter>(params.base_name, "fastq.gz", max_records_per_file);
 
 	const std::string input_files_num_error_text = "Unexpected number of read files: " +
 			std::to_string(params.read_files.size()) +

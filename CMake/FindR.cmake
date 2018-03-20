@@ -99,6 +99,12 @@ find_path(RINSIDE_INCLUDE_DIR RInside.h
         HINTS ${R_PACKAGES_DIRS}
         PATH_SUFFIXES /RInside/include)
 
+if (FIND_RCPP_PROGRESS)
+    find_path(RCPP_PROGRESS_INCLUDE_DIR progress.hpp
+            HINTS ${R_PACKAGES_DIRS}
+            PATH_SUFFIXES /RcppProgress/include)
+endif()
+
 find_library(RINSIDE_LIBRARY RInside PATH ${RINSIDE_INCLUDE_DIR}/../lib)
 
 # Additional packages
@@ -112,20 +118,25 @@ if(NOT "${R_MATRIX_PKG}" STREQUAL TRUE)
     set(R_MATRIX_PKG )
 endif()
 
-# define find requirements
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(R DEFAULT_MSG
+set(LIBRARIES_LIST
         R_LIBRARIES
         R_INCLUDE_DIRS
         RCPP_INCLUDE_DIR
         RCPP_EIGEN_INCLUDE_DIR
         RINSIDE_INCLUDE_DIR
         RINSIDE_LIBRARY
-        R_MATRIX_PKG
-)
+        R_MATRIX_PKG)
+
+if (FIND_RCPP_PROGRESS)
+    set(LIBRARIES_LIST ${LIBRARIES_LIST} RCPP_PROGRESS_INCLUDE_DIR)
+endif()
+
+# define find requirements
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(R DEFAULT_MSG ${LIBRARIES_LIST})
 
 if (R_FOUND)
-    set(R_INCLUDE_DIRS ${R_INCLUDE_DIRS} ${RCPP_INCLUDE_DIR} ${RCPP_EIGEN_INCLUDE_DIR} ${RINSIDE_INCLUDE_DIR})
+    set(R_INCLUDE_DIRS ${R_INCLUDE_DIRS} ${RCPP_INCLUDE_DIR} ${RCPP_EIGEN_INCLUDE_DIR} ${RINSIDE_INCLUDE_DIR} ${RCPP_PROGRESS_INCLUDE_DIR})
     set(R_LIBRARIES ${R_LIBRARIES} ${RINSIDE_LIBRARY})
     message(STATUS "Found R: ${R_ROOT}")
 endif()
@@ -135,6 +146,7 @@ mark_as_advanced(
         R_CORE_LIBRARY
         RCPP_EIGEN_INCLUDE_DIR
         RCPP_INCLUDE_DIR
+        RCPP_PROGRESS_INCLUDE_DIR
         RINSIDE_INCLUDE_DIR
         R_MATRIX_PKG
 )

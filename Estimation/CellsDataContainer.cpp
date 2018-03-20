@@ -53,34 +53,34 @@ namespace Estimation
 		L_TRACE << this->get_cb_count_top_verbose();
 	}
 
-	void CellsDataContainer::add_record(const string &cell_barcode, const string &umi, const string &gene,
-	                                    const std::string &chr_name, const UMI::Mark &umi_mark)
+	void CellsDataContainer::add_record(const ReadInfo &read_info)
 	{
 		if (this->_is_initialized)
 			throw runtime_error("Container is already initialized");
 
-		auto res = this->_cell_ids_by_cb.emplace(cell_barcode, this->_cell_ids_by_cb.size());
+		auto res = this->_cell_ids_by_cb.emplace(read_info.params.cell_barcode(), this->_cell_ids_by_cb.size());
 		if (res.second)
 		{
-			this->_cells.emplace_back(cell_barcode, this->_merge_strategy->min_genes_before_merge(),
+			this->_cells.emplace_back(read_info.params.cell_barcode(), this->_merge_strategy->min_genes_before_merge(),
 			                          &this->_gene_indexer, &this->_umi_indexer);
 		}
 
 		size_t cell_id = res.first->second;
 
-		if (gene.empty())
+		if (read_info.gene.empty())
 		{
-			this->_cells[cell_id].stats().inc(Stats::INTERGENIC_READS_PER_CHR_PER_CELL, chr_name);
+			this->_cells[cell_id].stats().inc(Stats::INTERGENIC_READS_PER_CHR_PER_CELL, read_info.chromosome_name);
 			return;
 		}
 
-		if (umi_mark == UMI::Mark::NONE)
+		if (read_info.umi_mark == UMI::Mark::NONE)
 		{
-			L_WARN << "Empty mark for CB '" << cell_barcode << "', UMI '" << umi << "', gene '" << gene << "'";
+			L_WARN << "Empty mark for CB '" << read_info.params.cell_barcode() << "', UMI '" << read_info.params.umi()
+						<< "', gene '" << read_info.gene << "'";
 		}
 
-		this->_cells[cell_id].add_umi(gene, umi, umi_mark);
-		this->update_cell_stats(cell_id, umi_mark, chr_name);
+		this->_cells[cell_id].add_umi(read_info);
+		this->update_cell_stats(cell_id, read_info.umi_mark, read_info.chromosome_name);
 	}
 
 	void CellsDataContainer::merge_cells(size_t source_cell_ind, size_t target_cell_ind)

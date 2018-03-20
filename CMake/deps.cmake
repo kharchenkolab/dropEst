@@ -25,10 +25,10 @@ if(Boost_FOUND)
 endif(Boost_FOUND)
 
 find_package (ZLIB REQUIRED)
+find_package (Threads REQUIRED)
 
 #set(BAMTOOLS_ROOT "/opt/bamtools-2.2.3/")
 find_package (BamTools REQUIRED)
-find_package (Threads REQUIRED)
 
 # set(R_ROOT "/opt/R-3.3.1/lib64/R/")
 find_package (R REQUIRED)

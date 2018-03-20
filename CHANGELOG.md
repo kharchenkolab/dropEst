@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.0] - 2018-03-20
+### Changed
+* Now, information about reads is kept in separate file instead (*.reads.gz), which should be passed to dropEst
+* New format of *reads_per_umi_per_cell* in cell.counts.rds
+
+### Added
+* UMI correction algorithm now uses UMI quality (only Illumina 1.8 or later formats are supported)
+
 ## [0.7.6] - 2018-02-22
 ### Added
 * Version number output in dropEst

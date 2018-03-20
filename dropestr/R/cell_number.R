@@ -110,17 +110,17 @@ PlotCellsNumberLine <- function(umi.counts, breaks=100, title=NULL, estimate.cel
     diff.inds <- which(diff(as.integer(plot.df$Quality)) != 0) + 1
     plot.df <- plot.df %>%
       dplyr::bind_rows(plot.df[diff.inds,] %>% dplyr::mutate(breaks=plot.df$breaks[diff.inds - 1] * (1 - 1e-10))) %>%
-      dplyr::arrange(desc(breaks)) #%>% dplyr::mutate(breaks = round(breaks))
+      dplyr::arrange(dplyr::desc(breaks)) #%>% dplyr::mutate(breaks = round(breaks))
   }
 
-  if (is.null(plot.label)) {
-    gg <- gg.base + ggplot2::geom_line(data=plot.df, mapping=ggplot2::aes(x=breaks, y=y))
+  plot.df$PlotLabel <- plot.label
+  if (!is.null(plot.label)) {
+    gg_line <- ggplot2::geom_line(data=plot.df, mapping=ggplot2::aes(x=breaks, y=y, linetype=PlotLabel))
   } else {
-    plot.df$PlotLabel <- plot.label
-    gg <- gg.base + ggplot2::geom_line(data=plot.df, mapping=ggplot2::aes(x=breaks, y=y, linetype=PlotLabel))
+    gg_line <- ggplot2::geom_line(data=plot.df, mapping=ggplot2::aes(x=breaks, y=y))
   }
 
-  gg <- gg +
+  gg <- gg.base + gg_line +
     ggplot2::scale_x_continuous(expand = c(0, 0)) +
     ggplot2::scale_y_continuous(limits=c(0, max(plot.df$y * 1.05)), expand = c(0, 0)) +
     ggplot2::labs(x='Cell rank', y=plot.data$y.label) + ggplot2::ggtitle(title)
@@ -148,7 +148,11 @@ PlotCellsNumberLine <- function(umi.counts, breaks=100, title=NULL, estimate.cel
     if (is.null(plot.label)) {
       area <- ggplot2::geom_area(data=plot.df, mapping=ggplot2::aes(x=breaks, y=y), fill='gray', alpha=0.4)
     } else {
-      area <- ggplot2::geom_area(data=plot.df, mapping=ggplot2::aes(x=breaks, y=y, fill=PlotLabel), alpha=0.4)
+      if (!is.null(plot.label)) {
+        area <- ggplot2::geom_area(data=plot.df, mapping=ggplot2::aes(x=breaks, y=y, fill=PlotLabel, alpha=0.4))
+      } else {
+        area <- ggplot2::geom_area(data=plot.df, mapping=ggplot2::aes(x=breaks, y=y, alpha=0.4))
+      }
     }
     gg <- gg + area
   }

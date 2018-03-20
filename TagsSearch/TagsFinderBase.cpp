@@ -47,10 +47,10 @@ namespace TagsSearch
 			return false;
 		}
 
-		if (this->_total_reads_read % 1000000 == 0 && this->_total_reads_read > 0)
+		if (this->_total_reads_read % 5000000 == 0 && this->_total_reads_read > 0)
 		{
 			L_TRACE << "Total " << this->_total_reads_read << " read (" << this->_parsed_reads << " parsed, "
-			        << (this->_parsed_reads - this->_low_quality_reads) << " high-quality reads)";
+			        << (this->_parsed_reads - this->_low_quality_reads) << " passed quality threshold)";
 		}
 		this->_total_reads_read++;
 

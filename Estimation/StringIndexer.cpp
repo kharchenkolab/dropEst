@@ -22,4 +22,9 @@ namespace Estimation
 		return this->_indexes.at(value);
 	}
 
+	const StringIndexer::values_t &StringIndexer::values() const
+	{
+		return this->_values;
+	}
+
 }

@@ -4,6 +4,7 @@
 #include "Stats.h"
 #include "UMI.h"
 #include "StringIndexer.h"
+#include "ReadInfo.h"
 
 #include <string>
 
@@ -80,8 +81,7 @@ namespace Estimation
 		                   const std::shared_ptr<Merge::UMIs::MergeUMIsStrategySimple> &umi_merge_strategy,
 		                   const std::vector<UMI::Mark> &gene_match_levels, int max_cells_num = -1);
 
-		void add_record(const std::string &cell_barcode, const std::string &umi, const std::string &gene,
-		                const std::string &chr_name = "", const UMI::Mark &umi_mark = UMI::Mark(UMI::Mark::HAS_EXONS));
+		void add_record(const ReadInfo &read_info);
 		void exclude_cell(size_t index);
 
 		void merge_and_filter();

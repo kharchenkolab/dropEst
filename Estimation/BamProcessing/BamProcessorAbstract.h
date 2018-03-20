@@ -3,6 +3,7 @@
 #include <Estimation/CellsDataContainer.h>
 #include <Estimation/BamProcessing/BamTags.h>
 #include <Estimation/UMI.h>
+#include <Estimation/ReadInfo.h>
 
 #include <cstdlib>
 #include <string>
@@ -47,8 +48,7 @@ namespace Estimation
 			virtual void update_bam(const std::string& bam_file, const BamTools::BamReader &reader);
 
 			virtual void trace_state(const std::string& trace_prefix) const = 0;
-			virtual void save_read(const std::string& cell_barcode, const std::string& chr_name, const std::string& umi,
-			                       const std::string& gene, const UMI::Mark &umi_mark) = 0;
+			virtual void save_read(const ReadInfo &read_info) = 0;
 			virtual void write_alignment(BamTools::BamAlignment alignment, const std::string& gene,
 								 const Tools::ReadParameters &read_params) = 0;
 

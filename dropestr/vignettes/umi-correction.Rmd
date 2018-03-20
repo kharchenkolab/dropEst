@@ -19,16 +19,16 @@ ggplot2::theme_set(ggplot2::theme_bw(base_size = 18) + ggplot2::theme(plot.title
 ```{r, fig.width=5}
 data("reads_per_umi_per_cell")
 
-umis_distribution <- GetUmisDistribution(reads_per_umi_per_cell)
+umis_distribution <- GetUmisDistribution(reads_per_umi_per_cell$reads_per_umi)
 umi_probabilities <- umis_distribution / sum(umis_distribution)
 
-PlotUmisDistribution(reads_per_umi_per_cell)
+PlotUmisDistribution(reads_per_umi_per_cell$reads_per_umi)
 ```
 
 ## Collisions adjustment:
 ```{r}
-umis_per_gene <- lapply(reads_per_umi_per_cell, sapply, length)
-max_umi_per_gene <- max(sapply(umis_per_gene, max))
+umis_per_gene <- sapply(reads_per_umi_per_cell$reads_per_umi, length)
+max_umi_per_gene <- max(umis_per_gene)
 
 collisions_info <- FillCollisionsAdjustmentInfo(umi_probabilities, max_umi_per_gene, step=20, mc.cores=5, verbose=T)
 (max_umi_per_gene_adj <- AdjustGeneExpression(max_umi_per_gene, collisions_info$adjusted, collisions_info$observed))

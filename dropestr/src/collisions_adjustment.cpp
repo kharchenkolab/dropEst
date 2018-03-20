@@ -1,105 +1,116 @@
 #include "dropestr.h"
-
-#include <random>
+#include "umi_processing.h"
 
 using namespace Rcpp;
 
-// [[Rcpp::export]]
-List GetTrimCollisionsNum(const List &rpu_per_cell, int trim_length) {
-  List res(rpu_per_cell.size());
+class CollisionsAdjuster {
+public:
+  typedef std::vector<unsigned> size_vec_t;
+  typedef std::vector<double> probs_vec_t;
 
-  auto const &cell_names = as<s_vec_t>(as<StringVector>(rpu_per_cell.names()));
-  for (int cell_ind = 0; cell_ind < rpu_per_cell.size(); ++cell_ind) {
-    const auto &rpu_per_gene = as<List>(rpu_per_cell[cell_ind]);
-    IntegerVector collisions_per_gene(rpu_per_gene.size());
+private:
+  size_vec_t _adjusted_sizes;
+  probs_vec_t _umi_probabilities;
+  probs_vec_t _umi_probabilities_neg_prod;
 
-    for (int gene_ind = 0; gene_ind < rpu_per_gene.size(); ++gene_ind) {
-      auto const &reads_per_umi = as<IntegerVector>(rpu_per_gene[gene_ind]);
-      auto const &umis = as<s_vec_t>(as<StringVector>(reads_per_umi.names()));
-      s_set_t trimmed_rpus;
+  double _sum_collisions;
+  size_t _last_total_gene_size;
 
-      int collisions_num = 0;
-      for (int umi_ind = 0; umi_ind < reads_per_umi.size(); ++umi_ind) {
-        auto ins = trimmed_rpus.insert(umis[umi_ind].substr(0, trim_length));
-        if (!ins.second) {
-          collisions_num++;
-        }
+private:
+  double fpow(double base, long exp) const {
+    if (exp == 1)
+      return base;
+
+    double result = 1;
+    while (exp) {
+      if (exp & 1) {
+        result *= base;
+      }
+      exp >>= 1;
+      base *= base;
+    }
+
+    return result;
+  }
+
+  void update_adjusted_sizes(size_t max_gene_expression) {
+    for (size_t s = this->_adjusted_sizes.size() + 1; s <= max_gene_expression; ++s) {
+      const size_t total_size = s + size_t(this->_sum_collisions);
+      double new_umi_prob = 0;
+      for (int i = 0; i < this->_umi_probabilities.size(); ++i) {
+        this->_umi_probabilities_neg_prod[i] *= this->fpow(1 - this->_umi_probabilities[i], total_size - this->_last_total_gene_size);
+        new_umi_prob += this->_umi_probabilities[i] * (1 - this->_umi_probabilities_neg_prod[i]);
       }
 
-      collisions_per_gene[gene_ind] = collisions_num;
+      this->_last_total_gene_size = total_size;
+
+      const double collision_num = 1.0 / (1.0 - new_umi_prob) - 1.0;
+      this->_sum_collisions += collision_num;
+      this->_adjusted_sizes.push_back(std::lround(s + this->_sum_collisions));
     }
-
-    collisions_per_gene.attr("names") = as<StringVector>(rpu_per_gene.names());
-    res[cell_ind] = collisions_per_gene;
   }
 
-  res.attr("names") = cell_names;
-  return res;
-}
+public:
+  CollisionsAdjuster()
+    : _adjusted_sizes()
+  , _umi_probabilities()
+  , _umi_probabilities_neg_prod()
+  , _sum_collisions(0)
+  , _last_total_gene_size(0)
+  {}
 
+  void init(const probs_vec_t &umi_probabilities, size_t max_gene_expression = 0) {
+    this->_sum_collisions = 0;
+    this->_last_total_gene_size = 0;
+    this->_umi_probabilities = umi_probabilities;
+    this->_umi_probabilities_neg_prod = probs_vec_t(umi_probabilities.size(), 1);
+    CollisionsAdjuster::update_adjusted_sizes(max_gene_expression);
+  }
+
+  size_vec_t adjusted_sizes() const {
+    return this->_adjusted_sizes;
+  }
+};
+
+//' @export
 // [[Rcpp::export]]
-double GetBootstrapUmisMeanNum(const std::vector<double> &umi_probabilities, size_t size, unsigned repeats_num, int seed = -1) {
-  if (seed == -1) {
-    seed = time(nullptr);
-  }
-
-  srand(seed);
-
-  std::discrete_distribution<int> dist(umi_probabilities.begin(), umi_probabilities.end());
-  std::mt19937 gen;
-
-  unsigned long sum = 0;
-  for (unsigned i = 0; i < repeats_num; ++i) {
-    std::vector<int> uniq_vals(size);
-    for (int try_num = 0; try_num < size; ++try_num) {
-      uniq_vals[try_num] = dist(gen);
-    }
-    std::sort(uniq_vals.begin(), uniq_vals.end());
-    int diff_num = std::distance(uniq_vals.begin(), std::unique(uniq_vals.begin(), uniq_vals.end()));
-    sum += diff_num;
-  }
-
-  return double(sum) / repeats_num;
+std::vector<unsigned> FillCollisionsAdjustmentInfo(const std::vector<double> &umi_probabilities, unsigned max_umi_per_gene) {
+  CollisionsAdjuster adjuster;
+  adjuster.init(umi_probabilities, max_umi_per_gene);
+  return adjuster.adjusted_sizes();
 }
 
-int roundInt(int val, int order) {
-  return std::round(val / double(order)) * order;
-}
-
+//' @export
 // [[Rcpp::export]]
-int AdjustGeneExpressionClassic(int value, int umis_number) {
+int AdjustGeneExpressionUniform(int value, int umis_number) {
   if (value == umis_number) {
-    return 2 * AdjustGeneExpressionClassic(value - 1, umis_number) - AdjustGeneExpressionClassic(value - 2, umis_number);
+    return 2 * AdjustGeneExpressionUniform(value - 1, umis_number) - AdjustGeneExpressionUniform(value - 2, umis_number);
   }
   return int(std::round(-std::log(1 - value / double(umis_number)) * umis_number));
 }
 
-//' Adjust gene expression value for collisions.
-//'
-//' @param value gene expression value.
-//' @param observed_sizes vector of quantized ordered obseved gene sizes.
-//' @param adjusted_sizes vector of adjusted gene sizes for *observed_sizes*.
-//' @return Adjusted gene expression value.
-//'
-//' @export
 // [[Rcpp::export]]
-int AdjustGeneExpression(int value, const std::vector<int> &observed_sizes, const std::vector<double> &adjusted_sizes) {
-  if (adjusted_sizes.empty() || observed_sizes.empty() || observed_sizes.size() != adjusted_sizes.size())
-    stop("Bad input arrays: " + std::to_string(observed_sizes.size()) + ", " + std::to_string(adjusted_sizes.size()));
+unsigned DeadjustGeneExpression(double gene_expression, const std::vector<unsigned> &adjusted_expressions) {
+  if (adjusted_expressions.empty())
+    stop("Empty collisions info");
 
-  if (adjusted_sizes.back() == value)
-    return observed_sizes.back();
+  if (gene_expression < 0)
+    stop("Negative gene expression value: " + std::to_string(gene_expression));
 
-  auto est_iter = std::upper_bound(adjusted_sizes.begin(), adjusted_sizes.end(), double(value));
-  if (est_iter == adjusted_sizes.end())
-    stop("Too large value of gene expression: " + std::to_string(value));
+  const double EPS = 1e-3;
+  if (gene_expression < 1 + EPS)
+    return 1;
 
-  int index = std::distance(adjusted_sizes.begin(), est_iter);
-  if (index == 0)
-    stop("Undexpected expression value: " + std::to_string(value));
+  auto upper_iter = std::lower_bound(adjusted_expressions.begin(), adjusted_expressions.end(), gene_expression - EPS);
+  if (upper_iter == adjusted_expressions.end())
+    stop("Too large value of gene expression: " + std::to_string(gene_expression));
 
-  int lower_real = observed_sizes[index - 1], upper_real = observed_sizes[index];
-  double lower_est = adjusted_sizes[index - 1], upper_est = adjusted_sizes[index];
+  size_t upper_ind = upper_iter - adjusted_expressions.begin();
+  if (upper_ind == 0)
+    return 1;
 
-  return lower_real + (upper_real - lower_real) * (value - lower_est) / (upper_est - lower_est); // Linear interpolation
+  double upper_expr = adjusted_expressions[upper_ind];
+  double lower_expr = adjusted_expressions[upper_ind - 1];
+
+  return std::lround(upper_ind + 1 - (upper_expr - gene_expression) / (upper_expr - lower_expr));
 }

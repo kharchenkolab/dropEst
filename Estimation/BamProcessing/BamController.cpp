@@ -3,8 +3,9 @@
 #include "Tools/Logs.h"
 #include "Tools/ReadParameters.h"
 #include "FilledBamParamsParser.h"
-#include "ReadMapParamsParser.h"
 #include "FilteringBamProcessor.h"
+#include "ReadMapParamsParser.h"
+#include "Estimation/ReadInfo.h"
 
 #include <api/BamReader.h>
 
@@ -160,8 +161,9 @@ namespace BamProcessing
 			return;
 		}
 
-		processor->write_alignment(alignment, gene, read_params);
-		processor->save_read(read_params.cell_barcode(), chr_name, read_params.umi(), gene, mark);
+		ReadInfo read_info(read_params, gene, chr_name, mark);
+		processor->write_alignment(alignment, gene, read_params); // TODO: save quality
+		processor->save_read(read_info);
 	}
 }
 }

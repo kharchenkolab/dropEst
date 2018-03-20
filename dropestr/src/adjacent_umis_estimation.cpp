@@ -1,9 +1,10 @@
 #include "dropestr.h"
+#include "umi_processing.h"
 
 using namespace Rcpp;
 
 template<typename T>
-s_vec_t getAdjacentUmis(const std::string &umi, const T &filter) {
+s_vec_t getAdjacentUmis(const std::string &umi, const T &filter, bool need_filter) {
   static_assert((std::is_same<s_set_t, T>::value || std::is_same<si_map_t, T>::value), "Only map or set");
   s_vec_t res;
   for (int i = 0; i < umi.length(); ++i) {
@@ -14,13 +15,19 @@ s_vec_t getAdjacentUmis(const std::string &umi, const T &filter) {
 
       cur_umi[i] = n;
 
-      if (filter.find(cur_umi) != filter.end()) {
+      if (!need_filter || filter.find(cur_umi) != filter.end()) {
         res.push_back(cur_umi);
       }
     }
   }
 
   return res;
+}
+
+//' @export
+// [[Rcpp::export]]
+s_vec_t GetAdjacentUmis(const std::string &umi) { // TODO: not @export
+  return getAdjacentUmis(umi, s_set_t(), false);
 }
 
 // [[Rcpp::export]]
@@ -38,15 +45,70 @@ std::vector<bool> GetCrossmergedMask(const s_vec_t &base_umis, const s_vec_t &ta
 }
 
 // [[Rcpp::export]]
-List SubsetAdjacentUmis(const s_vec_t &umis) {
-  s_set_t umis_set(umis.begin(), umis.end());
-  List res(umis.size());
+std::vector<bool> ResolveUmiDependencies(const s_vec_t &base_umis, const s_vec_t &target_umis, bool verbose=false) { // TODO: remove verbose
+  if (base_umis.size() != target_umis.size())
+    stop("All vectors must have the same size");
 
-  for (int i = 0; i < umis.size(); ++i) {
-    res[i] = getAdjacentUmis(umis[i], umis_set);
+  si_map_t inds_by_base;
+  s_vec_t base_uniq; // TODO: remove
+  for (int i = 0; i < base_umis.size(); ++i) {
+    auto iter = inds_by_base.emplace(base_umis[i], inds_by_base.size());
+    if (iter.second) {
+      base_uniq.push_back(base_umis[i]);
+    }
   }
 
-  res.attr("names") = wrap(umis);
+  std::vector<int> merge_targets(inds_by_base.size());
+  std::iota(merge_targets.begin(), merge_targets.end(), 0);
+
+  for (size_t id = 0; id < base_umis.size(); ++id) {
+    int base_umi_id = inds_by_base.at(base_umis[id]); // if several umis with the same base_umi are presented
+    if (merge_targets[base_umi_id] != base_umi_id)
+      continue;
+
+    if (verbose) {
+      std::cout << id << ", " << base_umi_id << ": " << base_uniq[base_umi_id] << "\n";
+    }
+    auto const &target_umi = target_umis[id];
+    auto iter = inds_by_base.find(target_umi);
+    int target_id = (iter == inds_by_base.end()) ? -1 : iter->second;
+    if (verbose) {
+      std::cout << "\t" << target_umis[id] << " (" << target_id << ")\n";
+    }
+    while (target_id != -1 && target_id != base_umi_id && target_id != merge_targets[target_id]) {
+      target_id = merge_targets[target_id];
+      if (verbose) {
+        std::cout << "\t" << ((target_id != -1) ? base_uniq[target_id] : std::to_string(-1)) << " (" << target_id << ")\n";
+      }
+    }
+
+    merge_targets[base_umi_id] = target_id;
+  }
+
+  std::vector<bool> is_filtered;
+  for (int i = 0; i < base_umis.size(); ++i) {
+    int base_umi_id = inds_by_base.at(base_umis[i]);
+    is_filtered.push_back(merge_targets[base_umi_id] != base_umi_id);
+    if (verbose) {
+      std::cout << "(" << base_umi_id << ", " << merge_targets[base_umi_id] << ") ";
+    }
+  }
+  if (verbose) {
+    std::cout << std::endl;
+  }
+
+  return is_filtered;
+}
+
+// [[Rcpp::export]]
+std::unordered_map<std::string, s_vec_t> SubsetAdjacentUmis(const s_vec_t &umis) { // TODO: not export
+  s_set_t umis_set(umis.begin(), umis.end());
+  std::unordered_map<std::string, s_vec_t> res;
+
+  for (auto const &umi : umis) {
+    res[umi] = getAdjacentUmis(umi, umis_set, true);
+  }
+
   return res;
 }
 
@@ -64,107 +126,85 @@ List FillAdjacentUmisData(const NumericVector &umi_probabilites, bool adjacent_o
   const sd_map_t umi_probs_map = parseVector(umi_probabilites);
 
   sd_map_t adjacent_probs;
-  NumericVector position_probs(umis.at(0).length(), 0), nucl_probs(NUCL_PAIR_INDS.size(), 0);
-
   Progress progress(umis.size(), show_progress);
   std::unordered_map<std::string, s_vec_t> neighbours;
-  for (auto const &umi : umis) {
-    auto cur_neighbours = neighbours.insert(std::make_pair(umi, s_vec_t())).first;
+  for (auto const &cur_umi : umis) {
+    auto cur_neighbours = neighbours.insert(std::make_pair(cur_umi, s_vec_t())).first;
     double sum_prob = 0;
-    for (int i = 0; i < umi.length(); ++i) {
-      std::string cur_umi(umi);
-      double cur_umi_prob = umi_probs_map.at(umi);
+    for (int i = 0; i < cur_umi.length(); ++i) {
+      std::string neighb_umi(cur_umi);
+      double cur_umi_prob = umi_probs_map.at(cur_umi);
       for (char n : NUCLEOTIDES) {
-        if (umi[i] == n)
+        if (cur_umi[i] == n)
           continue;
 
-        cur_umi[i] = n;
-        cur_neighbours->second.push_back(cur_umi);
+        neighb_umi[i] = n;
+        cur_neighbours->second.push_back(neighb_umi);
 
         if (adjacent_only)
           continue;
 
-        double neighb_umi_prob = umi_probs_map.at(cur_umi);
+        double neighb_umi_prob = umi_probs_map.at(neighb_umi);
         sum_prob += neighb_umi_prob;
-
-        List umi_difference = GetUmisDifference(umi, cur_umi, 1, 1, true);
-
-        double pair_prob = neighb_umi_prob * cur_umi_prob;
-        position_probs[as<int>(umi_difference["Position"])] += pair_prob;
-        nucl_probs[as<int>(umi_difference["Nucleotides"])] += pair_prob;
       }
     }
 
     if (!adjacent_only) {
-      adjacent_probs.emplace(umi, sum_prob);
+      adjacent_probs.emplace(cur_umi, sum_prob);
     }
 
     if (progress.check_abort())
       return List();
+
     progress.increment();
   }
 
   if (adjacent_only)
     return wrap(neighbours);
 
-  double sum_pair_probs = sum(position_probs);
-  position_probs = position_probs / sum_pair_probs;
-  nucl_probs = nucl_probs / sum_pair_probs;
-
-  return List::create(_["adjacent.umis"] = neighbours, _["probabilities"] = adjacent_probs,
-                      _["nucl.probabilities"] = wrap(nucl_probs), _["position.probabilities"] = position_probs);
+  return List::create(_["adjacent.umis"] = neighbours, _["probabilities"] = adjacent_probs);
 }
 
+//' @export
 // [[Rcpp::export]]
-List GetAdjacentUmisNum(const IntegerVector &reads_per_umi_from, const IntegerVector &reads_per_umi_to,
-                          const List &neighbourhood, bool total = true, bool larger = false, bool smaller = false) {
-  // if (smaller && larger)
-  //   stop("You can't use both smaller and larger");
+List GetAdjacentUmisNum(const IntegerVector &reads_per_umi_from, const IntegerVector &reads_per_umi_to) {
+  IntegerVector total_neighbours_num(reads_per_umi_from.size(), 0),
+                smaller_neighbours_num(reads_per_umi_from.size(), 0),
+                larger_neighbours_num(reads_per_umi_from.size(), 0);
 
-  si_map_t total_neighbours_num, smaller_neighbours_num, larger_neighbours_num;
+  auto const &umis = as_s_vec(reads_per_umi_from.names());
+  s_set_t umis_set(umis.begin(), umis.end());
 
-  auto const &umis = as<StringVector>(reads_per_umi_from.names());
-  si_map_t rpu_map = parseVector(reads_per_umi_to);
+  si_map_t rpu_map_to = parseVector(reads_per_umi_to);
 
-  for (auto const &neighbours : as<List>(neighbourhood[umis])) {
-    int cur_rpu = 0;
-    const std::string &cur_umi = std::string(umis[neighbours.index]);
-
-    if (smaller || larger) {
-      cur_rpu = rpu_map.at(cur_umi);
-    }
+  for (size_t i = 0; i < umis.size(); ++i) {
+    int cur_rpu = reads_per_umi_from[i];
 
     int total_nn = 0, smaller_nn = 0, larger_nn = 0;
-    for (auto const &neighbour : as<StringVector>(neighbours)) {
-      auto neighb_rpu_it = rpu_map.find(std::string(neighbour));
-      if (neighb_rpu_it == rpu_map.end())
+    for (auto const &neighbour : getAdjacentUmis(umis[i], umis_set, true)) {
+      auto neighb_rpu_it = rpu_map_to.find(neighbour);
+      if (neighb_rpu_it == rpu_map_to.end())
         continue;
 
-      if (smaller && neighb_rpu_it->second <= cur_rpu) {
+      if (neighb_rpu_it->second <= cur_rpu) {
         smaller_nn++;
       }
-
-      if (larger && neighb_rpu_it->second > cur_rpu) {
+      else {
         larger_nn++;
       }
 
-      if (total) {
-        total_nn++;
-      }
+      total_nn++;
     }
 
-    if (smaller) {
-      smaller_neighbours_num.emplace(cur_umi, smaller_nn);
-    }
-
-    if (larger) {
-      larger_neighbours_num.emplace(cur_umi, larger_nn);
-    }
-
-    if (total) {
-      total_neighbours_num.emplace(cur_umi, total_nn);
-    }
+    smaller_neighbours_num[i] = smaller_nn;
+    larger_neighbours_num[i] = larger_nn;
+    total_neighbours_num[i] = total_nn;
   }
+
+
+  smaller_neighbours_num.attr("names") = wrap(umis);
+  larger_neighbours_num.attr("names") = wrap(umis);
+  total_neighbours_num.attr("names") = wrap(umis);
 
   return List::create(_["Smaller"]=smaller_neighbours_num,
                       _["Larger"]=larger_neighbours_num,
@@ -175,7 +215,7 @@ List GetAdjacentUmisNum(const IntegerVector &reads_per_umi_from, const IntegerVe
 //' @export
 // [[Rcpp::export]]
 NumericMatrix FillDpMatrix(double prior_prob, int neighbours_num, int max_umi_per_cell) { //TODO: not export this
-  int n_col = max_umi_per_cell + 1, n_row = neighbours_num + 1;
+  int n_col = max_umi_per_cell, n_row = neighbours_num + 1;
   NumericMatrix dp_matrix(n_row, n_col);
 
   double prod = 1;
@@ -202,28 +242,41 @@ void fillReverseCumSum(int max_neighbour_num, int larger_nn, int umi_ind, const 
   }
 }
 
-void fillCumSumRatio(int max_neighbour_num, int smaller_nn, int larger_nn, int umi_ind, const NumericVector &distr, NumericMatrix &res, double tol=1e-10) {
+void fillCumSumRatio(int max_neighbour_num, int smaller_nn, int larger_nn, int umi_ind, const NumericVector &distr,
+                     NumericMatrix &res, bool log_probs=false, double tol=1e-20) {
+  if (distr.size() <= larger_nn + smaller_nn) {
+    stop("Strange numbers: max=" + std::to_string(max_neighbour_num) + ", larget=" + std::to_string(larger_nn) +
+      ", smaller=" + std::to_string(smaller_nn));
+  }
+
   double reverse_cum_sum = 0, direct_cum_sum = 0;
+  std::vector<double> direct_cum_sums(max_neighbour_num + 1, 0); // To prevent underflow
   for (int nn = larger_nn; nn <= larger_nn + smaller_nn; ++nn) {
     direct_cum_sum += distr[nn];
+    direct_cum_sums[nn] = direct_cum_sum;
   }
 
   if (direct_cum_sum < tol) {
-    direct_cum_sum = 1e10; // Any huge number
+    for (int nn = larger_nn; nn <= larger_nn + smaller_nn; ++nn) {
+      direct_cum_sums[nn] = 1e10; // Any huge number
+    }
   }
-  for (int nn = larger_nn + smaller_nn; nn > larger_nn; --nn) {
-    double cur_val = distr[nn];
-    reverse_cum_sum += cur_val;
-    direct_cum_sum -= cur_val;
 
-    res(nn - larger_nn, umi_ind) = reverse_cum_sum / direct_cum_sum;
+  for (int nn = larger_nn + smaller_nn; nn > larger_nn; --nn) {
+    reverse_cum_sum += distr[nn];
+    double log_value = std::log(reverse_cum_sum) - std::log(direct_cum_sums[nn - 1]);
+    res(nn - larger_nn, umi_ind) = log_probs ? log_value : std::exp(log_value);
   }
 }
 
 // [[Rcpp::export]]
 NumericMatrix GetSmallerNeighboursDistributionsBySizes(const List &dp_matrices, const IntegerVector &larger_neighbours_num,
                                                        const s_vec_t &neighbour_prob_inds, int size_adj, int max_neighbour_num,
-                                                       const IntegerVector &smaller_neighbours_num = IntegerVector()) {
+                                                       const IntegerVector &smaller_neighbours_num = IntegerVector(), bool log_probs=false,
+                                                       bool return_raw=false) {
+  if (size_adj == 0)
+    stop("Zero gene size");
+
   // reads_per_umi, larger_neighbours_num and neighbour_prob_inds must have the same order
   si_map_t dp_matrices_index;
   for (int i = 0; i < dp_matrices.size(); ++i) {
@@ -238,7 +291,7 @@ NumericMatrix GetSmallerNeighboursDistributionsBySizes(const List &dp_matrices, 
       return res;
 
     auto const &matrix = as<NumericMatrix>(dp_matrices.at(dp_matrices_index.at(neighbour_prob_inds.at(umi_ind))));
-    auto const &distr = matrix.column(size_adj);
+    auto const &distr = matrix.column(size_adj - 1);
 
     int larger_nn = larger_neighbours_num.at(umi_ind);
     double prob_sum = 0;
@@ -253,12 +306,20 @@ NumericMatrix GetSmallerNeighboursDistributionsBySizes(const List &dp_matrices, 
       prob_sum = 1;
     }
 
+    if (return_raw) {
+      for (int nn = larger_nn; nn <= max_neighbour_num; ++nn) {
+        res(nn - larger_nn, umi_ind) = distr[nn] / prob_sum;
+      }
+
+      continue;
+    }
+
     if (smaller_neighbours_num.size() != 0) {
-      fillCumSumRatio(max_neighbour_num, smaller_neighbours_num.at(umi_ind), larger_nn, umi_ind, distr / prob_sum, res);
+      fillCumSumRatio(max_neighbour_num, smaller_neighbours_num.at(umi_ind), larger_nn, umi_ind, distr / prob_sum, res, log_probs);
+      continue;
     }
-    else {
-      fillReverseCumSum(max_neighbour_num, larger_nn, umi_ind, distr / prob_sum, res);
-    }
+
+    fillReverseCumSum(max_neighbour_num, larger_nn, umi_ind, distr / prob_sum, res);
   }
 
   colnames(res) = as<StringVector>(larger_neighbours_num.names());
@@ -267,74 +328,46 @@ NumericMatrix GetSmallerNeighboursDistributionsBySizes(const List &dp_matrices, 
 }
 
 // [[Rcpp::export]]
-NumericVector GetSmallerNeighbourProbabilities(const NumericMatrix &small_neighs_dist, const IntegerVector &neighb_per_umi) {
-  NumericVector res(sum(neighb_per_umi));
-  int res_ind = 0;
-  for (int umi_ind = 0; umi_ind < neighb_per_umi.size(); ++umi_ind) {
-    int neighb_num = neighb_per_umi[umi_ind];
-    for (int neighb_ind = 1; neighb_ind <= neighb_num; ++neighb_ind) {
-      res[res_ind++] = small_neighs_dist(neighb_ind, umi_ind);
-    }
-  }
-
-  return res;
-}
-
-// [[Rcpp::export]]
-IntegerVector FilterUmisInGeneSimple(const IntegerVector &reads_per_umi, const std::vector<s_vec_t> &neighbourhood, double mult=1) {
-  if (neighbourhood.size() != reads_per_umi.size())
-    stop("Vectors must have equal size");
-
+List FilterUmisInGeneClassic(const List &reads_per_umi, double mult=1) {
   if (reads_per_umi.size() == 1)
     return reads_per_umi;
 
-  LogicalVector filt_mask(reads_per_umi.size(), true);
-
   Progress p(0, false);
-  auto const &rpu_map = parseVector(reads_per_umi);
-  auto const &umis = as<s_vec_t>(as<StringVector>(reads_per_umi.names()));
-
-  std::vector<int> targets(umis.size(), -1);
-  si_map_t umi_inds;
-  for (int i = 0; i < umis.size(); ++i) {
-    umi_inds[umis[i]] = i;
+  const GeneInfo info(reads_per_umi);
+  si_map_t rpu_map;
+  for (int i = 0; i < info.umis.size(); ++i) {
+    rpu_map.emplace(info.umis[i], info.reads_per_umi[i]);
   }
 
-  for (int i = 0; i < umis.size(); ++i) {
-    auto const &neighbours = neighbourhood[i];
-    if (neighbours.empty())
-      continue;
+  auto const neighbourhood = SubsetAdjacentUmis(info.umis);
+  si_map_t umi_inds;
+  for (int i = 0; i < info.umis.size(); ++i) {
+    umi_inds[info.umis[i]] = i;
+  }
 
-    int cur_rpu = rpu_map.at(umis[i]);
-    int neighb_index = -1;
+  std::vector<std::string> base_umis, target_umis;
+  for (int i = 0; i < info.umis.size(); ++i) {
+    auto const &neighbours = neighbourhood.at(info.umis[i]);
+    int cur_rpu = rpu_map.at(info.umis[i]);
+
     for (auto const &neighbour : neighbours) {
-      auto neighb_it = rpu_map.find(neighbour);
-      if (neighb_it == rpu_map.end() || (neighb_it->second < cur_rpu * mult - EPS)) // rpu_neighb >= cur_rpu
+      if (rpu_map.at(neighbour) < cur_rpu * mult - EPS) // rpu_neighb >= cur_rpu
         continue;
 
-      int cur_neighb_index = umi_inds.at(neighb_it->first);
-      if (targets[cur_neighb_index] == i)
-        continue;
-
-      if (neighb_index != -1) {
-        neighb_index = -1;
-        break;
-      }
-
-      filt_mask[i] = false;
-      neighb_index = cur_neighb_index;
-    }
-
-    if (neighb_index != -1) {
-      targets[i] = neighb_index;
+      base_umis.push_back(info.umis[i]);
+      target_umis.push_back(neighbour);
     }
 
     if (p.check_abort())
       break;
   }
 
-  if (any(filt_mask).is_false()) {
-    filt_mask[which_max(reads_per_umi)] = true;
+  std::vector<bool> is_base_filt = ResolveUmiDependencies(base_umis, target_umis);
+  LogicalVector filt_mask(reads_per_umi.size(), true);
+  for (int i = 0; i < is_base_filt.size(); ++i) {
+    if (is_base_filt[i]) {
+      filt_mask[umi_inds[base_umis[i]]] = false;
+    }
   }
 
   return reads_per_umi[filt_mask];

@@ -1,5 +1,7 @@
 #include "Gene.h"
 
+#include "ReadInfo.h"
+
 namespace Estimation
 {
 	const UMI &Estimation::Gene::at(const std::string &umi) const
@@ -7,10 +9,11 @@ namespace Estimation
 		return this->_umis.at(this->_umi_indexer->get_index(umi));
 	}
 
-	bool Gene::add_umi(const std::string &umi, const UMI::Mark &umi_mark)
+	bool Gene::add_umi(const ReadInfo &read_info)
 	{
-		auto insert_it = this->_umis.emplace(this->_umi_indexer->add(umi), UMI());
-		insert_it.first->second.add_read(umi_mark);
+		auto umi_index = this->_umi_indexer->add(read_info.params.umi());
+		auto insert_it = this->_umis.emplace(umi_index, UMI(read_info.params.umi_quality().length(), 0));
+		insert_it.first->second.add_read(read_info);
 
 		return insert_it.second;
 	}

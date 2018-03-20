@@ -1,6 +1,6 @@
 #include "Cell.h"
 
-#include <cstring>
+#include "ReadInfo.h"
 
 namespace Estimation
 {
@@ -18,10 +18,10 @@ namespace Estimation
 		strcpy(this->_barcode.get(), barcode.c_str());
 	}
 
-	void Cell::add_umi(const std::string &gene, const std::string &umi, const UMI::Mark &umi_mark)
+	void Cell::add_umi(const ReadInfo &read_info)
 	{
-		auto gene_it = this->_genes.emplace(this->_gene_indexer->add(gene), Gene(this->_umi_indexer));
-		bool is_new = gene_it.first->second.add_umi(umi, umi_mark);
+		auto gene_it = this->_genes.emplace(this->_gene_indexer->add(read_info.gene), Gene(this->_umi_indexer));
+		bool is_new = gene_it.first->second.add_umi(read_info);
 		if (is_new)
 		{
 			this->_stats.inc(Stats::TOTAL_UMIS_PER_CB);
