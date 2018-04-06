@@ -58,6 +58,8 @@ List TrimUmis(const List &rpu_per_cell, int trim_length, bool reverse=false) {
 //' @param umi_length length of UMI.
 //' @param smooth smooth term, which is added to each UMI probability in case if some UMIs have only few observations.
 //' @return Vector of UMI probabilities.
+//'
+//' @export
 // [[Rcpp::export]]
 si_map_t GetUmisDistributionNew(List umis_per_gene_per_cell, int smooth = 1) {
   si_map_t res;

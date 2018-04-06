@@ -99,7 +99,7 @@ PlotCellScores <- function(scores, cells.number=NULL, y.threshold=NULL, main=NUL
 #' @return ggplot object with the plot.
 GetUmisDistribution <- function(reads.per.umi.per.cb, trim.quantile=0.99, bins=50) {
   if ("reads_per_umi" %in% names(reads.per.umi.per.cb)) {
-    return(GetUmisDistributionNew(reads.per.umi.per.cb))
+    return(GetUmisDistributionNew(reads.per.umi.per.cb$reads_per_umi))
   }
 
   return(GetUmisDistributionOld(reads.per.umi.per.cb))
