@@ -112,6 +112,16 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const ptree &pt
 				                       writer, params.save_stats, params.save_reads_params));
 	}
 
+	if (protocol_type == "10x") // 10x has the same format of files as indrop v3
+	{
+		if (params.read_files.size() != 3)
+			throw std::runtime_error(input_files_num_error_text);
+
+		return shared_ptr<TagsFinderBase>(
+				new IndropV3TagsFinder(params.read_files, pt.get_child(BARCODES_CONFIG_PATH), processing_config,
+				                       writer, params.save_stats, params.save_reads_params));
+	}
+
 	if (protocol_type == "indrop")
 	{
 		if (params.read_files.size() != 2)

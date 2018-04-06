@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.8.1] - 2018-03-20
+### Changed
+* Fixed some bugs in dropestr
+### Added
+* Added protocol type 10x (which is alias for indrop3) to dropTag
+
 ## [0.8.0] - 2018-03-20
 ### Changed
 * Now, information about reads is kept in separate file instead (*.reads.gz), which should be passed to dropEst

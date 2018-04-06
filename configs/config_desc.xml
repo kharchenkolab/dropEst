@@ -3,7 +3,7 @@
     <TagsSearch>
         <!--
         Used protocol. Number and order of required input files depend on this parameter.
-        Possible values: indrop, indrop3, iclip.
+        Possible values: 10x, indrop, indrop3, iclip.
         -->
         <protocol>indrop</protocol>
         <BarcodesSearch> <!-- Required for InDrop V3 -->
