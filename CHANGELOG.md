@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.8.1] - 2018-03-20
+## [0.8.1] - 2018-04-06
 ### Changed
 * Fixed some bugs in dropestr
 ### Added
