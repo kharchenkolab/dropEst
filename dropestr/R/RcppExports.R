@@ -119,8 +119,6 @@ GetUmisDistributionNew <- function(umis_per_gene_per_cell, smooth = 1L) {
 #' @param umi_length length of UMI.
 #' @param smooth smooth term, which is added to each UMI probability in case if some UMIs have only few observations.
 #' @return Vector of UMI probabilities.
-#'
-#' @export
 GetUmisDistributionOld <- function(umis_per_gene_per_cell, smooth = 1L) {
     .Call('_dropestr_GetUmisDistributionOld', PACKAGE = 'dropestr', umis_per_gene_per_cell, smooth)
 }

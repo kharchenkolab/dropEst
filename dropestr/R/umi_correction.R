@@ -107,7 +107,7 @@ CorrectUmiSequenceErrors <- function(reads.per.umi.per.cb.info, umi.probabilitie
     if (verbosity.level > 0) {
       cat("Estimating UMIs distribution...")
     }
-    umi.distribution <- GetUmisDistribution(reads.per.umi.per.cb, smooth = distribution.smooth)
+    umi.distribution <- GetUmisDistribution(reads.per.umi.per.cb.info, smooth = distribution.smooth)
     umi.probabilities <- umi.distribution / sum(umi.distribution)
 
     if (verbosity.level > 0) {

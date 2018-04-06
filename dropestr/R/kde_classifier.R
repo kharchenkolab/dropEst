@@ -40,6 +40,9 @@ PredictKDE <- function(clf, x, bandwidth.mult=1) {
   dens1 <- ks::kde(clf$data1, H=clf$h1, eval.points = x)$estimate
   dens0 <- ks::kde(clf$data0, H=clf$h0, eval.points = x)$estimate
 
+  dens1 <- pmax(dens1, 0) # ks sometimes returns negative values close to zero
+  dens0 <- pmax(dens0, 0)
+
   sum.probs <- dens1 * clf$prior.probs[2] + dens0 * clf$prior.probs[1]
   prob1 <- as.vector(dens1 * clf$prior.probs[2]) / sum.probs
 

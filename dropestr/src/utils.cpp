@@ -89,7 +89,6 @@ si_map_t GetUmisDistributionNew(List umis_per_gene_per_cell, int smooth = 1) {
 //' @return Vector of UMI probabilities.
 //'
 //' @export
-// [[Rcpp::export]]
 si_map_t GetUmisDistributionOld(List umis_per_gene_per_cell, int smooth = 1) {
   si_map_t res;
 
