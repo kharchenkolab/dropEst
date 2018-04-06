@@ -320,7 +320,7 @@ intronic, exonic or exon/intron spanning. These matrices are stored in the separ
 *  -m, --merge-barcodes : merge linked cell tags  
 *  -M, --merge-barcodes-precise : use precise merge strategy (can be slow), recommended to use when the list of real barcodes is not available  
 *  -o, --output-file filename : output file name
-*  -r, --read-params filenames: file or files with serialized params from tags search step. If there are several files, they should be provided in quotes, separated by space: "file1.reads.gz file2.reads.gz file3.reads.gz"  
+*  -r, --read-params filenames: file or files with serialized params from tags search step. If there are several files, they should be provided in quotes, separated by space: "file1.params.gz file2.params.gz file3.params.gz"  
 *  -R, --reads-output: print count matrix for reads and don't use UMI statistics  
 *  -q, --quiet : disable logs  
 *  -V, --velocyto : save separate count matrices for exons, introns and exon/intron spanning reads

@@ -90,7 +90,7 @@ static void usage()
 	cerr << "\t-M, --merge-barcodes-precise : use precise merge strategy (can be slow), recommended to use when the list of real barcodes is not available\n";
 	cerr << "\t-o, --output-file filename : output file name\n";
 	cerr << "\t-r, --read-params filenames: file or files with serialized params from tags search step. If there are several files"
-	     << ", they should be provided in quotes, separated by space: \"file1.reads.gz file2.reads.gz file3.reads.gz\"" << endl;
+	     << ", they should be provided in quotes, separated by space: \"file1.params.gz file2.params.gz file3.params.gz\"" << endl;
 	cerr << "\t-P, --pseudoaligner: use chromosome name as a source of gene id\n";
 	cerr << "\t-q, --quiet : disable logs\n";
 	cerr << "\t-R, --reads-output: print count matrix for reads and don't use UMI statistics\n";
