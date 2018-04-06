@@ -1,6 +1,7 @@
 <config>
     <!-- droptag -->
     <TagsSearch>
+        <protocol>10x</protocol>
         <BarcodesSearch>
             <barcode1_length>8</barcode1_length>
             <barcode2_length>16</barcode2_length>

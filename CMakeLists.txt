@@ -13,7 +13,7 @@ endif (NOT "${CMAKE_BUILD_TYPE}" STREQUAL Debug)
 
 add_definitions(-DPROJ_DATA_PATH=\"${PROJECT_SOURCE_DIR}/data\")
 add_definitions(-DPROJ_BIN_PATH=\"${CMAKE_CURRENT_BINARY_DIR}\")
-add_definitions(-DVERSION=\"0.8.0\")
+add_definitions(-DVERSION=\"0.8.1\")
 
 include(deps)
 

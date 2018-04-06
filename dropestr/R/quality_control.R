@@ -97,12 +97,12 @@ PlotCellScores <- function(scores, cells.number=NULL, y.threshold=NULL, main=NUL
 #' @param trim.quantile
 #' @param bins number of bins in histogram
 #' @return ggplot object with the plot.
-GetUmisDistribution <- function(reads.per.umi.per.cb, trim.quantile=0.99, bins=50) {
+GetUmisDistribution <- function(reads.per.umi.per.cb, smooth=1, trim.quantile=0.99, bins=50) {
   if ("reads_per_umi" %in% names(reads.per.umi.per.cb)) {
-    return(GetUmisDistributionNew(reads.per.umi.per.cb))
+    return(GetUmisDistributionNew(reads.per.umi.per.cb$reads_per_umi, smooth=smooth))
   }
 
-  return(GetUmisDistributionOld(reads.per.umi.per.cb))
+  return(GetUmisDistributionOld(reads.per.umi.per.cb, smooth=smooth))
 }
 
 #' Plot distribution of UMI
