@@ -4,7 +4,8 @@
 \alias{GetUmisDistribution}
 \title{Plot distribution of UMI}
 \usage{
-GetUmisDistribution(reads.per.umi.per.cb, trim.quantile = 0.99, bins = 50)
+GetUmisDistribution(reads.per.umi.per.cb, smooth = 1, trim.quantile = 0.99,
+  bins = 50)
 }
 \arguments{
 \item{bins}{number of bins in histogram}
