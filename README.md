@@ -134,8 +134,8 @@ either in *.fastq* of *.fastq.gz* format. The file order depends on the type of 
 on the usage for currently supported protocols.
 
 **Note.** Algorithm of UMI correction requires information about base-call quality of UMIs. To save this information, use `-s` option.
-In this case, in addition to fastq files with reads, the pipeline saves separate gzipped file with read parameters. This files must 
-be passed to dropEst with `-r` option. 
+In this case, in addition to fastq files with reads, the pipeline saves separate gzipped file with read parameters. These files 
+must be passed to dropEst with `-r` option. 
 
 ### Protocols
 #### inDrop v1 & v2
@@ -158,7 +158,7 @@ Example command:
 * File 3: gene read
 * *File 4 (optional): library tag*
 
-If a file with library tags provided, option "-t" is required.
+If a file with library tags provided, option "-t" is required. ***This option wasn't tested properly, so it's better to avoid using it.***
 <!-- To get data from multiple libraries **TODO: understand what happens with barcode in the case of multiple library tags**. -->
 
 Example config file is located at "*dropEst/configs/indrop_v3.xml*".  
@@ -252,7 +252,7 @@ Another crucial moment in estimation of count matrix is correction of cell barco
 
 Example command:
 ```bash
-dropest [options] [-m] -g ./hg38/genes.gtf -c ./config.xml ./alignment.*/accepted_hits.bam
+dropest [options] [-m] [-r pipeline_res.params.gz] -g ./hg38/genes.gtf -c ./config.xml ./alignment.*/accepted_hits.bam
 ```
 
 ### Usage of tagged bam files (e.g. 10x, Drop-seq) as input
@@ -270,7 +270,7 @@ To specify corresponding .bam tag names, use "*Estimation/BamTags*" section in t
 Pseudoaligners, such as Kallisto store gene / transcript names in the field of chromosome name. To parse such files, 
 use "*-P*" option. Example:
  ```bash
- dropest [options] -P -c ./config.xml ./kallisto_res_*.bam
+ dropest [options] -P [-r pipeline_res.params.gz] -c ./config.xml ./kallisto_res_*.bam
  ```
 
 ### Count intronic / exonic reads only
@@ -288,15 +288,15 @@ Thus, to count all UMIs with exonic **or** not annotated reads, use *"-L eE"*. D
 Example commands:
 * Intronic reads only:
     ```bash
-    dropest [-f] [-g ./genes.gtf] -L i -c ./config.xml ./alignment_*.bam
+    dropest [-f] [-g ./genes.gtf] [-r pipeline_res.params.gz] -L i -c ./config.xml ./alignment_*.bam
     ```
 * Exonic reads only:
     ```bash
-    dropest [-f] [-g ./genes.gtf] -L i -c ./config.xml ./alignment_*.bam
+    dropest [-f] [-g ./genes.gtf] [-r pipeline_res.params.gz] -L i -c ./config.xml ./alignment_*.bam
     ```
 * Exon/intron spanning reads:
     ```bash
-    dropest [-f] [-g ./genes.gtf] -L BA -c ./config.xml ./alignment_*.bam
+    dropest [-f] [-g ./genes.gtf] [-r pipeline_res.params.gz] -L BA -c ./config.xml ./alignment_*.bam
     ```
 
 The pipeline can determine genome regions either using .gtf annotation file or using .bam tags, i.e. for CellRanger 
@@ -320,7 +320,7 @@ intronic, exonic or exon/intron spanning. These matrices are stored in the separ
 *  -m, --merge-barcodes : merge linked cell tags  
 *  -M, --merge-barcodes-precise : use precise merge strategy (can be slow), recommended to use when the list of real barcodes is not available  
 *  -o, --output-file filename : output file name
-*  -r, --read-params filenames: file or files with serialized params from tags search step. If there are several files, they should be provided in quotes, separated by space: "file1.reads.gz file2.reads.gz file3.reads.gz"  
+*  -r, --read-params filenames: file or files with serialized params from tags search step. If there are several files, they should be provided in quotes, separated by space: "file1.params.gz file2.params.gz file3.params.gz"  
 *  -R, --reads-output: print count matrix for reads and don't use UMI statistics  
 *  -q, --quiet : disable logs  
 *  -V, --velocyto : save separate count matrices for exons, introns and exon/intron spanning reads
