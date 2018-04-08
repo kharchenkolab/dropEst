@@ -19,7 +19,8 @@ namespace Estimation
 {
 namespace Merge
 {
-	MergeStrategyFactory::MergeStrategyFactory(const boost::property_tree::ptree &config, int min_genes_after_merge)
+	MergeStrategyFactory::MergeStrategyFactory(const boost::property_tree::ptree &config, const std::string &config_file_name,
+	                                           int min_genes_after_merge)
 	{
 		auto main_config = config.get_child("Merge", boost::property_tree::ptree());
 
@@ -41,8 +42,11 @@ namespace Merge
 
 		this->_barcodes_type = main_config.get<std::string>("barcodes_type", "indrop");
 		this->_barcodes_filename = main_config.get<std::string>("barcodes_file", "");
+		this->_barcodes_filename = Tools::expand_tilde_in_path(Tools::ltrim(this->_barcodes_filename));
+		this->_barcodes_filename = Tools::expand_relative_path(config_file_name, this->_barcodes_filename);
+
 		if (!this->_barcodes_filename.empty() && !std::ifstream(this->_barcodes_filename))
-			throw std::runtime_error("Can't open barcodes file '" + this->_barcodes_filename + "'");
+			throw std::runtime_error("Can't open file with barcodes: '" + this->_barcodes_filename + "'");
 
 		auto poisson_config = config.get_child("PreciseMerge", boost::property_tree::ptree());
 

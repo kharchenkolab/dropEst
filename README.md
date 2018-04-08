@@ -248,7 +248,7 @@ Count matrix estimation also requires information about the source gene for the 
 
 Another crucial moment in estimation of count matrix is correction of cell barcode errors. Most protocols provide the list of real barcodes, which simplifies the task of correction. If such file is available, path to the file **should be specified in the *config.xml* file** (*Estimation/Merge/barcodes_file*). This can dramatically increase quality of the result. Lists for inDrop protocols can be found at *dropEst/data/barcodes/*. Two algorithms of barcode correction are available:
 1. Simple, "*-m*" option. This algorithm is recommended in the case, where barcodes list is supplied.
-2. Precise, "*-M*" option. Doesn't requires list of real barcodes to obtain high-quality results, however has a lower performance for large datasets.
+2. Precise, "*-M*" option. Doesn't requires list of real barcodes to obtain high-quality results, however has lower performance for large datasets.
 
 Example command:
 ```bash

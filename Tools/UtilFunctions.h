@@ -44,4 +44,9 @@ namespace Tools
 	unsigned hamming_distance(const std::string &s1, const std::string &s2, bool skip_n = true);
 	double fpow(double base, long exp);
 	RInside* init_r();
+
+	std::string expand_tilde_in_path(const std::string &path);
+	void copy_file(const std::string &src_file, const std::string &dest_file);
+	std::string expand_relative_path(const std::string &src_fname, const std::string &rel_fname);
+	std::string ltrim(const std::string &str);
 };

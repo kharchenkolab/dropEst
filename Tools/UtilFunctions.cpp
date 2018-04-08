@@ -1,5 +1,8 @@
 #include "UtilFunctions.h"
-#include <limits>
+
+#include <cstdlib>
+#include <fstream>
+#include <boost/filesystem.hpp>
 
 
 namespace Tools
@@ -106,6 +109,34 @@ namespace Tools
 		}
 
 		return res;
+	}
+
+	std::string ltrim(const std::string &str)
+	{
+		return str.substr(str.find_first_not_of(" \t"));
+	}
+
+	std::string expand_tilde_in_path(const std::string &path)
+	{
+		if (path.substr(0, 2) == "~/")
+			return std::getenv("HOME") + path.substr(1);
+
+		return path;
+	}
+
+	void copy_file(const std::string &src_file, const std::string &dest_file)
+	{
+		std::ifstream src(src_file, std::ios::binary);
+		std::ofstream dest(dest_file, std::ios::binary);
+		dest << src.rdbuf();
+	}
+
+	std::string expand_relative_path(const std::string &src_fname, const std::string &rel_fname)
+	{
+		if (rel_fname[0] == '/')
+			return rel_fname;
+
+		return boost::filesystem::path(src_fname).parent_path().append(rel_fname).lexically_normal().string();
 	}
 }
 

@@ -16,7 +16,7 @@ namespace BarcodesParsing
 	{
 		std::ifstream cb_f(barcodes_filename);
 		if (cb_f.fail())
-			throw std::runtime_error("Can't open barcodes file: '" + barcodes_filename + "'");
+			throw std::runtime_error("Can't open file with barcodes: '" + barcodes_filename + "'");
 
 		barcode_parts_list_t barcodes(2);
 		for (size_t i = 0; i < 2; ++i)

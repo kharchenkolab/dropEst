@@ -54,7 +54,7 @@ namespace Merge
 		merge_cb_ptr get_cb_strat(bool merge_tags, bool use_poisson) const;
 		merge_umi_ptr get_umi() const;
 
-		MergeStrategyFactory(const boost::property_tree::ptree &config, int min_genes_after_merge = -1);
+		MergeStrategyFactory(const boost::property_tree::ptree &config, const std::string &config_file_name, int min_genes_after_merge = -1);
 	};
 }
 }

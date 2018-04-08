@@ -267,6 +267,7 @@ int main(int argc, char **argv)
 		params.log_prefix += "_";
 	}
 	Tools::init_log(!params.quiet, false, params.log_prefix + "tag_main.log", params.log_prefix + "tag_debug.log");
+	Tools::copy_file(params.config_file_name, params.log_prefix + "tag_config.dump.xml");
 
 	L_TRACE << command_line;
 	L_TRACE << "Version: " << VERSION << ".";

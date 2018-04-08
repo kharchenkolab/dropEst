@@ -237,7 +237,7 @@ CellsDataContainer get_cells_container(const vector<string> &files, const Params
 {
 	auto match_levels = UMI::Mark::get_by_code(params.gene_match_level);
 
-	Merge::MergeStrategyFactory merge_factory(est_config, params.min_genes_after_merge);
+	Merge::MergeStrategyFactory merge_factory(est_config, params.config_file_name, params.min_genes_after_merge);
 	CellsDataContainer container(merge_factory.get_cb_strat(params.merge_tags, params.merge_tags_precise),
 	                             merge_factory.get_umi(), match_levels, params.max_cells_number);
 
@@ -270,6 +270,7 @@ int main(int argc, char **argv)
 		params.log_prefix += "_";
 	}
 	Tools::init_log(!params.quiet, false, params.log_prefix + "est_main.log", params.log_prefix + "est_debug.log");
+	Tools::copy_file(params.config_file_name, params.log_prefix + "est_config.dump.xml");
 
 	L_TRACE << command_line;
 	L_TRACE << "Version: " << VERSION << ".";

@@ -21,7 +21,8 @@ namespace Estimation
 			const std::string intergenic_read_value;
 
 			BamTags();
-			BamTags(const boost::property_tree::ptree &config);
+
+			explicit BamTags(const boost::property_tree::ptree &config);
 		};
 	}
 }

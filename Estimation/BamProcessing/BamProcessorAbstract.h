@@ -36,7 +36,7 @@ namespace Estimation
 			virtual std::string get_result_bam_name(const std::string &bam_name) const = 0;
 
 		public:
-			BamProcessorAbstract(const BamTags &tags_info);
+			explicit BamProcessorAbstract(const BamTags &tags_info);
 			virtual ~BamProcessorAbstract();
 
 			size_t total_reads_num() const;
