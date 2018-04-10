@@ -21,7 +21,7 @@ MergeUMIsStrategySimple::MergeUMIsStrategySimple(unsigned int max_merge_distance
 
 void MergeUMIsStrategySimple::merge(CellsDataContainer &container) const
 {
-	Tools::trace_time("UMI merge start");
+	Tools::trace_time("Merge UMIs with N's");
 	size_t total_cell_merged = 0, total_umi_merged = 0, total_cells_processed = 0;
 	for (size_t cell_id = 0; cell_id < container.total_cells_number(); ++cell_id)
 	{

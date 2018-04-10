@@ -15,6 +15,7 @@
 #include <Estimation/Merge/SimpleMergeStrategy.h>
 #include <Estimation/Merge/RealBarcodesMergeStrategy.h>
 #include <Estimation/Merge/UMIs/MergeUMIsStrategySimple.h>
+#include <Estimation/Merge/UMIs/MergeUMIsStrategyDirectional.h>
 
 #include <Tools/Logs.h>
 #include <Tools/IndexedValue.h>
@@ -42,7 +43,7 @@ struct Fixture
 		this->umi_merge_strat = std::make_shared<Merge::UMIs::MergeUMIsStrategySimple>(1);
 
 		this->any_mark = Mark::get_by_code(Mark::DEFAULT_CODE);
-		this->container_full = std::make_shared<CellsDataContainer>(this->real_cb_strat, this->umi_merge_strat, this->any_mark);
+		this->container_full = std::make_shared<CellsDataContainer>(this->real_cb_strat, std::shared_ptr<Merge::UMIs::MergeUMIsStrategyAbstract>(this->umi_merge_strat), this->any_mark);
 
 		Tools::init_test_logs(boost::log::trivial::error);
 		this->container_full->add_record(read_info("AAATTAGGTCCA", "AAACCT", "Gene1")); //0, real
@@ -518,9 +519,9 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		BOOST_CHECK_EQUAL(wrong_umis[1], "AACTCNT");
 	}
 
-	BOOST_FIXTURE_TEST_CASE(testUMIMergeStrategy, Fixture)
+	BOOST_FIXTURE_TEST_CASE(testUMIMergeStrategySimple, Fixture)
 	{
-		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, this->any_mark);
+		CellsDataContainer container(this->real_cb_strat, std::shared_ptr<Merge::UMIs::MergeUMIsStrategyAbstract>(this->umi_merge_strat), this->any_mark);
 
 		container.add_record(read_info("AAATTAGGTCCA", "AAACCT", "Gene1"));
 		container.add_record(read_info("AAATTAGGTCCA", "AAACCT", "Gene1"));
@@ -550,45 +551,6 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		BOOST_CHECK_NO_THROW(container.cell(0).at("Gene2").at("ACCCCT"));
 
 		for (auto const &umi :container.cell(0).at("Gene2").umis())
-		{
-			BOOST_CHECK_EQUAL(container.umi_indexer().get_value(umi.first).find('N'), std::string::npos);
-		}
-	}
-
-	BOOST_FIXTURE_TEST_CASE(debugUMIMergeStrategy, Fixture)
-	{
-		CellsDataContainer container(this->real_cb_strat, this->umi_merge_strat, this->any_mark);
-
-		container.add_record(read_info("GTCCCATGTCTCAT-3", "TAAATTACAT", "ENSG00000100941"));
-		container.add_record(read_info("GTCCCATGTCTCAT-3", "ATCGACNNNN", "ENSG00000100941"));
-		container.add_record(read_info("GTCCCATGTCTCAT-3", "ATTAAAGTCG", "ENSG00000100941"));
-
-		for (int i = 0; i < 12; ++i)
-		{
-			container.add_record(read_info("GTCCCATGTCTCAT-3", "CCCAACAGCT", "ENSG00000100941"));
-		}
-
-		container.add_record(read_info("GTCCCATGTCTCAT-3", "ATCGACATTC", "ENSG00000100941"));
-		for (int i = 0; i < 4; ++i)
-		{
-			container.add_record(read_info("GTCCCATGTCTCAT-3", "ATTCAAGTCG", "ENSG00000100941"));
-		}
-
-		for (int i = 0; i < 14; ++i)
-		{
-			container.add_record(read_info("GTCCCATGTCTCAT-3", "CACGAAACGA", "ENSG00000100941"));
-		}
-
-		for (int i = 0; i < 10; ++i)
-		{
-			container.add_record(read_info("GTCCCATGTCTCAT-3", "TCCGTTACAG", "ENSG00000100941"));
-		}
-
-
-		container.set_initialized();
-
-		this->umi_merge_strat->merge(container);
-		for (auto const &umi :container.cell(0).at("ENSG00000100941").umis())
 		{
 			BOOST_CHECK_EQUAL(container.umi_indexer().get_value(umi.first).find('N'), std::string::npos);
 		}
@@ -638,5 +600,27 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		parser->get_gene(chrom_in, align, gene_out);
 
 		BOOST_CHECK_EQUAL(gene_out, chrom_in);
+	}
+
+	BOOST_FIXTURE_TEST_CASE(testUMIMergeStrategyDirectional, Fixture)
+	{
+		using Strat = Merge::UMIs::MergeUMIsStrategyDirectional;
+		auto umi_merge_strat = std::make_shared<Strat>();
+		CellsDataContainer container(this->real_cb_strat, std::shared_ptr<Merge::UMIs::MergeUMIsStrategyAbstract>(umi_merge_strat), this->any_mark);
+
+		Strat::umi_vec_t umis;
+		umis.emplace_back("AAA", 2);
+		umis.emplace_back("AAC", 5);
+		umis.emplace_back("AAT", 6);
+		umis.emplace_back("AGT", 20);
+		umis.emplace_back("CCC", 10);
+		umis.emplace_back("TCC", 20);
+
+		auto targets = umi_merge_strat->find_targets(umis);
+
+		BOOST_REQUIRE_EQUAL(targets.size(), 3);
+		BOOST_CHECK_EQUAL(targets.at("AAA"), "AGT");
+		BOOST_CHECK_EQUAL(targets.at("AAT"), "AGT");
+		BOOST_CHECK_EQUAL(targets.at("CCC"), "TCC");
 	}
 BOOST_AUTO_TEST_SUITE_END()

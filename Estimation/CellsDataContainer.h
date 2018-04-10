@@ -26,7 +26,7 @@ namespace Estimation
 		class MergeStrategyAbstract;
 		namespace UMIs
 		{
-			class MergeUMIsStrategySimple;
+			class MergeUMIsStrategyAbstract;
 		}
 	}
 
@@ -46,7 +46,7 @@ namespace Estimation
 
 	private:
 		std::shared_ptr<Merge::MergeStrategyAbstract> _merge_strategy;
-		std::shared_ptr<Merge::UMIs::MergeUMIsStrategySimple> _umi_merge_strategy;
+		std::shared_ptr<Merge::UMIs::MergeUMIsStrategyAbstract> _umi_merge_strategy;
 
 		static const size_t TOP_PRINT_SIZE;
 		const int _max_cells_num;
@@ -78,7 +78,7 @@ namespace Estimation
 
 	public:
 		CellsDataContainer(const std::shared_ptr<Merge::MergeStrategyAbstract> &merge_strategy,
-		                   const std::shared_ptr<Merge::UMIs::MergeUMIsStrategySimple> &umi_merge_strategy,
+		                   const std::shared_ptr<Merge::UMIs::MergeUMIsStrategyAbstract> &umi_merge_strategy,
 		                   const std::vector<UMI::Mark> &gene_match_levels, int max_cells_num = -1);
 
 		void add_record(const ReadInfo &read_info);

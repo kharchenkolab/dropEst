@@ -12,6 +12,7 @@
 #include <Estimation/Merge/BarcodesParsing/InDropBarcodesParser.h>
 #include <Estimation/Merge/BarcodesParsing/ConstLengthBarcodesParser.h>
 #include <Estimation/Merge/UMIs/MergeUMIsStrategySimple.h>
+#include <Estimation/Merge/UMIs/MergeUMIsStrategyDirectional.h>
 
 #include <fstream>
 
@@ -53,7 +54,8 @@ namespace Merge
 		this->_max_merge_prob = poisson_config .get<double>("max_merge_prob", 1e-4);
 		this->_max_real_cb_merge_prob = poisson_config.get<double>("max_real_merge_prob", 1e-7);
 
-		this->_max_umi_merge_edit_distance = main_config.get<unsigned>("max_umi_merge_edit_distance", 2);
+		this->_max_umi_merge_edit_distance = main_config.get<unsigned>("max_umi_merge_edit_distance", 1);
+		this->_umi_merge_mult = main_config.get<double>("umi_merge_multiplier", 2);
 	}
 
 	MergeStrategyFactory::merge_cb_ptr MergeStrategyFactory::get_cb_strat(bool merge_tags, bool use_poisson) const
@@ -100,8 +102,11 @@ namespace Merge
 		                                                         this->_max_merge_edit_distance));
 	}
 
-	MergeStrategyFactory::merge_umi_ptr MergeStrategyFactory::get_umi() const
+	MergeStrategyFactory::merge_umi_ptr MergeStrategyFactory::get_umi(bool advanced) const
 	{
+		if (advanced)
+			return merge_umi_ptr(new UMIs::MergeUMIsStrategyDirectional(this->_umi_merge_mult, this->_max_umi_merge_edit_distance));
+
 		return merge_umi_ptr(new UMIs::MergeUMIsStrategySimple(this->_max_umi_merge_edit_distance));
 	}
 

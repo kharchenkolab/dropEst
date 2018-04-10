@@ -27,7 +27,7 @@ namespace BamProcessing
 										CellsDataContainer &container) const
 	{
 		L_TRACE << "";
-		Tools::trace_time("Start parse bams");
+		Tools::trace_time("Start parsing of bams");
 
 		auto processor = std::shared_ptr<BamProcessorAbstract>(new BamProcessor(container, this->_tags, print_result_bams));
 		this->process_bam_files(bam_files, processor);
@@ -39,7 +39,7 @@ namespace BamProcessing
 	                                             const CellsDataContainer &container) const
 	{
 		L_TRACE << "";
-		Tools::trace_time("Start write filtered bam");
+		Tools::trace_time("Start writing of filtered bam");
 
 		auto processor = std::shared_ptr<BamProcessorAbstract>(new FilteringBamProcessor(this->_tags, container));
 		this->process_bam_files(bam_files, processor);
@@ -56,7 +56,7 @@ namespace BamProcessing
 		{
 			if (match_level.check(UMI::Mark::HAS_INTRONS) && !parser->has_introns())
 			{
-				throw std::runtime_error("Genes file should have transcript_id tag or intron records for intron/exon search option");
+				throw std::runtime_error("File with gene info must have transcript_id tag or intron records for intron/exon search option");
 			}
 		}
 

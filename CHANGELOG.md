@@ -5,6 +5,9 @@
 * Config field "Estimation/Merge/barcodes_file" now accepts paths, relative to config directory, as well as path with "~/"
 ### Added
 * To improve reproducibility, config file is now copied to log directory
+* 'Directional' UMI correction can be applied during dropEst phase with "-u" option. In this case, information for more 
+    advanced UMI correction isn't saved to output rds.
+* 
 
 ## [0.8.1] - 2018-04-06
 ### Changed

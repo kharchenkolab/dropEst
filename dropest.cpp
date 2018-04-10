@@ -32,6 +32,7 @@ struct Params
 	bool quiet = false;
 	bool reads_output = false;
 	bool stats_for_validation = false;
+	bool umi_merge = false;
 	bool velocyto_matrices = false;
 	bool write_matrix = false;
 	string config_file_name = "";
@@ -89,11 +90,12 @@ static void usage()
 	cerr << "\t-m, --merge-barcodes : merge linked cell tags" << endl;
 	cerr << "\t-M, --merge-barcodes-precise : use precise merge strategy (can be slow), recommended to use when the list of real barcodes is not available\n";
 	cerr << "\t-o, --output-file filename : output file name\n";
-	cerr << "\t-r, --read-params filenames: file or files with serialized params from tags search step. If there are several files"
-	     << ", they should be provided in quotes, separated by space: \"file1.params.gz file2.params.gz file3.params.gz\"" << endl;
 	cerr << "\t-P, --pseudoaligner: use chromosome name as a source of gene id\n";
 	cerr << "\t-q, --quiet : disable logs\n";
+	cerr << "\t-r, --read-params filenames: file or files with serialized params from tags search step. If there are several files"
+	     << ", they should be provided in quotes, separated by space: \"file1.params.gz file2.params.gz file3.params.gz\"" << endl;
 	cerr << "\t-R, --reads-output: print count matrix for reads and don't use UMI statistics\n";
+	cerr << "\t-u, --merge-umi: apply 'directional' correction of UMI errors. If you want to apply more advanced UMI correction, don’t use ‘-u’, but use follow up R analysis.\n";
 	cerr << "\t-V, --velocyto : save separate count matrices for exons, introns and exon/intron spanning reads\n";
 	cerr << "\t-w, --write-mtx : write out matrix in MatrixMarket format\n";
 }
@@ -128,7 +130,7 @@ static Params parse_cmd_params(int argc, char **argv)
 			{"write-mtx",     no_argument,       0, 'w'},
 			{0, 0,                                 0, 0}
 	};
-	while ((c = getopt_long(argc, argv, "bc:C:fFg:G:hl:L:mMno:r:PqRSVw", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "bc:C:fFg:G:hl:L:mMno:r:PqRSuVw", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -190,6 +192,9 @@ static Params parse_cmd_params(int argc, char **argv)
 			case 'V' :
 				params.velocyto_matrices = true;
 				break;
+			case 'u' :
+				params.umi_merge = true;
+				break;
 			case 'w' :
 				params.write_matrix = true;
 				break;
@@ -239,7 +244,7 @@ CellsDataContainer get_cells_container(const vector<string> &files, const Params
 
 	Merge::MergeStrategyFactory merge_factory(est_config, params.config_file_name, params.min_genes_after_merge);
 	CellsDataContainer container(merge_factory.get_cb_strat(params.merge_tags, params.merge_tags_precise),
-	                             merge_factory.get_umi(), match_levels, params.max_cells_number);
+	                             merge_factory.get_umi(params.umi_merge), match_levels, params.max_cells_number);
 
 	bam_controller.parse_bam_files(files, params.bam_output, container);
 

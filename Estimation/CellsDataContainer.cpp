@@ -18,7 +18,7 @@ namespace Estimation
 	const size_t CellsDataContainer::TOP_PRINT_SIZE = 10;
 
 	CellsDataContainer::CellsDataContainer(const std::shared_ptr<Merge::MergeStrategyAbstract> &merge_strategy,
-	                                       const std::shared_ptr<Merge::UMIs::MergeUMIsStrategySimple> &umi_merge_strategy,
+	                                       const std::shared_ptr<Merge::UMIs::MergeUMIsStrategyAbstract> &umi_merge_strategy,
 		                                   const std::vector<UMI::Mark> &gene_match_levels, int max_cells_num)
 		: _merge_strategy(merge_strategy)
 		, _umi_merge_strategy(umi_merge_strategy)

@@ -16,7 +16,7 @@ namespace Merge
 
 	namespace UMIs
 	{
-		class MergeUMIsStrategySimple;
+		class MergeUMIsStrategyAbstract;
 	}
 
 	class MergeStrategyAbstract;
@@ -25,7 +25,7 @@ namespace Merge
 	{
 	public:
 		using merge_cb_ptr = std::shared_ptr<MergeStrategyAbstract>;
-		using merge_umi_ptr = std::shared_ptr<UMIs::MergeUMIsStrategySimple>;
+		using merge_umi_ptr = std::shared_ptr<UMIs::MergeUMIsStrategyAbstract>;
 		using barcodes_parser_ptr = std::shared_ptr<BarcodesParsing::BarcodesParser>;
 
 	private:
@@ -42,6 +42,7 @@ namespace Merge
 		double _max_real_cb_merge_prob;
 
 		unsigned int _max_umi_merge_edit_distance;
+		double _umi_merge_mult;
 
 	private:
 		merge_cb_ptr get_cb_poisson_strat() const;
@@ -52,7 +53,7 @@ namespace Merge
 
 	public:
 		merge_cb_ptr get_cb_strat(bool merge_tags, bool use_poisson) const;
-		merge_umi_ptr get_umi() const;
+		merge_umi_ptr get_umi(bool advanced) const;
 
 		MergeStrategyFactory(const boost::property_tree::ptree &config, const std::string &config_file_name, int min_genes_after_merge = -1);
 	};

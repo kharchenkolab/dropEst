@@ -320,9 +320,11 @@ intronic, exonic or exon/intron spanning. These matrices are stored in the separ
 *  -m, --merge-barcodes : merge linked cell tags  
 *  -M, --merge-barcodes-precise : use precise merge strategy (can be slow), recommended to use when the list of real barcodes is not available  
 *  -o, --output-file filename : output file name
-*  -r, --read-params filenames: file or files with serialized params from tags search step. If there are several files, they should be provided in quotes, separated by space: "file1.params.gz file2.params.gz file3.params.gz"  
-*  -R, --reads-output: print count matrix for reads and don't use UMI statistics  
+*  -P, --pseudoaligner: use chromosome name as a source of gene id
 *  -q, --quiet : disable logs  
+*  -r, --read-params filenames: file or files with serialized params from tags search step. If there are several files, they should be provided in quotes, separated by space: "file1.params.gz file2.params.gz file3.params.gz"  
+*  -R, --reads-output: print count matrix for reads and don't use UMI statistics
+*  -u, --merge-umi: apply 'directional' correction of UMI errors. If you want to apply more advanced UMI correction, don’t use ‘-u’, but use follow up R analysis.  
 *  -V, --velocyto : save separate count matrices for exons, introns and exon/intron spanning reads
 *  -w, --write-mtx : write out matrix in MatrixMarket format  
 
