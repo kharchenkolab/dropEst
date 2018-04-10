@@ -283,20 +283,11 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 //		BOOST_CHECK_EQUAL(record[1].type, GtfRecord::INTRON);
 	}
 
-	BOOST_FIXTURE_TEST_CASE(testTildePaths, Fixture)
-	{
-		std::string fname = "~/InDrop/dropEst/configs/10x.xml";
-		std::string abs_fname = "/home/viktor/InDrop/dropEst/configs/10x.xml";
-
-		BOOST_CHECK_EQUAL(expand_tilde_in_path(fname), abs_fname);
-		BOOST_CHECK_EQUAL(expand_tilde_in_path(abs_fname), abs_fname);
-	}
-
 	BOOST_FIXTURE_TEST_CASE(testRelativePaths, Fixture)
 	{
 		std::string fname = "../data/barcodes/indrop_v1_2";
-		std::string source_fname = "/home/viktor/InDrop/dropEst/configs/indrop_v1_2.xml";
-		std::string abs_fname = "/home/viktor/InDrop/dropEst/data/barcodes/indrop_v1_2";
+		std::string source_fname = "/home/user/InDrop/dropEst/configs/indrop_v1_2.xml";
+		std::string abs_fname = "/home/user/InDrop/dropEst/configs/../data/barcodes/indrop_v1_2";
 
 		BOOST_CHECK_EQUAL(expand_relative_path(source_fname, fname), abs_fname);
 		BOOST_CHECK_EQUAL(expand_relative_path(source_fname, abs_fname), abs_fname);

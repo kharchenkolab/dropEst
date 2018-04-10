@@ -1,5 +1,7 @@
-#include <Tools/Logs.h>
 #include "ReadMapParamsParser.h"
+
+#include <Tools/Logs.h>
+#include <Tools/UtilFunctions.h>
 
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
@@ -56,8 +58,14 @@ namespace BamProcessing
 		{
 			if (name.empty())
 				continue;
-			L_TRACE << "Start reading file: " << name;
-			std::ifstream ifs(name);
+
+			auto name_full = Tools::expand_tilde_in_path(name);
+			L_TRACE << "Start reading file: " << name_full;
+			std::ifstream ifs(name_full);
+
+			if (!ifs)
+				throw std::runtime_error("Can't open file with read parameters'" + name_full + "'");
+
 			boost::iostreams::filtering_istream gz_fs;
 			gz_fs.push(boost::iostreams::gzip_decompressor());
 			gz_fs.push(ifs);

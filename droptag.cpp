@@ -72,7 +72,7 @@ static void check_files_existence(const Params &params)
 	for (auto const &file : params.read_files)
 	{
 		if (!std::ifstream(file))
-			throw std::runtime_error("Can't open reads file '" + file + "'");
+			throw std::runtime_error("Can't open file with reads: '" + file + "'");
 	}
 }
 

@@ -137,8 +137,7 @@ namespace Tools
 		if (rel_fname[0] == '/')
 			return rel_fname;
 
-		auto path = boost::filesystem::path(src_fname).parent_path().concat(rel_fname, boost::filesystem::path::codecvt());
-		return boost::filesystem::canonical(path).string();
+		return boost::filesystem::path(src_fname).parent_path().append(rel_fname, boost::filesystem::path::codecvt()).string();
 	}
 }
 

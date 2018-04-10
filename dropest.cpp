@@ -53,9 +53,6 @@ static void check_files_existence(const Params &params, const vector<string> &ba
 	if (!params.genes_filename.empty() && !std::ifstream(params.genes_filename))
 		throw std::runtime_error("Can't open genes file '" + params.genes_filename + "'");
 
-	if (!params.read_params_filenames.empty() && !std::ifstream(params.read_params_filenames))
-		throw std::runtime_error("Can't open reads file '" + params.read_params_filenames + "'");
-
 	for (auto const &file : bam_files)
 	{
 		if (!std::ifstream(file))
