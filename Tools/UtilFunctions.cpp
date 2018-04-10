@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <boost/filesystem.hpp>
+#include <boost/filesystem/path.hpp>
 
 
 namespace Tools
@@ -136,7 +137,8 @@ namespace Tools
 		if (rel_fname[0] == '/')
 			return rel_fname;
 
-		return boost::filesystem::path(src_fname).parent_path().append(rel_fname).lexically_normal().string();
+		auto path = boost::filesystem::path(src_fname).parent_path().concat(rel_fname, boost::filesystem::path::codecvt());
+		return boost::filesystem::canonical(path).string();
 	}
 }
 
