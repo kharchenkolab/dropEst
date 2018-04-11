@@ -3,6 +3,7 @@
 ## [Upcoming]
 ### Changed
 * Config field "Estimation/Merge/barcodes_file" now accepts paths, relative to config directory, as well as path with "~/"
+* Fixed bug with several files passed to `-r` option of dropest (Issue #25)
 ### Added
 * To improve reproducibility, config file is now copied to log directory
 * 'Directional' UMI correction can be applied during dropEst phase with "-u" option. In this case, information for more 
