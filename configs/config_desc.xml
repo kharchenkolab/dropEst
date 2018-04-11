@@ -54,15 +54,17 @@
 
         <BamTags> <!-- Optional. Tags, which are used to parse .bam file (-f option) or to print tagged .bam file (-b or -F options). Default values correspond to 10x protocol. -->
             <cb>CB</cb> <!-- Cell barcode. Default: CB. -->
+            <cb_raw>CR</cb_raw> <!-- Cell barcode raw. Used only for bam output. Default: CR. -->
             <umi>UB</umi> <!-- UMI. Default: UB. -->
+            <umi_raw>UR</umi_raw> <!-- UMI raw. Used only for bam output. Default: UR. -->
             <gene>GX</gene> <!-- Gene id. Default: GX. -->
             <cb_quality>CQ</cb_quality> <!-- Cell barcode quality. Default: CQ. -->
             <umi_quality>UQ</umi_quality> <!-- UMI quality. Default: UQ. -->
             <Type> <!-- Tag, which contain type of read. If not specified, all reads with gene info are considered as exonic -->
                 <tag>XF</tag>
-                <intronic>INTRONIC</intronic> <!-- Value corresponding to intronic reads -->
-                <intergenic>INTERGENIC</intergenic> <!-- Value corresponding to intergenic reads. All reads, which has gene id and intergenic mark are considered as intergenic -->
-                <!-- All reads with other tags, which has gene id are considered as exonic -->
+                <intronic>INTRONIC</intronic> <!-- Value corresponding to intronic reads. Default value for bam output is INTRONIC. -->
+                <intergenic>INTERGENIC</intergenic> <!-- Value corresponding to intergenic reads. All reads, which has gene id and intergenic mark are considered as intergenic. Default value for bam output is INTERGENIC. -->
+                <exonic>EXONIC</exonic> <!-- Value corresponding to exonic reads. If not specified, all reads with other tags, which has gene id are considered as exonic. Default value for bam output is EXONIC. -->
             </Type>
         </BamTags>
 

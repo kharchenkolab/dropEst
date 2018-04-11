@@ -30,8 +30,7 @@ namespace Estimation
 
 			void save_read(const ReadInfo &read_info) override;
 
-			void write_alignment(BamTools::BamAlignment alignment, const std::string& gene,
-								 const Tools::ReadParameters &read_params) override;
+			void write_alignment(BamTools::BamAlignment alignment, const ReadInfo &read_info) override;
 
 			const CellsDataContainer& container() const override;
 		};

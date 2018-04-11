@@ -18,6 +18,8 @@ namespace Estimation
 			cb_map_t merge_cbs;
 			bool is_bam_open;
 			size_t written_reads;
+			size_t _wrong_genes;
+			size_t _wrong_umis;
 
 			const CellsDataContainer &_container;
 
@@ -30,8 +32,7 @@ namespace Estimation
 			void update_bam(const std::string& bam_file, const BamTools::BamReader &reader) override;
 			void trace_state(const std::string& bam_file) const override;
 			void save_read(const ReadInfo &read_info) override;
-			void write_alignment(BamTools::BamAlignment alignment, const std::string& gene,
-										 const Tools::ReadParameters &read_params) override;
+			void write_alignment(BamTools::BamAlignment alignment, const ReadInfo &read_info) override;
 
 			const CellsDataContainer& container() const override;
 		};

@@ -40,35 +40,48 @@ namespace Estimation
 		void FilteringBamProcessor::trace_state(const std::string &bam_file) const
 		{
 			L_TRACE << bam_file << ": " << this->total_reads_num() << " total reads; " << this->written_reads << std::setprecision(3)
-					<< " ("<< (100.0 * this->written_reads / this->total_reads_num()) <<"%) written";
+					<< " ("<< (100.0 * this->written_reads / this->total_reads_num()) <<"%) written" ;
+
+			if (this->_wrong_genes > 0)
+			{
+				L_WARN << "WARNING: " << this->_wrong_genes << " genes can't be found in the dataset";
+			}
+
+			if (this->_wrong_umis > 0)
+			{
+				L_WARN << "WARNING: " << this->_wrong_umis << " UMIs can't be found in the dataset";
+			}
 		}
 
 		void FilteringBamProcessor::save_read(const ReadInfo &read_info)
 		{}
 
-		void FilteringBamProcessor::write_alignment(BamTools::BamAlignment alignment, const std::string &gene,
-													const Tools::ReadParameters &read_params)
+		void FilteringBamProcessor::write_alignment(BamTools::BamAlignment alignment, const ReadInfo &read_info)
 		{
-			if (gene == "")
+			if (read_info.gene == "")
 				return;
 
-			auto cb_iter = this->merge_cbs.find(read_params.cell_barcode());
-			if (cb_iter == this->merge_cbs.end())
+			auto cb_iter = this->merge_cbs.find(read_info.params.cell_barcode());
+			if (cb_iter == this->merge_cbs.end()) // Check if CB passed size threshold
 				return;
 
 			auto const &genes = this->_container.cell(this->_container.cell_id_by_cb(cb_iter->second)).genes();
-			auto gene_iter = genes.find(this->_container.gene_indexer().get_index(gene));
-			if (gene_iter == genes.end())
+			auto gene_iter = genes.find(this->_container.gene_indexer().get_index(read_info.gene));
+			if (gene_iter == genes.end()) // Just to be on the safe side
+			{
+				this->_wrong_genes++;
 				return;
+			}
 
-			if (gene_iter->second.has(read_params.umi()))
+			if (!gene_iter->second.has(read_info.params.umi()))
+			{
+				this->_wrong_umis++;
 				return;
+			}
 
-			auto read_params_updated = Tools::ReadParameters(cb_iter->second, read_params.umi(),
-			                                                 read_params.cell_barcode_quality(),
-			                                                 read_params.umi_quality(), 0);
+			auto params_corrected = Tools::ReadParameters(cb_iter->second, "", "", "", 0); // TODO: add UMI
+			this->save_alignment(alignment, read_info, params_corrected);
 			this->written_reads++;
-			this->save_alignment(alignment, read_params_updated, gene);
 		}
 
 		std::string FilteringBamProcessor::get_result_bam_name(const std::string &bam_name) const

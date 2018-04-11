@@ -61,13 +61,12 @@ namespace Estimation
 			return bam_name.substr(0, bam_name.find_last_of(".")) + ".tagged.bam";
 		}
 
-		void BamProcessor::write_alignment(BamTools::BamAlignment alignment, const std::string &gene,
-										const Tools::ReadParameters &read_params)
+		void BamProcessor::write_alignment(BamTools::BamAlignment alignment, const ReadInfo &read_info)
 		{
 			if (!this->_print_bam)
 				return;
 
-			this->save_alignment(alignment, read_params, gene);
+			this->save_alignment(alignment, read_info, Tools::ReadParameters());
 		}
 
 		const CellsDataContainer &BamProcessor::container() const

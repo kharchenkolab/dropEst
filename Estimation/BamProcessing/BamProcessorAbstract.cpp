@@ -56,17 +56,54 @@ namespace BamProcessing
 		return this->_low_quality_reads_num;
 	}
 
-	void BamProcessorAbstract::save_alignment(BamTools::BamAlignment alignment, const Tools::ReadParameters &params,
-	                                          const std::string &gene)
+	void BamProcessorAbstract::save_alignment(BamTools::BamAlignment alignment, const ReadInfo &read_info_raw,
+	                                          const Tools::ReadParameters &corrected_params)
 	{
-		if (gene != "")
+		auto const &raw_params = read_info_raw.params;
+
+		if (!read_info_raw.gene.empty())
 		{
-			alignment.AddTag(this->_tags.gene, "Z", gene);
+			alignment.AddTag(this->_tags.gene, "Z", read_info_raw.gene);
 		}
 
-		// TODO: add quality tags
-		alignment.AddTag(this->_tags.cell_barcode, "Z", params.cell_barcode());
-		alignment.AddTag(this->_tags.umi, "Z", params.umi());
+		alignment.AddTag(this->_tags.cell_barcode_raw, "Z", raw_params.cell_barcode());
+		alignment.AddTag(this->_tags.umi_raw, "Z", raw_params.umi());
+
+		if (!raw_params.cell_barcode_quality().empty())
+		{
+			alignment.AddTag(this->_tags.cell_barcode_quality, "Z", raw_params.cell_barcode_quality());
+		}
+
+		if (!raw_params.umi_quality().empty())
+		{
+			alignment.AddTag(this->_tags.umi_quality, "Z", raw_params.umi_quality());
+		}
+
+		// Read type
+		if (read_info_raw.umi_mark == UMI::Mark::HAS_EXONS)
+		{
+			alignment.AddTag(this->_tags.read_type, "Z", this->_tags.exonic_read_value_out);
+		}
+		else if (read_info_raw.umi_mark == UMI::Mark::HAS_INTRONS)
+		{
+			alignment.AddTag(this->_tags.read_type, "Z", this->_tags.intronic_read_value_out);
+		}
+		else if (read_info_raw.umi_mark == UMI::Mark::HAS_NOT_ANNOTATED)
+		{
+			alignment.AddTag(this->_tags.read_type, "Z", this->_tags.intergenic_read_value_out);
+		}
+
+		// Corrected barcodes
+		if (!corrected_params.cell_barcode().empty())
+		{
+			alignment.AddTag(this->_tags.cell_barcode, "Z", corrected_params.cell_barcode());
+		}
+
+		if (!corrected_params.umi().empty())
+		{
+			alignment.AddTag(this->_tags.umi, "Z", corrected_params.umi());
+		}
+
 		this->_writer.SaveAlignment(alignment);
 	}
 

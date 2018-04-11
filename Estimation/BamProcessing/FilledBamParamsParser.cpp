@@ -21,7 +21,7 @@ namespace BamProcessing
 			return false;
 
 		std::string cb_quality;
-		alignment.GetTag(this->tags.cb_quality, cb_quality);
+		alignment.GetTag(this->tags.cell_barcode_quality, cb_quality);
 
 		std::string umi_quality;
 		alignment.GetTag(this->tags.umi_quality, umi_quality);

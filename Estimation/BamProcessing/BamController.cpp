@@ -162,7 +162,7 @@ namespace BamProcessing
 		}
 
 		ReadInfo read_info(read_params, gene, chr_name, mark);
-		processor->write_alignment(alignment, gene, read_params); // TODO: save quality
+		processor->write_alignment(alignment, read_info);
 		processor->save_read(read_info);
 	}
 }

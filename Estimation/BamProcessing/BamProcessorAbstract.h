@@ -31,8 +31,8 @@ namespace Estimation
 			BamTools::BamWriter _writer;
 
 		protected:
-			void save_alignment(BamTools::BamAlignment alignment, const Tools::ReadParameters &params,
-			                    const std::string &gene);
+			void save_alignment(BamTools::BamAlignment alignment, const ReadInfo &read_info_raw,
+			                    const Tools::ReadParameters &corrected_params);
 			virtual std::string get_result_bam_name(const std::string &bam_name) const = 0;
 
 		public:
@@ -49,8 +49,7 @@ namespace Estimation
 
 			virtual void trace_state(const std::string& trace_prefix) const = 0;
 			virtual void save_read(const ReadInfo &read_info) = 0;
-			virtual void write_alignment(BamTools::BamAlignment alignment, const std::string& gene,
-								 const Tools::ReadParameters &read_params) = 0;
+			virtual void write_alignment(BamTools::BamAlignment alignment, const ReadInfo &read_info) = 0;
 
 			virtual const CellsDataContainer& container() const = 0;
 		};

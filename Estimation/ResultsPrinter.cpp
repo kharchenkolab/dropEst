@@ -42,7 +42,7 @@ namespace Estimation
 				_["cm"] = this->get_count_matrix(container, true),
 				_["cm_raw"] = this->get_count_matrix(container, false),
 				_["reads_per_chr_per_cells"] = reads_per_chr_per_cell,
-				_["reads_per_umi_per_cell"] = reads_per_umi_per_cell, // TODO: use better data structure. For instance, list of pairs (cb, gene), which contains structure (umi_id, #reads, quality).
+				_["reads_per_umi_per_cell"] = reads_per_umi_per_cell,
 				_["mean_reads_per_umi"] = mean_reads_per_umi,
 				_["saturation_info"] = saturation_info,
 				_["merge_targets"] = merge_targets,
