@@ -57,23 +57,12 @@ namespace UMIs
 		std::sort(umis.begin(), umis.end(), [](const UmiWrap &u1, const UmiWrap &u2){return u1.n_reads < u2.n_reads;});
 		CellsDataContainer::s_s_hash_t merge_targets;
 
-		for (long dst_id = umis.size() - 1; dst_id >= 1 ; --dst_id)
+		for (size_t src_id = 0; src_id < umis.size(); ++src_id)
 		{
-			auto const dst_umi = umis[dst_id];
-			for (size_t src_id = 0; src_id < dst_id; ++src_id)
+			std::string target = this->find_target(src_id, umis);
+			if (!target.empty())
 			{
-				auto const src_umi = umis[src_id];
-				if (src_umi.n_reads * this->_mult > dst_umi.n_reads)
-					break;
-
-				if (merge_targets.find(src_umi.sequence) != merge_targets.end())
-					continue;
-
-				unsigned ed = Tools::edit_distance(src_umi.sequence.c_str(), dst_umi.sequence.c_str(), true, this->_max_edit_distance);
-				if (ed > this->_max_edit_distance)
-					continue;
-
-				merge_targets[src_umi.sequence] = dst_umi.sequence;
+				merge_targets[umis[src_id].sequence] = target;
 			}
 		}
 
@@ -91,6 +80,39 @@ namespace UMIs
 		}
 
 		return merge_targets;
+	}
+
+	std::string MergeUMIsStrategyDirectional::find_target(size_t src_id, MergeUMIsStrategyDirectional::umi_vec_t &umis) const
+	{
+		auto const &src_umi = umis[src_id];
+		const bool has_ns = (src_umi.sequence.find('N') != std::string::npos);
+
+		std::string target;
+		unsigned min_ed = std::numeric_limits<unsigned>::max();
+		for (long dst_id = umis.size() - 1; dst_id > src_id; --dst_id)
+		{
+			auto const &dst_umi = umis[dst_id];
+			if (src_umi.n_reads * this->_mult > dst_umi.n_reads)
+				break;
+
+			auto ed = Tools::edit_distance(src_umi.sequence.c_str(), dst_umi.sequence.c_str(), true, this->_max_edit_distance);
+			if (ed > this->_max_edit_distance)
+				continue;
+
+			if (ed < min_ed)
+			{
+				target = dst_umi.sequence;
+				if (!has_ns && ed <= 1 || ed == 0)
+					break;
+
+				min_ed = ed;
+			}
+		}
+
+		if (has_ns && target.empty())
+			return MergeUMIsStrategyAbstract::fix_n_umi_with_random(src_umi.sequence);
+
+		return target;
 	}
 
 	MergeUMIsStrategyDirectional::UmiWrap::UmiWrap(const std::string &sequence, size_t n_reads)

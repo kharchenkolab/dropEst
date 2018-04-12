@@ -11,7 +11,6 @@ namespace Merge
 {
 namespace UMIs
 {
-const std::string MergeUMIsStrategySimple::nucleotides = "ACGT";
 
 MergeUMIsStrategySimple::MergeUMIsStrategySimple(unsigned int max_merge_distance)
 		: _max_merge_distance(max_merge_distance)
@@ -68,7 +67,6 @@ CellsDataContainer::s_s_hash_t MergeUMIsStrategySimple::find_targets(const Strin
                                                                      const Gene::umis_t &all_umis,
                                                                      const s_hash_t &bad_umis) const
 {
-	s_vec_t umis_without_pairs;
 	CellsDataContainer::s_s_hash_t merge_targets;
 	for (auto const &bad_umi : bad_umis)
 	{
@@ -92,7 +90,7 @@ CellsDataContainer::s_s_hash_t MergeUMIsStrategySimple::find_targets(const Strin
 
 		if (best_target == "" || min_ed > this->_max_merge_distance)
 		{
-			umis_without_pairs.push_back(bad_umi);
+			merge_targets[bad_umi] = MergeUMIsStrategyAbstract::fix_n_umi_with_random(bad_umi);
 		}
 		else
 		{
@@ -100,31 +98,7 @@ CellsDataContainer::s_s_hash_t MergeUMIsStrategySimple::find_targets(const Strin
 		}
 	}
 
-	if (!umis_without_pairs.empty())
-	{
-		this->remove_similar_wrong_umis(umis_without_pairs);
-		auto merge_targets2 = this->fill_wrong_umis(umis_without_pairs);
-		merge_targets.insert(merge_targets2.begin(), merge_targets2.end());
-	}
-
 	return merge_targets;
-}
-
-void MergeUMIsStrategySimple::remove_similar_wrong_umis(s_vec_t &wrong_umis) const
-{
-	s_vec_t res;
-	for (size_t i = 0; i < wrong_umis.size(); ++i)
-	{
-		for (size_t j = i + 1; j < wrong_umis.size(); ++j)
-		{
-			if (Tools::hamming_distance(wrong_umis[i], wrong_umis[j]) == 0)
-				goto skip_umi;
-		}
-
-		res.push_back(wrong_umis[i]);
-		skip_umi:;
-	}
-	wrong_umis = res;
 }
 
 CellsDataContainer::s_s_hash_t MergeUMIsStrategySimple::fill_wrong_umis(s_vec_t &wrong_umis) const
@@ -132,15 +106,7 @@ CellsDataContainer::s_s_hash_t MergeUMIsStrategySimple::fill_wrong_umis(s_vec_t 
 	CellsDataContainer::s_s_hash_t merge_targets;
 	for (auto &umi : wrong_umis)
 	{
-		std::string target_umi(umi);
-		for (std::string::size_type i = 0; i < target_umi.size(); ++i)
-		{
-			if (target_umi[i] != 'N')
-				continue;
-
-			target_umi[i] = MergeUMIsStrategySimple::nucleotides[rand() % MergeUMIsStrategySimple::nucleotides.size()];
-		}
-		merge_targets[umi] = target_umi;
+		merge_targets[umi] = MergeUMIsStrategyAbstract::fix_n_umi_with_random(umi);
 	}
 	return merge_targets;
 }

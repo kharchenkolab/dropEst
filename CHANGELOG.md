@@ -7,11 +7,11 @@
 * Fixed bug with wrong bam output (`-F` option)
 * Bam output now saves info about raw barcode sequences, read type and barcode quality similarly to 10x CellRanger format
 * Updated dockers for CentOS 6 and Cent OS 7
+* Fixed bug, when UMIs with N nucleotides weren't removed
 ### Added
 * To improve reproducibility, config file is now copied to log directory
 * 'Directional' UMI correction can be applied during dropEst phase with "-u" option. In this case, information for more 
-    advanced UMI correction isn't saved to output rds.
-* 
+    advanced UMI correction isn't saved to the output rds.
 
 ## [0.8.1] - 2018-04-06
 ### Changed

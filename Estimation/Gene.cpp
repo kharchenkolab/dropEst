@@ -41,10 +41,13 @@ namespace Estimation
 			return;
 
 		auto source_umi_it = this->_umis.find(this->_umi_indexer->get_index(source_umi));
+		if (source_umi_it == this->_umis.end())
+			throw std::runtime_error("Source UMI doesn't belong to the gene: " + source_umi);
+
 		auto target_umi_it = this->_umis.emplace(this->_umi_indexer->add(target_umi), source_umi_it->second);
 		if (!target_umi_it.second)
 		{
-			target_umi_it.first->second.merge(this->_umis.at(this->_umi_indexer->get_index(source_umi)));
+			target_umi_it.first->second.merge(source_umi_it->second);
 		}
 		this->_umis.erase(source_umi_it);
 

@@ -35,6 +35,7 @@ namespace Estimation
 
 			private:
 				merge_targets_t find_targets(umi_vec_t &umis) const;
+				std::string find_target(size_t src_id, umi_vec_t &umis) const;
 
 			public:
 				explicit MergeUMIsStrategyDirectional(double mult = 2, unsigned max_edit_distance=1);
