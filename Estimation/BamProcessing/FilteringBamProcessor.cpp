@@ -73,14 +73,23 @@ namespace Estimation
 				return;
 			}
 
-			if (!gene_iter->second.has(read_info.params.umi()))
+			std::string target_umi;
+			auto umi_target_it = gene_iter->second.merge_targets().find(read_info.params.umi());
+			if (umi_target_it != gene_iter->second.merge_targets().end())
+			{
+				target_umi = umi_target_it->second;
+			}
+			else if (gene_iter->second.has(read_info.params.umi()))
+			{
+				target_umi = read_info.params.umi();
+			}
+			else
 			{
 				this->_wrong_umis++;
 				return;
 			}
 
-			auto params_corrected = Tools::ReadParameters(cb_iter->second, "", "", "", 0); // TODO: add UMI
-			this->save_alignment(alignment, read_info, params_corrected);
+			this->save_alignment(alignment, read_info, cb_iter->second, target_umi);
 			this->written_reads++;
 		}
 

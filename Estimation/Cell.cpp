@@ -18,16 +18,6 @@ namespace Estimation
 		strcpy(this->_barcode.get(), barcode.c_str());
 	}
 
-	void Cell::add_umi(const ReadInfo &read_info)
-	{
-		auto gene_it = this->_genes.emplace(this->_gene_indexer->add(read_info.gene), Gene(this->_umi_indexer));
-		bool is_new = gene_it.first->second.add_umi(read_info);
-		if (is_new)
-		{
-			this->_stats.inc(Stats::TOTAL_UMIS_PER_CB);
-		}
-	}
-
 	void Cell::set_merged()
 	{
 		this->_is_merged = true;
@@ -36,17 +26,6 @@ namespace Estimation
 	void Cell::set_excluded()
 	{
 		this->_is_excluded = true;
-	}
-
-	void Cell::merge(const Cell &source)
-	{
-		for (auto const &gene: source._genes)
-		{
-			auto gene_it = this->_genes.emplace(gene.first, Gene(this->_umi_indexer));
-			gene_it.first->second.merge(gene.second);
-		}
-
-		this->_stats.merge(source.stats());
 	}
 
 	void Cell::merge_umis(StringIndexer::index_t gene, const s_s_hash_t &merge_targets)
@@ -63,6 +42,11 @@ namespace Estimation
 	}
 
 	const Cell::genes_t &Cell::genes() const
+	{
+		return this->_genes;
+	}
+
+	Cell::genes_t &Cell::genes()
 	{
 		return this->_genes;
 	}

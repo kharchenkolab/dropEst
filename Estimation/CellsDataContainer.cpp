@@ -19,9 +19,11 @@ namespace Estimation
 
 	CellsDataContainer::CellsDataContainer(const std::shared_ptr<Merge::MergeStrategyAbstract> &merge_strategy,
 	                                       const std::shared_ptr<Merge::UMIs::MergeUMIsStrategyAbstract> &umi_merge_strategy,
-		                                   const std::vector<UMI::Mark> &gene_match_levels, int max_cells_num)
+		                                   const std::vector<UMI::Mark> &gene_match_levels, bool save_umi_merge_targets,
+		                                   int max_cells_num)
 		: _merge_strategy(merge_strategy)
 		, _umi_merge_strategy(umi_merge_strategy)
+		, _save_umi_merge_targets(save_umi_merge_targets)
 		, _max_cells_num(max_cells_num)
 		, _is_initialized(false)
 		, _query_marks(gene_match_levels)
@@ -79,14 +81,24 @@ namespace Estimation
 						<< "', gene '" << read_info.gene << "'";
 		}
 
-		this->_cells[cell_id].add_umi(read_info);
+		this->add_umi_to_cell(cell_id, read_info);
 		this->update_cell_stats(cell_id, read_info.umi_mark, read_info.chromosome_name);
 	}
 
 	void CellsDataContainer::merge_cells(size_t source_cell_ind, size_t target_cell_ind)
 	{
-		this->_cells.at(target_cell_ind).merge(this->_cells.at(source_cell_ind));
-		this->_cells.at(source_cell_ind).set_merged();
+		auto &source_cell = this->_cells.at(source_cell_ind);
+		auto &target_cell = this->_cells.at(target_cell_ind);
+
+		for (auto const &gene: source_cell.genes())
+		{
+			auto gene_it = target_cell.genes().emplace(gene.first, Gene(&this->_umi_indexer, this->_save_umi_merge_targets));
+			gene_it.first->second.merge(gene.second);
+		}
+
+		target_cell.stats().merge(source_cell.stats());
+
+		source_cell.set_merged();
 	}
 
 	void CellsDataContainer::exclude_cell(size_t index)
@@ -332,5 +344,15 @@ namespace Estimation
 	const StringIndexer &CellsDataContainer::umi_indexer() const
 	{
 		return this->_umi_indexer;
+	}
+
+	void CellsDataContainer::add_umi_to_cell(size_t cell_id, const ReadInfo &read_info)
+	{
+		auto gene_it = this->_cells.at(cell_id).genes().emplace(this->_gene_indexer.add(read_info.gene), Gene(&this->_umi_indexer, this->_save_umi_merge_targets));
+		bool is_new = gene_it.first->second.add_umi(read_info);
+		if (is_new)
+		{
+			this->_cells[cell_id].stats().inc(Stats::TOTAL_UMIS_PER_CB);
+		}
 	}
 }

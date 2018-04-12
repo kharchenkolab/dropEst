@@ -57,12 +57,12 @@ namespace UMIs
 		std::sort(umis.begin(), umis.end(), [](const UmiWrap &u1, const UmiWrap &u2){return u1.n_reads < u2.n_reads;});
 		CellsDataContainer::s_s_hash_t merge_targets;
 
-		for (long i = umis.size() - 1; i >= 1 ; --i)
+		for (long dst_id = umis.size() - 1; dst_id >= 1 ; --dst_id)
 		{
-			auto const dst_umi = umis[i];
-			for (size_t j = 0; j < i; ++j)
+			auto const dst_umi = umis[dst_id];
+			for (size_t src_id = 0; src_id < dst_id; ++src_id)
 			{
-				auto const src_umi = umis[j];
+				auto const src_umi = umis[src_id];
 				if (src_umi.n_reads * this->_mult > dst_umi.n_reads)
 					break;
 

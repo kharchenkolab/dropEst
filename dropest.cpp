@@ -306,7 +306,7 @@ int main(int argc, char **argv)
 			bam_controller.write_filtered_bam_files(files, container);
 		}
 
-		ResultsPrinter printer(params.write_matrix, params.reads_output, params.stats_for_validation);
+		ResultsPrinter printer(params.write_matrix, params.reads_output, params.stats_for_validation, !params.umi_merge);
 		Tools::trace_time("Done");
 
 		printer.save_results(container, params.output_name);

@@ -66,7 +66,7 @@ namespace Estimation
 			if (!this->_print_bam)
 				return;
 
-			this->save_alignment(alignment, read_info, Tools::ReadParameters());
+			this->save_alignment(alignment, read_info);
 		}
 
 		const CellsDataContainer &BamProcessor::container() const

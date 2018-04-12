@@ -49,6 +49,7 @@ namespace Estimation
 		std::shared_ptr<Merge::UMIs::MergeUMIsStrategyAbstract> _umi_merge_strategy;
 
 		static const size_t TOP_PRINT_SIZE;
+		const bool _save_umi_merge_targets;
 		const int _max_cells_num;
 
 		std::vector<Cell> _cells; //cell_id -> gen_name -> umi -> #reads
@@ -79,10 +80,13 @@ namespace Estimation
 	public:
 		CellsDataContainer(const std::shared_ptr<Merge::MergeStrategyAbstract> &merge_strategy,
 		                   const std::shared_ptr<Merge::UMIs::MergeUMIsStrategyAbstract> &umi_merge_strategy,
-		                   const std::vector<UMI::Mark> &gene_match_levels, int max_cells_num = -1);
+		                   const std::vector<UMI::Mark> &gene_match_levels, bool save_umi_merge_targets = false,
+		                   int max_cells_num = -1);
 
 		void add_record(const ReadInfo &read_info);
 		void exclude_cell(size_t index);
+
+		void add_umi_to_cell(size_t cell_id, const ReadInfo &read_info);
 
 		void merge_and_filter();
 		void merge_cells(size_t source_cell_ind, size_t target_cell_ind);

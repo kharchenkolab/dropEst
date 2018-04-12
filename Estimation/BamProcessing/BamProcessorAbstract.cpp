@@ -57,51 +57,51 @@ namespace BamProcessing
 	}
 
 	void BamProcessorAbstract::save_alignment(BamTools::BamAlignment alignment, const ReadInfo &read_info_raw,
-	                                          const Tools::ReadParameters &corrected_params)
+	                                          const std::string &cell_barcode_corrected, const std::string &umi_corrected)
 	{
 		auto const &raw_params = read_info_raw.params;
 
 		if (!read_info_raw.gene.empty())
 		{
-			alignment.AddTag(this->_tags.gene, "Z", read_info_raw.gene);
+			alignment.EditTag(this->_tags.gene, "Z", read_info_raw.gene);
 		}
 
-		alignment.AddTag(this->_tags.cell_barcode_raw, "Z", raw_params.cell_barcode());
-		alignment.AddTag(this->_tags.umi_raw, "Z", raw_params.umi());
+		alignment.EditTag(this->_tags.cell_barcode_raw, "Z", raw_params.cell_barcode());
+		alignment.EditTag(this->_tags.umi_raw, "Z", raw_params.umi());
 
 		if (!raw_params.cell_barcode_quality().empty())
 		{
-			alignment.AddTag(this->_tags.cell_barcode_quality, "Z", raw_params.cell_barcode_quality());
+			alignment.EditTag(this->_tags.cell_barcode_quality, "Z", raw_params.cell_barcode_quality());
 		}
 
 		if (!raw_params.umi_quality().empty())
 		{
-			alignment.AddTag(this->_tags.umi_quality, "Z", raw_params.umi_quality());
+			alignment.EditTag(this->_tags.umi_quality, "Z", raw_params.umi_quality());
 		}
 
 		// Read type
 		if (read_info_raw.umi_mark == UMI::Mark::HAS_EXONS)
 		{
-			alignment.AddTag(this->_tags.read_type, "Z", this->_tags.exonic_read_value_out);
+			alignment.EditTag(this->_tags.read_type, "Z", this->_tags.exonic_read_value_out);
 		}
 		else if (read_info_raw.umi_mark == UMI::Mark::HAS_INTRONS)
 		{
-			alignment.AddTag(this->_tags.read_type, "Z", this->_tags.intronic_read_value_out);
+			alignment.EditTag(this->_tags.read_type, "Z", this->_tags.intronic_read_value_out);
 		}
 		else if (read_info_raw.umi_mark == UMI::Mark::HAS_NOT_ANNOTATED)
 		{
-			alignment.AddTag(this->_tags.read_type, "Z", this->_tags.intergenic_read_value_out);
+			alignment.EditTag(this->_tags.read_type, "Z", this->_tags.intergenic_read_value_out);
 		}
 
 		// Corrected barcodes
-		if (!corrected_params.cell_barcode().empty())
+		if (!cell_barcode_corrected.empty())
 		{
-			alignment.AddTag(this->_tags.cell_barcode, "Z", corrected_params.cell_barcode());
+			alignment.EditTag(this->_tags.cell_barcode, "Z", cell_barcode_corrected);
 		}
 
-		if (!corrected_params.umi().empty())
+		if (!umi_corrected.empty())
 		{
-			alignment.AddTag(this->_tags.umi, "Z", corrected_params.umi());
+			alignment.EditTag(this->_tags.umi, "Z", umi_corrected);
 		}
 
 		this->_writer.SaveAlignment(alignment);

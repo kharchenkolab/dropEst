@@ -4,6 +4,11 @@
 
 namespace Estimation
 {
+	Gene::Gene(StringIndexer *umi_indexer, bool save_merge_targets)
+		: _umi_indexer(umi_indexer)
+		, _save_merge_targets(save_merge_targets)
+	{}
+
 	const UMI &Estimation::Gene::at(const std::string &umi) const
 	{
 		return this->_umis.at(this->_umi_indexer->get_index(umi));
@@ -42,6 +47,11 @@ namespace Estimation
 			target_umi_it.first->second.merge(this->_umis.at(this->_umi_indexer->get_index(source_umi)));
 		}
 		this->_umis.erase(source_umi_it);
+
+		if (this->_save_merge_targets)
+		{
+			this->_merge_targets[source_umi] = target_umi;
+		}
 	}
 
 	size_t Gene::number_of_requested_umis(const UMI::Mark::query_t &query, bool return_reads) const
@@ -108,7 +118,8 @@ namespace Estimation
 		return this->_umis.find(this->_umi_indexer->get_index(umi)) != this->_umis.end();
 	}
 
-	Gene::Gene(StringIndexer *umi_indexer)
-		: _umi_indexer(umi_indexer)
-	{}
+	const Gene::s_s_hash_t &Gene::merge_targets() const
+	{
+		return this->_merge_targets;
+	}
 }

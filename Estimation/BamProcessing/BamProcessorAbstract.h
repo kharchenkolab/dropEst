@@ -32,7 +32,7 @@ namespace Estimation
 
 		protected:
 			void save_alignment(BamTools::BamAlignment alignment, const ReadInfo &read_info_raw,
-			                    const Tools::ReadParameters &corrected_params);
+			                    const std::string &cell_barcode_corrected="", const std::string &umi_corrected="");
 			virtual std::string get_result_bam_name(const std::string &bam_name) const = 0;
 
 		public:

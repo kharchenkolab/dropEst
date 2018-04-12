@@ -17,18 +17,23 @@ namespace Estimation
 
 	public:
 		using umis_t = std::map<StringIndexer::index_t, UMI>;
+		using s_s_hash_t = std::unordered_map<std::string, std::string>;
 
 	private:
+		const bool _save_merge_targets;
+		s_s_hash_t _merge_targets;
+
 		umis_t _umis;
 		StringIndexer *_umi_indexer;
 
 	public:
-		explicit Gene(StringIndexer *umi_indexer);
+		Gene(StringIndexer *umi_indexer, bool save_merge_targets);
 
 		const UMI& at(const std::string& umi) const;
 		const umis_t& umis() const;
 		size_t size() const;
 		bool has(const std::string& umi) const;
+		const s_s_hash_t& merge_targets() const;
 
 		size_t number_of_requested_umis(const UMI::Mark::query_t &query, bool return_reads) const;
 		size_t number_of_umis(bool return_reads) const;

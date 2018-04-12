@@ -24,6 +24,7 @@ namespace Estimation
 		const bool write_matrix;
 		const bool reads_output;
 		const bool validation_stats;
+		const bool umi_correction_info;
 
 		static const size_t top_print_size = 10;
 
@@ -55,7 +56,7 @@ namespace Estimation
 		void save_mtx(const std::string &list_name, const std::string &filename_base) const;
 
 	public:
-		ResultsPrinter(bool write_matrix, bool reads_output, bool validation_stats);
+		ResultsPrinter(bool write_matrix, bool reads_output, bool validation_stats, bool umi_correction_info);
 
 		void save_results(const CellsDataContainer &container, const std::string &filename) const;
 		void save_intron_exon_matrices(CellsDataContainer &container, const std::string &filename) const;

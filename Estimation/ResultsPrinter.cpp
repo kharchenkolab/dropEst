@@ -13,6 +13,13 @@ namespace Estimation
 {
 	const size_t ResultsPrinter::top_print_size;
 
+	ResultsPrinter::ResultsPrinter(bool write_matrix, bool reads_output, bool validation_stats, bool umi_correction_info)
+		: write_matrix(write_matrix)
+		, reads_output(reads_output)
+		, validation_stats(validation_stats)
+		, umi_correction_info(umi_correction_info)
+	{}
+
 	void ResultsPrinter::save_results(const CellsDataContainer &container, const std::string &filename) const
 	{
 		const std::string list_name = "d";
@@ -30,7 +37,6 @@ namespace Estimation
 		auto reads_per_chr_per_cell = this->get_reads_per_chr_per_cell_info(container); // Real cells, all UMIs.
 		auto saturation_info = this->get_saturation_analysis_info(container); // Filtered cells, requested UMIs.
 		auto mean_reads_per_umi = this->get_mean_reads_per_umi(container); // Real cells, all UMIs.
-		auto reads_per_umi_per_cell = this->get_reads_per_umi_per_cell(container); // Filtered cells, requested UMIs.
 		auto merge_targets = this->get_merge_targets(container); // All cells.
 		IntegerVector aligned_reads_per_cb = wrap(container.get_stat_by_real_cells(Stats::TOTAL_READS_PER_CB)); // Real cells, all UMIs
 		IntegerVector aligned_umis_per_cb = wrap(container.get_stat_by_real_cells(Stats::TOTAL_UMIS_PER_CB)); // Real cells, all UMIs
@@ -42,7 +48,6 @@ namespace Estimation
 				_["cm"] = this->get_count_matrix(container, true),
 				_["cm_raw"] = this->get_count_matrix(container, false),
 				_["reads_per_chr_per_cells"] = reads_per_chr_per_cell,
-				_["reads_per_umi_per_cell"] = reads_per_umi_per_cell,
 				_["mean_reads_per_umi"] = mean_reads_per_umi,
 				_["saturation_info"] = saturation_info,
 				_["merge_targets"] = merge_targets,
@@ -50,6 +55,13 @@ namespace Estimation
 				_["aligned_umis_per_cell"] = aligned_umis_per_cb,
 				_["requested_umis_per_cb"] = requested_umis_per_cb,
 				_["requested_reads_per_cb"] = requested_reads_per_cb);
+
+		if (this->umi_correction_info)
+		{
+			auto const rpupc_list_name = list_name + "_rpupc";
+			(*R)[rpupc_list_name] = this->get_reads_per_umi_per_cell(container); // Filtered cells, requested UMIs.
+			R->parseEvalQ(list_name + "reads_per_umi_per_cell <- " + rpupc_list_name);
+		}
 
 		if (this->validation_stats)
 		{
@@ -97,12 +109,6 @@ namespace Estimation
 
 		return mat;
 	}
-
-	ResultsPrinter::ResultsPrinter(bool write_matrix, bool reads_output, bool validation_stats)
-		: write_matrix(write_matrix)
-		, reads_output(reads_output)
-		, validation_stats(validation_stats)
-	{}
 
 	List ResultsPrinter::get_saturation_analysis_info(const CellsDataContainer &container) const
 	{

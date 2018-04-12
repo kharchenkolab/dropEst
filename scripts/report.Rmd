@@ -47,7 +47,7 @@ umi_counts <- sort(Matrix::colSums(d$cm), decreasing=T)
 <div class = "row">
 <div class = "float_left">
 ```{r, fig.width=5.5, fig.height=3.5, warning=FALSE}
-PlotIntergenicFractionByChromosomes(d$reads_per_chr_per_cells, d$nonex_cells_chr_counts)
+PlotIntergenicFractionByChromosomes(d$reads_per_chr_per_cells, d$nonex_cells_chr_counts) # TODO: not run for pseudoaligners
 ```
 </div>
 <div class = "float_left">

@@ -49,16 +49,15 @@ namespace Estimation
 		const Stats &stats() const;
 		Stats &stats();
 		const genes_t& genes() const;
+		genes_t& genes();
 		s_ul_hash_t requested_umis_per_gene(const UMI::Mark::query_t &query_marks, bool return_reads) const;
 		ss_ul_hash_t requested_reads_per_umi_per_gene(const UMI::Mark::query_t &query_marks) const;
 
 		size_t size() const;
 		const Gene& at(const std::string &gene) const;
 
-		void add_umi(const ReadInfo &read_info);
 		void set_merged();
 		void set_excluded();
-		void merge(const Cell &source);
 		void merge_umis(StringIndexer::index_t gene, const s_s_hash_t &merge_targets);
 		void update_requested_size(const UMI::Mark::query_t &query_marks);
 
