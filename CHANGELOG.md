@@ -3,13 +3,14 @@
 ## [Upcoming]
 ### Changed
 * Config field "Estimation/Merge/barcodes_file" now accepts paths, relative to config directory, as well as path with "~/"
-* Fixed bug with several files passed to `-r` option of dropest (Issue #25)
+* Fixed bug which perevented passing several files to `-r` option of dropest (Issue #25)
 * Fixed bug with wrong bam output (`-F` option)
 * Bam output now saves info about raw barcode sequences, read type and barcode quality similarly to 10x CellRanger format
 * Updated dockers for CentOS 6 and Cent OS 7
 * Fixed bug, when UMIs with N nucleotides weren't removed
+* Fixed bug with incorrect processing of read type tag, when it has type "A" (Issue #18)
 ### Added
-* To improve reproducibility, config file is now copied to log directory
+* To improve reproducibility, config file is now copied to the log directory
 * 'Directional' UMI correction can be applied during dropEst phase with "-u" option. In this case, information for more 
     advanced UMI correction isn't saved to the output rds.
 

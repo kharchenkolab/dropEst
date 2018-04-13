@@ -502,23 +502,6 @@ BOOST_AUTO_TEST_SUITE(TestEstimator)
 		}
 	}
 
-	BOOST_FIXTURE_TEST_CASE(testRemoveSimilarWrongUmis, Fixture)
-	{
-		Merge::UMIs::MergeUMIsStrategySimple::s_vec_t wrong_umis;
-		wrong_umis.emplace_back("AAANTTT");
-		wrong_umis.emplace_back("AACTNTT");
-		wrong_umis.emplace_back("AACTCNT");
-//		wrong_umis.push_back("NNNNNNN"); // These tests will fail, but we don't really care
-//
-//		wrong_umis.push_back("AANNNCT");
-//		wrong_umis.push_back("AGNNNCT");
-//		wrong_umis.push_back("ANATTCT");
-		this->umi_merge_strat->remove_similar_wrong_umis(wrong_umis);
-		BOOST_CHECK_EQUAL(wrong_umis.size(), 2);
-		BOOST_CHECK_EQUAL(wrong_umis[0], "AAANTTT");
-		BOOST_CHECK_EQUAL(wrong_umis[1], "AACTCNT");
-	}
-
 	BOOST_FIXTURE_TEST_CASE(testUMIMergeStrategySimple, Fixture)
 	{
 		CellsDataContainer container(this->real_cb_strat, std::shared_ptr<Merge::UMIs::MergeUMIsStrategyAbstract>(this->umi_merge_strat), this->any_mark);

@@ -28,6 +28,8 @@ namespace Estimation
 			const BamTags tags;
 
 		private:
+			static bool get_bam_tag(const BamTools::BamAlignment &alignment, const std::string &tag, std::string &value);
+
 			UMI::Mark parse_read_type(const BamTools::BamAlignment &alignment, std::string &gene) const;
 			UMI::Mark get_gene_from_reference(const std::string &chr_name, const BamTools::BamAlignment &alignment,
 			                                  std::string &gene) const;

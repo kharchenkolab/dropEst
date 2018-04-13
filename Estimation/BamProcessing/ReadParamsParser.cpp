@@ -2,7 +2,6 @@
 #include <Tools/ReadParameters.h>
 #include <Tools/GeneAnnotation/RefGenesContainer.h>
 #include "ReadParamsParser.h"
-#include "BamController.h"
 
 namespace Estimation
 {
@@ -68,7 +67,7 @@ namespace BamProcessing
 	{
 		UMI::Mark mark;
 		std::string read_type;
-		if (this->tags.read_type.empty() || !alignment.GetTag(this->tags.read_type, read_type))
+		if (this->tags.read_type.empty() || !ReadParamsParser::get_bam_tag(alignment, this->tags.read_type, read_type))
 		{
 			mark.add(UMI::Mark::HAS_EXONS);
 			return mark;
@@ -176,6 +175,26 @@ namespace BamProcessing
 	bool ReadParamsParser::has_introns() const
 	{
 		return this->_genes_container.has_introns();
+	}
+
+	bool ReadParamsParser::get_bam_tag(const BamTools::BamAlignment &alignment, const std::string &tag, std::string &value)
+	{
+		char type;
+		if  (!alignment.GetTagType(tag, type))
+			return false;
+
+		if (type != 'Z' && type != 'A')
+			throw std::runtime_error(std::string("Expected string tag, but got ") + type + ", tag data: " + alignment.TagData);
+
+		if (!alignment.GetTag(tag, value))
+			return false;
+
+		if (type == 'A')
+		{
+			value = value.substr(0, 1);
+		}
+
+		return true;
 	}
 }
 }
