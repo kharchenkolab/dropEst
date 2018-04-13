@@ -81,7 +81,6 @@ namespace BamProcessing
 
 		if (!this->tags.intergenic_read_value.empty() && read_type == this->tags.intergenic_read_value)
 		{
-			gene = "";
 			mark.add(UMI::Mark::HAS_NOT_ANNOTATED);
 			return mark;
 		}

@@ -9,6 +9,7 @@
 * Updated dockers for CentOS 6 and Cent OS 7
 * Fixed bug, when UMIs with N nucleotides weren't removed
 * Fixed bug with incorrect processing of read type tag, when it has type "A" (Issue #18)
+* Pipeline now uses information from gene bam tag for intergenic reads when provided
 ### Added
 * To improve reproducibility, config file is now copied to the log directory
 * 'Directional' UMI correction can be applied during dropEst phase with "-u" option. In this case, information for more 
