@@ -48,10 +48,8 @@ add_executable(filter_mixture_bam utils/filter_mixture_bam.cpp)
 target_link_libraries(filter_mixture_bam ${BAMTOOLS_LIBRARIES} ${ZLIB_LIBRARIES} ${LIBRARIES})
 set_target_properties(filter_mixture_bam PROPERTIES RUNTIME_OUTPUT_DIRECTORY ./utils/)
 
-#TODO: check it
-add_custom_command(TARGET dropest POST_BUILD
-        COMMAND cp
-        ${CMAKE_SOURCE_DIR}/scripts/Report/*.R ${CMAKE_CURRENT_BINARY_DIR}/)
+add_custom_command(TARGET dropest POST_BUILD COMMAND cp ${CMAKE_SOURCE_DIR}/dropReport.Rsc ${CMAKE_CURRENT_BINARY_DIR}/)
+add_custom_command(TARGET dropest POST_BUILD COMMAND cp -r ${CMAKE_SOURCE_DIR}/scripts ${CMAKE_CURRENT_BINARY_DIR}/)
 
 set (TEST_TS TestTagsSearch)
 add_executable (${TEST_TS} ${PROJECT_SOURCE_DIR}/Tests/TestTagsSearch.cpp)
