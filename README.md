@@ -291,7 +291,7 @@ Example commands:
     ```
 * Exonic reads only:
     ```bash
-    dropest [-f] [-g ./genes.gtf] [-r pipeline_res.params.gz] -L i -c ./config.xml ./alignment_*.bam
+    dropest [-f] [-g ./genes.gtf] [-r pipeline_res.params.gz] -L e -c ./config.xml ./alignment_*.bam
     ```
 * Exon/intron spanning reads:
     ```bash
