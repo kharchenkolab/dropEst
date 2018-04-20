@@ -282,7 +282,7 @@ Option *"-L"* allows to specify all acceptable types of regions:
 * B: UMIs, which have both exonic and intronic reads
 * A: UMIs, which have exonic, intronic and not annotated reads
 
-Thus, to count all UMIs with exonic **or** not annotated reads, use *"-L eE"*. Default value: *"-L eEBA"*.
+Thus, to count all UMIs with exonic **or** not annotated reads, use *"-L eE"*. Default value: *"-L eEBA"*, i.e. to count all UMIs, which have at least one reads, touching exon.
 
 Example commands:
 * Intronic reads only:
