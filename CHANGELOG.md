@@ -1,6 +1,6 @@
 # Changelog
 
-## [Upcoming]
+## [0.8.2] - 2018-04-20
 ### Changed
 * Config field "Estimation/Merge/barcodes_file" now accepts paths, relative to config directory, as well as path with "~/"
 * Fixed bug which perevented passing several files to `-r` option of dropest (Issue #25)

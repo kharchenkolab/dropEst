@@ -2,14 +2,13 @@
 Pipeline for estimating molecular count matrices for droplet-based single-cell RNA-seq measurements. Implements methods, described in [this paper](https://doi.org/10.1101/171496).
 
 ## News
-### [0.8.0] - 2018-03-20
-**Important changes:**
-* Algorithm of UMI correction now uses UMI quality. To provide this information you have to extract it on the dropTag 
-phase with `-s` option and pass it to dropEst with `-r filename.gz`.
-* Now, information about reads is kept in separate file instead (*.reads.gz), which should be passed to dropEst
-* New format of *reads_per_umi_per_cell* in cell.counts.rds
+## [0.8.2] - 2018-04-20
+* Fixed multiple bugs
+* 'Directional' UMI correction can be applied during dropEst phase with "-u" option. In this case, information for more 
+    advanced UMI correction isn't saved to the output rds
+* Bam output (`-F`) now saves info about raw barcode sequences, read type and barcode quality similarly to 10x CellRanger format
 
-See [CHANGELOG.md](CHANGELOG.md) for full list.
+See [CHANGELOG.md](CHANGELOG.md) for the full list.
 
 ## Table of contents
 <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
