@@ -36,6 +36,7 @@ struct Params
 	bool quiet = false;
 	bool save_stats = false;
 	int num_of_threads = 1;
+        int reads_per_out_file = -1;
 	string base_name = "";
 	string config_file_name = "";
 	string log_prefix = "";
@@ -60,6 +61,7 @@ static void usage()
 	cerr << "\t-p, --parallel number: number of threads\n";
 	cerr << "\t-s, --save-reads-params : serialize reads parameters to save quality info\n";
 	cerr << "\t-S, --save-stats : save stats to rds file\n";
+	cerr << "\t-r, --reads-per-out-file : maximum number of reads per output file; (0 - unlimited)\n";
 	cerr << "\t-t, --lib-tag library tag : (for IndropV3 with library tag only)\n";
 	cerr << "\t-q, --quiet : disable logs\n";
 }
@@ -84,8 +86,10 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const ptree &pt
 		throw std::runtime_error("Protocol is empty. Please, specify it in the config (TagsSearch/protocol)");
 
 	auto const &processing_config = pt.get_child(PROCESSING_CONFIG_PATH, ptree());
-
-	size_t max_records_per_file = processing_config.get<size_t>("reads_per_out_file", 0);
+	
+	
+	size_t max_records_per_file = params.reads_per_out_file;
+	if(max_records_per_file==-1) max_records_per_file = processing_config.get<size_t>("reads_per_out_file", 0);
 	auto writer = std::make_shared<ConcurrentGzWriter>(params.base_name, "fastq.gz", max_records_per_file);
 
 	const std::string input_files_num_error_text = "Unexpected number of read files: " +
@@ -159,6 +163,7 @@ Params parse_cmd_params(int argc, char **argv)
 			{"log-prefix", required_argument, 0, 'l'},
 			{"name",       required_argument, 0, 'n'},
 			{"parallel",   required_argument, 0, 'p'},
+			{"reads-per-out-file",   required_argument, 0, 'r'},
 			{"save-reads-params",    no_argument,       0, 's'},
 			{"save-stats",    required_argument,       0, 'S'},
 			{"lib-tag",    required_argument, 0, 't'},
@@ -167,7 +172,7 @@ Params parse_cmd_params(int argc, char **argv)
 	};
 
 	Params params;
-	while ((c = getopt_long(argc, argv, "c:hl:n:p:sSt:q", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "c:hl:n:p:r:sSt:q", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -188,6 +193,9 @@ Params parse_cmd_params(int argc, char **argv)
 				break;
 			case 's' :
 				params.save_reads_params = true;
+				break;
+			case 'r' :
+				params.reads_per_out_file = int(strtol(optarg, nullptr, 10));  
 				break;
 			case 'S' :
 				params.save_stats = true;
