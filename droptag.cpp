@@ -61,7 +61,7 @@ static void usage()
 	cerr << "\t-p, --parallel number: number of threads\n";
 	cerr << "\t-s, --save-reads-params : serialize reads parameters to save quality info\n";
 	cerr << "\t-S, --save-stats : save stats to rds file\n";
-	cerr << "\t-r, --reads-per-out-file : maximum number of reads per output file; (0 - unlimited)\n";
+	cerr << "\t-r, --reads-per-out-file : maximum number of reads per output file; (0 - unlimited). Overrides corresponding xml parameter.\n";
 	cerr << "\t-t, --lib-tag library tag : (for IndropV3 with library tag only)\n";
 	cerr << "\t-q, --quiet : disable logs\n";
 }
