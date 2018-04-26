@@ -201,6 +201,7 @@ Example command:
 *  -l, --log-prefix prefix: logs prefix
 *  -n, --name name: alternative output base name
 *  -p, --parallel number: number of threads (usage of more than 6 threads should lead to significant speed up)
+*  -r, --reads-per-out-file : maximum number of reads per output file; (0 - unlimited). Overrides corresponding xml parameter.
 *  -S, --save-stats : save stats to rds file. This data is used on the dropReport phase.
 *  -t, --lib-tag library tag : (for IndropV3 with library tag only)
 *  -q, --quiet : disable logs
