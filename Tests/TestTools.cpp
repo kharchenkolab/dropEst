@@ -289,6 +289,8 @@ BOOST_AUTO_TEST_SUITE(TestTools)
 		std::string source_fname = "/home/user/InDrop/dropEst/configs/indrop_v1_2.xml";
 		std::string abs_fname = "/home/user/InDrop/dropEst/configs/../data/barcodes/indrop_v1_2";
 
+		BOOST_CHECK_EQUAL(expand_relative_path("", ""), "");
+		BOOST_CHECK_EQUAL(expand_relative_path(source_fname, ""), "");
 		BOOST_CHECK_EQUAL(expand_relative_path(source_fname, fname), abs_fname);
 		BOOST_CHECK_EQUAL(expand_relative_path(source_fname, abs_fname), abs_fname);
 	}

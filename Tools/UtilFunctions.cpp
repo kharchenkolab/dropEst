@@ -119,6 +119,9 @@ namespace Tools
 
 	std::string expand_tilde_in_path(const std::string &path)
 	{
+		if (path.length() < 2)
+			return path;
+
 		if (path.substr(0, 2) == "~/")
 			return std::getenv("HOME") + path.substr(1);
 
@@ -134,7 +137,7 @@ namespace Tools
 
 	std::string expand_relative_path(const std::string &src_fname, const std::string &rel_fname)
 	{
-		if (rel_fname[0] == '/')
+		if (rel_fname.empty() || rel_fname[0] == '/')
 			return rel_fname;
 
 		return boost::filesystem::path(src_fname).parent_path().append(rel_fname, boost::filesystem::path::codecvt()).string();

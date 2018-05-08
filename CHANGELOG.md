@@ -1,5 +1,10 @@
 # Changelog
 
+## [Upcoming]
+### Changed
+* Fixed bug with merge failure without barcode file
+* Fixed bug with `-C` option
+
 ## [0.8.2] - 2018-04-20
 ### Changed
 * Config field "Estimation/Merge/barcodes_file" now accepts paths, relative to config directory, as well as path with "~/"

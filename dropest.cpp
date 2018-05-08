@@ -99,7 +99,7 @@ static void usage()
 
 static Params parse_cmd_params(int argc, char **argv)
 {
-	Params params;
+	Params params{};
 
 	int option_index = 0;
 	int c;
@@ -241,7 +241,7 @@ CellsDataContainer get_cells_container(const vector<string> &files, const Params
 
 	Merge::MergeStrategyFactory merge_factory(est_config, params.config_file_name, params.min_genes_after_merge);
 	CellsDataContainer container(merge_factory.get_cb_strat(params.merge_tags, params.merge_tags_precise),
-	                             merge_factory.get_umi(params.umi_merge), match_levels, params.max_cells_number);
+	                             merge_factory.get_umi(params.umi_merge), match_levels, !params.umi_merge, params.max_cells_number);
 
 	bam_controller.parse_bam_files(files, params.bam_output, container);
 
