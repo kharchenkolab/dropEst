@@ -40,6 +40,7 @@ See [CHANGELOG.md](CHANGELOG.md) for the full list.
 		- [Output](#output)
 	- [dropReport](#dropreport)
 		- [Troubleshooting](#troubleshooting)
+	- [Examples](#examples)
 	- [dropEstR package](#dropestr-package)
 	- [Additional notes](#additional-notes)
 
@@ -362,6 +363,9 @@ To see full list of options use:
 
 ### Troubleshooting
 If you get the error *"pandoc version 1.12.3 or higher is required and was not found"*, try to set path in the corresponding environment variable:  `export RSTUDIO_PANDOC=/path/to/pandoc`.
+
+## Examples
+Complete examples of the pipeline can be found at [EXAMPLES.md](examples/EXAMPLES.md).
 
 ## dropEstR package
 
