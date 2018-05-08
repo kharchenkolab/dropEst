@@ -1,8 +1,11 @@
 #!/usr/bin/env Rscript
 # options(verbose=T)
 
+.libPaths(c("/home/lj63/R/library/", .libPaths()))
+
 library(knitr)
 library(optparse)
+
 
 option_list = list(
   make_option(c("-t", "--tags"), type="character", default=NULL,

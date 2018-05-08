@@ -114,6 +114,9 @@ namespace Tools
 
 	std::string ltrim(const std::string &str)
 	{
+		if (str.empty())
+			return str;
+
 		return str.substr(str.find_first_not_of(" \t"));
 	}
 
