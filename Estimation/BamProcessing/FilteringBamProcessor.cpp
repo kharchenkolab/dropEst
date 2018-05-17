@@ -13,8 +13,10 @@ namespace Estimation
 	{
 		FilteringBamProcessor::FilteringBamProcessor(const BamTags &tags, const CellsDataContainer &container)
 			: BamProcessorAbstract(tags)
-			, is_bam_open(false)
-			, written_reads(0)
+			, _is_bam_open(false)
+			, _written_reads(0)
+			, _wrong_genes(0)
+			, _wrong_umis(0)
 			, _container(container)
 		{
 			auto const &merge_targets = container.merge_targets();
@@ -31,16 +33,16 @@ namespace Estimation
 				if (!good_cells_mask[target_cell])
 					continue;
 
-				this->merge_cbs[container.cell(base_cell_id).barcode()] = container.cell(target_cell).barcode();
+				this->_merge_cbs[container.cell(base_cell_id).barcode()] = container.cell(target_cell).barcode();
 			}
 
-			L_TRACE << "Writer prepared, " << this->merge_cbs.size() << " cbs to write";
+			L_TRACE << "Writer prepared, " << this->_merge_cbs.size() << " cbs to write";
 		}
 
 		void FilteringBamProcessor::trace_state(const std::string &bam_file) const
 		{
-			L_TRACE << bam_file << ": " << this->total_reads_num() << " total reads; " << this->written_reads << std::setprecision(3)
-					<< " ("<< (100.0 * this->written_reads / this->total_reads_num()) <<"%) written" ;
+			L_TRACE << bam_file << ": " << this->total_reads_num() << " total reads; " << this->_written_reads << std::setprecision(3)
+					<< " ("<< (100.0 * this->_written_reads / this->total_reads_num()) <<"%) written" ;
 
 			if (this->_wrong_genes > 0)
 			{
@@ -61,8 +63,8 @@ namespace Estimation
 			if (read_info.gene == "")
 				return;
 
-			auto cb_iter = this->merge_cbs.find(read_info.params.cell_barcode());
-			if (cb_iter == this->merge_cbs.end()) // Check if CB passed size threshold
+			auto cb_iter = this->_merge_cbs.find(read_info.params.cell_barcode());
+			if (cb_iter == this->_merge_cbs.end()) // Check if CB passed size threshold
 				return;
 
 			auto const &genes = this->_container.cell(this->_container.cell_id_by_cb(cb_iter->second)).genes();
@@ -90,7 +92,7 @@ namespace Estimation
 			}
 
 			this->save_alignment(alignment, read_info, cb_iter->second, target_umi);
-			this->written_reads++;
+			this->_written_reads++;
 		}
 
 		std::string FilteringBamProcessor::get_result_bam_name(const std::string &bam_name) const
@@ -100,11 +102,11 @@ namespace Estimation
 
 		void FilteringBamProcessor::update_bam(const std::string &bam_file, const BamTools::BamReader &reader)
 		{
-			if (this->is_bam_open)
+			if (this->_is_bam_open)
 				return;
 
 			BamProcessorAbstract::update_bam(bam_file, reader);
-			this->is_bam_open = true;
+			this->_is_bam_open = true;
 		}
 
 		const CellsDataContainer &FilteringBamProcessor::container() const

@@ -3,7 +3,10 @@
 ## [Upcoming]
 ### Changed
 * Fixed bug with merge failure without barcode file
-* Fixed bug with `-C` option
+* Fixed bug with `-C` and `-u` options
+* Fixed logs for bam output
+* Fixed output of reads_per_umi_per_cell
+* Barcodes for 10x chromium v2.0
 
 ## [0.8.2] - 2018-04-20
 ### Changed

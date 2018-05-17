@@ -15,9 +15,9 @@ namespace Estimation
 		private:
 			using cb_map_t = std::unordered_map<std::string, std::string>;
 
-			cb_map_t merge_cbs;
-			bool is_bam_open;
-			size_t written_reads;
+			cb_map_t _merge_cbs;
+			bool _is_bam_open;
+			size_t _written_reads;
 			size_t _wrong_genes;
 			size_t _wrong_umis;
 

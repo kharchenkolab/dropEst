@@ -60,7 +60,7 @@ namespace Estimation
 		{
 			auto const rpupc_list_name = list_name + "_rpupc";
 			(*R)[rpupc_list_name] = this->get_reads_per_umi_per_cell(container); // Filtered cells, requested UMIs.
-			R->parseEvalQ(list_name + "reads_per_umi_per_cell <- " + rpupc_list_name);
+			R->parseEvalQ(list_name + "$reads_per_umi_per_cell <- " + rpupc_list_name);
 		}
 
 		if (this->validation_stats)
