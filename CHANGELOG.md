@@ -1,6 +1,6 @@
 # Changelog
 
-## [Upcoming]
+## [0.8.3] - 2018-05-17
 ### Changed
 * Fixed bug with merge failure without barcode file
 * Fixed bug with `-C` and `-u` options
