@@ -84,14 +84,15 @@ git clone https://github.com/hms-dbmi/dropEst.git
 Build:
 
 ```bash
-cd dropEst
-cmake . && make
+mkdir dropEst/build
+cd dropEst/build
+cmake .. && make
 ```
 
 ### Manual installation of dependencies
 Here is the instruction on how to install specific versions of libraries to the local folder (i.e. `~/local/`). Let's store this directory in `LOCAL_LIBS` variable:
 ```bash
-export LOCAL_LIBS=~/local/
+export LOCAL_LIBS=$HOME/local/
 ```
 
 To create this directory use:
@@ -118,6 +119,8 @@ Build and install:
 make
 make install
 ```
+
+For the detailed instruction see [instruction page](https://cmake.org/install/).
 
 #### Zlib
 Download version 1.2.11:
@@ -150,6 +153,8 @@ make
 make install DESTDIR=$LOCAL_LIBS
 ```
 
+For the detailed instruction see [instruction page](https://github.com/pezmaster31/bamtools/wiki/Building-and-installing).
+
 #### Bzip2
 Download version 1.0.6:
 ```bash
@@ -166,6 +171,8 @@ cp -a libbz2.so* $LOCAL_LIBS/lib/
 ln -s $LOCAL_LIBS/lib/libbz2.so.1.0 $LOCAL_LIBS/lib/libbz2.so
 ```
 
+For the detailed instruction see [this page](http://www.linuxfromscratch.org/lfs/view/stable/chapter06/bzip2.html).
+
 #### Boost
 Download version 1.60:
 ```bash
@@ -179,6 +186,8 @@ Build and install:
 ./bootstrap.sh --with-libraries=filesystem,iostreams,log,system,thread,test
 ./b2 cxxflags="-std=c++11" include="$LOCAL_LIBS/include/" search="$LOCAL_LIBS/lib/" link=shared threading=multi install --prefix=$LOCAL_LIBS
 ```
+
+For the detailed instruction see [tutorial page](https://www.boost.org/doc/libs/1_60_0/tools/build/tutorial.html).
 
 ### Troubleshooting
 #### CMake can't find installed libraries
@@ -203,11 +212,17 @@ CMake < 3.10 has known issues with boost 1.65. If you have such combination, ple
 ### Dockers
 In case you still can't build the project, dockerfiles for the most popular linux distributions are provided (see `dropEst/dockers/`). 
 You can either build and run these dockers or just read dockerfiles for the further instructions on dropEst installation for specific distribution.
-Manual boost installation is shown in **CentOS 6** docker.
 
 To install docker on your system see [installation instruction](https://github.com/wsargent/docker-cheat-sheet#installation). After installing the docker, use the following commands to start it:
 ```bash
 cd dropEst/dockers/debian9
+docker build -t dropest .
+docker run --name dropest -it dropest
+```
+
+Or, for CentOS 6:
+```bash
+cd dropEst/dockers/centos6
 docker build -t dropest .
 docker run --name dropest -it dropest
 ```
