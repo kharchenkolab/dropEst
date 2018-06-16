@@ -18,6 +18,7 @@ See [CHANGELOG.md](CHANGELOG.md) for the full list.
 	- [Setup](#setup)
 		- [System requirements](#system-requirements)
 		- [Installation](#installation)
+		- [Manual installation of dependencies](#manual-installation-of-dependencies)
 		- [Troubleshooting](#troubleshooting)
 		- [Dockers](#dockers)
 	- [dropTag](#droptag)
@@ -57,7 +58,8 @@ See [CHANGELOG.md](CHANGELOG.md) for the full list.
 * BamTools library >= 2.5.0
 	* Note that some linux distributions have separate packages for the library and the executable, i.e. on Ubuntu you need `libbamtools-dev`, but not `bamtools`.
 	* or you can [build it locally](https://github.com/pezmaster31/bamtools/wiki/Building-and-installing) and then specify the location of the build when running cmake (e.g. `cmake -D BAMTOOLS_ROOT=/home/username/bamtools .`)
-* Zlib
+* Zlib *(was tested on 1.2.11 version)*
+* Bzip2 *(was tested on 1.0.5 version)*
 * R >= 3.2.2 with packages:
   * Rcpp
   * RcppEigen
@@ -87,18 +89,23 @@ cmake . && make
 ```
 
 ### Manual installation of dependencies
-Here is the instruction on how to install specific versions of libraries to the local folder `~/local/`. To create this directory use:
+Here is the instruction on how to install specific versions of libraries to the local folder (i.e. `~/local/`). Let's store this directory in `LOCAL_LIBS` variable:
 ```bash
-mkdir ~/local
+export LOCAL_LIBS=~/local/
+```
+
+To create this directory use:
+```bash
+mkdir $LOCAL_LIBS
 ```
 
 To add installed libraries to `PATH` use:
 ```bash
-export PATH=~/local/bin:~/local/usr/local/bin/:$PATH
+export PATH=$LOCAL_LIBS/bin:$LOCAL_LIBS/usr/local/bin/:$PATH
 ```
 
 #### CMake
-Get code of version 3.12:
+Download version 3.12:
 ```bash
 wget https://cmake.org/files/v3.12/cmake-3.12.0-rc1.tar.gz
 tar xvf cmake-3.12.0-rc1.tar.gz
@@ -107,13 +114,13 @@ cd cmake-3.12.0-rc1
 
 Build and install:
 ```bash
-./bootstrap --prefix=~/local/
+./bootstrap --prefix=$LOCAL_LIBS
 make
 make install
 ```
 
 #### Zlib
-Download version 1.2.11
+Download version 1.2.11:
 ```bash
 wget https://zlib.net/zlib-1.2.11.tar.gz
 tar xvf zlib-1.2.11.tar.gz
@@ -122,7 +129,7 @@ cd zlib-1.2.11
 
 Build and install:
 ```bash
-./configure --prefix=~/local/
+./configure --prefix=$LOCAL_LIBS
 make
 make install
 ```
@@ -135,10 +142,28 @@ cd bamtools
 git reset --hard 94f072
 ```
 
+Build and install:
 ```bash
 mkdir build && cd build
 cmake ../
-make install DESTDIR=~/local
+make
+make install DESTDIR=$LOCAL_LIBS
+```
+
+#### Bzip2
+Download version 1.0.6:
+```bash
+wget http://www.bzip.org/1.0.6/bzip2-1.0.6.tar.gz
+tar xvf bzip2-1.0.6.tar.gz
+cd bzip2-1.0.6
+```
+
+Build and install:
+```bash
+make -f Makefile-libbz2_so
+make install PREFIX=$LOCAL_LIBS
+cp -a libbz2.so* $LOCAL_LIBS/lib/
+ln -s $LOCAL_LIBS/lib/libbz2.so.1.0 $LOCAL_LIBS/lib/libbz2.so
 ```
 
 #### Boost
@@ -152,7 +177,7 @@ cd boost_1_60_0
 Build and install:
 ```bash
 ./bootstrap.sh --with-libraries=filesystem,iostreams,log,system,thread,test
-./b2 -s NO_BZIP2=1 cxxflags=-std=c++11 link=shared threading=multi install --prefix=$HOME/local
+./b2 cxxflags="-std=c++11" include="$LOCAL_LIBS/include/" search="$LOCAL_LIBS/lib/" link=shared threading=multi install --prefix=$LOCAL_LIBS
 ```
 
 ### Troubleshooting
