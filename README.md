@@ -54,7 +54,7 @@ See [CHANGELOG.md](CHANGELOG.md) for the full list.
 ## Setup
 ### System requirements
 * Boost >= 1.54
-* BamTools library
+* BamTools library >= 2.5.0
 	* Note that some linux distributions have separate packages for the library and the executable, i.e. on Ubuntu you need `libbamtools-dev`, but not `bamtools`.
 	* or you can [build it locally](https://github.com/pezmaster31/bamtools/wiki/Building-and-installing) and then specify the location of the build when running cmake (e.g. `cmake -D BAMTOOLS_ROOT=/home/username/bamtools .`)
 * Zlib
@@ -64,6 +64,7 @@ See [CHANGELOG.md](CHANGELOG.md) for the full list.
   * RInside
   * Matrix
 * Compiler with c++11 support *(was tested with gcc >= 4.8.5 and CLang 3.9.1)*
+* CMake >= 3.0
 
 ### Installation
 Install R packages:
@@ -85,8 +86,77 @@ cd dropEst
 cmake . && make
 ```
 
+### Manual installation of dependencies
+Here is the instruction on how to install specific versions of libraries to the local folder `~/local/`. To create this directory use:
+```bash
+mkdir ~/local
+```
+
+To add installed libraries to `PATH` use:
+```bash
+export PATH=~/local/bin:~/local/usr/local/bin/:$PATH
+```
+
+#### CMake
+Get code of version 3.12:
+```bash
+wget https://cmake.org/files/v3.12/cmake-3.12.0-rc1.tar.gz
+tar xvf cmake-3.12.0-rc1.tar.gz
+cd cmake-3.12.0-rc1
+```
+
+Build and install:
+```bash
+./bootstrap --prefix=~/local/
+make
+make install
+```
+
+#### Zlib
+Download version 1.2.11
+```bash
+wget https://zlib.net/zlib-1.2.11.tar.gz
+tar xvf zlib-1.2.11.tar.gz
+cd zlib-1.2.11
+```
+
+Build and install:
+```bash
+./configure --prefix=~/local/
+make
+make install
+```
+
+#### BamTools
+Clone repository, version 2.5.0:
+```bash
+git clone https://github.com/pezmaster31/bamtools.git
+cd bamtools
+git reset --hard 94f072
+```
+
+```bash
+mkdir build && cd build
+cmake ../
+make install DESTDIR=~/local
+```
+
+#### Boost
+Download version 1.60:
+```bash
+wget http://sourceforge.net/projects/boost/files/boost/1.60.0/boost_1_60_0.tar.gz
+tar xzf boost_1_60_0.tar.gz
+cd boost_1_60_0
+```
+
+Build and install:
+```bash
+./bootstrap.sh --with-libraries=filesystem,iostreams,log,system,thread,test
+./b2 -s NO_BZIP2=1 cxxflags=-std=c++11 link=shared threading=multi install --prefix=$HOME/local
+```
+
 ### Troubleshooting
-#### Local libraries installation
+#### CMake can't find installed libraries
 If `cmake` can't find one of the libraries, or you want to use some specific versions, which are currently not in the default path, use corresponding cmake variables:
 * Boost: BOOST_ROOT.
 * BamTools: BAMTOOLS_ROOT.
