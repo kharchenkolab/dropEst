@@ -1,5 +1,5 @@
 # dropEst - Pipeline
-Pipeline for estimating molecular count matrices for droplet-based single-cell RNA-seq measurements. Implements methods, described in [this paper](https://doi.org/10.1101/171496).
+Pipeline for estimating molecular count matrices for droplet-based single-cell RNA-seq measurements. Implements methods, described in [this paper](https://doi.org/10.1186/s13059-018-1449-6). To reproduce results from the paper see [this repository](https://github.com/VPetukhov/dropEstAnalysis).
 
 ## News
 ## [0.8.3] - 2018-05-17
