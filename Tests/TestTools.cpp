@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <fstream>
-#include <boost/test/unit_test.hpp>
+#include <boost/test/included/unit_test.hpp>
 #include <boost/unordered_map.hpp>
 #include <Tools/ReadParameters.h>
 #include <Tools/GeneAnnotation/RefGenesContainer.h>
