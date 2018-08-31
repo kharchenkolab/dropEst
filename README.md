@@ -491,10 +491,10 @@ Package content:
   * quality control (see *dropReport.Rsc*)  <!-- TODO: create vignette -->
 
 ### Troubleshooting
-*dropestr* depends on *ks* package, which requires installed X Server. If you don't want to install it, use [this fork](https://github.com/VPetukhov/ks), which has almost the same functionality without X Server requirenment.
+*dropestr* depends on *ks* package, which suggests installed X Server. If you don't want to install it, use:
 
 ```r
-devtools::install_github('VPetukhov/ks')
+install.packages("ks", dependencies=c("Depends", "Imports", "LinkingTo"))
 ```
 
 ## Additional notes
