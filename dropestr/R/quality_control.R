@@ -21,11 +21,18 @@ EstimateSaturation <- function(reads.by.umig.vec, reads.by.umig.cbs, umi.counts,
   counts <- counts[order(as.integer(names(counts)))]
   freqs <- as.integer(names(counts))
 
-  estimator <- preseqR::ds.mincount(data.frame(freqs, counts))
+  preseq.version <- substr(packageVersion("preseqR"), 1, 1)
+  if (preseq.version >= '4')
+    estimator <- preseqR::ds.rSAC(cbind(freqs, counts))
+  else if (preseq.version == '3') {
+    estimator <- preseqR::ds.mincount(data.frame(freqs, counts))$FUN
+  } else
+    stop("preseqR of version >= 3.x.x is required")
+
   size.ratios <- seq(0, max.estimate.rate, length.out=steps.num)
   sequencing.depth <- sum(top.reads.by.umig) * size.ratios
 
-  estimates <- sapply(size.ratios, estimator$FUN)
+  estimates <- sapply(size.ratios, estimator)
   return(list(sat=data.frame(estimates, depth=sequencing.depth),
               current=data.frame(depth=sum(top.reads.by.umig), estimates=length(top.reads.by.umig))))
 }
