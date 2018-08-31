@@ -1,5 +1,11 @@
 # Changelog
 
+## [Upcoming]
+### Changed
+- Compatibility with preseqR-4.0.0
+- Compatibility with newer boost versions
+- Fixed "merge-umi" cli option in dropest
+
 ## [0.8.3] - 2018-05-17
 ### Changed
 * Fixed bug with merge failure without barcode file

@@ -116,6 +116,7 @@ static Params parse_cmd_params(int argc, char **argv)
 			{"gene-match-level",	required_argument, 0, 'L'},
 			{"merge-barcodes",  no_argument,       0, 'm'},
 			{"merge-barcodes-precise",  no_argument,       0, 'M'},
+			{"merge-umi",  no_argument,       0, 'u'},
 			{"not-filtered",	no_argument, 	   0, 'n'},
 			{"output-file",     required_argument, 0, 'o'},
 			{"read-params",     required_argument, 0, 'r'},
