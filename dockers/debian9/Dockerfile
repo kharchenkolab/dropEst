@@ -27,13 +27,12 @@ ENTRYPOINT ["/bin/bash"]
 WORKDIR "/home/user"
 
 RUN \
-  git clone https://github.com/VPetukhov/ks.git && \
   git clone https://github.com/hms-dbmi/dropEst.git && \
   mkdir -p ~/R/x86_64-redhat-linux-gnu-library/3.4
 
 RUN \
   echo '.libPaths(c("~/R/x86_64-redhat-linux-gnu-library/3.4", .libPaths()))' > .Rprofile && \
-  R -e 'devtools::install_local("~/ks/")' && \
+  R -e 'chooseCRANmirror(ind=52); install.packages("ks", dependencies=c("Depends", "Imports", "LinkingTo"))' && \
   R -e 'devtools::install_local("~/dropEst/dropestr/", dependencies=T)'
 
 RUN \

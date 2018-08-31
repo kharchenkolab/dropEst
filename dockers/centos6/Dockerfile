@@ -11,15 +11,15 @@ RUN \
     git \
     libcurl-devel \
     openssl-devel \
-    R \
+    R-core \
+    R-devel \
     vim \
     wget
 
 RUN yum -y install devtoolset-6-gcc*
 
-RUN source /opt/rh/devtoolset-6/enable
-
 RUN \
+  source /opt/rh/devtoolset-6/enable && \
   cd /root && \
   wget https://github.com/jgm/pandoc/releases/download/2.1.3/pandoc-2.1.3-linux.tar.gz && \
   tar xvzf pandoc-2.1.3-linux.tar.gz --strip-components 1 -C /usr/local/ && \
@@ -47,13 +47,12 @@ RUN \
 RUN \
   source ~/.bashrc && \
   cd && \
-  git clone https://github.com/VPetukhov/ks.git && \
   git clone https://github.com/hms-dbmi/dropEst.git && \
   mkdir -p ~/R/x86_64-redhat-linux-gnu-library/3.4 && \
   echo '.libPaths(c("~/R/x86_64-redhat-linux-gnu-library/3.4", .libPaths()))' > .Rprofile && \
   R -e 'chooseCRANmirror(ind=52); install.packages(c("devtools"))' && \
-  R -e 'devtools::install_local("~/ks/")' && \
   R -e 'devtools::install_local("~/dropEst/dropestr/", dependencies=T)' && \
+  R -e 'chooseCRANmirror(ind=52); install.packages("ks", dependencies=c("Depends", "Imports", "LinkingTo"))' && \
   R -e 'chooseCRANmirror(ind=52); install.packages(c("Rcpp","RcppEigen", "RInside", "Matrix", "optparse", "rmarkdown"))'
 
 RUN \
