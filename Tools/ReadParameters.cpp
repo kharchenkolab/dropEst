@@ -4,12 +4,12 @@ namespace Tools
 {
 	ReadParameters::ReadParameters(const std::string &cell_barcode, const std::string &umi,
 	                               const std::string &cell_barcode_quality, const std::string &umi_quality,
-	                               int min_quality)
+	                               char min_phred_score)
 		: _cell_barcode(cell_barcode)
 		, _umi(umi)
 		, _cell_barcode_quality(cell_barcode_quality)
 		, _umi_quality(umi_quality)
-		, _pass_quality_threshold(this->check_quality(min_quality))
+		, _pass_quality_threshold(this->check_quality(min_phred_score))
 		, _is_empty(false)
 	{
 		if (cell_barcode.length() == 0 || umi.length() == 0)
@@ -52,11 +52,11 @@ namespace Tools
 		auto cell_barcode = encoded_id.substr(cell_barcode_start_pos + 1, umi_start_pos - cell_barcode_start_pos - 1);
 		auto umi = encoded_id.substr(umi_start_pos + 1);
 
-		return ReadParameters(cell_barcode, umi, "", "", 0);
+		return ReadParameters(cell_barcode, umi, "", "");
 	}
 
 	std::pair<std::string, ReadParameters> ReadParameters::parse_from_string(const std::string &params_string,
-	                                                                         int min_quality)
+	                                                                         char min_phred)
 	{
 		std::vector<std::string> parsed;
 		std::string::size_type start_pos = 0, end_pos = 0;
@@ -76,7 +76,7 @@ namespace Tools
 		{
 			parsed[0] = parsed[0].substr(1);
 		}
-		return std::make_pair(parsed[0], ReadParameters(parsed[1], parsed[2], parsed[3], parsed[4], min_quality));
+		return std::make_pair(parsed[0], ReadParameters(parsed[1], parsed[2], parsed[3], parsed[4], min_phred));
 	}
 
 	const std::string& ReadParameters::cell_barcode() const
@@ -115,20 +115,20 @@ namespace Tools
 		return id_prefix + '!' + this->_cell_barcode + '#' + this->_umi;
 	}
 
-	bool ReadParameters::check_quality(int min_quality) const
+	bool ReadParameters::check_quality(char min_phred_score) const
 	{
-		if (min_quality <= 0)
+		if (min_phred_score <= ReadParameters::quality_offset)
 			return true;
 
-		for (char qual : this->_cell_barcode_quality)
+		for (char phred : this->_cell_barcode_quality)
 		{
-			if (qual < min_quality + Tools::ReadParameters::quality_offset)
+			if (phred < min_phred_score)
 				return false;
 		}
 
-		for (char qual : this->_umi_quality)
+		for (char phred : this->_umi_quality)
 		{
-			if (qual < min_quality + Tools::ReadParameters::quality_offset)
+			if (phred < min_phred_score)
 				return false;
 		}
 
@@ -138,5 +138,10 @@ namespace Tools
 	bool ReadParameters::pass_quality_threshold() const
 	{
 		return this->_pass_quality_threshold;
+	}
+
+	char ReadParameters::quality_to_phred(int quality)
+	{
+		return static_cast<char>(quality + ReadParameters::quality_offset);
 	}
 }

@@ -31,6 +31,11 @@
             <min_align_length>  10 </min_align_length> <!-- Minimal acceptable length of the read after trimming. Default: 10. -->
             <reads_per_out_file> 10000000 </reads_per_out_file> <!-- Number of reads that can be written in one fastq file. Default: infinity. -->
             <poly_a_tail> AAAAAAAA </poly_a_tail> <!-- Sequence, which is searched as poly-a tail. Default: AAAAAAAA. -->
+            <leading_trim>0</leading_trim> <!-- Cut bases off the start of a read, if below a threshold quality. Default: 0. -->
+            <trailing_trim>0</trailing_trim> <!-- Cut bases off the end of a read, if below a threshold quality. Default: 0. -->
+            <min_median_quality>0</min_median_quality> <!-- Required median quality of a gene read. Default: 0. -->
+            <trim_quality>0</trim_quality> <!-- Quality threshold for gene read trimming. Default: 0. -->
+            <max_g_fraction>1.0</max_g_fraction> <!-- Maximal fraction of G-nucleotide of a gene read. Default: 1.0. -->
         </Processing>
     </TagsSearch>
 

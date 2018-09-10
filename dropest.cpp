@@ -12,6 +12,7 @@
 
 #include "Estimation/ResultsPrinter.h"
 #include "Tools/Logs.h"
+#include "Tools/ReadParameters.h"
 #include "Tools/UtilFunctions.h"
 
 using namespace std;
@@ -298,8 +299,8 @@ int main(int argc, char **argv)
 		}
 
 		BamProcessing::BamController bam_controller(BamProcessing::BamTags(estimation_config), params.filled_bam,
-		                                            params.read_params_filenames, params.genes_filename,
-		                                            params.pseudoaligner, estimation_config.get<int>("Other.min_barcode_quality", 0));
+		                                            params.read_params_filenames, params.genes_filename, params.pseudoaligner,
+		                                            Tools::ReadParameters::quality_to_phred(estimation_config.get<int>("Other.min_barcode_quality", 0)));
 		CellsDataContainer container = get_cells_container(files, params, estimation_config, bam_controller);
 
 		if (params.filtered_bam_output)

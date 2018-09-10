@@ -28,9 +28,9 @@ namespace TagsSearch
 		std::string get_additional_stat(long total_reads_read) const override;
 
 	public:
-		IndropV1TagsFinder(const std::vector<std::string> &fastq_filenames,
-		                   const boost::property_tree::ptree &spacer_config, const boost::property_tree::ptree &config,
-		                   const std::shared_ptr<ConcurrentGzWriter> &writer, bool save_stats, bool save_read_params);
+		explicit IndropV1TagsFinder(const std::vector<std::string> &fastq_filenames,
+				                    const boost::property_tree::ptree &spacer_config, const boost::property_tree::ptree &config,
+		                            const std::shared_ptr<ConcurrentGzWriter> &writer, bool save_stats, bool save_read_params);
 	};
 }
 

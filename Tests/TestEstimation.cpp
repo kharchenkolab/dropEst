@@ -27,7 +27,7 @@ using Mark = UMI::Mark;
 static ReadInfo read_info(const std::string &cell_barcode, const std::string &umi, const std::string &gene,
                           const std::string &chr_name = "", const Mark& mark = Mark(Mark::HAS_EXONS))
 {
-	return ReadInfo(Tools::ReadParameters(cell_barcode, umi, "", umi, 0), gene, chr_name, mark);
+	return ReadInfo(Tools::ReadParameters(cell_barcode, umi, "", umi), gene, chr_name, mark);
 }
 
 struct Fixture

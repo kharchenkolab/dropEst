@@ -16,6 +16,7 @@
 #include "TagsSearch/IndropV3TagsFinder.h"
 #include <TagsSearch/ConcurrentGzWriter.h>
 #include <TagsSearch/IClipTagsFinder.h>
+#include <Rcpp.h>
 #include "Tools/Logs.h"
 
 using namespace std;
@@ -86,8 +87,7 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const ptree &pt
 		throw std::runtime_error("Protocol is empty. Please, specify it in the config (TagsSearch/protocol)");
 
 	auto const &processing_config = pt.get_child(PROCESSING_CONFIG_PATH, ptree());
-	
-	
+
 	size_t max_records_per_file = params.reads_per_out_file;
 	if(max_records_per_file==-1) max_records_per_file = processing_config.get<size_t>("reads_per_out_file", 0);
 	auto writer = std::make_shared<ConcurrentGzWriter>(params.base_name, "fastq.gz", max_records_per_file);
@@ -246,7 +246,7 @@ void save_stats(const string &out_filename, const shared_ptr<TagsFinderBase> &ta
 	using namespace Rcpp;
 
 	Tools::trace_time("Writing R data to " + out_filename);
-	RInside *R = Tools::init_r();
+	auto R = Tools::init_r();
 
 	(*R)["d"] = List::create(
 		_["reads_per_cb"] = wrap(tags_finder->num_reads_per_cb())

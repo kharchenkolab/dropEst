@@ -28,7 +28,7 @@ namespace BamProcessing
 
 		try
 		{
-			read_params = Tools::ReadParameters(cell_barcode, umi, cb_quality, umi_quality, this->_min_barcode_quality);
+			read_params = Tools::ReadParameters(cell_barcode, umi, cb_quality, umi_quality, this->_min_barcode_phred);
 		}
 		catch (std::runtime_error &error)
 		{
@@ -40,9 +40,9 @@ namespace BamProcessing
 	}
 
 	FilledBamParamsParser::FilledBamParamsParser(const std::string &gtf_path, const BamTags &tags,
-	                                             bool gene_in_chromosome_name, int min_barcode_quality)
+	                                             bool gene_in_chromosome_name, char min_barcode_phred)
 		: ReadParamsParser(gtf_path, tags, gene_in_chromosome_name)
-		, _min_barcode_quality(min_barcode_quality)
+		, _min_barcode_phred(min_barcode_phred)
 	{}
 }
 }

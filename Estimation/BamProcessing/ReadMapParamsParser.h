@@ -13,7 +13,7 @@ namespace Estimation
 		class ReadMapParamsParser : public ReadParamsParser
 		{
 		private:
-			int _min_quality;
+			char _min_barcode_phred;
 			ReadParametersEfficient::reads_params_map_t _read_params;
 
 			StringIndexer _barcode_indexer;
@@ -25,7 +25,7 @@ namespace Estimation
 
 		public:
 			ReadMapParamsParser(const std::string &gtf_path, const std::string &read_param_filenames,
-			                    const BamTags &tags, bool gene_in_chromosome_name, int min_quality);
+			                    const BamTags &tags, bool gene_in_chromosome_name, char min_barcode_phred);
 
 			bool get_read_params(const BamTools::BamAlignment &alignment, Tools::ReadParameters &read_params) override;
 		};

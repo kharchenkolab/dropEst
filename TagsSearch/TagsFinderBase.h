@@ -16,6 +16,8 @@
 namespace TestTagsSearch
 {
 	struct test1;
+	struct testTrimming;
+	struct testValidation;
 }
 
 namespace Tools
@@ -28,6 +30,8 @@ namespace TagsSearch
 	class TagsFinderBase
 	{
 		friend struct TestTagsSearch::test1;
+		friend struct TestTagsSearch::testTrimming;
+		friend struct TestTagsSearch::testValidation;
 
 	public:
 		using s_counter_t = std::unordered_map<std::string, int>;
@@ -54,9 +58,14 @@ namespace TagsSearch
 
 	protected:
 		const unsigned _min_read_len;
-		const int _quality_threshold;
-		const std::string poly_a;
-		const Tools::ReverseComplement rc;
+		const char _barcode_phred_threshold;
+		const char _trim_phred_threshold;
+		const char _gene_phred_threshold;
+		const int _leading_trim_length;
+		const int _trailing_trim_length;
+		const double _max_g_fraction;
+		const std::string _poly_a;
+		const Tools::ReverseComplement _rc;
 
 		TrimsCounter _trims_counter;
 
@@ -68,9 +77,12 @@ namespace TagsSearch
 		void read_bunch(size_t number_of_iterations = 10000, size_t records_bunch_size = 5000);
 		void run_thread();
 
+		bool validate(const FastQReader::FastQRecord& record) const;
+		bool trim(FastQReader::FastQRecord& record) const;
+
 	protected:
 		virtual bool parse_fastq_record(FastQReader::FastQRecord &record, Tools::ReadParameters &read_params) = 0;
-		void trim(const std::string &barcodes_tail, std::string &sequence, std::string &quality);
+		void trim_poly_a(const std::string &barcodes_tail, std::string &sequence, std::string &quality);
 		virtual std::string get_additional_stat(long total_reads_read) const = 0;
 		FastQReader& fastq_reader(size_t index);
 

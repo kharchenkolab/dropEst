@@ -5,6 +5,8 @@
 - Compatibility with preseqR-4.0.0
 - Compatibility with newer boost versions
 - Fixed "merge-umi" cli option in dropest
+### Added
+- dropTag now able to trim and filter gene reads based on quality (see `TagsSearch/Processing` section of "configs/config_desc.xml")
 
 ## [0.8.3] - 2018-05-17
 ### Changed

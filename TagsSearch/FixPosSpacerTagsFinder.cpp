@@ -117,7 +117,7 @@ namespace TagsSearch
 		if (this->_trim_tail_length != 0)
 		{
 			auto tail = barcodes_record.sequence.substr(seq_end - this->_trim_tail_length, this->_trim_tail_length);
-			this->trim(tail, gene_record.sequence, gene_record.quality);
+			this->trim_poly_a(tail, gene_record.sequence, gene_record.quality);
 		}
 
 		return true;
@@ -161,7 +161,7 @@ namespace TagsSearch
 		}
 
 		this->_outcomes.inc(MultiSpacerOutcomesCounter::OK);
-		read_params = Tools::ReadParameters(cb, umi, cb_quality, umi_quality, this->_quality_threshold);
+		read_params = Tools::ReadParameters(cb, umi, cb_quality, umi_quality, this->_barcode_phred_threshold);
 		return cur_pos;
 	}
 

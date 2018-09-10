@@ -21,20 +21,21 @@ namespace Tools
 		static const char quality_offset = 33; // TODO: to xml
 
 	private:
-		bool check_quality(int min_quality) const;
+		bool check_quality(char min_phred_score) const;
 
 	public:
 		ReadParameters();
 		ReadParameters(const std::string &cell_barcode, const std::string &umi,
 		               const std::string &cell_barcode_quality, const std::string &umi_quality,
-		               int min_quality);
+		               char min_phred_score=0);
 		ReadParameters(const std::string &cell_barcode, const std::string &umi,
 		               const std::string &cell_barcode_quality, const std::string &umi_quality,
 		               bool pass_quality_threshold);
 
 		static ReadParameters parse_encoded_id(const std::string &encoded_id);
 		static std::pair<std::string, ReadParameters> parse_from_string(const std::string &params_string,
-		                                                                int min_quality = 0);
+		                                                                char min_phred = 0);
+		static char quality_to_phred(int quality);
 
 		std::string to_string(const std::string &read_name) const;
 		std::string encoded_id(const std::string &id_prefix) const;

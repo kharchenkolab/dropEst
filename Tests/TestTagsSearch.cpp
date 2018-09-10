@@ -32,11 +32,14 @@ struct Fixture
 				"        <umi_length>6</umi_length>\n"
 				"        <r1_rc_length>8</r1_rc_length>\n"
 				"    </SpacerSearch>\n"
-				"    <TailTrimming>\n"
-				"        <min_align_length>10</min_align_length>\n"
-				"        <max_reads>10000000</max_reads>\n"
-				"        <poly_a_tail>AAAAAAAA</poly_a_tail>\n"
-				"    </TailTrimming>\n"
+				"    <Processing>\n"
+				"        <leading_trim>5</leading_trim>\n"
+				"        <trailing_trim>3</trailing_trim>\n"
+				"        <trailing_trim>3</trailing_trim>\n"
+				"        <trim_quality>25</trim_quality>\n"
+				"        <max_g_fraction>0.8</max_g_fraction>\n"
+				"        <min_median_quality>25</min_median_quality>\n"
+				"    </Processing>\n"
 				"</config>";
 
 		boost::property_tree::ptree pt;
@@ -54,9 +57,9 @@ struct Fixture
 
 		this->spacer_finder = SpacerFinder(pt.get_child("config.SpacerSearch"));
 		this->tags_finder = std::make_shared<IndropV1TagsFinder>(std::vector<std::string>(), pt.get_child("config.SpacerSearch"),
-		                                                         pt.get_child("config.TailTrimming"), nullptr, false, false);
+		                                                         pt.get_child("config.Processing"), nullptr, false, false);
 		this->mask_tags_finder = std::make_shared<FixPosSpacerTagsFinder>(std::vector<std::string>(), pt2.get_child("SpacerSearch"),
-		                                                                  pt.get_child("config.TailTrimming"), nullptr, false, false);
+		                                                                  pt.get_child("config.Processing"), nullptr, false, false);
 	}
 
 	SpacerFinder spacer_finder;
@@ -74,7 +77,7 @@ BOOST_AUTO_TEST_SUITE(TestTagsSearch)
 
 		auto spacer_pos = tags_finder->_spacer_finder.find_spacer(r1_line2);
 		std::string barcodes_tail = this->spacer_finder.parse_r1_rc(r1_line2, spacer_pos.second);
-		tags_finder->trim(barcodes_tail, r2_line2, r2_line3);
+		tags_finder->trim_poly_a(barcodes_tail, r2_line2, r2_line3);
 
 		BOOST_CHECK_EQUAL(spacer_pos.first, 9);
 		BOOST_CHECK_EQUAL(spacer_pos.second, 31);
@@ -128,6 +131,41 @@ BOOST_AUTO_TEST_SUITE(TestTagsSearch)
 		BOOST_CHECK_EQUAL(params.cell_barcode_quality(), "TCTCACTGCGTCTCACTGCGATTGTCGGCCATTGTCGGCCGGAGATAGGAGGAGATAGGA");
 		BOOST_CHECK_EQUAL(params.umi(), "TAAGGGAT");
 		BOOST_CHECK_EQUAL(params.umi_quality(), "TAAGGGAT");
+	}
+
+	BOOST_FIXTURE_TEST_CASE(testTrimming, Fixture)
+	{
+		std::string seq("TCTCACTGCGTCTCACT");
+		FastQReader::FastQRecord fastq("id1", seq, "", ";*;;;;;;;;;;;;;;*");
+		BOOST_CHECK(this->tags_finder->trim(fastq));
+		BOOST_CHECK_EQUAL(fastq.sequence, seq.substr(2, seq.length() - 3));
+		BOOST_CHECK_EQUAL(fastq.quality, ";;;;;;;;;;;;;;");
+
+		fastq = FastQReader::FastQRecord("id1", seq, "", ";;;;;;;;;;;;;***;");
+		BOOST_CHECK(this->tags_finder->trim(fastq));
+		BOOST_CHECK_EQUAL(fastq.sequence, seq.substr(0, seq.length() - 3));
+		BOOST_CHECK_EQUAL(fastq.quality, ";;;;;;;;;;;;;*");
+
+		fastq = FastQReader::FastQRecord("id1", seq, "", "******;;;;;;;;;;;");
+		BOOST_CHECK(this->tags_finder->trim(fastq));
+		BOOST_CHECK_EQUAL(fastq.sequence, seq.substr(5, seq.length() - 5));
+		BOOST_CHECK_EQUAL(fastq.quality, "*;;;;;;;;;;;");
+
+		fastq = FastQReader::FastQRecord("id1", seq, "", "******;;;;;;;;***");
+		BOOST_CHECK(!this->tags_finder->trim(fastq));
+	}
+
+	BOOST_FIXTURE_TEST_CASE(testValidation, Fixture)
+	{
+		std::string seq();
+		FastQReader::FastQRecord fastq("id1", "AAAAAAAAAA", "", ";;;;;**;;;");
+		BOOST_CHECK(this->tags_finder->validate(fastq));
+
+		fastq = FastQReader::FastQRecord("id1", "GGGGGAGGGG", "", ";;;;;;;;;;");
+		BOOST_CHECK(!this->tags_finder->validate(fastq));
+
+		fastq = FastQReader::FastQRecord("id1", "AAAAAAAAAA", "", "******;;;;");
+		BOOST_CHECK(!this->tags_finder->validate(fastq));
 	}
 
 BOOST_AUTO_TEST_SUITE_END()

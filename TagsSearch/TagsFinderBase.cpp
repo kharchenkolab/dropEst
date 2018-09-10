@@ -5,6 +5,8 @@
 
 #include <thread>
 
+using Tools::ReadParameters;
+
 namespace TagsSearch
 {
 	TagsFinderBase::TagsFinderBase(const std::vector<std::string> &fastq_filenames,
@@ -13,7 +15,12 @@ namespace TagsSearch
 	                               bool save_stats, bool save_read_params)
 		: _save_stats(save_stats)
 		, _save_read_params(save_read_params)
-		, _quality_threshold(processing_config.get<int>("min_barcode_quality", 0))
+		, _barcode_phred_threshold(ReadParameters::quality_to_phred(processing_config.get<int>("min_barcode_quality", 0)))
+		, _trim_phred_threshold(ReadParameters::quality_to_phred(processing_config.get<int>("trim_quality", 0)))
+		, _gene_phred_threshold(ReadParameters::quality_to_phred(processing_config.get<int>("min_median_quality", 0)))
+		, _leading_trim_length(processing_config.get<int>("leading_trim", 0))
+		, _trailing_trim_length(processing_config.get<int>("trailing_trim", 0))
+		, _max_g_fraction(processing_config.get<double>("max_g_fraction", 1.0))
 		, _file_uid(TagsFinderBase::get_file_uid())
 		, _total_reads_read(0)
 		, _low_quality_reads(0)
@@ -21,7 +28,7 @@ namespace TagsSearch
 		, _file_ended(false)
 		, _reading_in_progress(false)
 		, _min_read_len(processing_config.get<unsigned>("min_align_length", 10))
-		, poly_a(processing_config.get<std::string>("poly_a_tail", "AAAAAAAA"))
+		, _poly_a(processing_config.get<std::string>("poly_a_tail", "AAAAAAAA"))
 		, _trims_counter()
 		, _fastq_writer(writer)
 	{
@@ -36,7 +43,7 @@ namespace TagsSearch
 		}
 	}
 
-	bool TagsFinderBase::get_next_record(FastQReader::FastQRecord& record, Tools::ReadParameters &params)
+	bool TagsFinderBase::get_next_record(FastQReader::FastQRecord& record, ReadParameters &params)
 	{
 		if (this->_file_ended)
 			return false;
@@ -59,7 +66,7 @@ namespace TagsSearch
 
 		++this->_parsed_reads;
 
-		if (!params.pass_quality_threshold())
+		if (!params.pass_quality_threshold() || !this->validate(record) || !this->trim(record))
 		{
 			this->_low_quality_reads++;
 			return false;
@@ -87,7 +94,7 @@ namespace TagsSearch
 		return ss.str();
 	}
 
-	void TagsFinderBase::trim(const std::string &barcodes_tail, std::string &sequence, std::string &quality)
+	void TagsFinderBase::trim_poly_a(const std::string &barcodes_tail, std::string &sequence, std::string &quality)
 	{
 		if (sequence.length() != quality.length())
 			throw std::runtime_error("Read has different lengths of sequence and quality string: '" +
@@ -96,7 +103,7 @@ namespace TagsSearch
 		len_t trim_pos = sequence.length();
 		// attempt 1: check for reverse complement of the UMI+second barcode, remove trailing As
 		// RC of UMI+second barcode (up to a length r1_rc_length - spacer_finder parameter)
-		std::string rcb = this->rc.rc(barcodes_tail);
+		std::string rcb = this->_rc.rc(barcodes_tail);
 
 		len_t rc_pos = sequence.find(rcb);
 		if (rc_pos != std::string::npos)
@@ -107,7 +114,7 @@ namespace TagsSearch
 		else
 		{
 			// attempt 2: find polyA block
-			rc_pos = sequence.find(this->poly_a);
+			rc_pos = sequence.find(this->_poly_a);
 			if (rc_pos != std::string::npos)
 			{
 				trim_pos = rc_pos;
@@ -179,7 +186,7 @@ namespace TagsSearch
 					break;
 
 				FastQReader::FastQRecord record;
-				Tools::ReadParameters params;
+				ReadParameters params;
 				if (!this->get_next_record(record, params))
 				{
 					record_id--;
@@ -269,5 +276,61 @@ namespace TagsSearch
 	FastQReader &TagsFinderBase::fastq_reader(size_t index)
 	{
 		return *this->_fastq_readers.at(index);
+	}
+
+	bool TagsFinderBase::validate(const FastQReader::FastQRecord &record) const
+	{
+		if (this->_gene_phred_threshold <= ReadParameters::quality_offset)
+			return true;
+
+		double n_low = 0;
+		for (char qual : record.quality)
+		{
+			n_low += (qual < this->_gene_phred_threshold);
+		}
+
+		if (n_low / record.quality.size() > 0.5)
+			return false;
+
+		double n_g = 0;
+		for (char nuc : record.sequence)
+		{
+			n_g += (nuc == 'G' || nuc == 'N');
+		}
+
+		return (n_g / record.quality.size() < this->_max_g_fraction);
+	}
+
+	bool TagsFinderBase::trim(FastQReader::FastQRecord &record) const
+	{
+		if (this->_trim_phred_threshold <= ReadParameters::quality_offset)
+			return true;
+
+		int trim_start = -1;
+		for (int i = 0; i < std::min(int(record.sequence.size()), this->_leading_trim_length); ++i)
+		{
+			if (record.quality.at(static_cast<unsigned>(i)) < this->_trim_phred_threshold)
+			{
+				trim_start = i;
+			}
+		}
+
+		trim_start++;
+		long trim_end = static_cast<int>(record.sequence.size());
+		for (long i = record.sequence.size() - 1; i >= std::max(long(record.sequence.size() - this->_trailing_trim_length), 0L); --i)
+		{
+			if (record.quality.at(static_cast<unsigned long>(i)) < this->_trim_phred_threshold)
+			{
+				trim_end = i;
+			}
+		}
+
+		auto trimmed_length = static_cast<size_t>(trim_end - trim_start);
+		if (trimmed_length < this->_min_read_len)
+			return false;
+
+		record.quality = record.quality.substr(static_cast<size_t>(trim_start), trimmed_length);
+		record.sequence = record.sequence.substr(static_cast<size_t>(trim_start), trimmed_length);
+		return true;
 	}
 }

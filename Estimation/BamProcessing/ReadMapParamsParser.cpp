@@ -12,9 +12,9 @@ namespace Estimation
 namespace BamProcessing
 {
 	ReadMapParamsParser::ReadMapParamsParser(const std::string &gtf_path, const std::string &read_param_filenames,
-	                                         const BamTags &tags, bool gene_in_chromosome_name, int min_quality)
+	                                         const BamTags &tags, bool gene_in_chromosome_name, char min_barcode_phred)
 		: ReadParamsParser(gtf_path, tags, gene_in_chromosome_name)
-		, _min_quality(min_quality)
+		, _min_barcode_phred(min_barcode_phred)
 	{
 		this->init(read_param_filenames);
 	}
@@ -83,7 +83,7 @@ namespace BamProcessing
 
 				try
 				{
-					auto params_pair = Tools::ReadParameters::parse_from_string(row, this->_min_quality);
+					auto params_pair = Tools::ReadParameters::parse_from_string(row, this->_min_barcode_phred);
 					auto params = ReadParametersEfficient(params_pair.second, this->_barcode_indexer, this->_umi_indexer,
 					                                      this->_umi_quality_indexer);
 					auto ins_iter = this->_read_params.emplace(params_pair.first, params);

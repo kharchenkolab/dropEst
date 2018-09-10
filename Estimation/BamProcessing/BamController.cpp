@@ -14,13 +14,13 @@ namespace Estimation
 namespace BamProcessing
 {
 	BamController::BamController(const BamTags &tags, bool filled_bam, const std::string &read_param_filenames,
-	                             const std::string &gtf_path, bool gene_in_chromosome_name, int min_barcode_quality)
+	                             const std::string &gtf_path, bool gene_in_chromosome_name, char min_barcode_phred)
 		: _tags(tags)
 		, _filled_bam(filled_bam)
 		, _gene_in_chromosome_name(gene_in_chromosome_name)
 		, _read_param_filenames(read_param_filenames)
 		, _gtf_path(gtf_path)
-		, _min_barcode_quality(min_barcode_quality)
+		, _min_barcode_phred(min_barcode_phred)
 	{}
 
 	void BamController::parse_bam_files(const std::vector<std::string> &bam_files, bool print_result_bams,
@@ -114,12 +114,12 @@ namespace BamProcessing
 	{
 		if (this->_filled_bam)
 			return std::make_shared<FilledBamParamsParser>(this->_gtf_path, this->_tags, this->_gene_in_chromosome_name,
-			                                               this->_min_barcode_quality);
+			                                               this->_min_barcode_phred);
 
 		if (this->_read_param_filenames != "")
 			return std::make_shared<ReadMapParamsParser>(this->_gtf_path, this->_read_param_filenames,
 			                                             this->_tags, this->_gene_in_chromosome_name,
-			                                             this->_min_barcode_quality);
+			                                             this->_min_barcode_phred);
 
 		return std::make_shared<ReadParamsParser>(this->_gtf_path, this->_tags, this->_gene_in_chromosome_name);
 	}
