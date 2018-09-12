@@ -45,7 +45,10 @@ namespace TagsSearch
 		const std::string _file_uid;
 
 		std::atomic<long> _total_reads_read;
+		std::atomic<long> _low_gene_quality_reads;
 		std::atomic<long> _low_quality_reads;
+		std::atomic<long> _trimmed_reads;
+		std::atomic<long> _high_poly_g_reads;
 		std::atomic<long> _parsed_reads;
 		std::atomic<bool> _file_ended;
 
@@ -77,13 +80,13 @@ namespace TagsSearch
 		void read_bunch(size_t number_of_iterations = 10000, size_t records_bunch_size = 5000);
 		void run_thread();
 
-		bool validate(const FastQReader::FastQRecord& record) const;
-		bool trim(FastQReader::FastQRecord& record) const;
+		bool validate(const FastQReader::FastQRecord& record);
+		bool trim(FastQReader::FastQRecord& record);
 
 	protected:
 		virtual bool parse_fastq_record(FastQReader::FastQRecord &record, Tools::ReadParameters &read_params) = 0;
 		void trim_poly_a(const std::string &barcodes_tail, std::string &sequence, std::string &quality);
-		virtual std::string get_additional_stat(long total_reads_read) const = 0;
+		virtual std::string get_additional_stat(long total_reads_read) const;
 		FastQReader& fastq_reader(size_t index);
 
 	public:

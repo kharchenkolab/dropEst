@@ -17,6 +17,7 @@
 #include <TagsSearch/ConcurrentGzWriter.h>
 #include <TagsSearch/IClipTagsFinder.h>
 #include <Rcpp.h>
+#include <TagsSearch/SingleBarcodeTagsFinder.h>
 #include "Tools/Logs.h"
 
 using namespace std;
@@ -89,7 +90,10 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const ptree &pt
 	auto const &processing_config = pt.get_child(PROCESSING_CONFIG_PATH, ptree());
 
 	size_t max_records_per_file = params.reads_per_out_file;
-	if(max_records_per_file==-1) max_records_per_file = processing_config.get<size_t>("reads_per_out_file", 0);
+	if (max_records_per_file==-1)
+	{
+		max_records_per_file = processing_config.get<size_t>("reads_per_out_file", 0);
+	}
 	auto writer = std::make_shared<ConcurrentGzWriter>(params.base_name, "fastq.gz", max_records_per_file);
 
 	const std::string input_files_num_error_text = "Unexpected number of read files: " +
@@ -118,12 +122,12 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const ptree &pt
 
 	if (protocol_type == "10x") // 10x has the same format of files as indrop v3
 	{
-		if (params.read_files.size() != 3)
+		if (params.read_files.size() != 2)
 			throw std::runtime_error(input_files_num_error_text);
 
 		return shared_ptr<TagsFinderBase>(
-				new IndropV3TagsFinder(params.read_files, pt.get_child(BARCODES_CONFIG_PATH), processing_config,
-				                       writer, params.save_stats, params.save_reads_params));
+				new SingleBarcodeTagsFinder(params.read_files, pt.get_child(BARCODES_CONFIG_PATH), processing_config,
+				                            writer, params.save_stats, params.save_reads_params));
 	}
 
 	if (protocol_type == "indrop")

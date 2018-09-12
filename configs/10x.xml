@@ -3,8 +3,7 @@
     <TagsSearch>
         <protocol>10x</protocol>
         <BarcodesSearch>
-            <barcode1_length>8</barcode1_length>
-            <barcode2_length>16</barcode2_length>
+            <barcode_length>16</barcode_length>
             <umi_length>10</umi_length>
             <r1_rc_length>0</r1_rc_length>
         </BarcodesSearch>

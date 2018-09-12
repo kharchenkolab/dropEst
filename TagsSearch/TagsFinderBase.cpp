@@ -23,7 +23,10 @@ namespace TagsSearch
 		, _max_g_fraction(processing_config.get<double>("max_g_fraction", 1.0))
 		, _file_uid(TagsFinderBase::get_file_uid())
 		, _total_reads_read(0)
+		, _low_gene_quality_reads(0)
 		, _low_quality_reads(0)
+		, _high_poly_g_reads(0)
+		, _trimmed_reads(0)
 		, _parsed_reads(0)
 		, _file_ended(false)
 		, _reading_in_progress(false)
@@ -57,7 +60,8 @@ namespace TagsSearch
 		if (this->_total_reads_read % 5000000 == 0 && this->_total_reads_read > 0)
 		{
 			L_TRACE << "Total " << this->_total_reads_read << " read (" << this->_parsed_reads << " parsed, "
-			        << (this->_parsed_reads - this->_low_quality_reads) << " passed quality threshold)";
+			        << (this->_parsed_reads - this->_low_quality_reads) << " passed quality threshold)" << " "
+			        << this->_low_gene_quality_reads << " " << this->_trimmed_reads << " " << this->_high_poly_g_reads;
 		}
 		this->_total_reads_read++;
 
@@ -278,7 +282,7 @@ namespace TagsSearch
 		return *this->_fastq_readers.at(index);
 	}
 
-	bool TagsFinderBase::validate(const FastQReader::FastQRecord &record) const
+	bool TagsFinderBase::validate(const FastQReader::FastQRecord &record)
 	{
 		if (this->_gene_phred_threshold <= ReadParameters::quality_offset)
 			return true;
@@ -290,7 +294,10 @@ namespace TagsSearch
 		}
 
 		if (n_low / record.quality.size() > 0.5)
+		{
+			this->_low_gene_quality_reads++;
 			return false;
+		}
 
 		double n_g = 0;
 		for (char nuc : record.sequence)
@@ -298,10 +305,16 @@ namespace TagsSearch
 			n_g += (nuc == 'G' || nuc == 'N');
 		}
 
-		return (n_g / record.quality.size() < this->_max_g_fraction);
+		if (n_g / record.quality.size() > this->_max_g_fraction)
+		{
+			this->_high_poly_g_reads++;
+			return false;
+		}
+
+		return true;
 	}
 
-	bool TagsFinderBase::trim(FastQReader::FastQRecord &record) const
+	bool TagsFinderBase::trim(FastQReader::FastQRecord &record)
 	{
 		if (this->_trim_phred_threshold <= ReadParameters::quality_offset)
 			return true;
@@ -329,8 +342,18 @@ namespace TagsSearch
 		if (trimmed_length < this->_min_read_len)
 			return false;
 
+		if (trimmed_length != record.quality.length())
+		{
+			this->_trimmed_reads++;
+		}
+
 		record.quality = record.quality.substr(static_cast<size_t>(trim_start), trimmed_length);
 		record.sequence = record.sequence.substr(static_cast<size_t>(trim_start), trimmed_length);
 		return true;
+	}
+
+	std::string TagsFinderBase::get_additional_stat(long total_reads_read) const
+	{
+		return "";
 	}
 }
