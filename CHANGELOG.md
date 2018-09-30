@@ -7,6 +7,7 @@
 - Fixed "merge-umi" cli option in dropest
 ### Added
 - dropTag now able to trim and filter gene reads based on quality (see `TagsSearch/Processing` section of "configs/config_desc.xml")
+- Pipeline can be installed with `make install` now
 
 ## [0.8.3] - 2018-05-17
 ### Changed

@@ -28,6 +28,14 @@ d <- readRDS(opt$args[[1]])
 
 #Generate report
 
-report_script <- paste0(dirname(sub("--file=", "", grep("--file=", commandArgs(), value = TRUE)[1])), '/scripts/report.Rmd')
+report_script_prefix <- dirname(sub("--file=", "", grep("--file=", commandArgs(), value = TRUE)[1]))
+report_script <- paste0(report_script_prefix, '/scripts/report.Rmd')
+if (!file.exists(report_script)) {
+  report_script <- paste0(report_script_prefix, '/../usr/share/dropEst/report.Rmd')
+}
+
+if (!file.exists(report_script))
+  stop("Can't file report.Rmd file (file ", report_script, ") doesn't exist")
+
 rmarkdown::render(report_script, output_format="html_document", encoding="UTF-8",
                   output_dir=normalizePath(dirname(opt$options$out)), output_file=basename(opt$options$out))

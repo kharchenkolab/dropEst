@@ -38,6 +38,12 @@ target_link_libraries(Estimation DropTools)
 set(LIBRARIES DropTools ${BASE_LIBRARIES})
 set(EST_LIBRARIES ${EST_LIBRARIES} ${BAMTOOLS_LIBRARIES} ${ZLIB_LIBRARIES} ${LIBRARIES})
 
+## RPATH (required to link libraries after install)
+SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+# Targets
+
 add_executable(droptag droptag.cpp)
 target_link_libraries(droptag TagsSearch ${LIBRARIES})
 
@@ -52,6 +58,18 @@ if (NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
     add_custom_command(TARGET dropest POST_BUILD COMMAND cp ${CMAKE_SOURCE_DIR}/dropReport.Rsc ${CMAKE_CURRENT_BINARY_DIR}/)
     add_custom_command(TARGET dropest POST_BUILD COMMAND cp -r ${CMAKE_SOURCE_DIR}/scripts ${CMAKE_CURRENT_BINARY_DIR}/)
 endif (NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
+
+
+# Installation
+
+install (TARGETS TagsSearch DropTools Estimation DESTINATION lib)
+install (TARGETS droptag dropest DESTINATION bin)
+
+install (FILES "${PROJECT_BINARY_DIR}/dropReport.Rsc" DESTINATION bin)
+install (FILES "${PROJECT_BINARY_DIR}/scripts/report.Rmd" DESTINATION usr/share/dropEst)
+
+
+# Tests
 
 set (TEST_TS TestTagsSearch)
 add_executable (${TEST_TS} ${PROJECT_SOURCE_DIR}/Tests/TestTagsSearch.cpp)

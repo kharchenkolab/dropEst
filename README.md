@@ -80,12 +80,20 @@ Clone this repository:
 git clone https://github.com/hms-dbmi/dropEst.git
 ```
 
-Build:
+Build (**replace `installation/path` with path to the folder, where you want to install the pipeline**):
 
 ```bash
 cd dropEst
-cmake . && make
+cmake -D installation/path . && make
 ```
+
+Install:
+
+```bash
+make install
+```
+
+After this, `droptag`, `dropest` and `dropReport.Rsc` binaries must be available at `installation/path/bin/` folder.
 
 ### Troubleshooting
 #### Local libraries installation
