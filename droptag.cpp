@@ -38,7 +38,7 @@ struct Params
 	bool quiet = false;
 	bool save_stats = false;
 	int num_of_threads = 1;
-        int reads_per_out_file = -1;
+	int reads_per_out_file = -1;
 	string base_name = "";
 	string config_file_name = "";
 	string log_prefix = "";
@@ -89,8 +89,8 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const ptree &pt
 
 	auto const &processing_config = pt.get_child(PROCESSING_CONFIG_PATH, ptree());
 
-	size_t max_records_per_file = params.reads_per_out_file;
-	if (max_records_per_file==-1)
+	long max_records_per_file = params.reads_per_out_file;
+	if (max_records_per_file == -1)
 	{
 		max_records_per_file = processing_config.get<size_t>("reads_per_out_file", 0);
 	}
@@ -120,7 +120,7 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const ptree &pt
 				                       writer, params.save_stats, params.save_reads_params));
 	}
 
-	if (protocol_type == "10x") // 10x has the same format of files as indrop v3
+	if (protocol_type == "10x")
 	{
 		if (params.read_files.size() != 2)
 			throw std::runtime_error(input_files_num_error_text);
@@ -307,7 +307,6 @@ int main(int argc, char **argv)
 		L_ERR << err.what()  << "\nTime: " << asctime(localtime(&ctt));
 		return 1;
 	}
-
 
 	return 0;
 }

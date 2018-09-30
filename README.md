@@ -168,9 +168,8 @@ Example command:
 ```
 
 #### 10x
-* File 1: library tag *(default length: 8bp)*
-* File 2: cell barcode + UMI, part 1 *(default length: 16+10=26bp)*
-* File 3: gene read
+* File 1: cell barcode + UMI, part 1 *(default length: 16+10=26bp)*
+* File 2: gene read
 
 Example config file is located at "*dropEst/configs/10x.xml*".  
 Example command:
