@@ -288,7 +288,7 @@ Example command:
 
 While dropTag provides way to demultiplex 10x data, [Cell Ranger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger) is still recommended tool for this. [dropEst](##dropEst) phase can be ran on the Cell Ranger demultiplexed .bam file to obtain data in the format, optimized for the subsequent analysis.
 
-**NOTE.** Sometimes 10x CellRanger isn't able to determine gene, from which a read originated. In this cases it fills gene info with a list of possible genes, separated by semicolon (e.g. 'ENSG00000255508;ENSG00000254772'). These genes **must be filtered out** prior to further analysis:
+**Note.** Sometimes 10x CellRanger isn't able to determine gene, from which a read originated. In this cases it fills gene info with a list of possible genes, separated by semicolon (e.g. 'ENSG00000255508;ENSG00000254772'). These genes **must be filtered out** prior to further analysis:
 ```r
 holder <- readRDS('./cell.counts.rds')
 cm <- holder$cm[grep("^[^;]+$", rownames(holder$cm)),]
@@ -302,7 +302,7 @@ Example command:
 ```bash
 ./droptag -c dropEst/configs/iclip.xml [-S] [-s] data.fastq
 ```
-**NOTE.** Implementation of iCLIP wasn't tested properly. Please, be careful using it. Anyone who used it is very welcome to comment it either in Issues or by e-mail.
+**Note.** Implementation of iCLIP wasn't tested properly. Please, be careful using it. Anyone who used it is very welcome to comment it either in Issues or by e-mail.
 
 
 ### Command line arguments for dropTag
@@ -416,6 +416,8 @@ annotation tags, all reads with not empty gene tag are considered as exonic.
 For some purposes (i.e. [velocyto](http://velocyto.org/)) it can be useful to look separately at the fraction of intronic and exonic UMIs.
 Option *"-V"* allows to output three separate count matrices, each of which contains only UMIs of a specific type: 
 intronic, exonic or exon/intron spanning. These matrices are stored in the separate file *"cell.counts.matrices.rds"*. 
+
+**Note.** If you use bam file from other pipeline (i.e. 10x), please **ensure that you provided gtf file with genes** with `-g` option. Because CellRanger (and some other pipelines) doesn't include information about intronic reads to the bam file.
 
 ### Command line arguments for dropEst
 *  -b, --bam-output: print tagged bam files  
