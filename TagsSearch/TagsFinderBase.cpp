@@ -60,8 +60,7 @@ namespace TagsSearch
 		if (this->_total_reads_read % 5000000 == 0 && this->_total_reads_read > 0)
 		{
 			L_TRACE << "Total " << this->_total_reads_read << " read (" << this->_parsed_reads << " parsed, "
-			        << (this->_parsed_reads - this->_low_quality_reads) << " passed quality threshold)" << " "
-			        << this->_low_gene_quality_reads << " " << this->_trimmed_reads << " " << this->_high_poly_g_reads;
+			        << (this->_parsed_reads - this->_low_quality_reads) << " passed quality threshold)";
 		}
 		this->_total_reads_read++;
 
