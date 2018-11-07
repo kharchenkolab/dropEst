@@ -1,0 +1,29 @@
+<config>
+    <!-- droptag -->
+    <TagsSearch>
+        <protocol>split_seq</protocol>
+        <MultipleBarcodeSearch>
+            <barcode_starts>10 48 86</barcode_starts>
+            <barcode_lengths>8 8 8</barcode_lengths>
+            <umi_start>0</umi_start>
+            <umi_length>10</umi_length>
+        </MultipleBarcodeSearch>
+
+        <Processing>
+            <min_align_length>10</min_align_length>
+            <reads_per_out_file>10000000</reads_per_out_file>
+        </Processing>
+    </TagsSearch>
+
+    <!-- dropest -->
+    <Estimation>
+        <Merge>
+            <barcodes_file>../data/barcodes/splitseq</barcodes_file>
+            <barcodes_type>const</barcodes_type>
+            <max_cb_merge_edit_distance>4</max_cb_merge_edit_distance>
+            <max_umi_merge_edit_distance>1</max_umi_merge_edit_distance>
+            <min_genes_after_merge>100</min_genes_after_merge>
+            <min_genes_before_merge>20</min_genes_before_merge>
+        </Merge>
+    </Estimation>
+</config>
