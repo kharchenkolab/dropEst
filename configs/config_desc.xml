@@ -6,7 +6,15 @@
         Possible values: 10x, indrop, indrop3, iclip.
         -->
         <protocol>indrop</protocol>
-        <BarcodesSearch> <!-- Required for InDrop V3 -->
+
+        <MultipleBarcodeSearch> <!-- Required for SPLiT-seq -->
+            <barcode_starts>10 48 86</barcode_starts> <!-- Start position of cell barcode parts, separated by spaces -->
+            <barcode_lengths>8 8 8</barcode_lengths> <!-- Barcode part lengths (corresponding to start positions), separated by spaces -->
+            <umi_start>0</umi_start> <!-- UMI start position -->
+            <umi_length>10</umi_length> <!-- UMI length -->
+        </MultipleBarcodeSearch>
+
+        <BarcodesSearch> <!-- Required for InDrop V3, 10x and iCLIP -->
             <barcode1_length> 8 </barcode1_length>  <!-- Length of the first CB part -->
             <barcode2_length> 8 </barcode2_length> <!-- Length of the second CB part -->
             <umi_length> 6 </umi_length> <!-- Length of UMI -->
@@ -14,7 +22,7 @@
             <max_libtag_ed> 2 </max_libtag_ed> <!-- Optional. Maximal acceptable edit distance of the library tag. Used only with  cli argument 'lib-tag'. Default: 2.-->
         </BarcodesSearch>
 
-        <SpacerSearch> <!-- Required for InDrop V1 and some other -->
+        <SpacerSearch> <!-- Required for InDrop V1 -->
             <spacer>GAGTGATTGCTTGTGACGCCTT</spacer>
             <max_spacer_edit_distance> 3 </max_spacer_edit_distance>
             <spacer_search_length> 4 </spacer_search_length> <!-- Length of the part of the spacer, either at the begining ot at the end, which is used to find it -->

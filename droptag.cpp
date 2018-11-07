@@ -16,6 +16,7 @@
 #include "TagsSearch/IndropV3TagsFinder.h"
 #include <TagsSearch/ConcurrentGzWriter.h>
 #include <TagsSearch/IClipTagsFinder.h>
+#include <TagsSearch/SplitSeqTagsFinder.h>
 #include <Rcpp.h>
 #include "Tools/Logs.h"
 
@@ -25,6 +26,7 @@ using namespace boost::property_tree;
 
 const std::string CONFIG_PATH = "config.TagsSearch";
 const std::string PROCESSING_CONFIG_PATH = CONFIG_PATH + ".Processing";
+const std::string MULTIPLE_BARCODES_CONFIG_PATH = CONFIG_PATH + ".MultipleBarcodeSearch";
 const std::string BARCODES_CONFIG_PATH = CONFIG_PATH + ".BarcodesSearch";
 const std::string SPACER_CONFIG_PATH = CONFIG_PATH + ".SpacerSearch";
 
@@ -149,6 +151,16 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const ptree &pt
 		return shared_ptr<TagsFinderBase>(
 				new IClipTagsFinder(params.read_files, pt.get_child(BARCODES_CONFIG_PATH), processing_config,
 				                    writer, params.save_stats, params.save_reads_params));
+	}
+
+	if (protocol_type == "split_seq")
+	{
+		if (params.read_files.size() != 2)
+			throw std::runtime_error(input_files_num_error_text);
+
+		return shared_ptr<TagsFinderBase>(
+				new SplitSeqTagsFinder(params.read_files, pt.get_child(MULTIPLE_BARCODES_CONFIG_PATH), processing_config,
+						writer, params.save_stats, params.save_reads_params));
 	}
 }
 

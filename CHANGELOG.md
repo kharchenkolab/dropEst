@@ -8,6 +8,7 @@
 ### Added
 - dropTag now able to trim and filter gene reads based on quality (see `TagsSearch/Processing` section of "configs/config_desc.xml")
 - Pipeline can be installed with `make install` now
+- Support for SPLiT-seq protocol (DOI: 10.1126/science.aam8999)
 
 ## [0.8.3] - 2018-05-17
 ### Changed

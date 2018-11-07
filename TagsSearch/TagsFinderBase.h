@@ -83,7 +83,7 @@ namespace TagsSearch
 	protected:
 		virtual bool parse_fastq_record(FastQReader::FastQRecord &record, Tools::ReadParameters &read_params) = 0;
 		void trim_poly_a(const std::string &barcodes_tail, std::string &sequence, std::string &quality);
-		virtual std::string get_additional_stat(long total_reads_read) const = 0;
+		virtual std::string get_additional_stat(long total_reads_read) const;
 		FastQReader& fastq_reader(size_t index);
 
 	public:

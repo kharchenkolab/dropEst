@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <RInside.h>
 
 #define MIN3(a, b, c) ((a) < (b) ? ((a) < (c) ? (a) : (c)) : ((b) < (c) ? (b) : (c)))
@@ -49,4 +50,6 @@ namespace Tools
 	void copy_file(const std::string &src_file, const std::string &dest_file);
 	std::string expand_relative_path(const std::string &src_fname, const std::string &rel_fname);
 	std::string ltrim(const std::string &str);
+
+	std::vector<size_t> parse_vec_from_string(const std::string &str, const std::string &split_pattern = " \t");
 };

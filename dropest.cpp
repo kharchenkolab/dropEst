@@ -313,7 +313,8 @@ int main(int argc, char **argv)
 
 		printer.save_results(container, params.output_name);
 
-		if (params.velocyto_matrices) {
+		if (params.velocyto_matrices)
+		{
 			printer.save_intron_exon_matrices(container, params.output_name);
 		}
 	}

@@ -148,6 +148,11 @@ namespace TagsSearch
 		}
 	}
 
+	std::string TagsFinderBase::get_additional_stat(long total_reads_read) const
+	{
+		return "";
+	}
+
 	const TagsFinderBase::s_counter_t& TagsFinderBase::num_reads_per_cb() const
 	{
 		return this->_num_reads_per_cb;

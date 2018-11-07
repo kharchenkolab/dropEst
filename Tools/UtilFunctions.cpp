@@ -4,6 +4,8 @@
 #include <fstream>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/path.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
 
 
 namespace Tools
@@ -144,6 +146,19 @@ namespace Tools
 			return rel_fname;
 
 		return boost::filesystem::path(src_fname).parent_path().append(rel_fname, boost::filesystem::path::codecvt()).string();
+	}
+
+	std::vector<size_t> parse_vec_from_string(const std::string &str, const std::string &split_pattern)
+	{
+		std::vector<std::string> str_values;
+		boost::split(str_values, str, boost::is_any_of(split_pattern));
+		std::vector<size_t> res;
+		for (auto const &val : str_values)
+		{
+			res.push_back(std::strtoul(val.c_str(), nullptr, 10));
+		}
+
+		return res;
 	}
 }
 
