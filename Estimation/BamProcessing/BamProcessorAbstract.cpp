@@ -12,6 +12,7 @@ namespace BamProcessing
 		: _total_reads_num(0)
 		, _cant_parse_reads_num(0)
 		, _low_quality_reads_num(0)
+		, _nonmapped_reads_num(0)
 		, _tags(tags_info)
 	{}
 
@@ -54,6 +55,11 @@ namespace BamProcessing
 	size_t BamProcessorAbstract::low_quality_reads_num() const
 	{
 		return this->_low_quality_reads_num;
+	}
+
+	size_t BamProcessorAbstract::nonmapped_reads_num() const
+	{
+		return this->_nonmapped_reads_num;
 	}
 
 	void BamProcessorAbstract::save_alignment(BamTools::BamAlignment alignment, const ReadInfo &read_info_raw,
@@ -115,6 +121,11 @@ namespace BamProcessing
 	void BamProcessorAbstract::inc_low_quality_num()
 	{
 		++this->_low_quality_reads_num;
+	}
+
+	void BamProcessorAbstract::inc_nonmapped_num()
+	{
+		++this->_nonmapped_reads_num;
 	}
 }
 }

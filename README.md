@@ -27,7 +27,8 @@ See [CHANGELOG.md](CHANGELOG.md) for the full list.
 			- [inDrop v1 & v2](#indrop-v1--v2)
 			- [inDrop v3](#indrop-v3)
 			- [10x](#10x)
-			- [iCLIP](#iCLIP)
+			- [iCLIP](#iCLIP)`
+			- [SPLiT-seq](#split-seq)
 		- [Command line arguments for dropTag](#command-line-arguments-for-droptag)
 	- [Alignment](#alignment)
 	    - [Alignment with TopHat](#alignment-with-tophat)
@@ -203,6 +204,16 @@ Example command:
 ./droptag -c dropEst/configs/iclip.xml [-S] [-s] data.fastq
 ```
 **NOTE.** Implementation of iCLIP wasn't tested properly. Please, be careful using it. Anyone who used it is very welcome to comment it either in Issues or by e-mail.
+
+#### SPLiT-seq
+* File 1: Gene reads
+* File 2: UMI + cell barcode (3 parts)
+
+Example config file is located at "*dropEst/configs/split_seq.xml*".
+Example command:
+```bash
+./droptag -c dropEst/configs/split_seq.xml [-S] [-s] gene_reads.fastq barcode_reads.fastq
+```
 
 
 ### Command line arguments for dropTag

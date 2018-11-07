@@ -84,6 +84,9 @@ namespace BamProcessing
 
 		while (reader.GetNextAlignment(alignment))
 		{
+			if (!alignment.IsMapped() || !alignment.IsPrimaryAlignment())
+				continue;
+
 			std::string chr_name;
 			try
 			{
@@ -95,6 +98,8 @@ namespace BamProcessing
 				{
 					L_ERR << "ERROR: can't find chromosome, id: " << alignment.RefID;
 				}
+
+				processor->inc_cant_parse_num();
 				continue;
 			}
 

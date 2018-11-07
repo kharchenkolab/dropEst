@@ -27,6 +27,7 @@ namespace Estimation
 		, _max_cells_num(max_cells_num)
 		, _is_initialized(false)
 		, _query_marks(gene_match_levels)
+		, _intergenic_reads(0)
 		, _has_exon_reads(0)
 		, _has_intron_reads(0)
 		, _has_not_annotated_reads(0)
@@ -72,6 +73,7 @@ namespace Estimation
 		if (read_info.gene.empty())
 		{
 			this->_cells[cell_id].stats().inc(Stats::INTERGENIC_READS_PER_CHR_PER_CELL, read_info.chromosome_name);
+			this->_intergenic_reads++;
 			return;
 		}
 
@@ -213,6 +215,11 @@ namespace Estimation
 	const UMI::Mark::query_t& CellsDataContainer::gene_match_level() const
 	{
 		return this->_query_marks;
+	}
+
+	size_t CellsDataContainer::intergenic_reads_num() const
+	{
+		return this->_intergenic_reads;
 	}
 
 	size_t CellsDataContainer::has_exon_reads_num() const

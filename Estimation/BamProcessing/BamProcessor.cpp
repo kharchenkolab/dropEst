@@ -13,16 +13,10 @@ namespace Estimation
 			: BamProcessorAbstract(tags)
 			, _container(container)
 			, _print_bam(print_bam)
-			, _total_intergenic_reads(0)
 		{}
 
 		void BamProcessor::save_read(const ReadInfo &read_info)
 		{
-			if (read_info.gene == "")
-			{
-				this->_total_intergenic_reads++;
-			}
-
 			this->_container.add_record(read_info);
 		}
 
@@ -31,20 +25,27 @@ namespace Estimation
 			std::stringstream cant_parse_msg;
 			if (this->cant_parse_reads_num() > 0)
 			{
-				cant_parse_msg << "can't parse " << (100.0*this->cant_parse_reads_num() / this->total_reads_num()) <<"% reads; ";
+				cant_parse_msg << ", can't parse " << (100.0*this->cant_parse_reads_num() / this->total_reads_num()) <<"% reads, ";
 			}
 
 			if (this->low_quality_reads_num() > 0)
 			{
-				cant_parse_msg << "low-quality reads: " << (100.0*this->low_quality_reads_num() / this->total_reads_num()) <<"%; ";
+				cant_parse_msg << "low-quality reads: " << (100.0*this->low_quality_reads_num() / this->total_reads_num()) <<"%, ";
 			}
 
-			L_TRACE << trace_prefix << ": " << this->total_reads_num() << " total reads; " << std::setprecision(3)
-					<< (100.0*this->_total_intergenic_reads / this->total_reads_num()) <<"% intergenic; "
-					<< (100.0*this->container().has_exon_reads_num() / this->total_reads_num()) <<"% touch exon; "
-					<< (100.0*this->container().has_intron_reads_num() / this->total_reads_num()) <<"% touch intron; "
-					<< (100.0*this->container().has_not_annotated_reads_num() / this->total_reads_num()) <<"% touch not annotated regions; "
+			if (this->nonmapped_reads_num() > 0)
+			{
+				cant_parse_msg << "low-quality reads: " << (100.0*this->low_quality_reads_num() / this->total_reads_num()) <<"%";
+			}
+
+			L_TRACE << trace_prefix << ": " << this->total_reads_num() << " primarily aligned reads (" << std::setprecision(3)
+					<< (100.0*this->container().intergenic_reads_num() / this->total_reads_num()) <<"% intergenic, "
+					<< (100.0*this->container().has_exon_reads_num() / this->total_reads_num()) <<"% touch exon, "
+					<< (100.0*this->container().has_intron_reads_num() / this->total_reads_num()) <<"% touch intron, "
+					<< (100.0*this->container().has_not_annotated_reads_num() / this->total_reads_num()) <<"% touch not annotated regions"
 					<< cant_parse_msg.str()
+					<< "), "
+					<< this->nonmapped_reads_num() << "nonmapped reads, "
 					<< this->_container.total_cells_number() << " CBs read";
 		}
 

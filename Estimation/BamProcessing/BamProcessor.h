@@ -16,7 +16,6 @@ namespace Estimation
 		private:
 			CellsDataContainer &_container;
 			const bool _print_bam;
-			size_t _total_intergenic_reads;
 
 		protected:
 			std::string get_result_bam_name(const std::string &bam_name) const override;

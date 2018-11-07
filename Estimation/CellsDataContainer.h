@@ -60,6 +60,7 @@ namespace Estimation
 		bool _is_initialized;
 		const UMI::Mark::query_t _query_marks;
 
+		size_t _intergenic_reads;
 		size_t _has_exon_reads;
 		size_t _has_intron_reads;
 		size_t _has_not_annotated_reads;
@@ -108,6 +109,7 @@ namespace Estimation
 		const Cell &cell(size_t index) const;
 		Cell &cell(size_t index);
 
+		size_t intergenic_reads_num() const;
 		size_t has_exon_reads_num() const;
 		size_t has_intron_reads_num() const;
 		size_t has_not_annotated_reads_num() const;
