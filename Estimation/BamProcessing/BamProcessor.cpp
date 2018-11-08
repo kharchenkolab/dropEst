@@ -42,10 +42,10 @@ namespace Estimation
 					<< (100.0*this->container().intergenic_reads_num() / this->total_reads_num()) <<"% intergenic, "
 					<< (100.0*this->container().has_exon_reads_num() / this->total_reads_num()) <<"% touch exon, "
 					<< (100.0*this->container().has_intron_reads_num() / this->total_reads_num()) <<"% touch intron, "
-					<< (100.0*this->container().has_not_annotated_reads_num() / this->total_reads_num()) <<"% touch not annotated regions"
+					<< (100.0*this->container().has_not_annotated_reads_num() / this->total_reads_num()) <<"% touch both gene and not annotated regions"
 					<< cant_parse_msg.str()
 					<< "), "
-					<< this->nonmapped_reads_num() << "nonmapped reads, "
+					<< this->nonmapped_reads_num() << " non-mapped reads, "
 					<< this->_container.total_cells_number() << " CBs read";
 		}
 

@@ -42,7 +42,7 @@ struct Params
 	string output_name = "";
 	string read_params_filenames = "";
 	std::string gene_match_level = UMI::Mark::DEFAULT_CODE;
-	int max_cells_number = -1;
+	int max_cell_number = -1;
 	int min_genes_after_merge = -1;
 };
 
@@ -140,7 +140,7 @@ static Params parse_cmd_params(int argc, char **argv)
 				params.config_file_name = string(optarg);
 				break;
 			case 'C' :
-				params.max_cells_number = int(strtol(optarg, nullptr, 10));
+				params.max_cell_number = int(strtol(optarg, nullptr, 10));
 				break;
 			case 'f' :
 				params.filled_bam = true;
@@ -243,7 +243,8 @@ CellsDataContainer get_cells_container(const vector<string> &files, const Params
 
 	Merge::MergeStrategyFactory merge_factory(est_config, params.config_file_name, params.min_genes_after_merge);
 	CellsDataContainer container(merge_factory.get_cb_strat(params.merge_tags, params.merge_tags_precise),
-	                             merge_factory.get_umi(params.umi_merge), match_levels, !params.umi_merge, params.max_cells_number);
+	                             merge_factory.get_umi(params.umi_merge), match_levels, params.filtered_bam_output,
+	                             params.max_cell_number);
 
 	bam_controller.parse_bam_files(files, params.bam_output, container);
 

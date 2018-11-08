@@ -60,7 +60,7 @@ namespace Estimation
 
 		void FilteringBamProcessor::write_alignment(BamTools::BamAlignment alignment, const ReadInfo &read_info)
 		{
-			if (read_info.gene == "")
+			if (read_info.gene.empty())
 				return;
 
 			auto cb_iter = this->_merge_cbs.find(read_info.params.cell_barcode());
@@ -97,7 +97,7 @@ namespace Estimation
 
 		std::string FilteringBamProcessor::get_result_bam_name(const std::string &bam_name) const
 		{
-			return bam_name.substr(0, bam_name.find_last_of(".")) + ".filtered.bam";
+			return bam_name.substr(0, bam_name.find_last_of('.')) + ".filtered.bam";
 		}
 
 		void FilteringBamProcessor::update_bam(const std::string &bam_file, const BamTools::BamReader &reader)
