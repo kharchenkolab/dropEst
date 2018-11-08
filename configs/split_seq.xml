@@ -18,7 +18,7 @@
     <!-- dropest -->
     <Estimation>
         <Merge>
-            <barcodes_file>../data/barcodes/splitseq</barcodes_file>
+            <barcodes_file>../data/barcodes/split_seq</barcodes_file>
             <barcodes_type>const</barcodes_type>
             <max_cb_merge_edit_distance>4</max_cb_merge_edit_distance>
             <max_umi_merge_edit_distance>1</max_umi_merge_edit_distance>
