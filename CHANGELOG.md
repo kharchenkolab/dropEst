@@ -1,6 +1,6 @@
 # Changelog
 
-## [Upcoming]
+## [0.8.5] - 2018-11-14
 ### Changed
 - Compatibility with preseqR-4.0.0
 - Compatibility with newer boost versions

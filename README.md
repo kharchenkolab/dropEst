@@ -2,9 +2,11 @@
 Pipeline for estimating molecular count matrices for droplet-based single-cell RNA-seq measurements. Implements methods, described in [this paper](https://doi.org/10.1186/s13059-018-1449-6). To reproduce results from the paper see [this repository](https://github.com/VPetukhov/dropEstAnalysis).
 
 ## News
-## [0.8.3] - 2018-05-17
-* Fixed multiple bugs
-* Barcodes for 10x chromium v2
+## [0.8.5] - 2018-11-14
+- Fixed several bugs
+- Support for SPLiT-seq
+- dropTag now able to trim and filter gene reads based on quality
+- Pipeline can be installed with `make install`
 
 See [CHANGELOG.md](CHANGELOG.md) for the full list.
 
