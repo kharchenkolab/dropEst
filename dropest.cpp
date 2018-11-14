@@ -93,7 +93,7 @@ static void usage()
 	cerr << "\t-r, --read-params filenames: file or files with serialized params from tags search step. If there are several files"
 	     << ", they should be provided in quotes, separated by space: \"file1.params.gz file2.params.gz file3.params.gz\"" << endl;
 	cerr << "\t-R, --reads-output: print count matrix for reads and don't use UMI statistics\n";
-	cerr << "\t-u, --merge-umi: apply 'directional' correction of UMI errors. If you want to apply more advanced UMI correction, don’t use ‘-u’, but use follow up R analysis.\n";
+	cerr << "\t-u, --merge-umi: apply 'directional' correction of UMI errors. This option prevents output of 'reads_per_umi_per_cell'. If you want to apply more advanced UMI correction, don’t use '-u', but use follow up R analysis.\n";
 	cerr << "\t-V, --velocyto : save separate count matrices for exons, introns and exon/intron spanning reads\n";
 	cerr << "\t-w, --write-mtx : write out matrix in MatrixMarket format\n";
 }

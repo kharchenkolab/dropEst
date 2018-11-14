@@ -1,12 +1,10 @@
 # dropEst - Pipeline
-Pipeline for estimating molecular count matrices for droplet-based single-cell RNA-seq measurements. Implements methods, described in [this paper](https://doi.org/10.1101/171496).
+Pipeline for estimating molecular count matrices for droplet-based single-cell RNA-seq measurements. Implements methods, described in [this paper](https://doi.org/10.1186/s13059-018-1449-6). To reproduce results from the paper see [this repository](https://github.com/VPetukhov/dropEstAnalysis).
 
 ## News
-## [0.8.2] - 2018-04-20
+## [0.8.3] - 2018-05-17
 * Fixed multiple bugs
-* 'Directional' UMI correction can be applied during dropEst phase with "-u" option. In this case, information for more 
-    advanced UMI correction isn't saved to the output rds
-* Bam output (`-F`) now saves info about raw barcode sequences, read type and barcode quality similarly to 10x CellRanger format
+* Barcodes for 10x chromium v2
 
 See [CHANGELOG.md](CHANGELOG.md) for the full list.
 
@@ -20,6 +18,7 @@ See [CHANGELOG.md](CHANGELOG.md) for the full list.
 	- [Setup](#setup)
 		- [System requirements](#system-requirements)
 		- [Installation](#installation)
+		- [Manual installation of dependencies](#manual-installation-of-dependencies)
 		- [Troubleshooting](#troubleshooting)
 		- [Dockers](#dockers)
 	- [dropTag](#droptag)
@@ -57,16 +56,18 @@ See [CHANGELOG.md](CHANGELOG.md) for the full list.
 ## Setup
 ### System requirements
 * Boost >= 1.54
-* BamTools library
+* BamTools library >= 2.5.0
 	* Note that some linux distributions have separate packages for the library and the executable, i.e. on Ubuntu you need `libbamtools-dev`, but not `bamtools`.
 	* or you can [build it locally](https://github.com/pezmaster31/bamtools/wiki/Building-and-installing) and then specify the location of the build when running cmake (e.g. `cmake -D BAMTOOLS_ROOT=/home/username/bamtools .`)
-* Zlib
+* Zlib *(was tested on 1.2.11 version)*
+* Bzip2 *(was tested on 1.0.5 version)*
 * R >= 3.2.2 with packages:
   * Rcpp
   * RcppEigen
   * RInside
   * Matrix
 * Compiler with c++11 support *(was tested with gcc >= 4.8.5 and CLang 3.9.1)*
+* CMake >= 3.0
 
 ### Installation
 Install R packages:
@@ -84,8 +85,9 @@ git clone https://github.com/hms-dbmi/dropEst.git
 Build (**replace `installation/path` with path to the folder, where you want to install the pipeline**):
 
 ```bash
-cd dropEst
-cmake -D installation/path . && make
+mkdir dropEst/build
+cd dropEst/build
+cmake .. && make
 ```
 
 Install:
@@ -96,8 +98,108 @@ make install
 
 After this, `droptag`, `dropest` and `dropReport.Rsc` binaries must be available at `installation/path/bin/` folder.
 
+### Manual installation of dependencies
+Here is the instruction on how to install specific versions of libraries to the local folder (i.e. `~/local/`). Let's store this directory in `LOCAL_LIBS` variable:
+```bash
+export LOCAL_LIBS=$HOME/local/
+```
+
+To create this directory use:
+```bash
+mkdir $LOCAL_LIBS
+```
+
+To add installed libraries to `PATH` use:
+```bash
+export PATH=$LOCAL_LIBS/bin:$LOCAL_LIBS/usr/local/bin/:$PATH
+```
+
+#### CMake
+Download version 3.12:
+```bash
+wget https://cmake.org/files/v3.12/cmake-3.12.0-rc1.tar.gz
+tar xvf cmake-3.12.0-rc1.tar.gz
+cd cmake-3.12.0-rc1
+```
+
+Build and install:
+```bash
+./bootstrap --prefix=$LOCAL_LIBS
+make
+make install
+```
+
+For the detailed instruction see [instruction page](https://cmake.org/install/).
+
+#### Zlib
+Download version 1.2.11:
+```bash
+wget https://zlib.net/zlib-1.2.11.tar.gz
+tar xvf zlib-1.2.11.tar.gz
+cd zlib-1.2.11
+```
+
+Build and install:
+```bash
+./configure --prefix=$LOCAL_LIBS
+make
+make install
+```
+
+#### BamTools
+Clone repository, version 2.5.0:
+```bash
+git clone https://github.com/pezmaster31/bamtools.git
+cd bamtools
+git reset --hard 94f072
+```
+
+Build and install:
+```bash
+mkdir build && cd build
+cmake ../
+make
+make install DESTDIR=$LOCAL_LIBS
+```
+
+For the detailed instruction see [instruction page](https://github.com/pezmaster31/bamtools/wiki/Building-and-installing).
+
+#### Bzip2
+Download version 1.0.6:
+```bash
+wget http://www.bzip.org/1.0.6/bzip2-1.0.6.tar.gz
+tar xvf bzip2-1.0.6.tar.gz
+cd bzip2-1.0.6
+```
+
+Build and install:
+```bash
+make -f Makefile-libbz2_so
+make install PREFIX=$LOCAL_LIBS
+cp -a libbz2.so* $LOCAL_LIBS/lib/
+ln -s $LOCAL_LIBS/lib/libbz2.so.1.0 $LOCAL_LIBS/lib/libbz2.so
+```
+
+For the detailed instruction see [this page](http://www.linuxfromscratch.org/lfs/view/stable/chapter06/bzip2.html).
+
+#### Boost
+Download version 1.60:
+```bash
+wget http://sourceforge.net/projects/boost/files/boost/1.60.0/boost_1_60_0.tar.gz
+tar xzf boost_1_60_0.tar.gz
+cd boost_1_60_0
+```
+
+Build and install:
+```bash
+./bootstrap.sh --with-libraries=filesystem,iostreams,log,system,thread,test
+./b2 cxxflags="-std=c++11" include="$LOCAL_LIBS/include/" search="$LOCAL_LIBS/lib/" link=shared threading=multi install --prefix=$LOCAL_LIBS
+```
+
+For the detailed instruction see [tutorial page](https://www.boost.org/doc/libs/1_60_0/tools/build/tutorial.html).
+
 ### Troubleshooting
-#### Local libraries installation
+#### CMake can't find installed libraries
 If `cmake` can't find one of the libraries, or you want to use some specific versions, which are currently not in the default path, use corresponding cmake variables:
 * Boost: BOOST_ROOT.
 * BamTools: BAMTOOLS_ROOT.
@@ -119,11 +221,17 @@ CMake < 3.10 has known issues with boost 1.65. If you have such combination, ple
 ### Dockers
 In case you still can't build the project, dockerfiles for the most popular linux distributions are provided (see `dropEst/dockers/`). 
 You can either build and run these dockers or just read dockerfiles for the further instructions on dropEst installation for specific distribution.
-Manual boost installation is shown in **CentOS 6** docker.
 
 To install docker on your system see [installation instruction](https://github.com/wsargent/docker-cheat-sheet#installation). After installing the docker, use the following commands to start it:
 ```bash
 cd dropEst/dockers/debian9
+docker build -t dropest .
+docker run --name dropest -it dropest
+```
+
+Or, for CentOS 6:
+```bash
+cd dropEst/dockers/centos6
 docker build -t dropest .
 docker run --name dropest -it dropest
 ```
@@ -344,7 +452,7 @@ intronic, exonic or exon/intron spanning. These matrices are stored in the separ
 *  -q, --quiet : disable logs  
 *  -r, --read-params filenames: file or files with serialized params from tags search step. If there are several files, they should be provided in quotes, separated by space: "file1.params.gz file2.params.gz file3.params.gz"  
 *  -R, --reads-output: print count matrix for reads and don't use UMI statistics
-*  -u, --merge-umi: apply 'directional' correction of UMI errors. If you want to apply more advanced UMI correction, don’t use ‘-u’, but use follow up R analysis.  
+*  -u, --merge-umi: apply 'directional' correction of UMI errors. This option prevents output of `reads_per_umi_per_cell`. If you want to apply more advanced UMI correction, don’t use ‘-u’, but use follow up R analysis.  
 *  -V, --velocyto : save separate count matrices for exons, introns and exon/intron spanning reads
 *  -w, --write-mtx : write out matrix in MatrixMarket format  
 
@@ -402,10 +510,10 @@ Package content:
   * quality control (see *dropReport.Rsc*)  <!-- TODO: create vignette -->
 
 ### Troubleshooting
-*dropestr* depends on *ks* package, which requires installed X Server. If you don't want to install it, use [this fork](https://github.com/VPetukhov/ks), which has almost the same functionality without X Server requirenment.
+*dropestr* depends on *ks* package, which suggests installed X Server. If you don't want to install it, use:
 
 ```r
-devtools::install_github('VPetukhov/ks')
+install.packages("ks", dependencies=c("Depends", "Imports", "LinkingTo"))
 ```
 
 ## Additional notes
