@@ -1,5 +1,5 @@
 # dropEst - Pipeline
-Pipeline for estimating molecular count matrices for droplet-based single-cell RNA-seq measurements. Implements methods, described in [this paper](https://doi.org/10.1186/s13059-018-1449-6). To reproduce results from the paper see [this repository](https://github.com/VPetukhov/dropEstAnalysis).
+Pipeline for estimating molecular count matrices for droplet-based single-cell RNA-seq measurements. If you used the pipeline in your research, please [cite](#citation) the corresponding [paper](https://doi.org/10.1186/s13059-018-1449-6). To reproduce results from the paper see [this repository](https://github.com/VPetukhov/dropEstAnalysis).
 
 ## News
 ## [0.8.5] - 2018-11-14
@@ -45,6 +45,7 @@ See [CHANGELOG.md](CHANGELOG.md) for the full list.
 	- [Examples](#examples)
 	- [dropEstR package](#dropestr-package)
 	- [Additional notes](#additional-notes)
+	- [Citation](#citation)
 
 <!-- /TOC -->
 
@@ -522,3 +523,8 @@ install.packages("ks", dependencies=c("Depends", "Imports", "LinkingTo"))
 
 ## Additional notes
 Description of the fields for the config file is provided in *dropEst/configs/config_desc.xml*.
+
+## Citation
+If you used the pipeline in your research, please cite the paper:
+
+Petukhov, V., Guo, J., Baryawno, N., Severe, N., Scadden, D. T., Samsonova, M. G., & Kharchenko, P. V. (2018). dropEst: pipeline for accurate estimation of molecular counts in droplet-based single-cell RNA-seq experiments. Genome biology, 19(1), 78. doi:10.1186/s13059-018-1449-6
