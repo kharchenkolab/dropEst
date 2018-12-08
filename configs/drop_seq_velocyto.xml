@@ -1,0 +1,29 @@
+<config>
+    <!-- droptag is currently not supported -->
+    <!-- dropest -->
+    <!-- The DropSeq pipeline does not create valid cb_quality and umi_quality fields in th BAM file. This can be circumvented by using empty cb and umi quality tags. -->
+    <!-- For further downstream analysis with velocyto, one can use the following flags on the DropSeq BAM file: `dropEst/build/dropest -m -V -b -f -g <your-gtf-file>.gtf -o dropEst_out -L eiEIBA -c drop_seq_velocyto.xml <your-BAM-file>.bam` -->
+    <!-- The -g flag is especially important, as the dropSeq pipeline does not correctly annotate the BAM file -->
+    <Estimation>
+        <Merge>
+            <min_merge_fraction>0.2</min_merge_fraction>
+            <max_cb_merge_edit_distance>2</max_cb_merge_edit_distance>
+            <max_umi_merge_edit_distance>1</max_umi_merge_edit_distance>
+            <min_genes_after_merge>100</min_genes_after_merge>
+            <min_genes_before_merge>20</min_genes_before_merge>
+        </Merge>
+
+        <PreciseMerge>
+            <max_merge_prob>1e-5</max_merge_prob>
+            <max_real_merge_prob>1e-7</max_real_merge_prob>
+        </PreciseMerge>
+
+        <BamTags>
+            <cb>XC</cb>
+            <umi>XM</umi>
+
+            <cb_quality> </cb_quality>
+            <umi_quality> </umi_quality>
+        </BamTags>
+    </Estimation>
+</config>
