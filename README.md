@@ -30,6 +30,7 @@ See [CHANGELOG.md](CHANGELOG.md) for the full list.
 			- [10x](#10x)
 			- [iCLIP](#iCLIP)`
 			- [SPLiT-seq](#split-seq)
+			- [Seq-Well](#seq-well)
 		- [Command line arguments for dropTag](#command-line-arguments-for-droptag)
 	- [Alignment](#alignment)
 	    - [Alignment with TopHat](#alignment-with-tophat)
@@ -269,7 +270,7 @@ must be passed to dropEst with `-r` option.
 Example config file is located at "*dropEst/configs/indrop_v1_2.xml*".  
 Example command:
 ```bash
-./droptag -c [-S] [-s] ./configs/indrop_v1_2.xml barcode_reads.fastq gene_reads.fastq
+./droptag -c [-S] [-s] ~/dropEst/configs/indrop_v1_2.xml barcode_reads.fastq gene_reads.fastq
 ```
 
 #### inDrop v3
@@ -284,7 +285,7 @@ If a file with library tags provided, option "-t" is required. ***This option wa
 Example config file is located at "*dropEst/configs/indrop_v3.xml*".  
 Example command:
 ```bash
-./droptag -c dropEst/configs/indrop_v3.xml [-S] [-s] [-t library_tag] barcode1_reads.fastq barcode2_reads.fastq gene_reads.fastq [library_tags.fastq]
+./droptag -c ~/dropEst/configs/indrop_v3.xml [-S] [-s] [-t library_tag] barcode1_reads.fastq barcode2_reads.fastq gene_reads.fastq [library_tags.fastq]
 ```
 
 #### 10x
@@ -295,7 +296,7 @@ Example command:
 Example config file is located at "*dropEst/configs/10x.xml*".  
 Example command:
 ```bash
-./droptag -c dropEst/configs/10x.xml [-S] [-s] lib_tag_reads.fastq barcode_reads.fastq gene_reads.fastq
+./droptag -c ~/dropEst/configs/10x.xml [-S] [-s] lib_tag_reads.fastq barcode_reads.fastq gene_reads.fastq
 ```
 
 While dropTag provides way to demultiplex 10x data, [Cell Ranger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger) is still recommended tool for this. [dropEst](##dropEst) phase can be ran on the Cell Ranger demultiplexed .bam file to obtain data in the format, optimized for the subsequent analysis.
@@ -312,7 +313,7 @@ cm <- holder$cm[grep("^[^;]+$", rownames(holder$cm)),]
 Example config file is located at "*dropEst/configs/iclip.xml*".  
 Example command:
 ```bash
-./droptag -c dropEst/configs/iclip.xml [-S] [-s] data.fastq
+./droptag -c ~/dropEst/configs/iclip.xml [-S] [-s] data.fastq
 ```
 **Note.** Implementation of iCLIP wasn't tested properly. Please, be careful using it. Anyone who used it is very welcome to comment it either in Issues or by e-mail.
 
@@ -323,9 +324,20 @@ Example command:
 Example config file is located at "*dropEst/configs/split_seq.xml*".
 Example command:
 ```bash
-./droptag -c dropEst/configs/split_seq.xml [-S] [-s] gene_reads.fastq barcode_reads.fastq
+./droptag -c ~/dropEst/configs/split_seq.xml [-S] [-s] gene_reads.fastq barcode_reads.fastq
 ```
 
+#### Seq-Well
+* File 1: Gene reads
+* File 2: Cell barcode + UMI
+
+Example config file is located at "*dropEst/configs/seq_well.xml*".
+Example command:
+```bash
+./droptag -c ~/dropEst/configs/seq_well.xml [-S] [-s] gene_reads.fastq barcode_reads.fastq
+```
+
+**Note.** Currently, config doesn't specify white-list of barcodes for Seq-Well. If you have one, and you can share it, I'd be more than happy to add this file to the pipeline. Please, feel free to submit it in a new issue or by e-mail.
 
 ### Command line arguments for dropTag
 *  -c, --config filename: xml file with droptag parameters  

@@ -1,0 +1,27 @@
+<config>
+    <!-- droptag -->
+    <TagsSearch>
+        <protocol>split_seq</protocol> <!-- seq-well has the same format as split-seq -->
+        <MultipleBarcodeSearch>
+            <barcode_starts>0</barcode_starts>
+            <barcode_lengths>12</barcode_lengths>
+            <umi_start>12</umi_start>
+            <umi_length>8</umi_length>
+        </MultipleBarcodeSearch>
+
+        <Processing>
+            <min_align_length>10</min_align_length>
+            <reads_per_out_file>10000000</reads_per_out_file>
+        </Processing>
+    </TagsSearch>
+
+    <!-- dropest -->
+    <Estimation>
+        <Merge>
+            <max_cb_merge_edit_distance>4</max_cb_merge_edit_distance>
+            <max_umi_merge_edit_distance>1</max_umi_merge_edit_distance>
+            <min_genes_after_merge>100</min_genes_after_merge>
+            <min_genes_before_merge>20</min_genes_before_merge>
+        </Merge>
+    </Estimation>
+</config>
