@@ -337,8 +337,6 @@ Example command:
 ./droptag -c ~/dropEst/configs/seq_well.xml [-S] [-s] gene_reads.fastq barcode_reads.fastq
 ```
 
-**Note.** Currently, config doesn't specify white-list of barcodes for Seq-Well. If you have one, and you can share it, I'd be more than happy to add this file to the pipeline. Please, feel free to submit it in a new issue or by e-mail.
-
 ### Command line arguments for dropTag
 *  -c, --config filename: xml file with droptag parameters  
 *  -l, --log-prefix prefix: logs prefix
