@@ -383,9 +383,10 @@ This phase requires aligned .bam files as input and uses them to estimate count 
 to dropEst. You can do it either using .bam tags or `-s` dropTag option (i.e. option 1 isn't available in this case). You still can run
 simpler algorithms (i.e. *cluster* or *directional*, see paper) without this information. 
 
-Count matrix estimation also requires information about the source gene for the reads. It can be provided in two ways:
+Count matrix estimation also requires information about the source gene for the reads. It can be provided in three ways:
 1. Use gene annotation in either *.bad* or *.gtf* format. To provide such file, "*-g*" option should be used.
 2. Use .bam tags. Tag name can be configured in [*config.xml* file](##additional-notes).
+3. Pseudoaligners encode gene names as chromosome names
 
 Another crucial moment in estimation of count matrix is correction of cell barcode errors. Most protocols provide the list of real barcodes, which simplifies the task of correction. If such file is available, path to the file **should be specified in the *config.xml* file** (*Estimation/Merge/barcodes_file*). This can dramatically increase quality of the result. Lists for inDrop protocols can be found at *dropEst/data/barcodes/*. Two algorithms of barcode correction are available:
 1. Simple, "*-m*" option. This algorithm is recommended in the case, where barcodes list is supplied.
@@ -441,8 +442,9 @@ Example commands:
     ```
 
 The pipeline can determine genome regions either using .gtf annotation file or using .bam tags, i.e. for CellRanger 
-output (see *Estimation/BamTags/Type* in *configs/config_desc.xml*). If .gtf file isn't provided and .bam file doesn't containt 
-annotation tags, all reads with not empty gene tag are considered as exonic. 
+output (see *Estimation/BamTags/Type* in *configs/config_desc.xml*). If .gtf file isn't provided and .bam file doesn't containt annotation tags, all reads with not empty gene tag are considered as exonic.
+
+**Note.** There is no way to extract information about intronic reads from pseudoalignment, so you can't use pseudoaligners at this stage.
 
 #### Velocyto integration
 For some purposes (i.e. [velocyto](http://velocyto.org/)) it can be useful to look separately at the fraction of intronic and exonic UMIs.
