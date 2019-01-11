@@ -449,7 +449,7 @@ For some purposes (i.e. [velocyto](http://velocyto.org/)) it can be useful to lo
 Option *"-V"* allows to output three separate count matrices, each of which contains only UMIs of a specific type: 
 intronic, exonic or exon/intron spanning. These matrices are stored in the separate file *"cell.counts.matrices.rds"*. 
 
-**Note.** If you use bam file from other pipeline (i.e. 10x), please **ensure that you provided gtf file with genes** with `-g` option. Because CellRanger (and some other pipelines) doesn't include information about intronic reads to the bam file.
+**Note.** Please **ensure that you provided gtf file with genes** with `-g` option.
 
 ### Command line arguments for dropEst
 *  -b, --bam-output: print tagged bam files  
