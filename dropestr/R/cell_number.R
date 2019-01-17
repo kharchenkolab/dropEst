@@ -1,4 +1,5 @@
 #' @importFrom dplyr %>%
+#' @importFrom magrittr %<>%
 NULL
 
 #' Calculate derivative of an tabular function.

@@ -16,6 +16,7 @@ ggplot2::theme_set(ggplot2::theme_bw(base_size = 14) + ggplot2::theme(plot.title
 ```
 
 ## Quick start
+
 ```{r}
 library(dropestr)
 data('lq_cells_data')
@@ -34,8 +35,8 @@ distinguishing of mitochondrial reads: by chromosome name and by genesets. The f
 while the second works with UMIs. However, results are quite similar.
 
 ```{r, fig.width=4.5, fig.height=3}
-scores_chromosome_filt <- ScorePipelineCells(pipeline_data, filter.high.mit.fraction=T, mit.chromosome.name='chrM')
-scores_geneset_filt <- ScorePipelineCells(pipeline_data, filter.high.mit.fraction=T, mitochondrion.genes=mit_genes)
+scores_chromosome_filt <- ScorePipelineCells(pipeline_data, mit.chromosome.name='chrM')
+scores_geneset_filt <- ScorePipelineCells(pipeline_data, mitochondrion.genes=mit_genes)
 PlotCellScores(scores_chromosome_filt, y.threshold=0.9, main='Chromosome')
 PlotCellScores(scores_geneset_filt, y.threshold=0.9, main='Geneset')
 ```
@@ -45,8 +46,9 @@ Answers are the same for `r round(mean((scores_chromosome_filt > 0.9) == (scores
 ## Manual filtration
 This filtration can be done manually in more flexible way.
 The first step is feature extraction from existed data.
+
 ```{r}
-lq_cells_df <- PrepareLqCellsDataPipeline(pipeline_data, mit.chromosome.name="chrM")
+lq_cells_df <- PrepareLqCellsDataPipeline(pipeline_data, mitochondrion.genes=mit_genes)
 ```
 
 Next, we need to estimate approximate number of real cells. It can be done using one of the following plots,
@@ -57,45 +59,30 @@ PlotCellsNumberLine(pipeline_data$aligned_umis_per_cell, estimate.cells.number=T
 PlotCellsNumberHist(pipeline_data$aligned_umis_per_cell, estimate.cells.number=T)
 ```
 
-Some cells can die prior to the sequencing, and they should be filtered. Such cell can be distinuished by mitochondrial fraction.
-As was mentioned above, this fraction can be estimated using the chromosome name or the list of genes.
-```{r, fig.width=4, fig.height=3}
-mit_chromosome_fraction <- GetChromosomeFraction(pipeline_data$reads_per_chr_per_cells$Exon[colnames(pipeline_data$cm),], 'chrM')
-mit_geneset_fraction <- GetGenesetFraction(pipeline_data$cm, mit_genes)
+Let's look at all the features we use. Please, keep in mind that all features are sacled to [0, 1] interval.
 
-FractionSmoothScatter(mit_chromosome_fraction, plot.threshold=T, main='Chromosome')
-FractionSmoothScatter(mit_geneset_fraction, plot.threshold=T, main='Geneset')
-```
-
-The last preparation step is obtaining initial labeling from the data. Here we can vary both borders of high/low quality cells and 
-the level of mitochondrial fraction, which is considered to be a marker of dead cells.
 ```{r}
-cells_number_manual <- list(min=300, max=800)
-
-cells_quality <- EstimateCellsQuality(pipeline_data$aligned_umis_per_cell)
-cells_quality_manual <- EstimateCellsQuality(pipeline_data$aligned_umis_per_cell, cells.number=cells_number_manual)
-
-cells_quality_filt <- FilterMitochondrionCells(mit_geneset_fraction, cells_quality)
-cells_quality_filt_manual <- FilterMitochondrionCells(mit_geneset_fraction, cells_quality, mit.threshold=0.2)
+for (n in names(lq_cells_df)) {
+  smoothScatter(lq_cells_df[[n]], xlab = "Cell rank", ylab = n, main = n)
+}
 ```
 
-Scoring of the cells for different types of initial labeling:
+We can see that high mitochondrial fraction doesn't help to distinguish right tail from the left, so we can manually filter it and remove this feature:
+
 ```{r}
-scores <- ScoreCells(lq_cells_df, cells_quality)
-scores_manual <- ScoreCells(lq_cells_df, cells_quality_manual)
-
-scores_filt <- ScoreCells(lq_cells_df, cells_quality_filt)
-scores_filt_manual <- ScoreCells(lq_cells_df, cells_quality_filt_manual)
+lq_cells_df <- lq_cells_df[lq_cells_df$MitochondrionFraction < 0.1, ]
+lq_cells_df$MitochondrionFraction <- NULL
 ```
 
-It can be seen that choice of threshold for mitochondrial fraction influence the result, but borders selection doesn't really affect set of cells, which were classified as high-quality.
-```{r, fig.width=5, fig.height=4}
-cells_number <- EstimateCellsNumber(pipeline_data$aligned_umis_per_cell)
-PlotCellScores(scores, cells_number, 0.95, main='Default parameters')
-PlotCellScores(scores_manual,cells_number_manual, 0.95, main='Manual borders')
+Also, based on what we see, we can decide to move border of "definitely low-quality" cells more to the right. The algoruthm is pretty robust to border selection though.
 
-PlotCellScores(scores_filt, cells_number, 0.95, main='Mit. filtration')
-PlotCellScores(scores_filt_manual, cells_number, 0.95, main='Manual mit. filtration')
+```{r}
+cells_number_manual <- list(min=450, max=800)
 ```
 
+Finally, we're redy to get final score:
 
+```{r}
+scores <- ScoreQualityData(pipeline_data$aligned_umis_per_cell, lq_cells_df, cells_number_manual)
+PlotCellScores(scores, y.threshold=0.9)
+```

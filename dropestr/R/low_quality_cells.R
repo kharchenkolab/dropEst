@@ -267,3 +267,21 @@ ScorePipelineCells <- function(pipeline.data, mitochondrion.genes=NULL, mit.chro
 
   return(scores)
 }
+
+#' @export
+ScoreQualityData <- function(umi.counts, scoring.data, cell.number=NULL, max.pcs=3, bandwidth.mult=1) {
+  if ("tbl" %in% class(scoring.data)) {
+    scoring.data <- as.data.frame(scoring.data)
+    rownames(scoring.data) <- scoring.data$Barcode
+    scoring.data$Barcode <- NULL
+  }
+
+  scoring.data %<>% Scale()
+  umi.counts <- umi.counts[rownames(scoring.data)]
+  if (max.pcs > 0 && max.pcs < ncol(scoring.data)) {
+    scoring.data <- GetOptimalPcs(scoring.data, max.pcs = max.pcs)$pca.data
+  }
+
+  cell.quality <- EstimateCellsQuality(umi.counts, cell.number=cell.number)
+  return(PredictKDE(TrainClassifier(scoring.data, cell.quality), scoring.data, bandwidth.mult=bandwidth.mult)[,2])
+}

@@ -11,7 +11,8 @@ PrepareLqCellsData(count.matrix, aligned.reads.per.cell,
   scale = TRUE)
 
 PrepareLqCellsDataPipeline(data, total.reads.per.cell = NULL,
-  mitochondrion.genes = NULL, mit.chromosome.name = NULL, scale = TRUE)
+  mitochondrion.genes = NULL, mit.chromosome.name = NULL,
+  scale = TRUE)
 }
 \arguments{
 \item{count.matrix}{Matrix with counts of umi per gene per cell.}
