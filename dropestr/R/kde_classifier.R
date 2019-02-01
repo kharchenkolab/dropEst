@@ -37,8 +37,8 @@ PredictKDE <- function(clf, x, bandwidth.mult=1) {
     stop("The classifier provided isn't a KdeClassifier")
   }
 
-  dens1 <- ks::kde(clf$data1, H=clf$h1, eval.points = x)$estimate
-  dens0 <- ks::kde(clf$data0, H=clf$h0, eval.points = x)$estimate
+  dens1 <- ks::kde(clf$data1, H=clf$h1 * bandwidth.mult, eval.points = x)$estimate
+  dens0 <- ks::kde(clf$data0, H=clf$h0 * bandwidth.mult, eval.points = x)$estimate
 
   dens1 <- pmax(dens1, 0) # ks sometimes returns negative values close to zero
   dens0 <- pmax(dens0, 0)

@@ -70,8 +70,8 @@ PrepareClassifierTrainingData <- function(reads_per_umi_pairs) {
 }
 
 #' @export
-FillCollisionsAdjustmentInfo <- function(umi_probabilities, max_umi_per_gene) {
-    .Call('_dropestr_FillCollisionsAdjustmentInfo', PACKAGE = 'dropestr', umi_probabilities, max_umi_per_gene)
+FillCollisionsAdjustmentInfo <- function(umi_probabilities, max_umi_per_gene, verbose = FALSE) {
+    .Call('_dropestr_FillCollisionsAdjustmentInfo', PACKAGE = 'dropestr', umi_probabilities, max_umi_per_gene, verbose)
 }
 
 #' @export
@@ -93,16 +93,6 @@ ValueCounts <- function(values, return_probs = FALSE) {
     .Call('_dropestr_ValueCounts', PACKAGE = 'dropestr', values, return_probs)
 }
 
-#' Estimate a distribution of observed UMI probabilities for results on <= 0.7.5.
-#'
-#' @param umis_per_gene_per_cell list of vectors: number of UMIs per gene per cell (zeros can be omitted).
-#' @param umi_length length of UMI.
-#' @param smooth smooth term, which is added to each UMI probability in case if some UMIs have only few observations.
-#' @return Vector of UMI probabilities.
-#'
-#' @export
-NULL
-
 #' @export
 BuildCountMatrix <- function(reads_per_umi_per_cell) {
     .Call('_dropestr_BuildCountMatrix', PACKAGE = 'dropestr', reads_per_umi_per_cell)
@@ -119,8 +109,9 @@ TrimUmis <- function(rpu_per_cell, trim_length, reverse = FALSE) {
 #' @param umi_length length of UMI.
 #' @param smooth smooth term, which is added to each UMI probability in case if some UMIs have only few observations.
 #' @return Vector of UMI probabilities.
-GetUmisDistributionNew <- function(umis_per_gene_per_cell, smooth = 1L) {
-    .Call('_dropestr_GetUmisDistributionNew', PACKAGE = 'dropestr', umis_per_gene_per_cell, smooth)
+#' @export
+GetUmisDistribution <- function(umis_per_gene_per_cell, smooth = 1L) {
+    .Call('_dropestr_GetUmisDistribution', PACKAGE = 'dropestr', umis_per_gene_per_cell, smooth)
 }
 
 GetUmisList <- function(umi_len) {

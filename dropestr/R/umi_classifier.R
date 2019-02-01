@@ -39,6 +39,10 @@ ReadsPerUmiDataset <- function(reads.per.umi.extracted, max.umis.per.cb=4) { # T
     nn <- setNames(sapply(adj.umis, max), names(sapply(adj.umis, which.max)))
 
     selected.inds <- which(nn == i - 1)
+    if (length(selected.inds) == 0) {
+      next
+    }
+
     selected.inds.mask <- (mapply(intersect, lapply(adj.umis[selected.inds], function(r) which(r == max(r))),
                                   lapply(rpus[selected.inds], function(r) which(r == max(r)))) %>% sapply(length) > 0)
 

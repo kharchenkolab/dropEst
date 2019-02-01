@@ -76,7 +76,7 @@ CorrectUmiSequenceErrorsBayesian <- function(reads.per.umi.per.cb, collisions.in
                         correction.info$neighb.prob.index, collisions.info, mc.cores=mc.cores)
 
   if (verbosity.level > 0) {
-    cat(" Completed.\n")
+    cat("Completed.\n")
   }
 
   return(filt.genes)
@@ -107,7 +107,7 @@ CorrectUmiSequenceErrors <- function(reads.per.umi.per.cb.info, umi.probabilitie
     if (verbosity.level > 0) {
       cat("Estimating UMIs distribution...")
     }
-    umi.distribution <- GetUmisDistribution(reads.per.umi.per.cb.info, smooth = distribution.smooth)
+    umi.distribution <- GetUmisDistribution(reads.per.umi.per.cb, smooth = distribution.smooth)
     umi.probabilities <- umi.distribution / sum(umi.distribution)
 
     if (verbosity.level > 0) {
@@ -121,7 +121,7 @@ CorrectUmiSequenceErrors <- function(reads.per.umi.per.cb.info, umi.probabilitie
       cat("Filling collisions info...\n")
     }
 
-    collisions.info <- FillCollisionsAdjustmentInfo(umi.probabilities, max.umi.per.gene + 1)
+    collisions.info <- FillCollisionsAdjustmentInfo(umi.probabilities, max.umi.per.gene + 1, verbose=(verbosity.level > 1))
 
     if (verbosity.level > 0) {
       cat("Completed.\n")
@@ -227,12 +227,12 @@ FilterUmisInGene <- function(cur.gene, classifier, dp.matrices, neighbours.prob.
 #' @export
 PrepareUmiCorrectionInfo <- function(umi.probabilities, max.umi.per.gene, quants.num=50, verbosity.level=0) {
   if (verbosity.level > 0) {
-    cat("Filling info about adjacent UMIs...")
+    cat("Filling info about adjacent UMIs...\n")
   }
   neighbours.info <- FillAdjacentUmisData(umi.probabilities, show_progress=(verbosity.level > 1))
 
   if (verbosity.level > 0) {
-    cat(" Completed.\n")
+    cat("Done!\n")
   }
 
   neighbour.probs <- neighbours.info$probabilities[names(umi.probabilities)]
@@ -247,7 +247,7 @@ PrepareUmiCorrectionInfo <- function(umi.probabilities, max.umi.per.gene, quants
   names(dp.matrices) <- GetUmiProbabilitiesIndex(uniq.umi.probs, quant.size)
 
   if (verbosity.level > 0) {
-    cat(" Completed.\n\n")
+    cat("Correction info prepared!\n\n")
   }
 
   return(list(neighb.prob.index=neighb.prob.index, dp.matrices=dp.matrices))

@@ -182,14 +182,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // FillCollisionsAdjustmentInfo
-std::vector<unsigned> FillCollisionsAdjustmentInfo(const std::vector<double>& umi_probabilities, unsigned max_umi_per_gene);
-RcppExport SEXP _dropestr_FillCollisionsAdjustmentInfo(SEXP umi_probabilitiesSEXP, SEXP max_umi_per_geneSEXP) {
+std::vector<unsigned> FillCollisionsAdjustmentInfo(const std::vector<double>& umi_probabilities, unsigned max_umi_per_gene, bool verbose);
+RcppExport SEXP _dropestr_FillCollisionsAdjustmentInfo(SEXP umi_probabilitiesSEXP, SEXP max_umi_per_geneSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::vector<double>& >::type umi_probabilities(umi_probabilitiesSEXP);
     Rcpp::traits::input_parameter< unsigned >::type max_umi_per_gene(max_umi_per_geneSEXP);
-    rcpp_result_gen = Rcpp::wrap(FillCollisionsAdjustmentInfo(umi_probabilities, max_umi_per_gene));
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    rcpp_result_gen = Rcpp::wrap(FillCollisionsAdjustmentInfo(umi_probabilities, max_umi_per_gene, verbose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -264,15 +265,15 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// GetUmisDistributionNew
-si_map_t GetUmisDistributionNew(List umis_per_gene_per_cell, int smooth);
-RcppExport SEXP _dropestr_GetUmisDistributionNew(SEXP umis_per_gene_per_cellSEXP, SEXP smoothSEXP) {
+// GetUmisDistribution
+si_map_t GetUmisDistribution(List umis_per_gene_per_cell, int smooth);
+RcppExport SEXP _dropestr_GetUmisDistribution(SEXP umis_per_gene_per_cellSEXP, SEXP smoothSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< List >::type umis_per_gene_per_cell(umis_per_gene_per_cellSEXP);
     Rcpp::traits::input_parameter< int >::type smooth(smoothSEXP);
-    rcpp_result_gen = Rcpp::wrap(GetUmisDistributionNew(umis_per_gene_per_cell, smooth));
+    rcpp_result_gen = Rcpp::wrap(GetUmisDistribution(umis_per_gene_per_cell, smooth));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -337,14 +338,14 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dropestr_FilterPredictions", (DL_FUNC) &_dropestr_FilterPredictions, 3},
     {"_dropestr_PrepareClassifierData", (DL_FUNC) &_dropestr_PrepareClassifierData, 1},
     {"_dropestr_PrepareClassifierTrainingData", (DL_FUNC) &_dropestr_PrepareClassifierTrainingData, 1},
-    {"_dropestr_FillCollisionsAdjustmentInfo", (DL_FUNC) &_dropestr_FillCollisionsAdjustmentInfo, 2},
+    {"_dropestr_FillCollisionsAdjustmentInfo", (DL_FUNC) &_dropestr_FillCollisionsAdjustmentInfo, 3},
     {"_dropestr_AdjustGeneExpressionUniform", (DL_FUNC) &_dropestr_AdjustGeneExpressionUniform, 2},
     {"_dropestr_DeadjustGeneExpression", (DL_FUNC) &_dropestr_DeadjustGeneExpression, 2},
     {"_dropestr_ValueCountsC", (DL_FUNC) &_dropestr_ValueCountsC, 1},
     {"_dropestr_ValueCounts", (DL_FUNC) &_dropestr_ValueCounts, 2},
     {"_dropestr_BuildCountMatrix", (DL_FUNC) &_dropestr_BuildCountMatrix, 1},
     {"_dropestr_TrimUmis", (DL_FUNC) &_dropestr_TrimUmis, 3},
-    {"_dropestr_GetUmisDistributionNew", (DL_FUNC) &_dropestr_GetUmisDistributionNew, 2},
+    {"_dropestr_GetUmisDistribution", (DL_FUNC) &_dropestr_GetUmisDistribution, 2},
     {"_dropestr_GetUmisList", (DL_FUNC) &_dropestr_GetUmisList, 1},
     {"_dropestr_ConcatLists", (DL_FUNC) &_dropestr_ConcatLists, 1},
     {"_dropestr_GetMirrorPairs", (DL_FUNC) &_dropestr_GetMirrorPairs, 3},

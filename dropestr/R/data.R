@@ -1,15 +1,5 @@
-# #' Results of processing of SRR3879617 dataset, neccesary for low-quality cells filtration.
-# #'
-# #' @format A list with the next fields:
-# #' \describe{
-# #'   \item{price}{price, in US dollars}
-# #'   \item{carat}{weight of the diamond, in carats}
-# #'   ...
-# #' }
-# #' @source \url{https://trace.ncbi.nlm.nih.gov/Traces/sra/?run=SRR3879617}
-# "lq_cells_info"
-
-#' Results of processing of mouse BC dataset (SCG71), neccesary for UMI errors correction for the 100 largest cells.
+#' Results of processing of 10x Frozen Human PBMC (Donor A) dataset, neccesary for UMI errors correction. 50 largest cells.
+#' https://support.10xgenomics.com/single-cell-gene-expression/datasets/1.1.0/frozen_pbmc_donor_a
 #'
 "reads_per_umi_per_cell"
 

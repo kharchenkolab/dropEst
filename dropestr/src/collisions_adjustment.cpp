@@ -33,7 +33,9 @@ private:
     return result;
   }
 
-  void update_adjusted_sizes(size_t max_gene_expression) {
+  void update_adjusted_sizes(size_t max_gene_expression, bool verbose) {
+    Progress progress(max_gene_expression - this->_adjusted_sizes.size() - 1, verbose);
+
     for (size_t s = this->_adjusted_sizes.size() + 1; s <= max_gene_expression; ++s) {
       const size_t total_size = s + size_t(this->_sum_collisions);
       double new_umi_prob = 0;
@@ -47,6 +49,11 @@ private:
       const double collision_num = 1.0 / (1.0 - new_umi_prob) - 1.0;
       this->_sum_collisions += collision_num;
       this->_adjusted_sizes.push_back(std::lround(s + this->_sum_collisions));
+
+      if (progress.check_abort())
+        break;
+
+      progress.increment();
     }
   }
 
@@ -59,12 +66,12 @@ public:
   , _last_total_gene_size(0)
   {}
 
-  void init(const probs_vec_t &umi_probabilities, size_t max_gene_expression = 0) {
+  void init(const probs_vec_t &umi_probabilities, size_t max_gene_expression = 0, bool verbose=false) {
     this->_sum_collisions = 0;
     this->_last_total_gene_size = 0;
     this->_umi_probabilities = umi_probabilities;
     this->_umi_probabilities_neg_prod = probs_vec_t(umi_probabilities.size(), 1);
-    CollisionsAdjuster::update_adjusted_sizes(max_gene_expression);
+    this->update_adjusted_sizes(max_gene_expression, verbose);
   }
 
   size_vec_t adjusted_sizes() const {
@@ -74,9 +81,9 @@ public:
 
 //' @export
 // [[Rcpp::export]]
-std::vector<unsigned> FillCollisionsAdjustmentInfo(const std::vector<double> &umi_probabilities, unsigned max_umi_per_gene) {
+std::vector<unsigned> FillCollisionsAdjustmentInfo(const std::vector<double> &umi_probabilities, unsigned max_umi_per_gene, bool verbose=false) {
   CollisionsAdjuster adjuster;
-  adjuster.init(umi_probabilities, max_umi_per_gene);
+  adjuster.init(umi_probabilities, max_umi_per_gene, verbose);
   return adjuster.adjusted_sizes();
 }
 
