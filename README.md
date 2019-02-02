@@ -511,6 +511,8 @@ If you get the error *"pandoc version 1.12.3 or higher is required and was not f
 ## Examples
 Complete examples of the pipeline can be found at [EXAMPLES.md](examples/EXAMPLES.md).
 
+[Here](http://pklab.med.harvard.edu/viktor/dropest_paper/dropest_0.8.5.zip) are results of processing of [neurons_900](https://support.10xgenomics.com/single-cell-gene-expression/datasets/2.1.0/neurons_900) 10x dataset.
+
 ## dropEstR package
 
 This package implements UMI errors corrections and low-quality cells filtration, which are not performed during dropEst phase.
