@@ -3,12 +3,14 @@
 \docType{data}
 \name{reads_per_umi_per_cell}
 \alias{reads_per_umi_per_cell}
-\title{Results of processing of mouse BC dataset (SCG71), neccesary for UMI errors correction for the 100 largest cells.}
-\format{An object of class \code{list} of length 100.}
+\title{Results of processing of 10x Frozen Human PBMC (Donor A) dataset, neccesary for UMI errors correction. 50 largest cells.
+https://support.10xgenomics.com/single-cell-gene-expression/datasets/1.1.0/frozen_pbmc_donor_a}
+\format{An object of class \code{list} of length 5.}
 \usage{
 reads_per_umi_per_cell
 }
 \description{
-Results of processing of mouse BC dataset (SCG71), neccesary for UMI errors correction for the 100 largest cells.
+Results of processing of 10x Frozen Human PBMC (Donor A) dataset, neccesary for UMI errors correction. 50 largest cells.
+https://support.10xgenomics.com/single-cell-gene-expression/datasets/1.1.0/frozen_pbmc_donor_a
 }
 \keyword{datasets}
