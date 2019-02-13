@@ -26,6 +26,7 @@ Input parameters:
 
 ```{r, include=FALSE}
 library(ggplot2)
+library(dplyr)
 library(dropestr)
 knitr::opts_chunk$set(fig.width=5, fig.height=3, echo=FALSE, warning=FALSE, message=FALSE)
 ggplot2::theme_set(ggplot2::theme_bw(base_size = 16) + ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5)))
@@ -44,6 +45,7 @@ umi_counts <- sort(Matrix::colSums(d$cm), decreasing=T)
 ```
 
 ## Common info
+
 <div class = "row">
 <div class = "float_left">
 ```{r, fig.width=5.5, fig.height=3.5, warning=FALSE}
@@ -52,7 +54,7 @@ PlotIntergenicFractionByChromosomes(d$reads_per_chr_per_cells, d$nonex_cells_chr
 </div>
 <div class = "float_left">
 ```{r, fig.width=3.5, fig.height=3.5}
-PlotUmisDistribution(d$reads_per_umi_per_cell)
+PlotUmisDistribution(d$reads_per_umi_per_cell$reads_per_umi)
 ```
 </div>
 </div>
@@ -71,7 +73,13 @@ PlotGenesPerCell(d$cm)
 </div>
 </div>
 
+```{r, fig.width=4.5, fig.height=3.5}
+smoothScatter(x=Matrix::colSums(d$cm > 0), y=Matrix::colSums(d$cm), 
+              xlab="#Genes per cell", ylab="#UMIs per cell", las=1)
+```
+
 ## Number of cells
+
 <div class = "row">
 <div class = "col-md-6">
 ```{r, fig.width=4.5, fig.height=3.5}
@@ -91,6 +99,7 @@ PlotCellsNumberLogLog(d$aligned_umis_per_cell, T, show.legend=F)
 </div>
 
 ## Cells quality
+
 ```{r}
 scores <- ScorePipelineCells(d, mitochondrion.genes = if (exists("mit_genes")) mit_genes else NULL,
                              tags.data = if (exists("tags_data")) tags_data else NULL)
@@ -113,7 +122,9 @@ if (exists("mit_genes")) {
 
 <div class = "row">
 <div class = "col-md-6">
+
 ## Saturation
+
 ```{r, message=FALSE, warning=FALSE, fig.width=4.5, fig.height=4}
 data(saturation_srr1784312)
 saturation <- EstimateSaturation(d$saturation_info$reads, d$saturation_info$cbs, sort(Matrix::colSums(d$cm), decreasing=T))
@@ -121,18 +132,22 @@ PlotSaturationEstimates(list(this=saturation, `mouse ES`=saturation_srr1784312))
 ```
 </div>
 <div class = "col-md-6">
-## #UMIs per gene
-```{r, fig.width=4.5, fig.height=4}
-umis_per_gene <- lapply(d$reads_per_umi_per_cell, sapply, length)
-umis_per_gene_vec <- unlist(umis_per_gene)
 
-ggplot() + geom_histogram(aes(x=umis_per_gene_vec[1:100], y= 1 - cumsum(..count../sum(..count..))), bins=50, col=I('black')) + ggplot2::scale_x_log10(expand=c(0, 0.0)) + 
-  labs(x='#UMIs per gene', y='Fraction of genes\nwith higher #UMIs') + ggplot2::annotation_logticks(sides='b')
+## #UMIs per gene
+
+```{r, fig.width=4.5, fig.height=4}
+umi_per_gene_probs <- dropestr::ValueCounts(d$cm@x, return_probs=T) %>%
+  tibble(UmiProb=., NUmis=as.integer(names(.))) %>% arrange(NUmis) %>%
+  filter(UmiProb > 5e-4)
+
+ggplot(umi_per_gene_probs) + geom_bar(aes(x=NUmis, y=1 - cumsum(UmiProb)), stat="identity", width=0.7) +
+  labs(x='#UMIs per gene', y='Fraction of genes\nwith larger #UMIs')
 ```
 </div>
 </div>
 
 ## Statistics
+
 <div class = "row">
 <div class = "col-md-6">
 Top genes:
@@ -143,7 +158,7 @@ PrintVectorAsTibble(Matrix::rowSums(d$cm), c('Gene', '#Molecules'))
 <div class = "col-md-6">
 Top UMIs:
 ```{r}
-PrintVectorAsTibble(GetUmisDistribution(d$reads_per_umi_per_cell), c('UMI', '#Molecules'), 10)
+PrintVectorAsTibble(GetUmisDistribution(d$reads_per_umi_per_cell$reads_per_umi), c('UMI', '#Molecules'), 10)
 ```
 </div>
 </div>
