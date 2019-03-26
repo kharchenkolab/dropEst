@@ -242,6 +242,19 @@ docker run --name dropest -it dropest
 
 You can find more info about dockers at [Docker Cheat Sheet](https://github.com/wsargent/docker-cheat-sheet)
 
+#### Updating dropEst inside docker
+
+Please note, that docker container isn't wired to a specific dropEst version, it just builds the latest commit from the master branch of the git repo. To update the code inside a compiled container, you need to log into it, pull the latest version and rebuild the code:
+
+```bash
+docker exec -it dropest /bin/bash
+
+cd /home/user/dropEst/build
+rm -rf ./*
+git pull origin master
+cmake .. && make
+```
+
 ## dropTag
     droptag -- generate tagged fastq files for alignment
 
