@@ -465,7 +465,7 @@ output (see *Estimation/BamTags/Type* in *configs/config_desc.xml*). If .gtf fil
 #### Velocyto integration
 For some purposes (i.e. [velocyto](http://velocyto.org/)) it can be useful to look separately at the fraction of intronic and exonic UMIs.
 Option *"-V"* allows to output three separate count matrices, each of which contains only UMIs of a specific type: 
-intronic, exonic or exon/intron spanning. These matrices are stored in the separate file *"cell.counts.matrices.rds"*. 
+intronic, exonic or exon/intron spanning. These matrices are stored in the separate file *"cell.counts.matrices.rds"*.
 
 **Note.** Please **ensure that you provided gtf file with genes** with `-g` option.
 
