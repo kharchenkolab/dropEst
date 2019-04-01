@@ -227,6 +227,7 @@ In case you still can't build the project, dockerfiles for the most popular linu
 You can either build and run these dockers or just read dockerfiles for the further instructions on dropEst installation for specific distribution.
 
 To install docker on your system see [installation instruction](https://github.com/wsargent/docker-cheat-sheet#installation). After installing the docker, use the following commands to start it:
+
 ```bash
 cd dropEst/dockers/debian9
 docker build -t dropest .
@@ -239,6 +240,8 @@ cd dropEst/dockers/centos6
 docker build -t dropest .
 docker run --name dropest -it dropest
 ```
+
+Pre-built docker can be found [here](https://hub.docker.com/r/sgosline/dropest).
 
 You can find more info about dockers at [Docker Cheat Sheet](https://github.com/wsargent/docker-cheat-sheet)
 
