@@ -76,7 +76,19 @@ pygments_style = None
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+
+html_theme = 'sphinx_rtd_theme'
+html_theme_options = dict(
+    navigation_depth=4,
+    logo_only=True,           # Only show the logo
+)
+html_context = dict(
+    display_github=True,      # Integrate GitHub
+    github_user='hms-dbmi',   # Username
+    github_repo='dropEst',     # Repo name
+    github_version='docs',  # Version
+    conf_py_path='/docs/',    # Path in the checkout to the docs root
+)
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -103,7 +115,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'dropEstdoc'
+htmlhelp_basename = 'dropEstDoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
