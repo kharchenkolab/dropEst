@@ -2,3 +2,6 @@ build/*
 .Rproj.user
 cmake-build-debug/
 .idea
+_build
+_static
+_templates
