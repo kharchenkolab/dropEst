@@ -6,7 +6,6 @@ single-cell RNA-seq measurements.
 
 .. include:: ../README.rst
    :start-line: 19
-   :end-line: 69
 
 .. toctree::
    :maxdepth: 3
