@@ -15,8 +15,8 @@ For detailed explanations, please see the `documentation <https://dropest.readth
 
 Particularly:
 
-- Installation
-- Integration with Velocyto
+- `Installation <https://dropest.readthedocs.io/en/latest/setup.html#installation>`__
+- `Integration with Velocyto <https://dropest.readthedocs.io/en/latest/dropest.html#velocyto-integration>`__
 
 News
 ----
