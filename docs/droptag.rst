@@ -135,6 +135,14 @@ Example command:
 
     ./droptag -c ~/dropEst/configs/seq_well.xml [-S] [-s] gene_reads.fastq barcode_reads.fastq
 
+Drop-seq
+^^^^^^^^
+
+Currently, processing of Drop-seq is supported only from bam files, obtained with
+`Drop-seq tools <https://github.com/broadinstitute/Drop-seq>`__. To get more information
+see `Usage of tagged bam files <dropest.html#usage-of-tagged-bam-files-e-g-10x-drop-seq-as-input>`__.
+
+
 Command line arguments for dropTag
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

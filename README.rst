@@ -57,6 +57,16 @@ are results of processing of
 `neurons\_900 <https://support.10xgenomics.com/single-cell-gene-expression/datasets/2.1.0/neurons_900>`__
 10x dataset.
 
+Supported protocols
+-------------------
+
+- 10x
+- inDrop
+- iCLIP
+- SPLiT-seq
+- Seq-Well
+- Drop-seq
+
 Citation
 --------
 
