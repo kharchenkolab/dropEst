@@ -81,6 +81,9 @@ static void check_files_existence(const Params &params)
 	}
 }
 
+/// Returns instance of TagsFinderBase based on the config file and number of input files, initializing it according to CLI parameters
+/// @param params CLI parameters
+/// @param pt specific node in the config file (config/TagsSearch)
 shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const ptree &pt)
 {
 	auto const &config = pt.get_child(CONFIG_PATH);
@@ -162,6 +165,8 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const ptree &pt
 				new SplitSeqTagsFinder(params.read_files, pt.get_child(MULTIPLE_BARCODES_CONFIG_PATH), processing_config,
 						writer, params.save_stats, params.save_reads_params));
 	}
+
+    throw std::runtime_error("Unknown protocol: '" + protocol_type + "'. Please, check it in the config (TagsSearch/protocol)");
 }
 
 
@@ -301,6 +306,7 @@ int main(int argc, char **argv)
 
 		Tools::trace_time("Run");
 
+		// All work is done here
 		finder->run(params.num_of_threads);
 
 		Tools::trace_time("All done");

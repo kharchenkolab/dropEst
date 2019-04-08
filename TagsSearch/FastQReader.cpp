@@ -26,11 +26,6 @@ namespace TagsSearch
 		this->_in_fstream.push(this->_in_file);
 	}
 
-//	void FastQReader::write_read_params(const std::string &id_prefix, const Tools::ReadParameters &read_params)
-//	{
-//		this->out_reads_zip << read_params.encoded_params(id_prefix) << "\n";
-//	}
-
 	bool FastQReader::get_next_record_unsafe(FastQRecord &record)
 	{
 		if (!this->get_next_line_unsafe(record.id))

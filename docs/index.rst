@@ -18,4 +18,5 @@ single-cell RNA-seq measurements.
    dropreport
    dropestr
    configuration
+   development
 

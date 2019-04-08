@@ -27,6 +27,8 @@ namespace Tools
 
 namespace TagsSearch
 {
+	/// Main class, which should be extended for each new protocol
+	/// Performs parallel reading of set of FastQ files to extract information about Cell Barcode, UMI and gene sequence for each read
 	class TagsFinderBase
 	{
 		friend struct TestTagsSearch::test1;
@@ -75,15 +77,42 @@ namespace TagsSearch
 		bool get_next_record(FastQReader::FastQRecord& record, Tools::ReadParameters &params);
 
 		void read_bunch(size_t number_of_iterations = 10000, size_t records_bunch_size = 5000);
+
+		/// Run processing of fastq file for one thread
 		void run_thread();
 
 		bool validate(const FastQReader::FastQRecord& record) const;
 		bool trim(FastQReader::FastQRecord& record) const;
 
 	protected:
+
+		/// Get next block from each of fastq files, parse read parameters from them and generate single new fastq
+		/// record which will be saved for further transcriptome alignment.
+		/// Must be overwritten for each new protocol.
+		///
+		/// \param record (output) fastq record with gene read
+		/// \param read_params (output) parsed read parameters
+		///
+		/// \return false if end of fastq files is reached, true otherwise
 		virtual bool parse_fastq_record(FastQReader::FastQRecord &record, Tools::ReadParameters &read_params) = 0;
+
+		/// Trim poly-A tail from the gene read
+		///
+		/// \param barcodes_tail template with poly-A tail
+		/// \param sequence gene read sequence, which should be trimmed (inplace)
+		/// \param quality gene read quality sequence, which should be trimmed (inplace)
 		void trim_poly_a(const std::string &barcodes_tail, std::string &sequence, std::string &quality);
+
+		/// Convert some additional statistics, collected during parsing, to print them in logfile.
+		/// Can be safely ignored during implementation of new protocol parsers.
+		///
+		/// \param total_reads_read total number of reads in the file
 		virtual std::string get_additional_stat(long total_reads_read) const;
+
+		/// Get reader for the specific fastq file
+		///
+		/// \param index fastq file index
+		/// \return corresponding fastq reader
 		FastQReader& fastq_reader(size_t index);
 
 	public:
@@ -91,6 +120,8 @@ namespace TagsSearch
 		               const boost::property_tree::ptree &processing_config, const std::shared_ptr<ConcurrentGzWriter> &writer,
 		               bool save_stats, bool save_read_params);
 
+		/// Create workers, which perform parallel processing of the fastq files
+		/// \param number_of_threads number of workers
 		void run(int number_of_threads);
 		const s_counter_t& num_reads_per_cb() const;
 		std::string results_to_string() const;

@@ -41,6 +41,11 @@ namespace Tools
 		}
 	};
 
+	/// Estimate edit distance
+	/// \param s1 string 1
+	/// \param s2 string 2
+	/// \param skip_n set all distances to N's equal to 0
+	/// \param max_ed maximal edit distance used in the dynamic programming algorithm. Default: 10000.
 	unsigned edit_distance(const char *s1, const char *s2, bool skip_n = true, unsigned max_ed=10000);
 	unsigned hamming_distance(const std::string &s1, const std::string &s2, bool skip_n = true);
 	double fpow(double base, long exp);

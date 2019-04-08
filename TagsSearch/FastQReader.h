@@ -44,12 +44,20 @@ namespace TagsSearch
 
 	private:
 		bool get_next_line_unsafe(std::string &line);
+
+		/// Read next block from the fastq file and put it to record. Not thread-safe!
+		///
+		/// \param record fastq records where output should be placed
+		/// \return true if read successful, false if EOF before the beginning of block
 		bool get_next_record_unsafe(FastQRecord &record);
 
 	public:
 		explicit FastQReader(const std::string &filename);
 
 		const std::string& filename() const;
+
+		/// Try to read next set of records for the fastq file to cache until it's full.
+		/// Do nothing if another thread is already reading this file or if its end is reached.
 		void try_read_records_to_cash();
 
 		bool get_next_record(FastQRecord &record);

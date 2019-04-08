@@ -221,7 +221,7 @@ namespace TagsSearch
 			if (this->_file_ended && this->_fastq_writer->empty())
 				break;
 
-			// Part 0. Multithreaded.
+			// Part 0. Multithreaded. Load some content from each of fastq files to memory.
 			for (auto &reader : this->_fastq_readers)
 			{
 				reader->try_read_records_to_cash();
