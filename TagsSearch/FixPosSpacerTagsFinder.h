@@ -48,7 +48,7 @@ namespace TagsSearch
 		static size_t parse_barcode_mask(const std::string &mask, size_t cur_pos, MaskPart &mask_part);
 
 	protected:
-		bool parse_fastq_record(FastQReader::FastQRecord &gene_record, Tools::ReadParameters &read_params) override;
+		bool parse_fastq_records(FastQReader::FastQRecord &gene_record, Tools::ReadParameters &read_params) override;
 
 		std::string get_additional_stat(long total_reads_read) const override;
 

@@ -15,7 +15,7 @@ namespace TagsSearch
 		, _cant_parse_num(0)
 	{}
 
-	bool IClipTagsFinder::parse_fastq_record(FastQReader::FastQRecord &gene_record, Tools::ReadParameters &read_params)
+	bool IClipTagsFinder::parse_fastq_records(FastQReader::FastQRecord &gene_record, Tools::ReadParameters &read_params)
 	{
 		if (!this->fastq_reader(0).get_next_record(gene_record))
 			return false;

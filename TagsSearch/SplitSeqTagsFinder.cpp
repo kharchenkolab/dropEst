@@ -31,7 +31,8 @@ namespace TagsSearch
 		}
 	}
 
-	bool SplitSeqTagsFinder::parse_fastq_record(FastQReader::FastQRecord &gene_record, Tools::ReadParameters &read_params)
+	bool SplitSeqTagsFinder::parse_fastq_records(FastQReader::FastQRecord &gene_record,
+												 Tools::ReadParameters &read_params)
 	{
 		FastQReader::FastQRecord barcode_record;
 		if (!this->fastq_reader(0).get_next_record(barcode_record))

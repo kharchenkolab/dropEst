@@ -98,7 +98,8 @@ namespace TagsSearch
 		return next_pos;
 	}
 
-	bool FixPosSpacerTagsFinder::parse_fastq_record(FastQReader::FastQRecord &gene_record, Tools::ReadParameters &read_params)
+	bool FixPosSpacerTagsFinder::parse_fastq_records(FastQReader::FastQRecord &gene_record,
+													 Tools::ReadParameters &read_params)
 	{
 		FastQReader::FastQRecord barcodes_record;
 		if (!this->fastq_reader(0).get_next_record(barcodes_record))

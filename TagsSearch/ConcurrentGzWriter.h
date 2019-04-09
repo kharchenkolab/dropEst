@@ -51,8 +51,14 @@ namespace TagsSearch
 		const std::string &base_filename() const;
 
 		void enqueue_lines(const std::string &line, unsigned lines_num);
-		void flush_gzip(bool unlimited_size);
-		void flush_write();
+
+		/// Aggregate and gzip all cached lines from the writer
+		///
+		/// \param unlimited_size should limit over the gzipped queue be preserved?
+		void gzip_cached_lines(bool unlimited_size);
+
+		/// Write all lines from the gzipped queue
+		void flush_writing_queue();
 	};
 }
 

@@ -43,12 +43,12 @@ namespace TagsSearch
 		}
 	}
 
-	bool TagsFinderBase::get_next_record(FastQReader::FastQRecord& record, ReadParameters &params)
+	bool TagsFinderBase::get_next_output_record(FastQReader::FastQRecord &gene_record, ReadParameters &params)
 	{
 		if (this->_file_ended)
 			return false;
 
-		if (!this->parse_fastq_record(record, params))
+		if (!this->parse_fastq_records(gene_record, params))
 		{
 			this->_file_ended = true;
 			return false;
@@ -61,12 +61,12 @@ namespace TagsSearch
 		}
 		this->_total_reads_read++;
 
-		if (params.is_empty() || record.sequence.length() < this->_min_read_len)
+		if (params.is_empty() || gene_record.sequence.length() < this->_min_read_len)
 			return false;
 
 		++this->_parsed_reads;
 
-		if (!params.pass_quality_threshold() || !this->validate(record) || !this->trim(record))
+		if (!params.pass_quality_threshold() || !this->validate(gene_record) || !this->trim(gene_record))
 		{
 			this->_low_quality_reads++;
 			return false;
@@ -74,7 +74,7 @@ namespace TagsSearch
 
 		std::string read_prefix = "@" + this->_file_uid + std::to_string(this->_total_reads_read);
 
-		record.id = this->_save_read_params ? read_prefix : params.encoded_id(read_prefix);
+		gene_record.id = this->_save_read_params ? read_prefix : params.encoded_id(read_prefix);
 
 		if (this->_save_stats)
 		{
@@ -176,7 +176,7 @@ namespace TagsSearch
 		return res;
 	}
 
-	void TagsFinderBase::read_bunch(size_t number_of_iterations, size_t records_bunch_size)
+	void TagsFinderBase::parse_next_bunch(size_t number_of_iterations, size_t records_bunch_size)
 	{
 		for (size_t i = 0; i < number_of_iterations; ++i)
 		{
@@ -192,7 +192,7 @@ namespace TagsSearch
 
 				FastQReader::FastQRecord record;
 				ReadParameters params;
-				if (!this->get_next_record(record, params))
+				if (!this->get_next_output_record(record, params))
 				{
 					record_id--;
 					continue;
@@ -221,18 +221,19 @@ namespace TagsSearch
 			if (this->_file_ended && this->_fastq_writer->empty())
 				break;
 
-			// Part 0. Multithreaded. Load some content from each of fastq files to memory.
+			// Part 1. Multithreaded over files. Load some content from each of fastq files to memory.
 			for (auto &reader : this->_fastq_readers)
 			{
 				reader->try_read_records_to_cash();
 			}
 
-			// Part 1. Single thread.
+			// Part 2. Single thread. Get cached records from fasq readers and parse them to gene records and
+			// (optionally) read parameters, caching results to file writers
 			if (!this->_file_ended)
 			{
 				if (!this->_reading_in_progress.exchange(true))
 				{
-					this->read_bunch();
+					this->parse_next_bunch();
 					if (this->_file_ended)
 					{
 						L_TRACE << this->results_to_string();
@@ -244,22 +245,22 @@ namespace TagsSearch
 				}
 			}
 
-			// Part 2.1. Multithreaded.
-			this->_fastq_writer->flush_gzip(this->_file_ended);
+			// Part 3.1. Multithreaded. Gzip cached lines with gene records
+			this->_fastq_writer->gzip_cached_lines(this->_file_ended);
 
-			// Part 2.2. Multithreaded.
+			// Part 3.2. Multithreaded. Gzip cached lines with read parameters
 			if (this->_save_read_params)
 			{
-				this->_params_writer->flush_gzip(_file_ended);
+				this->_params_writer->gzip_cached_lines(_file_ended);
 			}
 
-			// Part 3.1. Single thread.
-			this->_fastq_writer->flush_write();
+			// Part 4.1. Single thread. Write all cached gzipped gene records.
+			this->_fastq_writer->flush_writing_queue();
 
-			// Part 3.2. Single thread.
+			// Part 4.2. Single thread. Write all cached gzipped read parameters.
 			if (this->_save_read_params)
 			{
-				this->_params_writer->flush_write();
+				this->_params_writer->flush_writing_queue();
 			}
 		}
 	}

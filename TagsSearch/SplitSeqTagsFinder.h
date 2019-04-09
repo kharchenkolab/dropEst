@@ -17,7 +17,7 @@ namespace TagsSearch
 		size_t _short_seq_read_num;
 
 	protected:
-		bool parse_fastq_record(FastQReader::FastQRecord &gene_record, Tools::ReadParameters &read_params) override;
+		bool parse_fastq_records(FastQReader::FastQRecord &gene_record, Tools::ReadParameters &read_params) override;
 		std::string get_additional_stat(long total_reads_read) const override;
 
 		std::string parse_cell_barcode(const std::string &sequence);

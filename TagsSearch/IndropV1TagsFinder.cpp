@@ -25,7 +25,8 @@ namespace TagsSearch
 		return Tools::ReadParameters(cell_barcode, umi_barcode, cell_barcode_quality, umi_barcode_quality, this->_barcode_phred_threshold);
 	}
 
-	bool IndropV1TagsFinder::parse_fastq_record(FastQReader::FastQRecord &gene_record, Tools::ReadParameters &read_params)
+	bool IndropV1TagsFinder::parse_fastq_records(FastQReader::FastQRecord &gene_record,
+												 Tools::ReadParameters &read_params)
 	{
 		FastQReader::FastQRecord barcodes_record;
 		if (!this->fastq_reader(0).get_next_record(barcodes_record))

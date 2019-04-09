@@ -84,7 +84,7 @@ namespace TagsSearch
 		return this->_lines.empty() && this->_gzipped.empty();
 	}
 
-	void ConcurrentGzWriter::flush_gzip(bool unlimited_size)
+	void ConcurrentGzWriter::gzip_cached_lines(bool unlimited_size)
 	{
 		while (unlimited_size || !this->_gzipped.full())
 		{
@@ -96,7 +96,7 @@ namespace TagsSearch
 		}
 	}
 
-	void ConcurrentGzWriter::flush_write()
+	void ConcurrentGzWriter::flush_writing_queue()
 	{
 		if (this->_write_in_progress.exchange(true))
 			return;

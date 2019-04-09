@@ -13,7 +13,7 @@ namespace TagsSearch
 		, trim_tail_length(std::min(barcodes_config.get<size_t>("r1_rc_length"), barcode2_length + umi_length))
 	{}
 
-	bool IndropV3TagsFinder::parse_fastq_record(FastQReader::FastQRecord &record, Tools::ReadParameters &read_params)
+	bool IndropV3TagsFinder::parse_fastq_records(FastQReader::FastQRecord &record, Tools::ReadParameters &read_params)
 	{
 		FastQReader::FastQRecord cb1_rec, cb2_rec;
 		if (!this->fastq_reader(0).get_next_record(cb1_rec))

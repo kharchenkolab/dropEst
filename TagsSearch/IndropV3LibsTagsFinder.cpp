@@ -15,7 +15,8 @@ namespace TagsSearch
 		, max_lib_tag_ed(barcodes_config.get<unsigned>("max_libtag_ed", 2))
 	{}
 
-	bool IndropV3LibsTagsFinder::parse_fastq_record(FastQReader::FastQRecord &record, Tools::ReadParameters &read_params)
+	bool IndropV3LibsTagsFinder::parse_fastq_records(FastQReader::FastQRecord &record,
+													 Tools::ReadParameters &read_params)
 	{
 		FastQReader::FastQRecord lib_record;
 		if (!this->fastq_reader(3).get_next_record(lib_record))
@@ -31,6 +32,6 @@ namespace TagsSearch
 			return true;
 		}
 
-		return IndropV3TagsFinder::parse_fastq_record(record, read_params);
+		return IndropV3TagsFinder::parse_fastq_records(record, read_params);
 	}
 }

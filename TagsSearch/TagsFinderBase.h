@@ -74,9 +74,21 @@ namespace TagsSearch
 	private:
 		static std::string get_file_uid(long random_seed = -1);
 
-		bool get_next_record(FastQReader::FastQRecord& record, Tools::ReadParameters &params);
+		/// Parse next block of fastq records from the readers and compile them to a single output fastq records with its parameters.
+		///
+		/// \param gene_record (output) compiled record with gene read
+		/// \param params (output) read parameters for the compiled record
+		/// \return false in the next cases: (1) fastq files are ended, (2) record doesn't pass quality threshold,
+		/// (3) can't parse barcodes from the record; true otherwise
+		bool get_next_output_record(FastQReader::FastQRecord &gene_record, Tools::ReadParameters &params);
 
-		void read_bunch(size_t number_of_iterations = 10000, size_t records_bunch_size = 5000);
+		/// Parse next bunch of fastq records and its read parameters, compile them to string output and
+		/// place it to the corresponding queues
+		///
+		/// \param number_of_iterations number of reading iterations, each of them read records_bunch_size records,
+		/// compile it to a single string and put as a single record to queues
+		/// \param records_bunch_size number of records per iteration
+		void parse_next_bunch(size_t number_of_iterations = 10000, size_t records_bunch_size = 5000);
 
 		/// Run processing of fastq file for one thread
 		void run_thread();
@@ -94,7 +106,7 @@ namespace TagsSearch
 		/// \param read_params (output) parsed read parameters
 		///
 		/// \return false if end of fastq files is reached, true otherwise
-		virtual bool parse_fastq_record(FastQReader::FastQRecord &record, Tools::ReadParameters &read_params) = 0;
+		virtual bool parse_fastq_records(FastQReader::FastQRecord &record, Tools::ReadParameters &read_params) = 0;
 
 		/// Trim poly-A tail from the gene read
 		///

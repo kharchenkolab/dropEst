@@ -7,7 +7,7 @@ Adding new protocols to dropTag
 For each new protocol you need to write new c++ class, which inherits TagsFinderBase
 (*“TagsSearch/TagsFinderBase.cpp”*). There are several examples for
 existed protocols (see all classes with suffix “TagsFinder”). All you
-really need there is to define function ``parse_fastq_record``. After
+really need there is to define function ``parse_fastq_records``. After
 that you need to add new protocol type to function ``get_tags_finder``
 in *“droptag.cpp”*. It takes only several lines, e.g.:
 

@@ -22,7 +22,7 @@ namespace TagsSearch
 		std::string parse_cb(const std::string &cb1_seq, const std::string &cb2_seq) const;
 
 	protected:
-		bool parse_fastq_record(FastQReader::FastQRecord &record, Tools::ReadParameters &read_params) override;
+		bool parse_fastq_records(FastQReader::FastQRecord &record, Tools::ReadParameters &read_params) override;
 
 		std::string get_additional_stat(long total_reads_read) const override;
 
