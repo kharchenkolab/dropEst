@@ -29,7 +29,7 @@ namespace TagsSearch
 
 		std::atomic<bool> _write_in_progress;
 
-		Tools::BlockingConcurrentQueue<LinesInfo> _lines;
+		Tools::BlockingConcurrentQueue<LinesInfo> _lines; // Hm, was there a reason why these queues are Blocking, while one in Reader is not?
 		Tools::BlockingConcurrentQueue<LinesInfo> _gzipped;
 
 		std::ofstream _out_file;
