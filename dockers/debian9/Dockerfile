@@ -31,7 +31,7 @@ RUN \
   mkdir -p ~/R/x86_64-redhat-linux-gnu-library/3.4
 
 RUN \
-  echo '.libPaths(c("~/R/x86_64-redhat-linux-gnu-library/3.4", .libPaths()))' > .Rprofile && \
+  R -e 'dir.create(Sys.getenv("R_LIBS_USER"), recursive=T)' && \
   R -e 'chooseCRANmirror(ind=52); install.packages("ks", dependencies=c("Depends", "Imports", "LinkingTo"))' && \
   R -e 'devtools::install_local("~/dropEst/dropestr/", dependencies=T)'
 

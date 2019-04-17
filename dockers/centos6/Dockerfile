@@ -48,12 +48,10 @@ RUN \
   source ~/.bashrc && \
   cd && \
   git clone https://github.com/hms-dbmi/dropEst.git && \
-  mkdir -p ~/R/x86_64-redhat-linux-gnu-library/3.4 && \
-  echo '.libPaths(c("~/R/x86_64-redhat-linux-gnu-library/3.4", .libPaths()))' > .Rprofile && \
-  R -e 'chooseCRANmirror(ind=52); install.packages(c("devtools"))' && \
+  R -e 'dir.create(Sys.getenv("R_LIBS_USER"), recursive=T)' && \
+  R -e 'chooseCRANmirror(ind=52); install.packages(c("devtools", "Rcpp","RcppEigen", "RInside", "Matrix", "optparse", "rmarkdown"))' && \
   R -e 'devtools::install_local("~/dropEst/dropestr/", dependencies=T)' && \
-  R -e 'chooseCRANmirror(ind=52); install.packages("ks", dependencies=c("Depends", "Imports", "LinkingTo"))' && \
-  R -e 'chooseCRANmirror(ind=52); install.packages(c("Rcpp","RcppEigen", "RInside", "Matrix", "optparse", "rmarkdown"))'
+  R -e 'chooseCRANmirror(ind=52); install.packages("ks", dependencies=c("Depends", "Imports", "LinkingTo"))'
 
 RUN \
   source ~/.bashrc && \
