@@ -190,6 +190,65 @@ Build and install:
 For the detailed instruction see `tutorial
 page <https://www.boost.org/doc/libs/1_60_0/tools/build/tutorial.html>`__.
 
+Dockers
+~~~~~~~
+
+Alternatively, you can use dropEst through Docker. Dockerfiles for the most
+popular linux distributions are provided (see ``dropEst/dockers/``). You
+can either build and run these dockers or just read dockerfiles for the
+further instructions on dropEst installation for specific distribution.
+
+To install docker on your system see `installation
+instruction <https://github.com/wsargent/docker-cheat-sheet#installation>`__.
+
+To pull pre-built CentOS-based docker from DockerHub use:
+
+.. code:: bash
+
+    docker pull vpetukhov/dropest:latest
+
+Dockers for older dropEst versions are available on `DockerHub <https://hub.docker.com/r/sgosline/dropest>`__.
+
+Or, you can build docker by hands, using the following commands:
+
+.. code:: bash
+
+    cd dropEst/dockers/centos7
+    docker build -t dropest .
+
+Or, for CentOS 7:
+
+.. code:: bash
+
+    cd dropEst/dockers/centos7
+    docker build -t dropest .
+
+To run the docker, use
+
+.. code:: bash
+
+    docker run --name dropest -it dropest
+
+You can find more info about dockers at `Docker Cheat
+Sheet <https://github.com/wsargent/docker-cheat-sheet>`__
+
+Updating dropEst inside docker
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Please note, that docker container isn't wired to a specific dropEst
+version, it just builds the latest commit from the master branch of the
+git repo. To update the code inside a compiled container, you need to
+log into it, pull the latest version and rebuild the code:
+
+.. code:: bash
+
+    docker exec -it dropest /bin/bash
+
+    cd /home/user/dropEst/build
+    rm -rf ./*
+    git pull origin master
+    cmake .. && make
+
 Troubleshooting
 ~~~~~~~~~~~~~~~
 
@@ -232,52 +291,3 @@ Boost 1.65
 
 CMake < 3.10 has known issues with boost 1.65. If you have such
 combination, please try either to upgrade cmake or to downgrade boost.
-
-Dockers
-~~~~~~~
-
-In case you still can't build the project, dockerfiles for the most
-popular linux distributions are provided (see ``dropEst/dockers/``). You
-can either build and run these dockers or just read dockerfiles for the
-further instructions on dropEst installation for specific distribution.
-
-To install docker on your system see `installation
-instruction <https://github.com/wsargent/docker-cheat-sheet#installation>`__.
-After installing the docker, use the following commands to start it:
-
-.. code:: bash
-
-    cd dropEst/dockers/debian9
-    docker build -t dropest .
-    docker run --name dropest -it dropest
-
-Or, for CentOS 6:
-
-.. code:: bash
-
-    cd dropEst/dockers/centos6
-    docker build -t dropest .
-    docker run --name dropest -it dropest
-
-Pre-built docker can be found
-`here <https://hub.docker.com/r/sgosline/dropest>`__.
-
-You can find more info about dockers at `Docker Cheat
-Sheet <https://github.com/wsargent/docker-cheat-sheet>`__
-
-Updating dropEst inside docker
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Please note, that docker container isn't wired to a specific dropEst
-version, it just builds the latest commit from the master branch of the
-git repo. To update the code inside a compiled container, you need to
-log into it, pull the latest version and rebuild the code:
-
-.. code:: bash
-
-    docker exec -it dropest /bin/bash
-
-    cd /home/user/dropEst/build
-    rm -rf ./*
-    git pull origin master
-    cmake .. && make
