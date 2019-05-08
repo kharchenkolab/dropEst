@@ -124,7 +124,7 @@ namespace Tools
 			if (columns.size() < 9)
 				throw std::runtime_error("Can't parse record: \n" + record);
 
-			if (columns[0] == "." || columns[3] == "." || columns[4] == "." || columns.size() == 9)
+			if (columns[0] == "." || columns[3] == "." || columns[4] == "." || columns.size() == 8)
 				return result;
 
 			GtfRecord::RecordType type;
@@ -168,7 +168,7 @@ namespace Tools
 			if (id.empty())
 			{
 				if (name.empty())
-					throw std::runtime_error("GTF record doesn't contain either gene name or id:\n" + record);
+					throw std::runtime_error("GTF record must contain either gene name or id or both:\n" + record);
 
 				id = name;
 			}
