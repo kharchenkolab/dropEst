@@ -6,7 +6,7 @@
 
 namespace TagsSearch
 {
-	class SplitSeqTagsFinder : public TagsFinderBase
+	class MultipleBarcodesTagsFinder : public TagsFinderBase
 	{
 	private:
 		const std::vector<size_t> _barcode_starts;
@@ -24,7 +24,7 @@ namespace TagsSearch
 		std::string parse_umi_barcode(const std::string &sequence);
 
 	public:
-		SplitSeqTagsFinder(const std::vector<std::string> &fastq_filenames,
+		MultipleBarcodesTagsFinder(const std::vector<std::string> &fastq_filenames,
 		                   const boost::property_tree::ptree &barcode_config,
 		                   const boost::property_tree::ptree &processing_config,
 		                   const std::shared_ptr<ConcurrentGzWriter> &writer,

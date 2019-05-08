@@ -1,4 +1,4 @@
-#include "SplitSeqTagsFinder.h"
+#include "MultipleBarcodesTagsFinder.h"
 
 #include <Tools/Logs.h>
 #include <boost/algorithm/string/split.hpp>
@@ -6,7 +6,7 @@
 
 namespace TagsSearch
 {
-	SplitSeqTagsFinder::SplitSeqTagsFinder(const std::vector<std::string> &fastq_filenames,
+	MultipleBarcodesTagsFinder::MultipleBarcodesTagsFinder(const std::vector<std::string> &fastq_filenames,
 	                                       const boost::property_tree::ptree &barcode_config,
 	                                       const boost::property_tree::ptree &processing_config,
 	                                       const std::shared_ptr<ConcurrentGzWriter> &writer,
@@ -31,7 +31,7 @@ namespace TagsSearch
 		}
 	}
 
-	bool SplitSeqTagsFinder::parse_fastq_records(FastQReader::FastQRecord &gene_record,
+	bool MultipleBarcodesTagsFinder::parse_fastq_records(FastQReader::FastQRecord &gene_record,
 												 Tools::ReadParameters &read_params)
 	{
 		FastQReader::FastQRecord barcode_record;
@@ -58,7 +58,7 @@ namespace TagsSearch
 		return true;
 	}
 
-	std::string SplitSeqTagsFinder::parse_cell_barcode(const std::string &sequence)
+	std::string MultipleBarcodesTagsFinder::parse_cell_barcode(const std::string &sequence)
 	{
 		std::string cb;
 		for (size_t i = 0; i < this->_barcode_starts.size(); ++i)
@@ -69,12 +69,12 @@ namespace TagsSearch
 		return cb;
 	}
 
-	std::string SplitSeqTagsFinder::parse_umi_barcode(const std::string &sequence)
+	std::string MultipleBarcodesTagsFinder::parse_umi_barcode(const std::string &sequence)
 	{
 		return sequence.substr(this->_umi_start, this->_umi_length);
 	}
 
-	std::string SplitSeqTagsFinder::get_additional_stat(long total_reads_read) const
+	std::string MultipleBarcodesTagsFinder::get_additional_stat(long total_reads_read) const
 	{
 		return "Total " + std::to_string(this->_short_seq_read_num) + " short reads (" +
 			std::to_string(100 * double(this->_short_seq_read_num) / total_reads_read) + "%)";

@@ -16,7 +16,7 @@
 #include "TagsSearch/IndropV3TagsFinder.h"
 #include <TagsSearch/ConcurrentGzWriter.h>
 #include <TagsSearch/IClipTagsFinder.h>
-#include <TagsSearch/SplitSeqTagsFinder.h>
+#include <TagsSearch/MultipleBarcodesTagsFinder.h>
 #include <Rcpp.h>
 #include "Tools/Logs.h"
 
@@ -162,7 +162,7 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const ptree &pt
 			throw std::runtime_error(input_files_num_error_text);
 
 		return shared_ptr<TagsFinderBase>(
-				new SplitSeqTagsFinder(params.read_files, pt.get_child(MULTIPLE_BARCODES_CONFIG_PATH), processing_config,
+				new MultipleBarcodesTagsFinder(params.read_files, pt.get_child(MULTIPLE_BARCODES_CONFIG_PATH), processing_config,
 						writer, params.save_stats, params.save_reads_params));
 	}
 
