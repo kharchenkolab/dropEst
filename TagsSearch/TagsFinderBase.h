@@ -110,10 +110,11 @@ namespace TagsSearch
 
 		/// Trim poly-A tail from the gene read
 		///
-		/// \param barcodes_tail template with poly-A tail
 		/// \param sequence gene read sequence, which should be trimmed (inplace)
 		/// \param quality gene read quality sequence, which should be trimmed (inplace)
-		void trim_poly_a(const std::string &barcodes_tail, std::string &sequence, std::string &quality);
+		/// \param barcode_tail tail of cell barcode. If parameter is provided, pipeline tries to find reverse-complete
+		/// tail sequence for trimming
+		void trim_poly_a(std::string &sequence, std::string &quality, const std::string &barcode_tail="");
 
 		/// Convert some additional statistics, collected during parsing, to print them in logfile.
 		/// Can be safely ignored during implementation of new protocol parsers.

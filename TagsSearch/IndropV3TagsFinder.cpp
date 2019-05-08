@@ -47,8 +47,9 @@ namespace TagsSearch
 
 		if (this->trim_tail_length != 0)
 		{
-			std::string tail = cb2_rec.sequence.substr(this->barcode2_length + this->umi_length - this->trim_tail_length, this->trim_tail_length);
-			this->trim_poly_a(tail, record.sequence, record.quality);
+			std::string tail = cb2_rec.sequence.substr(this->barcode2_length + this->umi_length - this->trim_tail_length,
+					this->trim_tail_length);
+			this->trim_poly_a(record.sequence, record.quality, tail);
 		}
 
 		read_params = Tools::ReadParameters(cb, umi, cb_quality, umi_quality, this->_barcode_phred_threshold);

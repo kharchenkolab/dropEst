@@ -118,7 +118,7 @@ namespace TagsSearch
 		if (this->_trim_tail_length != 0)
 		{
 			auto tail = barcodes_record.sequence.substr(seq_end - this->_trim_tail_length, this->_trim_tail_length);
-			this->trim_poly_a(tail, gene_record.sequence, gene_record.quality);
+			this->trim_poly_a(gene_record.sequence, gene_record.quality, tail);
 		}
 
 		return true;

@@ -41,8 +41,8 @@ namespace TagsSearch
 
 		read_params = this->parse(barcodes_record.sequence, barcodes_record.quality, spacer_pos);
 
-		std::string barcodes_tail = this->_spacer_finder.parse_r1_rc(barcodes_record.sequence, spacer_pos.second);
-		this->trim_poly_a(barcodes_tail, gene_record.sequence, gene_record.quality);
+		std::string barcode_tail = this->_spacer_finder.parse_r1_rc(barcodes_record.sequence, spacer_pos.second);
+		this->trim_poly_a(gene_record.sequence, gene_record.quality, barcode_tail);
 		return true;
 	}
 

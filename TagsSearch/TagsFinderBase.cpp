@@ -94,27 +94,31 @@ namespace TagsSearch
 		return ss.str();
 	}
 
-	void TagsFinderBase::trim_poly_a(const std::string &barcodes_tail, std::string &sequence, std::string &quality)
+	void TagsFinderBase::trim_poly_a(std::string &sequence, std::string &quality, const std::string &barcode_tail)
 	{
 		if (sequence.length() != quality.length())
 			throw std::runtime_error("Read has different lengths of sequence and quality string: '" +
 											 sequence + "', '" + quality + "'");
 
 		len_t trim_pos = sequence.length();
-		// attempt 1: check for reverse complement of the UMI+second barcode, remove trailing As
-		// RC of UMI+second barcode (up to a length r1_rc_length - spacer_finder parameter)
-		std::string rcb = this->_rc.rc(barcodes_tail);
-
-		len_t rc_pos = sequence.find(rcb);
-		if (rc_pos != std::string::npos)
+		if (barcode_tail.length() > 0)
 		{
-			trim_pos = rc_pos;
-			this->_trims_counter.inc(TrimsCounter::RC);
+			// attempt 1: check for reverse complement of the UMI+second barcode, remove trailing As
+			// RC of UMI+second barcode (up to a length r1_rc_length - spacer_finder parameter)
+			std::string rcb = this->_rc.rc(barcode_tail);
+
+			len_t rc_pos = sequence.find(rcb);
+			if (rc_pos != std::string::npos)
+			{
+				trim_pos = rc_pos;
+				this->_trims_counter.inc(TrimsCounter::RC);
+			}
 		}
-		else
+
+		if (trim_pos == sequence.length())
 		{
 			// attempt 2: find polyA block
-			rc_pos = sequence.find(this->_poly_a);
+			len_t rc_pos = sequence.find(this->_poly_a);
 			if (rc_pos != std::string::npos)
 			{
 				trim_pos = rc_pos;

@@ -76,8 +76,8 @@ BOOST_AUTO_TEST_SUITE(TestTagsSearch)
 		std::string r2_line3 = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
 
 		auto spacer_pos = tags_finder->_spacer_finder.find_spacer(r1_line2);
-		std::string barcodes_tail = this->spacer_finder.parse_r1_rc(r1_line2, spacer_pos.second);
-		tags_finder->trim_poly_a(barcodes_tail, r2_line2, r2_line3);
+		std::string barcode_tail = this->spacer_finder.parse_r1_rc(r1_line2, spacer_pos.second);
+		tags_finder->trim_poly_a(r2_line2, r2_line3, barcode_tail);
 
 		BOOST_CHECK_EQUAL(spacer_pos.first, 9);
 		BOOST_CHECK_EQUAL(spacer_pos.second, 31);
