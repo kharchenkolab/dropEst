@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+[Unreleased]
+~~~~~~~~~~~~~~~~~~~~
+
+Changed
+^^^^^^^
+
+- Gene sequence poly-A tail in Split-seq protocol is now trimmed
+
 [0.8.5] - 2018-11-14
 ~~~~~~~~~~~~~~~~~~~~
 

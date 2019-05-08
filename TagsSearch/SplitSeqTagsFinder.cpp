@@ -53,6 +53,7 @@ namespace TagsSearch
 		std::string umi = this->parse_umi_barcode(barcode_record.sequence);
 		std::string umi_quality = this->parse_umi_barcode(barcode_record.quality);
 		read_params = Tools::ReadParameters(cell_barcode, umi, cell_barcode_quality, umi_quality, this->_barcode_phred_threshold);
+		this->trim_poly_a(gene_record.sequence, gene_record.quality);
 
 		return true;
 	}
