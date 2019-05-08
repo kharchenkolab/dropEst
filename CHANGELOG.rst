@@ -8,6 +8,7 @@ Changed
 ^^^^^^^
 
 - Gene sequence poly-A tail in Split-seq protocol is now trimmed
+- Fixed processing of GTF files without tags
 
 [0.8.5] - 2018-11-14
 ~~~~~~~~~~~~~~~~~~~~
