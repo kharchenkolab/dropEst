@@ -120,7 +120,7 @@ Example command:
 
 .. code:: bash
 
-    ./droptag -c ~/dropEst/configs/split_seq.xml [-S] [-s] gene_reads.fastq barcode_reads.fastq
+    ./droptag -c ~/dropEst/configs/split_seq.xml [-S] [-s] barcode_reads.fastq gene_reads.fastq
 
 Seq-Well
 ^^^^^^^^
@@ -133,7 +133,7 @@ Example command:
 
 .. code:: bash
 
-    ./droptag -c ~/dropEst/configs/seq_well.xml [-S] [-s] gene_reads.fastq barcode_reads.fastq
+    ./droptag -c ~/dropEst/configs/seq_well.xml [-S] [-s] barcode_reads.fastq gene_reads.fastq
 
 Drop-seq
 ^^^^^^^^
