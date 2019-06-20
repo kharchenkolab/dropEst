@@ -18,6 +18,8 @@ Particularly:
 - `Installation <https://dropest.readthedocs.io/en/latest/setup.html#installation>`__
 - `Integration with Velocyto <https://dropest.readthedocs.io/en/latest/dropest.html#velocyto-integration>`__
 
+If you have problems with installation, please look at the `Troubleshooting <https://dropest.readthedocs.io/en/latest/setup.html#troubleshooting>`__ page and open an `issue <https://github.com/hms-dbmi/dropEst/issues>`__ if there is nothing.
+
 News
 ----
 
