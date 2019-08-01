@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+[0.8.6] - 2019-08-01
+~~~~~~~~~~~~~~~~~~~~
+
+Added
+^^^^^
+
+- Protocol aliases for Drop-seq, Seq-well and CEL-Seq2
+
 [0.8.5] - 2018-11-14
 ~~~~~~~~~~~~~~~~~~~~
 

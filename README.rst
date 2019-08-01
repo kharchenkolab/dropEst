@@ -23,13 +23,10 @@ If you have problems with installation, please look at the `Troubleshooting <htt
 News
 ----
 
-[0.8.5] - 2018-11-14
+[0.8.6] - 2019-08-01
 ~~~~~~~~~~~~~~~~~~~~
 
--  Fixed several bugs
--  Support for SPLiT-seq
--  dropTag now able to trim and filter gene reads based on quality
--  Pipeline can be installed with ``make install``
+-  Added support for Drop-seq and CEL-Seq2
 
 See `Changelog <https://github.com/hms-dbmi/dropEst/blob/develop/CHANGELOG.rst>`__ for the full list.
 
@@ -63,11 +60,12 @@ Supported protocols
 -------------------
 
 - 10x
-- inDrop
-- iCLIP
-- SPLiT-seq
-- Seq-Well
+- CEL-Seq2
 - Drop-seq
+- iCLIP
+- inDrop (v1-3)
+- Seq-Well
+- SPLiT-seq
 
 Citation
 --------

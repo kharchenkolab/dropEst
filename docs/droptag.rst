@@ -78,7 +78,7 @@ option wasn't tested properly, so it's better to avoid using it.***
 
 While dropTag provides way to demultiplex 10x data, `Cell
 Ranger <https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger>`__
-is still recommended tool for this. `dropEst <##dropEst>`__ phase can be
+is still highly recommended tool for this. `dropEst <##dropEst>`__ phase can be
 ran on the Cell Ranger demultiplexed .bam file to obtain data in the
 format, optimized for the subsequent analysis.
 
@@ -112,8 +112,8 @@ either in Issues or by e-mail.
 SPLiT-seq
 ^^^^^^^^^
 
--  File 1: Gene reads
--  File 2: UMI + cell barcode (3 parts)
+-  File 1: UMI + cell barcode (3 parts)
+-  File 2: Gene reads
 
 Example config file is located at "*dropEst/configs/split\_seq.xml*".
 Example command:
@@ -125,8 +125,8 @@ Example command:
 Seq-Well
 ^^^^^^^^
 
--  File 1: Gene reads
--  File 2: Cell barcode + UMI
+-  File 1: Cell barcode + UMI
+-  File 2: Gene reads
 
 Example config file is located at "*dropEst/configs/seq\_well.xml*".
 Example command:
@@ -138,10 +138,40 @@ Example command:
 Drop-seq
 ^^^^^^^^
 
-Currently, processing of Drop-seq is supported only from bam files, obtained with
-`Drop-seq tools <https://github.com/broadinstitute/Drop-seq>`__. To get more information
+-  File 1: Cell barcode + UMI
+-  File 2: Gene reads
+
+Example config file is located at "*dropEst/configs/drop\_seq.xml*".
+Example command:
+
+.. code:: bash
+
+    ./droptag -c ~/dropEst/configs/drop_seq.xml [-S] [-s] barcode_reads.fastq gene_reads.fastq
+
+**Note.** Implementation of Drop-seq wasn't tested properly. Please, be
+careful using it. Anyone who used it is very welcome to comment it
+either in Issues or by e-mail.
+
+Alternatively, to run processing on the bam files, obtained with
+`Drop-seq tools <https://github.com/broadinstitute/Drop-seq>`__,
 see `Usage of tagged bam files <dropest.html#usage-of-tagged-bam-files-e-g-10x-drop-seq-as-input>`__.
 
+CEL-Seq2
+^^^^^^^^
+
+-  File 1: Cell barcode + UMI
+-  File 2: Gene reads
+
+Example config file is located at "*dropEst/configs/cel\_seq2.xml*".
+Example command:
+
+.. code:: bash
+
+    ./droptag -c ~/dropEst/configs/cel_seq2.xml [-S] [-s] barcode_reads.fastq gene_reads.fastq
+
+**Note.** Implementation of CEL-Seq2 wasn't tested properly. Please, be
+careful using it. Anyone who used it is very welcome to comment it
+either in Issues or by e-mail.
 
 Command line arguments for dropTag
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -3,11 +3,11 @@
     <TagsSearch>
         <!--
         Used protocol. Number and order of required input files depend on this parameter.
-        Possible values: 10x, indrop, indrop3, iclip.
+        Possible values: 10x, indrop, indrop3, iclip, split_seq, drop_seq, cel_seq2, seq_well.
         -->
         <protocol>indrop</protocol>
 
-        <MultipleBarcodeSearch> <!-- Required for SPLiT-seq -->
+        <MultipleBarcodeSearch> <!-- Required for SPLiT-seq, Drop-seq, Seq-Well and CEL-Seq2 -->
             <barcode_starts>10 48 86</barcode_starts> <!-- Start position of cell barcode parts, separated by spaces -->
             <barcode_lengths>8 8 8</barcode_lengths> <!-- Barcode part lengths (corresponding to start positions), separated by spaces -->
             <umi_start>0</umi_start> <!-- UMI start position -->

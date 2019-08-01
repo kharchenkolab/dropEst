@@ -156,7 +156,8 @@ shared_ptr<TagsFinderBase> get_tags_finder(const Params &params, const ptree &pt
 				                    writer, params.save_stats, params.save_reads_params));
 	}
 
-	if (protocol_type == "split_seq")
+	if ((protocol_type == "split_seq") || (protocol_type == "drop_seq") || (protocol_type == "cel_seq2") ||
+	    (protocol_type == "seq_well"))
 	{
 		if (params.read_files.size() != 2)
 			throw std::runtime_error(input_files_num_error_text);
