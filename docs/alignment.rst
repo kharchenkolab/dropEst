@@ -39,7 +39,11 @@ supported.**
    genes).
 2. Build Kallisto index: ``kallisto index -i genes.fa.gz``.
 3. Run
-   ``kallisto quant --pseudobam --single -i genes.index -o out -l mean_length -s std_length reads.fastq.gz``.
+
+   .. code:: bash
+
+       kallisto quant --pseudobam --single -i genes.index -o out -l mean_length -s std_length reads.fastq.gz
+
    Here, *mean\_length* is mean length of RNA fragment (not read length)
    and *std\_length* is standard deviataion of RNA fragment length. You
    should specify values, according to the experiment design.
