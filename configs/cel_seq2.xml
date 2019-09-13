@@ -1,12 +1,12 @@
 <config>
     <!-- droptag -->
     <TagsSearch>
-        <protocol>seq_well</protocol>
+        <protocol>cel_seq2</protocol>
         <MultipleBarcodeSearch>
             <barcode_starts>0</barcode_starts>
-            <barcode_lengths>12</barcode_lengths>
-            <umi_start>12</umi_start>
-            <umi_length>8</umi_length>
+            <barcode_lengths>8</barcode_lengths>
+            <umi_start>8</umi_start>
+            <umi_length>4</umi_length>
         </MultipleBarcodeSearch>
 
         <Processing>

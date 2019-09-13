@@ -1,5 +1,20 @@
 <config>
-    <!-- droptag is currently not supported -->
+    <!-- droptag -->
+    <TagsSearch>
+        <protocol>drop_seq</protocol>
+        <MultipleBarcodeSearch>
+            <barcode_starts>0</barcode_starts>
+            <barcode_lengths>12</barcode_lengths>
+            <umi_start>12</umi_start>
+            <umi_length>8</umi_length>
+        </MultipleBarcodeSearch>
+
+        <Processing>
+            <min_align_length>10</min_align_length>
+            <reads_per_out_file>10000000</reads_per_out_file>
+        </Processing>
+    </TagsSearch>
+
     <!-- dropest -->
     <Estimation>
         <Merge>

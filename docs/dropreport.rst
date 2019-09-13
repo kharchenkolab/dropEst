@@ -1,11 +1,11 @@
 dropReport
 ----------
 
-To run the report you have to install: \*
-`dropestr <#dropestr-package>`__ R package with all dependencies
-(``dependencies = T``). \*
-`pandoc <https://pandoc.org/installing.html>`__ \* R packages:
-``R     install.packages(c("optparse","rmarkdown"))``
+To run the report you have to install:
+
+- `dropestr <#dropestr-package>`__ R package with all dependencies (``dependencies = T``)
+- `pandoc <https://pandoc.org/installing.html>`__
+- R packages: ``install.packages(c("optparse","rmarkdown"))``
 
 To run the report use:
 
