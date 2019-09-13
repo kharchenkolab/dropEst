@@ -37,5 +37,5 @@ if (!file.exists(report_script)) {
 if (!file.exists(report_script))
   stop("Can't file report.Rmd file (file ", report_script, ") doesn't exist")
 
-rmarkdown::render(report_script, output_format="html_document", encoding="UTF-8",
+rmarkdown::render(report_script, output_format="html_document", encoding="UTF-8", intermediates_dir=normalizePath(dirname(opt$options$out)),
                   output_dir=normalizePath(dirname(opt$options$out)), output_file=basename(opt$options$out))

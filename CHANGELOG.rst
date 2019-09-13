@@ -9,6 +9,7 @@ Changed
 
 - Gene sequence poly-A tail in Split-seq protocol is now trimmed
 - Fixed processing of GTF files without tags
+- Fixed bug with no permission to write temporary files in dropReport
 
 [0.8.6] - 2019-08-01
 ~~~~~~~~~~~~~~~~~~~~
