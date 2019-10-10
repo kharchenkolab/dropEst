@@ -41,13 +41,13 @@ Clone this repository:
 
     git clone https://github.com/hms-dbmi/dropEst.git
 
-Build (**replace "installation/path" with path to the folder, where you want to install the pipeline** or drop this option if you want to keep the build without installation):
+Build (**replace "/installation/path" with path to the folder, where you want to install the pipeline** or drop this option if you want to keep the build without installation):
 
 .. code:: bash
 
     mkdir dropEst/build
     cd dropEst/build
-    cmake -D installation/path . && make
+    cmake -D CMAKE_INSTALL_PREFIX="/installation/path" . && make
 
 Install:
 
