@@ -43,7 +43,8 @@ General processing steps
    matrix and statistics. *Optionally: count matrix in MatrixMarket
    format.*
 4. **dropReport** - Generating report on library quality.
-5. **dropEstR** - UMI count corrections, cell quality classification
+5.  `dropEstR <https://github.com/kharchenkolab/dropestr>`__ - R pacakge for UMI count corrections and cell quality classification
+
 
 Examples
 --------
