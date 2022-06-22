@@ -47,7 +47,7 @@ Build (**replace "/installation/path" with path to the folder, where you want to
 
     mkdir dropEst/build
     cd dropEst/build
-    cmake -D CMAKE_INSTALL_PREFIX="/installation/path" . && make
+    cmake -DCMAKE_INSTALL_PREFIX="/installation/path" .. && make
 
 Install:
 
