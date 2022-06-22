@@ -9,7 +9,7 @@
 #   BAMTOOLS_FOUND - true if BAM has been found and can be used
 
 find_path(BAMTOOLS_INCLUDE_DIR api/BamReader.h PATHS ${BAMTOOLS_ROOT}/include PATH_SUFFIXES bamtools ../include ../include/bamtools)
-find_library(BAMTOOLS_LIBRARY bamtools PATHS ${BAMTOOLS_ROOT}/lib PATH_SUFFIXES bamtools ../lib)
+find_library(BAMTOOLS_LIBRARY bamtools PATHS ${BAMTOOLS_ROOT}/lib64 ${BAMTOOLS_ROOT}/lib PATH_SUFFIXES bamtools ../lib)
 
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(BAMTOOLS
